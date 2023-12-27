@@ -8,7 +8,7 @@ install:
 
 # This only works if you have your completions setup this way.
 completion:
-	rbk completion zsh >~/.local/share/zsh-completions/_rbk
+	rbk completion zsh >~/.local/share/zsh-completions/_eng
 
 # -----------------------------------------------------------------------------
 # Release helpers
@@ -60,17 +60,3 @@ deps-cleancache:
 
 list:
 	go list -mod=mod all
-
-# CIO CI/CD
-# -----------------------------------------------------------------------------
-
-detectsecrets: detectsecrets_install detectsecrets_update detectsecrets_audit
-
-detectsecrets_install:
-	pip install --upgrade "git+https://github.com/ibm/detect-secrets.git@master#egg+detect-secrets"
-
-detectsecrets_audit:
-	detect-secrets audit .secrets.baseline
-
-detectsecrets_update:
-	detect-secrets scan --update .secrets.baseline --exclude-files 'go.sum'
