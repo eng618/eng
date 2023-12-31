@@ -59,7 +59,7 @@ func GetEmail() {
 func updateEmail() {
 	var e string
 	prompt := &survey.Input{
-		Message: "What is your IBM email?",
+		Message: "What is your email?",
 	}
 	err := survey.AskOne(prompt, &e)
 	cobra.CheckErr(err)

@@ -1,3 +1,5 @@
 # This is an example config file with all the available configuration options.
 # This can be directly copied to your $HOME/.eng.yaml
 # You can further customize it from there.
+
+user-email: eng618@garciaericn.com
