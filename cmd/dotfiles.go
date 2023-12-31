@@ -22,9 +22,9 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 // dotfilesCmd represents the dotfiles command
@@ -33,7 +33,7 @@ var dotfilesCmd = &cobra.Command{
 	Short: "Manage dotfiles",
 	Long:  `This command is used to facilitate the management of private hidden dot files.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("dotfiles called")
+		log.Info("dotfiles called")
 	},
 }
 
