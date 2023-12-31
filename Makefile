@@ -8,7 +8,7 @@ install:
 
 # This only works if you have your completions setup this way.
 completion:
-	rbk completion zsh >~/.local/share/zsh-completions/_eng
+	eng completion zsh >~/.local/share/zsh-completions/_eng
 
 # -----------------------------------------------------------------------------
 # Release helpers
