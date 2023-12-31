@@ -3,6 +3,19 @@
 ## [Unreleased]
 
 
+<a name="v0.0.4"></a>
+
+## [v0.0.4] - 2023-12-31
+
+### Build
+
+- **deps:** update all
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+
 <a name="v0.0.3"></a>
 
 ## [v0.0.3] - 2023-12-31
@@ -42,6 +55,7 @@
 - **header:** update ascii
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.0.4...HEAD
+[v0.0.4]: https://github.com/eng618/eng/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://github.com/eng618/eng/compare/v0.0.2...v0.0.3
 [v0.0.2]: https://github.com/eng618/eng/compare/v0.0.1...v0.0.2
