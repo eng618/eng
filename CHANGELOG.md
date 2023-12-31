@@ -3,6 +3,15 @@
 ## [Unreleased]
 
 
+<a name="v0.0.3"></a>
+
+## [v0.0.3] - 2023-12-31
+
+### Chore
+
+- **changelog:** add config and initial changelog
+
+
 <a name="v0.0.2"></a>
 
 ## [v0.0.2] - 2023-12-31
@@ -33,5 +42,6 @@
 - **header:** update ascii
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.0.3...HEAD
+[v0.0.3]: https://github.com/eng618/eng/compare/v0.0.2...v0.0.3
 [v0.0.2]: https://github.com/eng618/eng/compare/v0.0.1...v0.0.2
