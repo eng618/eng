@@ -28,7 +28,9 @@ func StartChildProcess(c *exec.Cmd) {
 
 	go func() {
 		// Wait for a signal and forward it to the child process.
-		c.Process.Signal(<-sigCh)
+		if err := c.Process.Signal(<-sigCh); err != nil {
+			log.Fatal(err.Error())
+		}
 	}()
 
 	// Wait for the command to finish.
