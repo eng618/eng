@@ -13,6 +13,8 @@ tasks:
       - go build
       - go install
       - task: completion
+    aliases:
+      - "i"
 
   completion:
     cmds:
