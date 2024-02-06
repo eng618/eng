@@ -1,0 +1,67 @@
+version: "3"
+
+env:
+  ENV: testing
+
+dotenv: [".env", "{{.ENV}}/.env.", "{{.HOME}}/.env"]
+
+tasks:
+  # -----------------------------------------------------------------------------
+  # Usage
+  install:
+    cmds:
+      - go build
+      - go install
+      - task: completion
+
+  completion:
+    cmds:
+      - eng completion zsh >~/.local/share/zsh-completions/_eng
+
+  # -----------------------------------------------------------------------------
+  # Release helpers
+
+  changelog:
+    cmds:
+      - git-chglog -o CHANGELOG.md
+      - git add --update
+      - 'git commit -m "chore(CHANGELOG): update [skip-ci]"'
+
+  release-check: goreleaser check
+
+  release-clean: goreleaser release --clean
+
+  release:
+    cmds:
+      - task: release-clean
+      - task: changelog
+
+  # -----------------------------------------------------------------------------
+  # development
+
+  lint: golangci-lint run
+
+  lint-fix: golangci-lint run --fix
+
+  test: go test ./...
+
+  # -----------------------------------------------------------------------------
+  # Module Support
+
+  tidy: go mod tidy
+
+  deps-reset:
+    cmds:
+      - git checkout -- go.mod
+      - task: tidy
+
+  deps-list: go list -m -u -mod=readonly all
+
+  deps-upgrade:
+    cmds:
+      - go get -u -v ./...
+      - task: tidy
+
+  deps-cleancache: go clean -modcache
+
+  list: go list -mod=mod all
