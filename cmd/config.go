@@ -32,13 +32,10 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Manage the cli's config file config file.",
+	Long: `This command is used to facilitate the management of the config file specific to this cli. 
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+It should be located at $HOME/.eng.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("config called")
 	},
