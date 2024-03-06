@@ -22,8 +22,11 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"os/exec"
+
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 )
 
@@ -40,6 +43,8 @@ var dotfilesCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(dotfilesCmd)
 
+	dotfilesCmd.AddCommand(sync)
+
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
@@ -49,4 +54,17 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// dotfilesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+var sync = &cobra.Command{
+	Use:   "sync",
+	Short: "sync your local bear repository",
+	Long:  `This command fetches and pulls in remote changes to the local bare dot repository.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Info("sync called")
+
+		syncLocal := exec.Command("echo", "hello world")
+
+		utils.StartChildProcess(syncLocal)
+	},
 }
