@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
