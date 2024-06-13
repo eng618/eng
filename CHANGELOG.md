@@ -3,6 +3,36 @@
 ## [Unreleased]
 
 
+<a name="v0.14.0"></a>
+
+## [v0.14.0] - 2024-06-12
+
+### Build
+
+- **deps:** upgrade all
+- **deps:** bump github.com/go-git/go-git/v5 from 5.11.0 to 5.12.0
+- **deps:** bump golang.org/x/net from 0.22.0 to 0.23.0 ([#6](https://github.com/eng618/eng/issues/6))
+- **deps:** bump github.com/fatih/color from 1.16.0 to 1.17.0 ([#7](https://github.com/eng618/eng/issues/7))
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Ci
+
+- **goreleaser:** update version
+
+### Docs
+
+- **README:** various updates
+- **README:** add badges
+
+### Feat
+
+- **dotfiles:** add sync command
+- **killPort:** add new command
+
+
 <a name="v0.13.0"></a>
 
 ## [v0.13.0] - 2024-03-05
@@ -583,7 +613,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/eng618/eng/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/eng618/eng/compare/v0.0.4...v0.13.0
 [v0.0.4]: https://github.com/eng618/eng/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://github.com/eng618/eng/compare/v0.0.2...v0.0.3
