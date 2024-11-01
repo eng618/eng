@@ -63,6 +63,11 @@ var sync = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("sync called")
 
+		// TODO: Use configs to specify config value... in my case that is `cfg`
+		// TODO: fetch all changes `cfg fetch --all --prune --jobs=10`
+		// TODO: pull latest changes `cfg pull --rebase --autostash`
+		// TODO: if possible... reset the shell, if not prompt message for user to restart shell.
+
 		syncLocal := exec.Command("echo", "hello world")
 
 		utils.StartChildProcess(syncLocal)
