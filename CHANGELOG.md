@@ -3,6 +3,25 @@
 ## [Unreleased]
 
 
+<a name="v0.14.1"></a>
+
+## [v0.14.1] - 2024-10-31
+
+### Build
+
+- bump deps, and go version
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Ci
+
+- update releaser properties
+- test latest go version
+- **goreleaser:** update version
+
+
 <a name="v0.14.0"></a>
 
 ## [v0.14.0] - 2024-06-12
@@ -17,10 +36,6 @@
 ### Chore
 
 - **CHANGELOG:** update [skip-ci]
-
-### Ci
-
-- **goreleaser:** update version
 
 ### Docs
 
@@ -613,7 +628,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.14.1...HEAD
+[v0.14.1]: https://github.com/eng618/eng/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/eng618/eng/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/eng618/eng/compare/v0.0.4...v0.13.0
 [v0.0.4]: https://github.com/eng618/eng/compare/v0.0.3...v0.0.4
