@@ -70,7 +70,7 @@ var ts_up = &cobra.Command{
 
 		// TODO: build utility to verify command exists before trying.
 
-		tsUpCmd := exec.Command("/bin/sh", "-c", "sudo tailscale up")
+		tsUpCmd := exec.Command("sudo", "tailscale", "up")
 		utils.StartChildProcess(tsUpCmd)
 	},
 }
@@ -82,7 +82,8 @@ var ts_down = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Taking down the tailscale service")
 
-		tsDownCmd := exec.Command("/bin/sh", "-c", "sudo tailscale down")
+		// tsDownCmd := exec.Command("/bin/sh", "-c", "sudo tailscale down")
+		tsDownCmd := exec.Command("sudo", "tailscale", "down")
 		utils.StartChildProcess(tsDownCmd)
 	},
 }
