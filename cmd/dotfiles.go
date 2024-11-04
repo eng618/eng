@@ -22,11 +22,8 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"os/exec"
-
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 )
 
@@ -68,8 +65,6 @@ var sync = &cobra.Command{
 		// TODO: pull latest changes `cfg pull --rebase --autostash`
 		// TODO: if possible... reset the shell, if not prompt message for user to restart shell.
 
-		syncLocal := exec.Command("echo", "hello world")
-
-		utils.StartChildProcess(syncLocal)
+		log.Info("this function is not yet complete, stay tuned for future updates")
 	},
 }

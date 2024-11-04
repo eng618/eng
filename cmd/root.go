@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -96,5 +97,8 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	} else {
+		log.Warn("failed to read config file")
+		cobra.CheckErr(err)
 	}
 }
