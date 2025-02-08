@@ -12,7 +12,9 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// Email checks the config file for an email, or prompts to create one.
+// Email checks for the user's email in the configuration and prompts the user to confirm it.
+// If the email is not found or the user does not confirm it, the function will call updateEmail() to update the email.
+// It logs the start and success of the email checking process and returns the confirmed email as a string.
 func Email() string {
 	log.Start("Checking for email")
 
@@ -40,8 +42,9 @@ func Email() string {
 	return email
 }
 
-// GetEmail simplified command to ensure there is an email listed in the config,
-// and update if not present.
+// GetEmail retrieves the user's email from the configuration.
+// If the email is not found in the configuration, it prompts the user to update it.
+// Logs the process of checking and finding the email.
 func GetEmail() {
 	log.Start("Checking for user email.")
 
@@ -55,7 +58,10 @@ func GetEmail() {
 	log.Success("Found user email to be: %s", email)
 }
 
-// updateEmail prompts user to input email, than updates the config file with value.
+// updateEmail prompts the user to input their email address, updates the
+// configuration with the provided email, and saves the updated configuration
+// back to the configuration file. If any error occurs during the process,
+// it is handled appropriately.
 func updateEmail() {
 	var e string
 	prompt := &survey.Input{

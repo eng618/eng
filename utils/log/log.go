@@ -1,16 +1,18 @@
 /*
-package log is a wrapper around colorizing the log output. It has functions
+Package log is a wrapper around colorizing the log output. It has functions
 that allow you to simply write output to the screen for various scenarios.
 
-- Successful ==> Green
+- Start     ==> Blue
 
-- Info       ==> Cyan
+- Success   ==> Green
 
-- Warn       ==> Yellow
+- Info      ==> Cyan
 
-- Error      ==> Red
+- Warn      ==> Yellow
 
-- Fatal      ==> Red
+- Error     ==> Red
+
+- Fatal     ==> Red (and exits the program)
 */
 package log
 
@@ -27,7 +29,7 @@ func Message(format string, a ...any) {
 	fmt.Println(s)
 }
 
-// Start prints a message to the terminal in the color green.
+// Start prints a message to the terminal in the color blue.
 func Start(format string, a ...any) {
 	color.Blue("==> "+format, a...)
 }
