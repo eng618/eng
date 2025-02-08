@@ -45,6 +45,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 
 	configCmd.AddCommand(email)
+	configCmd.AddCommand(dotfilesRepo)
 
 	// Here you will define your flags and configuration settings.
 
@@ -64,5 +65,15 @@ var email = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking for email in config file...")
 		config.Email()
+	},
+}
+
+var dotfilesRepo = &cobra.Command{
+	Use:   "dotfiles-repo",
+	Short: "Set dotfiles repo path",
+	Long:  `This command sets the path to the local dotfiles repository in the config file.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Start("Checking for dotfile repo path in config file...")
+		config.DotfilesRepo()
 	},
 }
