@@ -3,6 +3,29 @@
 ## [Unreleased]
 
 
+<a name="v0.14.3"></a>
+
+## [v0.14.3] - 2025-02-08
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Docs
+
+- enhance comments for SyncDirectory and copyFile functions to clarify parameters and return values
+- improve comments for StartChildProcess function to clarify behavior and parameters
+- enhance documentation for config and log packages
+
+### Feat
+
+- enhance dotfiles commands with verbose logging and error handling
+- add verbose flag for enhanced output control
+- add fetch and sync commands for managing dotfiles repository
+- set default workTree to HOME environment variable in dotfiles configuration
+- add command to set dotfiles repository path and implement related functionality
+
+
 <a name="v0.14.2"></a>
 
 ## [v0.14.2] - 2025-02-08
@@ -652,7 +675,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.14.2...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.14.3...HEAD
+[v0.14.3]: https://github.com/eng618/eng/compare/v0.14.2...v0.14.3
 [v0.14.2]: https://github.com/eng618/eng/compare/v0.14.1...v0.14.2
 [v0.14.1]: https://github.com/eng618/eng/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/eng618/eng/compare/v0.13.0...v0.14.0
