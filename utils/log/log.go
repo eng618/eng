@@ -63,6 +63,6 @@ func Fatal(format string, a ...any) {
 // Verbose is a log wrapper.
 func Verbose(v bool, format string, a ...any) {
 	if v {
-		Message(format, a...)
+		Message("--- "+format, a...)
 	}
 }

@@ -55,3 +55,12 @@ func StartChildProcess(c *exec.Cmd) {
 		os.Exit(0)
 	}
 }
+
+// IsVerbose checks if the verbose flag is set on the command.
+func IsVerbose(cmd *cobra.Command) bool {
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return false
+	}
+	return verbose
+}

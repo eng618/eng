@@ -7,7 +7,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
-	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 )
 
@@ -88,12 +87,13 @@ func EnsureOnMaster(repoPath string) error {
 // FetchBareRepo fetches updates for a bare Git repository.
 func FetchBareRepo(repoPath string, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
-	utils.StartChildProcess(cmd)
 
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Error("FetchBareRepo output: %s", string(out)) // Log the output
 		return err
 	}
+	log.Info("FetchBareRepo output: %s", string(out)) // Log the output
 
 	return nil
 }
@@ -101,12 +101,13 @@ func FetchBareRepo(repoPath string, workTree string) error {
 // PullRebaseBareRepo pulls changes with rebase for a bare Git repository.
 func PullRebaseBareRepo(repoPath string, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase")
-	utils.StartChildProcess(cmd)
 
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Error("PullRebaseBareRepo output: %s", string(out)) // Log the output
 		return err
 	}
+	log.Info("PullRebaseBareRepo output: %s", string(out)) // Log the output
 
 	return nil
 }

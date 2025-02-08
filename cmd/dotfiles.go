@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
 )
@@ -36,14 +37,24 @@ var dotfilesCmd = &cobra.Command{
 	Long:  `This command is used to facilitate the management of private hidden dot files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("dotfiles called")
+
+		isVerbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			log.Error("Failed to parse verbose flag: %s", err)
+			return
+		}
+
+		log.Verbose(isVerbose, "Configuration values:")
+		log.Verbose(isVerbose, "dotfiles.repoPath: %s", viper.GetString("dotfiles.repoPath"))
+		log.Verbose(isVerbose, "dotfiles.worktree: %s", viper.GetString("dotfiles.worktree"))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(dotfilesCmd)
 
-	dotfilesCmd.AddCommand(sync)
-	dotfilesCmd.AddCommand(fetch)
+	dotfilesCmd.AddCommand(syncCmd)
+	dotfilesCmd.AddCommand(fetchCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -56,26 +67,39 @@ func init() {
 	// dotfilesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-var sync = &cobra.Command{
+var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "sync your local bear repository",
 	Long:  `This command fetches and pulls in remote changes to the local bare dot repository.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Syncing dotfiles")
 
+		isVerbose := utils.IsVerbose(cmd)
+
 		repoPath := viper.GetString("dotfiles.repoPath")
 		if repoPath == "" {
-			log.Error("dotfiles.repoPath is not set in the configuration file")
+			log.Error("dotfiles.repopath is not set in the configuration file")
 			return
 		}
+		log.Verbose(isVerbose, "dotfiles.repoPath: %s", repoPath)
 
 		worktreePath := viper.GetString("dotfiles.worktree")
 		if worktreePath == "" {
 			log.Error("dotfiles.worktree is not set in the configuration file")
 			return
 		}
+		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
 
-		err := repo.PullRebaseBareRepo(repoPath, worktreePath)
+		log.Info("Fetching dotfiles")
+		err := repo.FetchBareRepo(repoPath, worktreePath)
+		if err != nil {
+			log.Error("Failed to fetch dotfiles: %s", err)
+			return
+		}
+
+		// Then pull with rebase
+		log.Info("Pulling dotfiles with rebase")
+		err = repo.PullRebaseBareRepo(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to pull and rebase dotfiles: %s", err)
 			return
@@ -85,7 +109,7 @@ var sync = &cobra.Command{
 	},
 }
 
-var fetch = &cobra.Command{
+var fetchCmd = &cobra.Command{
 	Use:   "fetch",
 	Short: "fetch your local bear repository",
 	Long:  `This command fetches remote changes to the local bare dot repository.`,

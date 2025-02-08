@@ -57,9 +57,7 @@ This is personal cli to facilitate my workflow. An maintain my development machi
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+	cobra.CheckErr(err)
 }
 
 func init() {
