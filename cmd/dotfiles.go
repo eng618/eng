@@ -23,8 +23,10 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/utils/repo"
 )
 
 // dotfilesCmd represents the dotfiles command
@@ -41,6 +43,7 @@ func init() {
 	rootCmd.AddCommand(dotfilesCmd)
 
 	dotfilesCmd.AddCommand(sync)
+	dotfilesCmd.AddCommand(fetch)
 
 	// Here you will define your flags and configuration settings.
 
@@ -58,13 +61,55 @@ var sync = &cobra.Command{
 	Short: "sync your local bear repository",
 	Long:  `This command fetches and pulls in remote changes to the local bare dot repository.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("sync called")
+		log.Start("Syncing dotfiles")
 
-		// TODO: Use configs to specify config value... in my case that is `cfg`
-		// TODO: fetch all changes `cfg fetch --all --prune --jobs=10`
-		// TODO: pull latest changes `cfg pull --rebase --autostash`
-		// TODO: if possible... reset the shell, if not prompt message for user to restart shell.
+		repoPath := viper.GetString("dotfiles.repoPath")
+		if repoPath == "" {
+			log.Error("dotfiles.repoPath is not set in the configuration file")
+			return
+		}
 
-		log.Info("this function is not yet complete, stay tuned for future updates")
+		worktreePath := viper.GetString("dotfiles.worktree")
+		if worktreePath == "" {
+			log.Error("dotfiles.worktree is not set in the configuration file")
+			return
+		}
+
+		err := repo.PullRebaseBareRepo(repoPath, worktreePath)
+		if err != nil {
+			log.Error("Failed to pull and rebase dotfiles: %s", err)
+			return
+		}
+
+		log.Success("Dotfiles synced successfully")
+	},
+}
+
+var fetch = &cobra.Command{
+	Use:   "fetch",
+	Short: "fetch your local bear repository",
+	Long:  `This command fetches remote changes to the local bare dot repository.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Start("Fetching dotfiles")
+
+		repoPath := viper.GetString("dotfiles.repoPath")
+		if repoPath == "" {
+			log.Error("dotfiles.repoPath is not set in the configuration file")
+			return
+		}
+
+		worktreePath := viper.GetString("dotfiles.worktree")
+		if worktreePath == "" {
+			log.Error("dotfiles.worktree is not set in the configuration file")
+			return
+		}
+
+		err := repo.FetchBareRepo(repoPath, worktreePath)
+		if err != nil {
+			log.Error("Failed to fetch dotfiles: %s", err)
+			return
+		}
+
+		log.Success("Dotfiles fetched successfully")
 	},
 }

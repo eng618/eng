@@ -2,10 +2,12 @@ package repo
 
 import (
 	"os"
+	"os/exec"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 )
 
@@ -79,6 +81,32 @@ func EnsureOnMaster(repoPath string) error {
 	}
 
 	log.Success("you are now on master")
+
+	return nil
+}
+
+// FetchBareRepo fetches updates for a bare Git repository.
+func FetchBareRepo(repoPath string, workTree string) error {
+	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
+	utils.StartChildProcess(cmd)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// PullRebaseBareRepo pulls changes with rebase for a bare Git repository.
+func PullRebaseBareRepo(repoPath string, workTree string) error {
+	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase")
+	utils.StartChildProcess(cmd)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
