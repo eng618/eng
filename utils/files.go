@@ -8,9 +8,16 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// SyncDirectory checks the source directory, and recursively syncs it's files to the destination directory.
-// It checks the file last modification time to verify if the file has been modified,
-// and copies the newer file from the source to the destination.
+// SyncDirectory synchronizes the contents of the source directory (srcDir) with the destination directory (destDir).
+// It copies files and recursively syncs subdirectories. If isVerbose is true, it logs the files being copied.
+//
+// Parameters:
+//   - srcDir: The source directory to sync from.
+//   - destDir: The destination directory to sync to.
+//   - isVerbose: A boolean flag to enable verbose logging.
+//
+// Returns:
+//   - error: An error if any occurs during the synchronization process., otherwise nil.
 func SyncDirectory(srcDir, destDir string, isVerbose bool) error {
 	srcFiles, err := os.ReadDir(srcDir)
 	if err != nil {
@@ -38,7 +45,17 @@ func SyncDirectory(srcDir, destDir string, isVerbose bool) error {
 	return nil
 }
 
-// copyFile copies the src file path to the destination file path.
+// copyFile copies a file from srcPath to destPath.
+// It opens the source file for reading and the destination file for writing.
+// If any error occurs during these operations or during the copy process,
+// it returns the error. Otherwise, it returns nil.
+//
+// Parameters:
+//   - srcPath: The path to the source file to be copied.
+//   - destPath: The path to the destination file where the content will be copied.
+//
+// Returns:
+//   - error: An error if any occurs during the file operations, otherwise nil.
 func copyFile(srcPath, destPath string) error {
 	src, err := os.Open(srcPath)
 	if err != nil {
