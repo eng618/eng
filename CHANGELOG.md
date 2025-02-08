@@ -3,6 +3,30 @@
 ## [Unreleased]
 
 
+<a name="v0.14.2"></a>
+
+## [v0.14.2] - 2025-02-08
+
+### Build
+
+- update all mods
+
+### Chore
+
+- update Go version to 1.23.6 and fix archive formats in goreleaser config
+- various improvements
+- **CHANGELOG:** update [skip-ci]
+
+### Docs
+
+- update README
+
+### Feat
+
+- **ts:** add new command for tailscale help
+- **ts:** add new command for tailscale help
+
+
 <a name="v0.14.1"></a>
 
 ## [v0.14.1] - 2024-10-31
@@ -628,7 +652,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.14.2...HEAD
+[v0.14.2]: https://github.com/eng618/eng/compare/v0.14.1...v0.14.2
 [v0.14.1]: https://github.com/eng618/eng/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/eng618/eng/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/eng618/eng/compare/v0.0.4...v0.13.0
