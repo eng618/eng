@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -71,6 +72,7 @@ func updateDotfilesRepo() {
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.repoPath", r)
+	viper.Set("dotfiles.workTree", os.Getenv("HOME"))
 
 	// Save the updated configuration back to the file
 	if err := viper.WriteConfig(); err != nil {
