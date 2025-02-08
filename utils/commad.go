@@ -11,8 +11,16 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// StartChildProcess starts a monitored child process.
-// It executes the given command, and sets up a channel to capture os signals to pass to the child process.
+// StartChildProcess starts a child process with the given exec.Cmd configuration.
+// It sets up the standard input, output, and error streams to be the same as the parent process.
+// Additionally, it captures interrupt signals (ctl + c) and forwards them to the child process.
+//
+// Parameters:
+//   - c: A pointer to an exec.Cmd struct representing the command to be executed.
+//
+// The function starts the command and waits for it to finish. If the command exits with an error,
+// it logs the error and exits gracefully. If the command completes successfully, it logs a success message
+// and exits with a status code of 0.
 func StartChildProcess(c *exec.Cmd) {
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
