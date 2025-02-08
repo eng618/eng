@@ -1,6 +1,6 @@
 module github.com/eng618/eng
 
-go 1.22.8
+go 1.23.6
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
