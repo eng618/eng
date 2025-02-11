@@ -1,0 +1,71 @@
+name: Publish to Homebrew
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16"
+
+      - name: Build
+        run: go build -o eng ./cmd
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./eng
+          asset_name: eng
+          asset_content_type: application/octet-stream
+
+      - name: Generate completion scripts
+        run: |
+          mkdir -p completions
+          ./eng completion bash > completions/eng.bash
+          ./eng completion zsh > completions/eng.zsh
+          ./eng completion fish > completions/eng.fish
+
+      - name: Publish to Homebrew
+        run: |
+          git clone https://github.com/eng618/homebrew-eng.git
+          cd homebrew-eng/Formula
+          echo "class Eng < Formula" > eng.rb
+          echo "  desc 'Eng description'" >> eng.rb
+          echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
+          echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.sha }}/eng'" >> eng.rb
+          echo "  sha256 '$(shasum -a 256 ../eng | awk '{ print $1 }')'" >> eng.rb
+          echo "  version '${{ github.sha }}'" >> eng.rb
+          echo "  def install" >> eng.rb
+          echo "    bin.install 'eng'" >> eng.rb
+          echo "    bash_completion.install 'completions/eng.bash'" >> eng.rb
+          echo "    zsh_completion.install 'completions/eng.zsh'" >> eng.rb
+          echo "    fish_completion.install 'completions/eng.fish'" >> eng.rb
+          echo "  end" >> eng.rb
+          echo "end" >> eng.rb
+          git add eng.rb
+          git commit -m 'Update eng to ${{ github.sha }}'
+          git push
