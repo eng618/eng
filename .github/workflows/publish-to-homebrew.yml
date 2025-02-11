@@ -24,6 +24,9 @@ jobs:
       - name: Set execute permissions
         run: chmod +x ./eng
 
+      - name: Verify binary
+        run: ./eng --version
+
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
