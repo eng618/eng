@@ -21,7 +21,9 @@ jobs:
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
 
       - name: Run GoReleaser
         env:
