@@ -18,42 +18,21 @@ jobs:
         with:
           go-version: "1.23"
 
-      - name: Build
-        run: go build -o eng ./cmd
+      - name: Install GoReleaser
+        run: |
+          curl -sL https://git.io/goreleaser | bash
 
-      - name: Set execute permissions
-        run: chmod +x ./eng
-
-      - name: Verify binary
-        run: ./eng --version
-
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Run GoReleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./eng
-          asset_name: eng
-          asset_content_type: application/octet-stream
+        run: goreleaser release --rm-dist
 
       - name: Generate completion scripts
         run: |
           mkdir -p completions
-          ./eng completion bash > completions/eng.bash
-          ./eng completion zsh > completions/eng.zsh
-          ./eng completion fish > completions/eng.fish
+          ./dist/eng_darwin_amd64/eng completion bash > completions/eng.bash
+          ./dist/eng_darwin_amd64/eng completion zsh > completions/eng.zsh
+          ./dist/eng_darwin_amd64/eng completion fish > completions/eng.fish
 
       - name: Publish to Homebrew
         run: |
@@ -62,8 +41,8 @@ jobs:
           echo "class Eng < Formula" > eng.rb
           echo "  desc 'Eng description'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
-          echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng'" >> eng.rb
-          echo "  sha256 '$(shasum -a 256 ../eng | awk '{ print $1 }')'" >> eng.rb
+          echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_darwin_amd64.tar.gz'" >> eng.rb
+          echo "  sha256 '$(shasum -a 256 ../dist/eng_darwin_amd64.tar.gz | awk '{ print $1 }')'" >> eng.rb
           echo "  version '${{ github.ref_name }}'" >> eng.rb
           echo "  def install" >> eng.rb
           echo "    bin.install 'eng'" >> eng.rb
