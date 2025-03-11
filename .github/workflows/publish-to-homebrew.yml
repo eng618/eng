@@ -61,4 +61,4 @@ jobs:
           git config user.name "Eric N. Garcia"
           git add eng.rb
           git commit -m 'Update eng to ${{ github.ref_name }}'
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/eng618/homebrew-eng.git
