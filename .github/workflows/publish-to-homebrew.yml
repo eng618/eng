@@ -12,11 +12,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: stable
 
       - name: Install & Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -34,8 +36,18 @@ jobs:
           echo "class Eng < Formula" > eng.rb
           echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
-          echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_darwin_amd64.tar.gz'" >> eng.rb
-          echo "  sha256 '$(shasum -a 256 ../../dist/eng_darwin_amd64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "  if OS.mac?" >> eng.rb
+          echo "    if Hardware::CPU.intel?" >> eng.rb
+          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
+          echo "      sha256 '$(shasum -a 256 ../dist/eng_Darwin_x86_64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "    elsif Hardware::CPU.arm?" >> eng.rb
+          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
+          echo "      sha256 '$(shasum -a 256 ../dist/eng_Darwin_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "    end" >> eng.rb
+          echo "  elsif OS.linux?" >> eng.rb
+          echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
+          echo "    sha256 '$(shasum -a 256 ../dist/eng_Linux_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
           echo "  depends_on 'go' => :build" >> eng.rb
