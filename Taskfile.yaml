@@ -1,9 +1,9 @@
-version: "3"
+version: '3'
 
 env:
   ENV: testing
 
-dotenv: [".env", "{{.ENV}}/.env.", "{{.HOME}}/.env"]
+dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 
 tasks:
   # -----------------------------------------------------------------------------
@@ -14,7 +14,7 @@ tasks:
       - go install
       - task: completion
     aliases:
-      - "i"
+      - 'i'
 
   completion:
     cmds:
@@ -46,6 +46,11 @@ tasks:
   lint-fix: golangci-lint run --fix
 
   test: go test ./...
+
+  validate:
+    cmds:
+      - task: lint
+      - task: test
 
   # -----------------------------------------------------------------------------
   # Module Support

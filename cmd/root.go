@@ -71,7 +71,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 
 	// Bind the verbose flag to viper config
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	err := viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	cobra.CheckErr(err)
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
