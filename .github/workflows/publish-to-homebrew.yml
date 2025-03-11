@@ -27,28 +27,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate completion scripts
-        run: |
-          mkdir -p completions
-          ./dist/eng_darwin_amd64/eng completion bash > completions/eng.bash
-          ./dist/eng_darwin_amd64/eng completion zsh > completions/eng.zsh
-          ./dist/eng_darwin_amd64/eng completion fish > completions/eng.fish
-
       - name: Publish to Homebrew
         run: |
           git clone https://github.com/eng618/homebrew-eng.git
           cd homebrew-eng/Formula
           echo "class Eng < Formula" > eng.rb
-          echo "  desc 'Eng description'" >> eng.rb
+          echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
           echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_darwin_amd64.tar.gz'" >> eng.rb
           echo "  sha256 '$(shasum -a 256 ../dist/eng_darwin_amd64.tar.gz | awk '{ print $1 }')'" >> eng.rb
-          echo "  version '${{ github.ref_name }}'" >> eng.rb
+          echo "  license 'MIT'" >> eng.rb
+          echo "" >> eng.rb
+          echo "  depends_on 'go' => :build" >> eng.rb
+          echo "" >> eng.rb
           echo "  def install" >> eng.rb
-          echo "    bin.install 'eng'" >> eng.rb
-          echo "    bash_completion.install 'completions/eng.bash'" >> eng.rb
-          echo "    zsh_completion.install 'completions/eng.zsh'" >> eng.rb
-          echo "    fish_completion.install 'completions/eng.fish'" >> eng.rb
+          echo "    system 'go', 'build',  '-o', bin/'eng'" >> eng.rb
+          echo "" >> eng.rb
+          echo "    # Install shell completions" >> eng.rb
+          echo "    generate_completions" >> eng.rb
+          echo "  end" >> eng.rb
+          echo "" >> eng.rb
+          echo "  def generate_completions" >> eng.rb
+          echo "    (bash_completion/'eng').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'bash')" >> eng.rb
+          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'zsh')" >> eng.rb
+          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'fish')" >> eng.rb
+          echo "  end" >> eng.rb
+          echo "" >> eng.rb
+          echo "  test do" >> eng.rb
+          echo "    system '#{bin}/eng', '--help'" >> eng.rb
           echo "  end" >> eng.rb
           echo "end" >> eng.rb
           git add eng.rb

@@ -24,8 +24,17 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Build
-        run: go build -v ./...
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint
+        run: task lint
 
       - name: Test
-        run: go test -v ./...
+        run: task test
+
+      - name: Build
+        run: go build -v ./...

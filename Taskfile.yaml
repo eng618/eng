@@ -10,7 +10,7 @@ tasks:
   # Usage
   install:
     cmds:
-      - go build
+      - task: build
       - go install
       - task: completion
     aliases:
@@ -40,6 +40,8 @@ tasks:
 
   # -----------------------------------------------------------------------------
   # development
+
+  build: go build -v ./...
 
   lint: golangci-lint run
 
