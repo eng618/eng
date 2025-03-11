@@ -35,7 +35,7 @@ jobs:
           echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
           echo "  url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_darwin_amd64.tar.gz'" >> eng.rb
-          echo "  sha256 '$(shasum -a 256 ../dist/eng_darwin_amd64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "  sha256 '$(shasum -a 256 ../../dist/eng_darwin_amd64.tar.gz | awk '{ print $1 }')'" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
           echo "  depends_on 'go' => :build" >> eng.rb
@@ -57,6 +57,8 @@ jobs:
           echo "    system '#{bin}/eng', '--help'" >> eng.rb
           echo "  end" >> eng.rb
           echo "end" >> eng.rb
+          git config user.email "eng618@garciaericn.com"
+          git config user.name "Eric N. Garcia"
           git add eng.rb
           git commit -m 'Update eng to ${{ github.ref_name }}'
           git push
