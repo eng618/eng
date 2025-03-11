@@ -29,6 +29,8 @@ A personal cli to help facilitate my normal workflow. This is based on the cobra
 brew tap eng618/eng && brew install eng
 ```
 
+Source code for the homebrew formula can be found [here](https://github.com/eng618/homebrew-eng)
+
 ### From source code
 
 After cloning this repo, and running `go mod download`

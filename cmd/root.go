@@ -100,7 +100,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	} else {
-		log.Warn("failed to read config file")
-		cobra.CheckErr(err)
+		log.Warn("failed to read config file, using defaults")
+		// NOTE: Don't error out, as this fils when trying to install completions via brew install.
+		// cobra.CheckErr(err)
 	}
 }
