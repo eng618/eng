@@ -29,6 +29,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: "Debug: List contents of dist directories"
+        run: |
+          echo "Contents of ../dist:"
+          ls -la ../dist
+          echo "Contents of ../../dist:"
+          ls -la ../../dist
+
       - name: Publish to Homebrew
         run: |
           git clone https://github.com/eng618/homebrew-eng.git
@@ -39,14 +46,14 @@ jobs:
           echo "  if OS.mac?" >> eng.rb
           echo "    if Hardware::CPU.intel?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
-          echo "      sha256 '$(shasum -a 256 ../dist/eng_darwin_x86_64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "      sha256 '$(shasum -a 256 ../../dist/eng_darwin_x86_64.tar.gz | awk '{ print $1 }')'" >> eng.rb
           echo "    elsif Hardware::CPU.arm?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
-          echo "      sha256 '$(shasum -a 256 ../dist/eng_darwin_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "      sha256 '$(shasum -a 256 ../../dist/eng_darwin_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
           echo "    end" >> eng.rb
           echo "  elsif OS.linux?" >> eng.rb
           echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
-          echo "    sha256 '$(shasum -a 256 ../dist/eng_linux_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
+          echo "    sha256 '$(shasum -a 256 ../../dist/eng_linux_arm64.tar.gz | awk '{ print $1 }')'" >> eng.rb
           echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
