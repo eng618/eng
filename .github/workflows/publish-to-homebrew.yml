@@ -32,9 +32,9 @@ jobs:
       - name: "Debug: List contents of dist directories"
         run: |
           echo "Contents of ../dist:"
-          ls -la ../dist
+          if [ -d "../dist" ]; then ls -la ../dist; else echo "Directory ../dist does not exist."; fi
           echo "Contents of ../../dist:"
-          ls -la ../../dist
+          if [ -d "../../dist" ]; then ls -la ../../dist; else echo "Directory ../../dist does not exist."; fi
 
       - name: Publish to Homebrew
         run: |
