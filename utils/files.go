@@ -34,7 +34,7 @@ func SyncDirectory(srcDir, destDir string, isVerbose bool) error {
 				return err
 			}
 		} else {
-			if err := copyFile(srcPath, destPath); err != nil {
+			if err := copyFile(srcPath, destPath, isVerbose); err != nil {
 				return err
 			}
 
@@ -56,18 +56,28 @@ func SyncDirectory(srcDir, destDir string, isVerbose bool) error {
 //
 // Returns:
 //   - error: An error if any occurs during the file operations, otherwise nil.
-func copyFile(srcPath, destPath string) error {
+func copyFile(srcPath, destPath string, isVerbose bool) error {
 	src, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() {
+		if err := src.Close(); err != nil {
+			log.Error("Error closing source file: %v", err)
+		}
+		log.Verbose(isVerbose, "Closed source file: %s\n", srcPath)
+	}()
 
 	dest, err := os.Create(destPath)
 	if err != nil {
 		return err
 	}
-	defer dest.Close()
+	defer func() {
+		if err := dest.Close(); err != nil {
+			log.Error("Error closing destination file: %v", err)
+		}
+		log.Verbose(isVerbose, "Closed destination file: %s\n", destPath)
+	}()
 
 	_, err = io.Copy(dest, src)
 	if err != nil {
