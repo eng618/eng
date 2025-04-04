@@ -56,7 +56,16 @@ func StartChildProcess(c *exec.Cmd) {
 	}
 }
 
-// IsVerbose checks if the verbose flag is set on the command.
+// IsVerbose checks if the "verbose" flag is set for the given Cobra command.
+// It retrieves the value of the "verbose" flag from the command's flags and
+// returns true if the flag is set to true. If an error occurs while retrieving
+// the flag, it returns false.
+//
+// Parameters:
+//   - cmd: A pointer to a Cobra command from which the "verbose" flag is retrieved.
+//
+// Returns:
+//   - bool: True if the "verbose" flag is set to true, otherwise false.
 func IsVerbose(cmd *cobra.Command) bool {
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
