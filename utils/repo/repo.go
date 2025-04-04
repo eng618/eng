@@ -10,7 +10,9 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// IsDirty verifies the supplied repository path is in a clean state.
+// IsDirty checks if the repository at the given path has uncommitted changes.
+// It takes the repository path `repoPath` as input and returns a boolean indicating
+// whether the repository is dirty and an error if any occurs.
 func IsDirty(repoPath string) (bool, error) {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -30,7 +32,9 @@ func IsDirty(repoPath string) (bool, error) {
 	return !status.IsClean(), nil
 }
 
-// PullLatestCode pulls the latest code for the supplied repository.
+// PullLatestCode pulls the latest changes from the specified branch of the repository.
+// It takes the repository path `repoPath` and branch name `branchName` as inputs and
+// returns an error if the operation fails.
 func PullLatestCode(repoPath string, branchName string) error {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -52,7 +56,9 @@ func PullLatestCode(repoPath string, branchName string) error {
 	return err
 }
 
-// EnsureOnMaster verifies repo is on the master branch, and checks it out if it is not.
+// EnsureOnMaster ensures that the repository is on the master branch.
+// It takes the repository path `repoPath` as input and returns an error if the
+// repository is not on the master branch or if the operation fails.
 func EnsureOnMaster(repoPath string) error {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -84,7 +90,9 @@ func EnsureOnMaster(repoPath string) error {
 	return nil
 }
 
-// FetchBareRepo fetches updates for a bare Git repository.
+// FetchBareRepo fetches updates for a bare repository.
+// It takes the repository path `repoPath` and work tree `workTree` as inputs and
+// returns an error if the operation fails.
 func FetchBareRepo(repoPath string, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
 
@@ -98,7 +106,9 @@ func FetchBareRepo(repoPath string, workTree string) error {
 	return nil
 }
 
-// PullRebaseBareRepo pulls changes with rebase for a bare Git repository.
+// PullRebaseBareRepo performs a pull with rebase operation for a bare repository.
+// It takes the repository path `repoPath` and work tree `workTree` as inputs and
+// returns an error if the operation fails.
 func PullRebaseBareRepo(repoPath string, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase")
 
