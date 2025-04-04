@@ -35,6 +35,10 @@ jobs:
           name: dist
           path: dist
 
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Download dist directory
         uses: actions/download-artifact@v4
         with:
