@@ -29,6 +29,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Persist dist directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - name: Download dist directory
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+
       - name: Publish to Homebrew
         run: |
           git clone https://github.com/eng618/homebrew-eng.git
