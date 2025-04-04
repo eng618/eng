@@ -62,41 +62,52 @@ jobs:
 
           git clone https://github.com/eng618/homebrew-eng.git
           cd homebrew-eng/Formula
+
           echo "class Eng < Formula" > eng.rb
           echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
-          echo "  if OS.mac?" >> eng.rb
+          echo "  case" >> eng.rb
+          echo "  when OS.mac? && Hardware::CPU.intel?" >> eng.rb
+          echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
+          echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_x86_64.tar.gz'] }}'" >> eng.rb
+          echo "  when OS.mac? && Hardware::CPU.arm?" >> eng.rb
+          echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
+          echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_arm64.tar.gz'] }}'" >> eng.rb
+          echo "  when OS.linux?" >> eng.rb
           echo "    if Hardware::CPU.intel?" >> eng.rb
-          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_x86_64.tar.gz'] }}'" >> eng.rb
+          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_x86_64.tar.gz'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Linux_x86_64.tar.gz'] }}'" >> eng.rb
           echo "    elsif Hardware::CPU.arm?" >> eng.rb
-          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_arm64.tar.gz'] }}'" >> eng.rb
-          echo "    end" >> eng.rb
-          echo "  elsif OS.linux?" >> eng.rb
-          echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
+          echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
           echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Linux_arm64.tar.gz'] }}'" >> eng.rb
+          echo "    end" >> eng.rb
           echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
-          echo "" >> eng.rb
           echo "  def install" >> eng.rb
+          echo "    puts \"bin: \#{bin}\"" >> eng.rb
+          echo "    puts \"Installing eng to: \#{bin}\"" >> eng.rb
           echo "    bin.install 'eng'" >> eng.rb
-          echo "" >> eng.rb
-          echo "    # Install shell completions" >> eng.rb
+          echo "    puts \"eng installed successfully\"" >> eng.rb
+          echo "    puts \"Permissions of eng: \#{File.stat(\"\#{bin}/eng\").mode.to_s(8)}\"" >> eng.rb
+          echo "    # Verify the binary is functional before generating completions" >> eng.rb
+          echo "    system \"\#{bin}/eng\", '--version'" >> eng.rb
           echo "    generate_completions" >> eng.rb
           echo "  end" >> eng.rb
           echo "" >> eng.rb
           echo "  def generate_completions" >> eng.rb
-          echo "    (bash_completion/'eng').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'bash')" >> eng.rb
-          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'zsh')" >> eng.rb
-          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read('#{bin}/eng', 'completion', 'fish')" >> eng.rb
+          echo "    puts \"PATH: \#{ENV['PATH']}\"" >> eng.rb
+          echo "    puts \"Running: \#{bin}/eng completion bash\"" >> eng.rb
+          echo "    (bash_completion/'eng').write Utils.safe_popen_read(\"\#{bin}/eng\", 'completion', 'bash')" >> eng.rb
+          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read(\"\#{bin}/eng\", 'completion', 'zsh')" >> eng.rb
+          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read(\"\#{bin}/eng\", 'completion', 'fish')" >> eng.rb
           echo "  end" >> eng.rb
           echo "" >> eng.rb
           echo "  test do" >> eng.rb
-          echo "    system '#{bin}/eng', '--help'" >> eng.rb
+          echo "    system \"\#{bin}/eng\", '--help'" >> eng.rb
           echo "  end" >> eng.rb
           echo "end" >> eng.rb
+
           git config user.email "eng618@garciaericn.com"
           git config user.name "Eric N. Garcia"
           git add eng.rb
