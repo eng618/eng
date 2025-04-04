@@ -50,7 +50,6 @@ jobs:
           echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
-          echo "  depends_on 'go' => :build" >> eng.rb
           echo "" >> eng.rb
           echo "  def install" >> eng.rb
           echo "    bin.install 'eng'" >> eng.rb
