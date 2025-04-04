@@ -47,18 +47,12 @@ func init() {
 
 	systemCmd.AddCommand(killPort)
 	systemCmd.AddCommand(findNonMovieFolders)
+	systemCmd.AddCommand(updateSystem)
 
-	// TODO: Ubuntu update command
 
-	// Here you will define your flags and configuration settings.
+	// --------------------------------------------------------------------------
+	// flags
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// systemCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// systemCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	findNonMovieFolders.Flags().Bool("dry-run", false, "Only print the directories that do not contain movie files")
 }
 
@@ -165,6 +159,49 @@ var findNonMovieFolders = &cobra.Command{
 					}
 				}
 			}
+		}
+	},
+}
+
+// updateSystem is a Cobra command that updates the system.
+// 
+// Usage:
+//   updateSystem
+//
+// Description:
+//   This command checks the system type and performs a system update if the
+//   system is identified as Ubuntu. For unsupported systems, it logs a message
+//   indicating that updates are not supported.
+//
+// Behavior:
+//   - Executes the "uname -a" command to determine the system type.
+//   - If the system is identified as Ubuntu, it runs "sudo apt update && sudo apt upgrade -y"
+//     to update the system packages.
+//   - Logs an error message if there is an issue determining the system type or performing the update.
+//   - Logs a success message upon completing the update for Ubuntu systems.
+//   - Logs a message for unsupported systems.
+var updateSystem = &cobra.Command{
+	Use:   "updateSystem",
+	Short: "Update the system",
+	Long:  `This command updates the system. It supports Ubuntu systems and logs a message for unsupported systems.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkCmd := exec.Command("uname", "-a")
+		output, err := checkCmd.Output()
+		if err != nil {
+			log.Error("Error checking system type: %s", err)
+			return
+		}
+
+		if strings.Contains(strings.ToLower(string(output)), "ubuntu") {
+			log.Message("Running system update for Ubuntu...")
+			updateCmd := exec.Command("sudo", "apt", "update", "&&", "sudo", "apt", "upgrade", "-y")
+			if err := updateCmd.Run(); err != nil {
+				log.Error("Error updating system: %s", err)
+			} else {
+				log.Message("System updated successfully.")
+			}
+		} else {
+			log.Message("This system is not yet supported for updates.")
 		}
 	},
 }
