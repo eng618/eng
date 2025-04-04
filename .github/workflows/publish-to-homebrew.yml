@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      checksums: ${{ steps.goreleaser.outputs.artifacts }}
 
     steps:
       - name: Checkout repository
@@ -21,11 +23,12 @@ jobs:
           go-version: stable
 
       - name: Install & Run GoReleaser
+        id: goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean
+          args: release --clean --output-json=artifacts.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,6 +47,13 @@ jobs:
         with:
           name: dist
 
+      - name: Get Checksums
+        id: get_checksums
+        run: |
+          echo "checksums<<EOF" >> $GITHUB_OUTPUT
+          jq -r '.[] | select(.type == "Archive") | select(.name | contains("Darwin") or contains("Linux")) | "\(.name)=\(.extra.Checksum | split(":")[1])"' $GITHUB_WORKSPACE/artifacts.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Publish to Homebrew
         run: |
           # Change directory into the downloaded dist directory
@@ -57,14 +67,14 @@ jobs:
           echo "  if OS.mac?" >> eng.rb
           echo "    if Hardware::CPU.intel?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
-          echo "      sha256 '$(shasum -a 256 eng_Darwin_x86_64.tar.gz | awk '{print $1}')'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums).eng_Darwin_x86_64.tar.gz }}'" >> eng.rb
           echo "    elsif Hardware::CPU.arm?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
-          echo "      sha256 '$(shasum -a 256 eng_Darwin_arm64.tar.gz | awk '{print $1}')'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums).eng_Darwin_arm64.tar.gz }}'" >> eng.rb
           echo "    end" >> eng.rb
           echo "  elsif OS.linux?" >> eng.rb
           echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
-          echo "    sha256 '$(shasum -a 256 eng_Linux_arm64.tar.gz | awk '{print $1}')'" >> eng.rb
+          echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums).eng_Linux_arm64.tar.gz }}'" >> eng.rb
           echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
