@@ -85,26 +85,26 @@ jobs:
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
           echo "  def install" >> eng.rb
-          echo "    puts \"bin: \\#{bin}\"" >> eng.rb
-          echo "    puts \"Installing eng to: \\#{bin}\"" >> eng.rb
+          echo "    puts \"bin: #{bin}\"" >> eng.rb
+          echo "    puts \"Installing eng to: #{bin}\"" >> eng.rb
           echo "    bin.install 'eng'" >> eng.rb
           echo "    puts \"eng installed successfully\"" >> eng.rb
-          echo "    puts \"Permissions of eng: \\#{File.stat(\"\\#{bin}/eng\").mode.to_s(8)}\"" >> eng.rb
+          echo "    puts \"Permissions of eng: #{File.stat(\"#{bin}/eng\").mode.to_s(8)}\"" >> eng.rb
           echo "    # Verify the binary is functional before generating completions" >> eng.rb
-          echo "    system \"\\#{bin}/eng\", '--version'" >> eng.rb
+          echo "    system \"#{bin}/eng\", '--version'" >> eng.rb
           echo "    generate_completions" >> eng.rb
           echo "  end" >> eng.rb
           echo "" >> eng.rb
           echo "  def generate_completions" >> eng.rb
-          echo "    puts \"PATH: \\#{ENV['PATH']}\"" >> eng.rb
-          echo "    puts \"Running: \\#{bin}/eng completion bash\"" >> eng.rb
-          echo "    (bash_completion/'eng').write Utils.safe_popen_read(\"\\#{bin}/eng\", 'completion', 'bash')" >> eng.rb
-          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read(\"\\#{bin}/eng\", 'completion', 'zsh')" >> eng.rb
-          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read(\"\\#{bin}/eng\", 'completion', 'fish')" >> eng.rb
+          echo "    puts \"PATH: #{ENV['PATH']}\"" >> eng.rb
+          echo "    puts \"Running: #{bin}/eng completion bash\"" >> eng.rb
+          echo "    (bash_completion/'eng').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'bash')" >> eng.rb
+          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'zsh')" >> eng.rb
+          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'fish')" >> eng.rb
           echo "  end" >> eng.rb
           echo "" >> eng.rb
           echo "  test do" >> eng.rb
-          echo "    system \"\\#{bin}/eng\", '--help'" >> eng.rb
+          echo "    system \"#{bin}/eng\", '--help'" >> eng.rb
           echo "  end" >> eng.rb
           echo "end" >> eng.rb
 
