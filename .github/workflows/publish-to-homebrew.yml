@@ -68,14 +68,14 @@ jobs:
           echo "  if OS.mac?" >> eng.rb
           echo "    if Hardware::CPU.intel?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_x86_64.tar.gz'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)["eng_Darwin_x86_64.tar.gz"] }}'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_x86_64.tar.gz'] }}'" >> eng.rb
           echo "    elsif Hardware::CPU.arm?" >> eng.rb
           echo "      url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Darwin_arm64.tar.gz'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)["eng_Darwin_arm64.tar.gz"] }}'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Darwin_arm64.tar.gz'] }}'" >> eng.rb
           echo "    end" >> eng.rb
           echo "  elsif OS.linux?" >> eng.rb
           echo "    url 'https://github.com/eng618/eng/releases/download/${{ github.ref_name }}/eng_Linux_arm64.tar.gz'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)["eng_Linux_arm64.tar.gz"] }}'" >> eng.rb
+          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)['eng_Linux_arm64.tar.gz'] }}'" >> eng.rb
           echo "  end" >> eng.rb
           echo "  license 'MIT'" >> eng.rb
           echo "" >> eng.rb
