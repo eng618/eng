@@ -91,7 +91,7 @@ jobs:
           echo "    puts \"eng installed successfully\"" >> eng.rb
           echo "    puts \"Permissions of eng: #{File.stat(\"#{bin}/eng\").mode.to_s(8)}\"" >> eng.rb
           echo "    # Verify the binary is functional before generating completions" >> eng.rb
-          echo "    system \"#{bin}/eng\", '--version'" >> eng.rb
+          echo "    system \"#{bin}/eng\", '--help'" >> eng.rb
           echo "    generate_completions" >> eng.rb
           echo "  end" >> eng.rb
           echo "" >> eng.rb
