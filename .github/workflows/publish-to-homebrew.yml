@@ -44,13 +44,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
 
       - name: Get Checksums
         id: get_checksums
         run: |
           cd dist
           echo "checksums<<EOF" >> $GITHUB_OUTPUT
-          grep -E 'eng_(Darwin_(x86_64|arm64)|Linux_arm64).tar.gz' checksums.txt | awk '{print $2 "=" $1}' >> $GITHUB_OUTPUT
+          jq -r '.[] | select(.type == "Archive") | select(.name | contains("Darwin") or contains("Linux")) | "\(.name)=\(.extra.Checksum | split(":")[1])"' artifacts.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           cd ..
 
