@@ -4,8 +4,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/eng618/eng/utils/log"
+	"github.com/spf13/cobra"
 )
 
 var UpdateSystemCmd = &cobra.Command{

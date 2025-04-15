@@ -1,11 +1,11 @@
 package dotfiles
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var SyncCmd = &cobra.Command{

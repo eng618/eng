@@ -3,9 +3,9 @@ package system
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
+	"github.com/spf13/cobra"
 )
 
 var ProxyCmd = &cobra.Command{
@@ -28,7 +28,8 @@ func init() {
 		set, _ := cmd.Flags().GetBool("set")
 		if enable && disable {
 			log.Error("Cannot enable and disable proxy at the same time.")
-			cmd.Help()
+			err := cmd.Help()
+			cobra.CheckErr(err)
 			cmd.SilenceUsage = true
 			return
 		}

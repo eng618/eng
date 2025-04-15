@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
-	"github.com/eng618/eng/utils/log"
 )
 
 var ConfigCmd = &cobra.Command{
