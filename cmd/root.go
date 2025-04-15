@@ -28,6 +28,11 @@ import (
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/cmd/system"
+	"github.com/eng618/eng/cmd/dotfiles"
+	"github.com/eng618/eng/cmd/config"
+	"github.com/eng618/eng/cmd/ts"
 )
 
 var cfgFile string
@@ -77,6 +82,11 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rootCmd.AddCommand(system.SystemCmd)
+	rootCmd.AddCommand(dotfiles.DotfilesCmd)
+	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(ts.TSCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
