@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/utils/log"
 )
@@ -57,9 +58,8 @@ func StartChildProcess(c *exec.Cmd) {
 }
 
 // IsVerbose checks if the "verbose" flag is set for the given Cobra command.
-// It retrieves the value of the "verbose" flag from the command's flags and
-// returns true if the flag is set to true. If an error occurs while retrieving
-// the flag, it returns false.
+// It first checks if the verbose flag is explicitly set on the command.
+// If not, it falls back to the config value using viper.
 //
 // Parameters:
 //   - cmd: A pointer to a Cobra command from which the "verbose" flag is retrieved.
@@ -67,9 +67,15 @@ func StartChildProcess(c *exec.Cmd) {
 // Returns:
 //   - bool: True if the "verbose" flag is set to true, otherwise false.
 func IsVerbose(cmd *cobra.Command) bool {
-	verbose, err := cmd.Flags().GetBool("verbose")
-	if err != nil {
-		return false
+	// Check if the verbose flag is explicitly set on the command
+	if cmd.Flags().Changed("verbose") {
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			return false
+		}
+		return verbose
 	}
-	return verbose
+	// Fallback to config value if flag is not set
+	// Use viper to get the config value
+	return viper.GetBool("verbose")
 }
