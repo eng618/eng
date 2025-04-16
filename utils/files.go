@@ -29,6 +29,10 @@ func SyncDirectory(srcDir, destDir string, isVerbose bool) error {
 		destPath := filepath.Join(destDir, de.Name())
 
 		if de.IsDir() {
+			// Ensure destination subdirectory exists
+			if err := os.MkdirAll(destPath, 0o755); err != nil {
+				return err
+			}
 			// Recursively sync subdirectories
 			if err := SyncDirectory(srcPath, destPath, isVerbose); err != nil {
 				return err
