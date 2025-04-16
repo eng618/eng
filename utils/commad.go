@@ -24,8 +24,8 @@ import (
 // and exits with a status code of 0.
 func StartChildProcess(c *exec.Cmd) {
 	c.Stdin = os.Stdin
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = log.Writer()
+	c.Stderr = log.ErrorWriter()
 
 	// Set up a signal channel to capture ctl + c, so that we can pass it to the child command.
 	sigCh := make(chan os.Signal, 1)

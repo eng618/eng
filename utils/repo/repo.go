@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"os"
 	"os/exec"
 
 	"github.com/go-git/go-git/v5"
@@ -50,7 +49,7 @@ func PullLatestCode(repoPath string, branchName string) error {
 	err = w.Pull(&git.PullOptions{
 		RemoteName:    "origin",
 		ReferenceName: refName,
-		Progress:      os.Stdout,
+		Progress:      log.Writer(),
 	})
 
 	return err
