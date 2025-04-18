@@ -51,11 +51,22 @@ jobs:
         run: |
           cd dist
           echo "checksums<<EOF" >> $GITHUB_OUTPUT
+          # Extract checksums using the actual filenames from artifacts.json
           jq -r 'reduce ( .[] | select(.type == "Archive") | select(.name | test("Darwin|Linux")) | {(.name): (.extra.Checksum | split(":")[1])} ) as $item ({}; . + $item)' artifacts.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           cd ..
 
       - name: Publish to Homebrew
+        # Define filenames as step environment variables
+        # These are evaluated *before* the run script starts
+        env:
+          PROJECT_NAME: "eng"
+          TAG_NAME: ${{ github.ref_name }} # e.g., v0.1.0
+          # Construct filenames using GitHub Actions context directly
+          DARWIN_AMD64_FILE: eng_${{ github.ref_name }}_Darwin_x86_64.tar.gz
+          DARWIN_ARM64_FILE: eng_${{ github.ref_name }}_Darwin_arm64.tar.gz
+          LINUX_AMD64_FILE: eng_${{ github.ref_name }}_Linux_x86_64.tar.gz
+          LINUX_ARM64_FILE: eng_${{ github.ref_name }}_Linux_arm64.tar.gz
         run: |
           # Change directory into the downloaded dist directory
           cd dist
@@ -63,22 +74,16 @@ jobs:
           git clone https://github.com/eng618/homebrew-eng.git
           cd homebrew-eng/Formula
 
-          # Define variables for cleaner formula generation
-          PROJECT_NAME="eng"
-          TAG_NAME="${{ github.ref_name }}" # e.g., v0.1.0
-
-          # Construct filenames based on goreleaser template
-          DARWIN_AMD64_FILE="${PROJECT_NAME}_${TAG_NAME}_Darwin_x86_64.tar.gz"
-          DARWIN_ARM64_FILE="${PROJECT_NAME}_${TAG_NAME}_Darwin_arm64.tar.gz"
-          LINUX_AMD64_FILE="${PROJECT_NAME}_${TAG_NAME}_Linux_x86_64.tar.gz"
-          LINUX_ARM64_FILE="${PROJECT_NAME}_${TAG_NAME}_Linux_arm64.tar.gz"
 
           echo "class Eng < Formula" > eng.rb
           echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
+          echo "  # URLs now include the version in the filename" >> eng.rb
           echo "  case" >> eng.rb
           echo "  when OS.mac? && Hardware::CPU.intel?" >> eng.rb
+          # Use shell expansion for URL string construction
           echo "    url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${DARWIN_AMD64_FILE}'" >> eng.rb
+          # Use step env context for checksum lookup expression
           echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)[env.DARWIN_AMD64_FILE] }}'" >> eng.rb
           echo "  when OS.mac? && Hardware::CPU.arm?" >> eng.rb
           echo "    url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${DARWIN_ARM64_FILE}'" >> eng.rb
@@ -121,5 +126,6 @@ jobs:
           git config user.email "eng618@garciaericn.com"
           git config user.name "Eric N. Garcia"
           git add eng.rb
+          # Use shell expansion for commit message
           git commit -m "Update eng to ${TAG_NAME}"
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/eng618/homebrew-eng.git
