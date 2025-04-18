@@ -49,7 +49,7 @@ archives:
     # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats: zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:
