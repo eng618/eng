@@ -29,6 +29,7 @@ import (
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -110,7 +111,7 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	} else {
-		log.Warn("failed to read config file, using defaults")
+		log.Verbose(utils.IsVerbose(rootCmd), "failed to read config file, using defaults")
 		// NOTE: Don't error out, as this fils when trying to install completions via brew install.
 		// cobra.CheckErr(err)
 	}
