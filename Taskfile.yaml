@@ -5,35 +5,81 @@ env:
 
 dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 
+vars:
+  # --- Versioning ---
+  # The Go import path for the package where version variables are defined
+  PACKAGE_PATH: github.com/eng618/eng/cmd
+  # Get the latest git tag, or commit hash if no tags
+  VERSION:
+    sh: git describe --tags --always --dirty --abbrev=0
+  # Get the short commit hash
+  COMMIT:
+    sh: git rev-parse --short HEAD
+  # Get the build date in ISO 8601 format
+  DATE:
+    sh: date -u +'%Y-%m-%dT%H:%M:%SZ'
+  # Construct the ldflags string
+  LDFLAGS_STRING: '-X "{{.PACKAGE_PATH}}.version={{.VERSION}}" -X "{{.PACKAGE_PATH}}.commit={{.COMMIT}}" -X "{{.PACKAGE_PATH}}.date={{.DATE}}"'
+  # Add ldflags to Go build/install commands
+  GO_BUILD_FLAGS: '-ldflags="{{.LDFLAGS_STRING}}"'
+  # Output binary name
+  BINARY_NAME: eng
+
 tasks:
   # -----------------------------------------------------------------------------
   # Usage
   install:
+    desc: Build the binary and install it to $GOPATH/bin
     cmds:
-      - task: build
-      - go install
+      - echo "Installing {{.PACKAGE_PATH}} version {{.VERSION}}..."
+      # Use GO_BUILD_FLAGS for install
+      - go install {{.GO_BUILD_FLAGS}} .
       - task: completion
     aliases:
       - 'i'
+    deps: # Ensure build runs first if needed, though go install builds anyway
+      - build
 
   completion:
+    desc: Generate Zsh completion script
     cmds:
-      - eng completion zsh >~/.local/share/zsh-completions/_eng
+      - echo "Generating Zsh completion..."
+      # Run the locally built binary
+      - ./{{.BINARY_NAME}} completion zsh > ~/.local/share/zsh-completions/_eng
+    # Make sure build runs before completion generation
+    deps:
+      - build
+    # Prevent re-running build if install already ran it
+    # status:
+    #   - test -f ./{{.BINARY_NAME}}
 
   # -----------------------------------------------------------------------------
   # Release helpers
 
   changelog:
+    desc: Generate changelog and commit
     cmds:
+      - echo "Generating changelog..."
       - git-chglog -o CHANGELOG.md
       - git add --update
       - 'git commit -m "chore(CHANGELOG): update [skip-ci]"'
 
-  release-check: goreleaser check
+  release-check:
+    desc: Check goreleaser configuration
+    cmds:
+      - echo "Checking goreleaser configuration..."
+      - goreleaser check
 
-  release-clean: goreleaser release --clean
+  release-clean:
+    desc: Run goreleaser release with --clean
+    cmds:
+      - echo "Running goreleaser release..."
+      # Goreleaser typically handles its own ldflags via .goreleaser.yaml
+      # Ensure your .goreleaser.yaml is configured if you use goreleaser for releases
+      - goreleaser release --clean
 
   release:
+    desc: Perform a release (goreleaser + changelog)
     cmds:
       - task: release-clean
       - task: changelog
@@ -41,15 +87,36 @@ tasks:
   # -----------------------------------------------------------------------------
   # development
 
-  build: go build -v ./...
+  build:
+    desc: Build the binary locally
+    cmds:
+      - echo "Building {{.PACKAGE_PATH}} version {{.VERSION}}..."
+      # Use GO_BUILD_FLAGS for build and specify output binary name
+      - go build {{.GO_BUILD_FLAGS}} -v -o {{.BINARY_NAME}} .
+    # Make output file available to other tasks
+    generates:
+      - ./{{.BINARY_NAME}}
 
-  lint: golangci-lint run
+  lint:
+    desc: Run linter
+    cmds:
+      - echo "Running linter..."
+      - golangci-lint run
 
-  lint-fix: golangci-lint run --fix
+  lint-fix:
+    desc: Run linter with auto-fix
+    cmds:
+      - echo "Running linter with auto-fix..."
+      - golangci-lint run --fix
 
-  test: go test ./...
+  test:
+    desc: Run tests
+    cmds:
+      - echo "Running tests..."
+      - go test ./...
 
   validate:
+    desc: Run lint and tests
     cmds:
       - task: lint
       - task: test
@@ -57,20 +124,40 @@ tasks:
   # -----------------------------------------------------------------------------
   # Module Support
 
-  tidy: go mod tidy
+  tidy:
+    desc: Tidy go modules
+    cmds:
+      - echo "Tidying go modules..."
+      - go mod tidy
 
   deps-reset:
+    desc: Reset go.mod and tidy
     cmds:
+      - echo "Resetting go.mod..."
       - git checkout -- go.mod
       - task: tidy
 
-  deps-list: go list -m -u -mod=readonly all
+  deps-list:
+    desc: List available module updates
+    cmds:
+      - echo "Listing module updates..."
+      - go list -m -u -mod=readonly all
 
   deps-upgrade:
+    desc: Upgrade dependencies and tidy
     cmds:
+      - echo "Upgrading dependencies..."
       - go get -u -v ./...
       - task: tidy
 
-  deps-cleancache: go clean -modcache
+  deps-cleancache:
+    desc: Clean module cache
+    cmds:
+      - echo "Cleaning module cache..."
+      - go clean -modcache
 
-  list: go list -mod=mod all
+  list:
+    desc: List all modules
+    cmds:
+      - echo "Listing all modules..."
+      - go list -mod=mod all

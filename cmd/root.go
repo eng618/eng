@@ -24,6 +24,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
@@ -35,7 +36,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	// These variables are set at build time using -ldflags
+	version = "dev"     // Default value if not built with ldflags
+	commit  = "none"    // Default value
+	date    = "unknown" // Default value
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -68,6 +75,9 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// Set the version string for the root command's --version flag
+	rootCmd.Version = version // Use the version variable set at build time
+
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -81,12 +91,13 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
+	// Add subcommands
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -109,9 +120,25 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		log.Verbose(utils.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
+	} else if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		// Config file was found but another error was produced
+		log.Warn("Error reading config file %s: %v", viper.ConfigFileUsed(), err)
 	} else {
-		log.Verbose(utils.IsVerbose(rootCmd), "failed to read config file, using defaults")
-		log.Verbose(utils.IsVerbose(rootCmd), "error: %v", err)
+		log.Verbose(utils.IsVerbose(rootCmd), "No config file found, using defaults.")
 	}
+}
+
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number of eng",
+	Long:  `All software has versions. This is eng's. It shows the Git tag, commit hash, and build date.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("eng version: %s\n", version)
+		fmt.Printf("  Git Commit: %s\n", commit)
+		fmt.Printf("  Build Date: %s\n", date)
+		fmt.Printf("  Go Version: %s\n", runtime.Version())
+		fmt.Printf("  OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	},
 }
