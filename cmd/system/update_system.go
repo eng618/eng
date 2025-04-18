@@ -8,10 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var UpdateSystemCmd = &cobra.Command{
-	Use:   "updateSystem",
-	Short: "Update the system",
-	Long:  `This command updates the system. It supports Ubuntu systems and logs a message for unsupported systems.`,
+var UpdateCmd = &cobra.Command{
+	Use:     "update",
+	Aliases: []string{"update", "u"},
+	Short:   "Update the system",
+	Long:    `This command updates the system. It supports Ubuntu systems and logs a message for unsupported systems.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		checkCmd := exec.Command("uname", "-a")
 		output, err := checkCmd.Output()

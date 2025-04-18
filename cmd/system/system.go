@@ -17,7 +17,7 @@ var SystemCmd = &cobra.Command{
 func init() {
 	SystemCmd.AddCommand(KillPortCmd)
 	SystemCmd.AddCommand(FindNonMovieFoldersCmd)
-	SystemCmd.AddCommand(UpdateSystemCmd)
+	SystemCmd.AddCommand(UpdateCmd)
 	SystemCmd.AddCommand(ProxyCmd)
 
 	// Add flags for subcommands if needed
