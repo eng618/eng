@@ -32,6 +32,8 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 	if !viper.IsSet("proxies") {
 		// Handle migration from old format if there's a legacy proxy config
 		if viper.IsSet("proxy.value") {
+			log.Info("Migrating from old single proxy format to multi-proxy format...")
+
 			title := "Default"
 			value := viper.GetString("proxy.value")
 			enabled := viper.GetBool("proxy.enabled")
@@ -54,9 +56,18 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 				err := errors.New(color.RedString("Error writing config file: %w", err))
 				cobra.CheckErr(err)
 			}
-			log.Info("Migrated old proxy configuration format to the new format")
+			log.Success("Migration complete: old proxy configuration has been converted to the new format")
+		} else {
+			// No old format and no new format - initialize with empty array
+			viper.Set("proxies", []ProxyConfig{})
+			if err := viper.WriteConfig(); err != nil {
+				err := errors.New(color.RedString("Error writing config file: %v", err))
+				cobra.CheckErr(err)
+			}
+			log.Info("Initialized empty proxy configurations array")
 		}
 	} else {
+		// Load existing multi-proxy configuration
 		err := viper.UnmarshalKey("proxies", &proxies)
 		if err != nil {
 			log.Error("Failed to unmarshal proxy configurations: %v", err)
