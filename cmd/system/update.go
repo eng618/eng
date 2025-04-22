@@ -56,7 +56,7 @@ func updateUbuntu(isVerbose bool) {
 		log.Error("Error updating system: %s", err)
 		log.Verbose(isVerbose, "Update command failed with error: %v", err)
 	} else {
-		log.Message("System updated successfully.")
+		log.Success("System updated successfully.")
 		log.Verbose(isVerbose, "APT update and upgrade completed successfully")
 	}
 	updateBrew(isVerbose)
@@ -92,7 +92,7 @@ func updateBrew(isVerbose bool) {
 		log.Error("Error updating Homebrew packages: %s", err)
 		log.Verbose(isVerbose, "Homebrew update failed with error: %v", err)
 	} else {
-		log.Message("Homebrew packages updated successfully.")
+		log.Success("Homebrew packages updated successfully.")
 		log.Verbose(isVerbose, "Homebrew update and upgrade completed successfully")
 	}
 }
