@@ -3,6 +3,20 @@
 ## [Unreleased]
 
 
+<a name="v0.17.11"></a>
+
+## [v0.17.11] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Fix
+
+- correct typo in fetch command description and enhance environment variable handling
+- enhance proxy command output with detailed environment variables
+
+
 <a name="v0.17.10"></a>
 
 ## [v0.17.10] - 2025-04-22
@@ -1210,7 +1224,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.10...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.11...HEAD
+[v0.17.11]: https://github.com/eng618/eng/compare/v0.17.10...v0.17.11
 [v0.17.10]: https://github.com/eng618/eng/compare/v0.17.9...v0.17.10
 [v0.17.9]: https://github.com/eng618/eng/compare/v0.17.8...v0.17.9
 [v0.17.8]: https://github.com/eng618/eng/compare/v0.17.7...v0.17.8
