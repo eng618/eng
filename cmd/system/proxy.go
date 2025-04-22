@@ -49,12 +49,18 @@ func listProxyConfigurations() {
 	fmt.Println("http_proxy:", os.Getenv("http_proxy"))
 	fmt.Println("https_proxy:", os.Getenv("https_proxy"))
 	fmt.Println("no_proxy:", os.Getenv("no_proxy"))
+	fmt.Println("-------------------------------------------------")
 
 	if activeIndex >= 0 && activeIndex < len(proxies) {
 		fmt.Printf("\nActive proxy: %s (%s)\n", proxies[activeIndex].Title, proxies[activeIndex].Value)
 	} else {
 		fmt.Println("\nNo active proxy configured.")
 	}
+
+	fmt.Println("\nNote: Environment variable changes only affect the current process.")
+	fmt.Println("For system-wide changes, you may need to restart your terminal or source your profile.")
+	fmt.Println("To apply in your current shell, you can run:")
+	fmt.Println("  eval $(eng system proxy --export)")
 }
 
 var addCmd = &cobra.Command{
@@ -112,9 +118,42 @@ var disableCmd = &cobra.Command{
 	},
 }
 
+// Add a new export subcommand to enable easy exporting of proxy settings to shell
+var exportCmd = &cobra.Command{
+	Use:   "export",
+	Short: "Export proxy settings as environment variables for the current shell",
+	Long:  `Generates shell commands to export proxy settings as environment variables for the current shell.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		proxies, activeIndex := config.GetProxyConfigs()
+
+		if activeIndex >= 0 && activeIndex < len(proxies) {
+			proxyValue := proxies[activeIndex].Value
+			fmt.Printf("export ALL_PROXY='%s'\n", proxyValue)
+			fmt.Printf("export HTTP_PROXY='%s'\n", proxyValue)
+			fmt.Printf("export HTTPS_PROXY='%s'\n", proxyValue)
+			fmt.Printf("export GLOBAL_AGENT_HTTP_PROXY='%s'\n", proxyValue)
+			fmt.Printf("export http_proxy='%s'\n", proxyValue)
+			fmt.Printf("export https_proxy='%s'\n", proxyValue)
+			fmt.Printf("export NO_PROXY='localhost,127.0.0.1,::1,.local'\n")
+			fmt.Printf("export no_proxy='localhost,127.0.0.1,::1,.local'\n")
+		} else {
+			// If no active proxy, output commands to unset variables
+			fmt.Println("unset ALL_PROXY")
+			fmt.Println("unset HTTP_PROXY")
+			fmt.Println("unset HTTPS_PROXY")
+			fmt.Println("unset GLOBAL_AGENT_HTTP_PROXY")
+			fmt.Println("unset NO_PROXY")
+			fmt.Println("unset http_proxy")
+			fmt.Println("unset https_proxy")
+			fmt.Println("unset no_proxy")
+		}
+	},
+}
+
 func init() {
 	// Add subcommands to the proxy command
 	ProxyCmd.AddCommand(addCmd)
 	ProxyCmd.AddCommand(enableCmd)
 	ProxyCmd.AddCommand(disableCmd)
+	ProxyCmd.AddCommand(exportCmd)
 }
