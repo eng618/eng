@@ -50,7 +50,10 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 			viper.Set("proxies", proxies)
 			// Clean up old format
 			viper.Set("proxy", nil)
-if viper.IsSet("proxy.value") && !viper.IsSet("proxies") {
+			if err := viper.WriteConfig(); err != nil {
+				err := errors.New(color.RedString("Error writing config file: %w", err))
+				cobra.CheckErr(err)
+			}
 			log.Info("Migrated old proxy configuration format to the new format")
 		}
 	} else {
