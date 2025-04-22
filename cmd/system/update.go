@@ -45,11 +45,11 @@ var UpdateCmd = &cobra.Command{
 }
 
 func updateUbuntu(isVerbose bool) {
-	log.Message("Running system update for Ubuntu...")
+	log.Message("Running system update for Ubuntu/Linux...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
-	log.Verbose(isVerbose, "Running: sudo apt update && sudo apt upgrade -y")
-	updateCmd := exec.Command("bash", "-c", "sudo apt update && sudo apt upgrade -y")
+	log.Verbose(isVerbose, "Running: sudo apt-get update && sudo apt-get upgrade -y")
+	updateCmd := exec.Command("bash", "-c", "sudo apt-get update && sudo apt-get upgrade -y")
 	updateCmd.Stdout = log.Writer()
 	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
