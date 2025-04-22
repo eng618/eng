@@ -3,6 +3,486 @@
 ## [Unreleased]
 
 
+<a name="v0.17.6"></a>
+
+## [v0.17.6] - 2025-04-22
+
+### Feat
+
+- enhance system update command with verbose logging and support for isVerbose flag
+
+
+<a name="v0.17.5"></a>
+
+## [v0.17.5] - 2025-04-18
+
+### Feat
+
+- add step to calculate version without 'v' prefix for Homebrew publishing
+
+
+<a name="v0.17.4"></a>
+
+## [v0.17.4] - 2025-04-18
+
+### Refactor
+
+- streamline environment variable definitions for Homebrew publishing
+
+
+<a name="v0.17.3"></a>
+
+## [v0.17.3] - 2025-04-18
+
+### Fix
+
+- correct format specification for windows archive in goreleaser configuration
+
+
+<a name="v0.17.2"></a>
+
+## [v0.17.2] - 2025-04-18
+
+### Build
+
+- **deps:** bump golang.org/x/net from 0.37.0 to 0.38.0 ([#15](https://github.com/eng618/eng/issues/15))
+
+### Feat
+
+- implement version command and enhance build metadata injection
+
+### Refactor
+
+- rename UpdateSystemCmd to UpdateCmd for consistency and clarity
+- enhance logging for config file reading with verbose output
+
+### Test
+
+- add unit tests for IsVerbose and SyncDirectory functions
+
+
+<a name="v0.17.1"></a>
+
+## [v0.17.1] - 2025-04-16
+
+### Feat
+
+- add system update logic including brew
+
+### Refactor
+
+- redirect output streams to log writers in StartChildProcess and PullLatestCode
+- improve documentation and organization of log package functions
+
+
+<a name="v0.17.0"></a>
+
+## [v0.17.0] - 2025-04-16
+
+### Feat
+
+- add verbose command for managing verbose output settings
+
+### Fix
+
+- linter issues and minor organizations
+
+### Refactor
+
+- restructure command organization and add proxy management features - Moved config commands to a dedicated config package - Created dotfiles package with commands for managing dotfiles - Added system commands for managing system settings and proxy configuration - Implemented proxy configuration management with user prompts - Removed obsolete commands and files for better clarity and organization
+
+
+<a name="v0.16.15"></a>
+
+## [v0.16.15] - 2025-04-04
+
+### Fix
+
+- update command in Homebrew formula to use '--help' instead of '--version'
+
+
+<a name="v0.16.14"></a>
+
+## [v0.16.14] - 2025-04-04
+
+### Fix
+
+- correct string interpolation syntax in Homebrew formula
+
+
+<a name="v0.16.13"></a>
+
+## [v0.16.13] - 2025-04-04
+
+### Fix
+
+- update checksum retrieval logic and escape characters in Homebrew formula
+
+
+<a name="v0.16.12"></a>
+
+## [v0.16.12] - 2025-04-04
+
+### Fix
+
+- enhance Homebrew formula for multi-architecture support and improve installation logging
+
+
+<a name="v0.16.11"></a>
+
+## [v0.16.11] - 2025-04-04
+
+### Fix
+
+- correct syntax for accessing checksums in Homebrew formula
+
+
+<a name="v0.16.10"></a>
+
+## [v0.16.10] - 2025-04-04
+
+### Fix
+
+- improve checksum retrieval logic in Homebrew publish workflow
+
+
+<a name="v0.16.9"></a>
+
+## [v0.16.9] - 2025-04-04
+
+### Fix
+
+- update checksum retrieval method in Homebrew publish workflow to use jq
+
+
+<a name="v0.16.8"></a>
+
+## [v0.16.8] - 2025-04-04
+
+### Fix
+
+- simplify checksum retrieval in Homebrew publish workflow
+
+
+<a name="v0.16.7"></a>
+
+## [v0.16.7] - 2025-04-04
+
+### Fix
+
+- update Homebrew publish workflow to include checksum generation for artifacts
+
+
+<a name="v0.16.6"></a>
+
+## [v0.16.6] - 2025-04-04
+
+### Fix
+
+- update sha256 command in Homebrew formula to use awk instead of cut
+
+
+<a name="v0.16.5"></a>
+
+## [v0.16.5] - 2025-04-04
+
+### Fix
+
+- add publish job to download dist directory in Homebrew workflow
+
+
+<a name="v0.16.4"></a>
+
+## [v0.16.4] - 2025-04-04
+
+### Fix
+
+- update upload and download artifact actions to version 4 in Homebrew publish workflow
+
+
+<a name="v0.16.3"></a>
+
+## [v0.16.3] - 2025-04-04
+
+### Fix
+
+- add steps to persist and download dist directory in Homebrew publish workflow
+
+
+<a name="v0.16.2"></a>
+
+## [v0.16.2] - 2025-04-04
+
+### Fix
+
+- update sha256 command in Homebrew formula to use cut instead of awk
+
+
+<a name="v0.16.1"></a>
+
+## [v0.16.1] - 2025-04-04
+
+### Fix
+
+- remove unnecessary dependency declaration for Homebrew formula
+
+
+<a name="v0.16.0"></a>
+
+## [v0.16.0] - 2025-04-04
+
+### Build
+
+- **deps:** bump github.com/spf13/viper from 1.19.0 to 1.20.1 ([#13](https://github.com/eng618/eng/issues/13))
+- **deps:** bump golangci/golangci-lint-action from 6 to 7 ([#14](https://github.com/eng618/eng/issues/14))
+
+### Feat
+
+- add updateSystem command to perform system updates for Ubuntu
+- add findNonMovieFolders command to identify and manage non-movie directories
+
+### Fix
+
+- update sha256 paths and install command in Homebrew publish workflow
+
+### Refactor
+
+- update comments in repo.go for clarity and detail
+- enhance copyFile function to support verbose logging
+
+
+<a name="v0.15.13"></a>
+
+## [v0.15.13] - 2025-03-12
+
+### Ci
+
+- dynamic directory
+
+
+<a name="v0.15.12"></a>
+
+## [v0.15.12] - 2025-03-11
+
+### Ci
+
+- update paths
+
+
+<a name="v0.15.11"></a>
+
+## [v0.15.11] - 2025-03-11
+
+### Ci
+
+- remove debug statements
+
+
+<a name="v0.15.10"></a>
+
+## [v0.15.10] - 2025-03-11
+
+
+<a name="v0.15.9"></a>
+
+## [v0.15.9] - 2025-03-11
+
+### Ci
+
+- update paths
+
+
+<a name="v0.15.8"></a>
+
+## [v0.15.8] - 2025-03-11
+
+### Ci
+
+- update debug statements
+
+
+<a name="v0.15.7"></a>
+
+## [v0.15.7] - 2025-03-11
+
+### Ci
+
+- add debug statements
+
+
+<a name="v0.15.6"></a>
+
+## [v0.15.6] - 2025-03-11
+
+### Fix
+
+- path correction
+
+
+<a name="v0.15.5"></a>
+
+## [v0.15.5] - 2025-03-11
+
+### Feat
+
+- update Homebrew formula for multi-architecture support and set Go version to stable
+
+
+<a name="v0.15.4"></a>
+
+## [v0.15.4] - 2025-03-11
+
+### Ci
+
+- use PAT
+
+
+<a name="v0.15.3"></a>
+
+## [v0.15.3] - 2025-03-11
+
+### Ci
+
+- add token deploy
+
+
+<a name="v0.15.2"></a>
+
+## [v0.15.2] - 2025-03-11
+
+### Ci
+
+- fixes for git commands
+
+
+<a name="v0.15.1"></a>
+
+## [v0.15.1] - 2025-03-11
+
+
+<a name="v0.15.0"></a>
+
+## [v0.15.0] - 2025-03-11
+
+### Build
+
+- **deps:** bump github.com/go-git/go-git/v5 from 5.13.2 to 5.14.0 ([#12](https://github.com/eng618/eng/issues/12))
+
+### Chore
+
+- update Go version to 1.24 in workflows and configuration files
+
+### Ci
+
+- add golangci-lint
+
+### Docs
+
+- update README with homebrew formula link; improve config error logging
+
+### Feat
+
+- enhance workflows with task-based commands and improved Homebrew formula
+
+
+<a name="v0.14.13"></a>
+
+## [v0.14.13] - 2025-02-12
+
+### Feat
+
+- update GoReleaser workflow to combine installation and execution steps
+
+
+<a name="v0.14.12"></a>
+
+## [v0.14.12] - 2025-02-12
+
+### Feat
+
+- add GITHUB_TOKEN environment variable to GoReleaser workflow
+
+
+<a name="v0.14.11"></a>
+
+## [v0.14.11] - 2025-02-12
+
+### Feat
+
+- specify GoReleaser version and distribution in Homebrew publish workflow
+
+
+<a name="v0.14.10"></a>
+
+## [v0.14.10] - 2025-02-12
+
+### Feat
+
+- update GoReleaser action to version 6 in Homebrew publish workflow
+
+
+<a name="v0.14.9"></a>
+
+## [v0.14.9] - 2025-02-12
+
+### Feat
+
+- replace manual GoReleaser installation with GitHub Action for improved workflow
+
+
+<a name="v0.14.8"></a>
+
+## [v0.14.8] - 2025-02-12
+
+### Feat
+
+- add GITHUB_TOKEN environment variable for GoReleaser installation
+
+
+<a name="v0.14.7"></a>
+
+## [v0.14.7] - 2025-02-12
+
+### Feat
+
+- integrate GoReleaser for streamlined Homebrew publishing and update asset paths
+
+
+<a name="v0.14.6"></a>
+
+## [v0.14.6] - 2025-02-11
+
+### Feat
+
+- add verification step for binary version in Homebrew publish workflow
+
+
+<a name="v0.14.5"></a>
+
+## [v0.14.5] - 2025-02-11
+
+
+<a name="v0.14.4"></a>
+
+## [v0.14.4] - 2025-02-11
+
+### Chore
+
+- update GitHub Actions to use latest versions of checkout and setup-go
+- **CHANGELOG:** update [skip-ci]
+
+### Feat
+
+- set execute permissions for the build output in Homebrew publish workflow
+- update Homebrew publish workflow to use version tags instead of branch name
+- add GitHub Actions workflow for publishing to Homebrew
+- add caching for Go modules and build to improve CI performance
+
+### Reverts
+
+- feat: add caching for Go modules and build to improve CI performance
+
+
 <a name="v0.14.3"></a>
 
 ## [v0.14.3] - 2025-02-08
@@ -675,7 +1155,54 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.14.3...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.6...HEAD
+[v0.17.6]: https://github.com/eng618/eng/compare/v0.17.5...v0.17.6
+[v0.17.5]: https://github.com/eng618/eng/compare/v0.17.4...v0.17.5
+[v0.17.4]: https://github.com/eng618/eng/compare/v0.17.3...v0.17.4
+[v0.17.3]: https://github.com/eng618/eng/compare/v0.17.2...v0.17.3
+[v0.17.2]: https://github.com/eng618/eng/compare/v0.17.1...v0.17.2
+[v0.17.1]: https://github.com/eng618/eng/compare/v0.17.0...v0.17.1
+[v0.17.0]: https://github.com/eng618/eng/compare/v0.16.15...v0.17.0
+[v0.16.15]: https://github.com/eng618/eng/compare/v0.16.14...v0.16.15
+[v0.16.14]: https://github.com/eng618/eng/compare/v0.16.13...v0.16.14
+[v0.16.13]: https://github.com/eng618/eng/compare/v0.16.12...v0.16.13
+[v0.16.12]: https://github.com/eng618/eng/compare/v0.16.11...v0.16.12
+[v0.16.11]: https://github.com/eng618/eng/compare/v0.16.10...v0.16.11
+[v0.16.10]: https://github.com/eng618/eng/compare/v0.16.9...v0.16.10
+[v0.16.9]: https://github.com/eng618/eng/compare/v0.16.8...v0.16.9
+[v0.16.8]: https://github.com/eng618/eng/compare/v0.16.7...v0.16.8
+[v0.16.7]: https://github.com/eng618/eng/compare/v0.16.6...v0.16.7
+[v0.16.6]: https://github.com/eng618/eng/compare/v0.16.5...v0.16.6
+[v0.16.5]: https://github.com/eng618/eng/compare/v0.16.4...v0.16.5
+[v0.16.4]: https://github.com/eng618/eng/compare/v0.16.3...v0.16.4
+[v0.16.3]: https://github.com/eng618/eng/compare/v0.16.2...v0.16.3
+[v0.16.2]: https://github.com/eng618/eng/compare/v0.16.1...v0.16.2
+[v0.16.1]: https://github.com/eng618/eng/compare/v0.16.0...v0.16.1
+[v0.16.0]: https://github.com/eng618/eng/compare/v0.15.13...v0.16.0
+[v0.15.13]: https://github.com/eng618/eng/compare/v0.15.12...v0.15.13
+[v0.15.12]: https://github.com/eng618/eng/compare/v0.15.11...v0.15.12
+[v0.15.11]: https://github.com/eng618/eng/compare/v0.15.10...v0.15.11
+[v0.15.10]: https://github.com/eng618/eng/compare/v0.15.9...v0.15.10
+[v0.15.9]: https://github.com/eng618/eng/compare/v0.15.8...v0.15.9
+[v0.15.8]: https://github.com/eng618/eng/compare/v0.15.7...v0.15.8
+[v0.15.7]: https://github.com/eng618/eng/compare/v0.15.6...v0.15.7
+[v0.15.6]: https://github.com/eng618/eng/compare/v0.15.5...v0.15.6
+[v0.15.5]: https://github.com/eng618/eng/compare/v0.15.4...v0.15.5
+[v0.15.4]: https://github.com/eng618/eng/compare/v0.15.3...v0.15.4
+[v0.15.3]: https://github.com/eng618/eng/compare/v0.15.2...v0.15.3
+[v0.15.2]: https://github.com/eng618/eng/compare/v0.15.1...v0.15.2
+[v0.15.1]: https://github.com/eng618/eng/compare/v0.15.0...v0.15.1
+[v0.15.0]: https://github.com/eng618/eng/compare/v0.14.13...v0.15.0
+[v0.14.13]: https://github.com/eng618/eng/compare/v0.14.12...v0.14.13
+[v0.14.12]: https://github.com/eng618/eng/compare/v0.14.11...v0.14.12
+[v0.14.11]: https://github.com/eng618/eng/compare/v0.14.10...v0.14.11
+[v0.14.10]: https://github.com/eng618/eng/compare/v0.14.9...v0.14.10
+[v0.14.9]: https://github.com/eng618/eng/compare/v0.14.8...v0.14.9
+[v0.14.8]: https://github.com/eng618/eng/compare/v0.14.7...v0.14.8
+[v0.14.7]: https://github.com/eng618/eng/compare/v0.14.6...v0.14.7
+[v0.14.6]: https://github.com/eng618/eng/compare/v0.14.5...v0.14.6
+[v0.14.5]: https://github.com/eng618/eng/compare/v0.14.4...v0.14.5
+[v0.14.4]: https://github.com/eng618/eng/compare/v0.14.3...v0.14.4
 [v0.14.3]: https://github.com/eng618/eng/compare/v0.14.2...v0.14.3
 [v0.14.2]: https://github.com/eng618/eng/compare/v0.14.1...v0.14.2
 [v0.14.1]: https://github.com/eng618/eng/compare/v0.14.0...v0.14.1
