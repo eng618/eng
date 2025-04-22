@@ -57,7 +57,6 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           cd ..
 
-      # --- New Step to Calculate Version without 'v' ---
       - name: Get Version without v prefix
         id: get_version
         run: |
@@ -71,6 +70,8 @@ jobs:
           PROJECT_NAME: "eng"
           # TAG_NAME still includes the 'v' (e.g., v0.17.4) - used for URL path
           TAG_NAME: ${{ github.ref_name }}
+          # Version for Homebrew formula (without v prefix)
+          VERSION: ${{ steps.get_version.outputs.version_no_v }}
           # Construct filenames using the output from the previous step
           DARWIN_AMD64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Darwin_x86_64.tar.gz
           DARWIN_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Darwin_arm64.tar.gz
@@ -86,6 +87,7 @@ jobs:
           echo "class Eng < Formula" > eng.rb
           echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
           echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
+          echo "  version '${VERSION}'" >> eng.rb
           echo "  # URLs now use TAG_NAME (with v) for path, and FILE variable (without v) for filename" >> eng.rb
           echo "  case" >> eng.rb
           echo "  when OS.mac? && Hardware::CPU.intel?" >> eng.rb
