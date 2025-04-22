@@ -167,8 +167,11 @@ func UnsetProxyEnvVars() {
 	}
 
 	for _, v := range vars {
-		os.Unsetenv(v)
-		log.Info("Unset environment variable: %s", v)
+		if err := os.Unsetenv(v); err != nil {
+			log.Warn("Failed to unset environment variable %s: %w", v, err)
+		} else {
+			log.Info("Unset environment variable: %s", v)
+		}
 	}
 
 	log.Success("All proxy environment variables have been unset")
@@ -192,23 +195,39 @@ func SetProxyEnvVars(proxyValue string) {
 
 	// Set the environment variables
 	for _, v := range vars {
-		os.Setenv(v, proxyValue)
-		log.Info("Set environment variable: %s=%s", v, proxyValue)
+		if err := os.Setenv(v, proxyValue); err != nil {
+			log.Warn("Failed to set environment variable %s=%s: %w", v, proxyValue, err)
+		} else {
+			log.Info("Set environment variable: %s=%s", v, proxyValue)
+		}
 	}
 
 	// Also set lowercase versions
-	os.Setenv("http_proxy", proxyValue)
-	log.Info("Set environment variable: %s=%s", "http_proxy", proxyValue)
+	if err := os.Setenv("http_proxy", proxyValue); err != nil {
+		log.Warn("Failed to set environment variable http_proxy=%s: %v", proxyValue, err)
+	} else {
+		log.Info("Set environment variable: http_proxy=%s", proxyValue)
+	}
 
-	os.Setenv("https_proxy", proxyValue)
-	log.Info("Set environment variable: %s=%s", "https_proxy", proxyValue)
+	if err := os.Setenv("https_proxy", proxyValue); err != nil {
+		log.Warn("Failed to set environment variable https_proxy=%s: %v", proxyValue, err)
+	} else {
+		log.Info("Set environment variable: https_proxy=%s", proxyValue)
+	}
 
 	// Set the NO_PROXY variable to common local addresses
 	noProxyValue := "localhost,127.0.0.1,::1,.local"
-	os.Setenv("NO_PROXY", noProxyValue)
-	os.Setenv("no_proxy", noProxyValue)
-	log.Info("Set environment variable: %s=%s", "NO_PROXY", noProxyValue)
-	log.Info("Set environment variable: %s=%s", "no_proxy", noProxyValue)
+	if err := os.Setenv("NO_PROXY", noProxyValue); err != nil {
+		log.Warn("Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
+	} else {
+		log.Info("Set environment variable: NO_PROXY=%s", noProxyValue)
+	}
+
+	if err := os.Setenv("no_proxy", noProxyValue); err != nil {
+		log.Warn("Failed to set environment variable no_proxy=%s: %v", noProxyValue, err)
+	} else {
+		log.Info("Set environment variable: no_proxy=%s", noProxyValue)
+	}
 
 	log.Success("All proxy environment variables have been set")
 }
