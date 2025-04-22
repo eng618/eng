@@ -85,7 +85,12 @@ func init() {
 			// Convert from 1-based index (user-friendly) to 0-based index
 			index := enableIndex - 1
 			if index >= 0 && index < len(proxies) {
-				config.EnableProxy(index, proxies)
+				_, err := config.EnableProxy(index, proxies)
+				if err != nil {
+					log.Error("Failed to enable proxy: %v", err)
+					cmd.SilenceUsage = true
+					return
+				}
 			} else {
 				log.Error("Invalid proxy index: %d. Valid range is 1-%d", enableIndex, len(proxies))
 				cmd.SilenceUsage = true
