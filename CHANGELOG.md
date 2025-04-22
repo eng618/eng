@@ -3,6 +3,21 @@
 ## [Unreleased]
 
 
+<a name="v0.17.10"></a>
+
+## [v0.17.10] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Fix
+
+- update log message and command syntax for Ubuntu system updates
+- replace log.Message with log.Success for successful update notifications
+- correct syntax for CI skip condition in GitHub Actions workflow
+
+
 <a name="v0.17.9"></a>
 
 ## [v0.17.9] - 2025-04-22
@@ -1195,7 +1210,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.9...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.10...HEAD
+[v0.17.10]: https://github.com/eng618/eng/compare/v0.17.9...v0.17.10
 [v0.17.9]: https://github.com/eng618/eng/compare/v0.17.8...v0.17.9
 [v0.17.8]: https://github.com/eng618/eng/compare/v0.17.7...v0.17.8
 [v0.17.7]: https://github.com/eng618/eng/compare/v0.17.6...v0.17.7
