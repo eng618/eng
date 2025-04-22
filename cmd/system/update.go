@@ -13,7 +13,7 @@ var UpdateCmd = &cobra.Command{
 	Use:     "update",
 	Aliases: []string{"update", "u"},
 	Short:   "Update the system",
-	Long:    `This command updates the system. It supports Ubuntu systems and logs a message for unsupported systems.`,
+	Long:    `This command updates the system. It supports Ubuntu and WSL Linux systems and logs a message for unsupported systems.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		log.Verbose(isVerbose, "Checking system type...")
@@ -28,8 +28,8 @@ var UpdateCmd = &cobra.Command{
 		uname := strings.ToLower(string(output))
 		log.Verbose(isVerbose, "System type detected: %s", strings.TrimSpace(string(output)))
 
-		if strings.Contains(uname, "ubuntu") {
-			log.Verbose(isVerbose, "Detected Ubuntu system, running Ubuntu update...")
+		if strings.Contains(uname, "ubuntu") || strings.Contains(uname, "linux") {
+			log.Verbose(isVerbose, "Detected Ubuntu/Linux system, running system update...")
 			updateUbuntu(isVerbose)
 		} else if strings.Contains(uname, "darwin") {
 			log.Verbose(isVerbose, "Detected macOS system, running macOS update...")
