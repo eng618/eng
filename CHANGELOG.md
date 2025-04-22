@@ -3,6 +3,20 @@
 ## [Unreleased]
 
 
+<a name="v0.17.9"></a>
+
+## [v0.17.9] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Fix
+
+- update command execution for Ubuntu system updates to use bash for proper command parsing
+- ensure CI is skipped for commits with [skip ci] or [skip-ci] messages
+
+
 <a name="v0.17.8"></a>
 
 ## [v0.17.8] - 2025-04-22
@@ -1181,7 +1195,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.8...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.9...HEAD
+[v0.17.9]: https://github.com/eng618/eng/compare/v0.17.8...v0.17.9
 [v0.17.8]: https://github.com/eng618/eng/compare/v0.17.7...v0.17.8
 [v0.17.7]: https://github.com/eng618/eng/compare/v0.17.6...v0.17.7
 [v0.17.6]: https://github.com/eng618/eng/compare/v0.17.5...v0.17.6
