@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
@@ -14,7 +15,21 @@ var ProxyCmd = &cobra.Command{
 	Long:  `This command displays the current system proxy and allows enabling or disabling it via flags or prompts.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		proxy, enabled := config.ProxyConfig()
-		fmt.Printf("Current proxy: %s\nEnabled: %v\n", proxy, enabled)
+		fmt.Println("Current proxy configuration:")
+		fmt.Println("Config proxy:", proxy)
+		fmt.Println("Enabled:", enabled)
+		fmt.Println("-------------------------------------------------")
+		fmt.Println("System environment variables:")
+		fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
+		fmt.Println("HTTP_PROXY:", os.Getenv("HTTP_PROXY"))
+		fmt.Println("HTTPS_PROXY:", os.Getenv("HTTPS_PROXY"))
+		fmt.Println("GLOBAL_AGENT_HTTP_PROXY:", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
+		fmt.Println("NO_PROXY:", os.Getenv("NO_PROXY"))
+		fmt.Println("-------------------------------------------------")
+		fmt.Println("Lowercase environment variables:")
+		fmt.Println("http_proxy:", os.Getenv("http_proxy"))
+		fmt.Println("https_proxy:", os.Getenv("https_proxy"))
+		fmt.Println("no_proxy:", os.Getenv("no_proxy"))
 	},
 }
 
