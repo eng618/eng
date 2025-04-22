@@ -49,7 +49,9 @@ func updateUbuntu(isVerbose bool) {
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
 	log.Verbose(isVerbose, "Running: sudo apt update && sudo apt upgrade -y")
-	updateCmd := exec.Command("sudo", "apt", "update", "&&", "sudo", "apt", "upgrade", "-y")
+	updateCmd := exec.Command("bash", "-c", "sudo apt update && sudo apt upgrade -y")
+	updateCmd.Stdout = log.Writer()
+	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
 		log.Error("Error updating system: %s", err)
 		log.Verbose(isVerbose, "Update command failed with error: %v", err)
