@@ -11,13 +11,26 @@ import (
 
 var ProxyCmd = &cobra.Command{
 	Use:   "proxy",
-	Short: "Show or configure the system proxy",
-	Long:  `This command displays the current system proxy and allows enabling or disabling it via flags or prompts.`,
+	Short: "Show or configure system proxies",
+	Long:  `This command displays and manages multiple proxy configurations and allows enabling, disabling, or setting them via flags or interactive prompts.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		proxy, enabled := config.ProxyConfig()
-		fmt.Println("Current proxy configuration:")
-		fmt.Println("Config proxy:", proxy)
-		fmt.Println("Enabled:", enabled)
+		proxies, activeIndex := config.GetProxyConfigs()
+
+		fmt.Println("Proxy Configurations:")
+		fmt.Println("-------------------------------------------------")
+
+		if len(proxies) == 0 {
+			fmt.Println("No proxy configurations found.")
+		} else {
+			for i, p := range proxies {
+				status := " "
+				if p.Enabled {
+					status = "*"
+				}
+				fmt.Printf("[%s] %d. %s - %s\n", status, i+1, p.Title, p.Value)
+			}
+		}
+
 		fmt.Println("-------------------------------------------------")
 		fmt.Println("System environment variables:")
 		fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
@@ -30,32 +43,87 @@ var ProxyCmd = &cobra.Command{
 		fmt.Println("http_proxy:", os.Getenv("http_proxy"))
 		fmt.Println("https_proxy:", os.Getenv("https_proxy"))
 		fmt.Println("no_proxy:", os.Getenv("no_proxy"))
+
+		// Check if any flags are set that would skip the interactive mode
+		add, _ := cmd.Flags().GetBool("add")
+		enableIndex, _ := cmd.Flags().GetInt("enable")
+		disableAll, _ := cmd.Flags().GetBool("disable")
+		select_, _ := cmd.Flags().GetBool("select")
+
+		// If no action flags are set, prompt for selection
+		if !add && enableIndex < 0 && !disableAll && !select_ {
+			if activeIndex >= 0 && activeIndex < len(proxies) {
+				fmt.Printf("\nActive proxy: %s (%s)\n", proxies[activeIndex].Title, proxies[activeIndex].Value)
+			} else {
+				fmt.Println("\nNo active proxy configured.")
+			}
+		}
 	},
 }
 
 func init() {
-	ProxyCmd.Flags().Bool("enable", false, "Enable the proxy")
-	ProxyCmd.Flags().Bool("disable", false, "Disable the proxy")
-	ProxyCmd.Flags().Bool("set", false, "Interactively set the proxy value")
+	ProxyCmd.Flags().Bool("add", false, "Add a new proxy configuration")
+	ProxyCmd.Flags().Int("enable", -1, "Enable a specific proxy by index")
+	ProxyCmd.Flags().Bool("disable", false, "Disable all proxies")
+	ProxyCmd.Flags().Bool("select", false, "Interactively select a proxy to enable")
+
 	ProxyCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		enable, _ := cmd.Flags().GetBool("enable")
-		disable, _ := cmd.Flags().GetBool("disable")
-		set, _ := cmd.Flags().GetBool("set")
-		if enable && disable {
-			log.Error("Cannot enable and disable proxy at the same time.")
-			err := cmd.Help()
-			cobra.CheckErr(err)
-			cmd.SilenceUsage = true
+		add, _ := cmd.Flags().GetBool("add")
+		enableIndex, _ := cmd.Flags().GetInt("enable")
+		disableAll, _ := cmd.Flags().GetBool("disable")
+		select_, _ := cmd.Flags().GetBool("select")
+
+		proxies, _ := config.GetProxyConfigs()
+
+		if add {
+			// Add a new proxy configuration
+			config.AddOrUpdateProxy()
 			return
 		}
-		if enable {
-			config.SetProxyEnabled(true)
+
+		if enableIndex >= 0 {
+			// Convert from 1-based index (user-friendly) to 0-based index
+			index := enableIndex - 1
+			if index >= 0 && index < len(proxies) {
+				config.EnableProxy(index, proxies)
+			} else {
+				log.Error("Invalid proxy index: %d. Valid range is 1-%d", enableIndex, len(proxies))
+				cmd.SilenceUsage = true
+				return
+			}
 		}
-		if disable {
-			config.SetProxyEnabled(false)
+
+		if disableAll {
+			// Disable all proxies
+			if err := config.DisableAllProxies(); err != nil {
+				log.Error("Failed to disable proxies: %v", err)
+				cmd.SilenceUsage = true
+				return
+			}
+			log.Success("All proxies disabled")
+			return
 		}
-		if set {
-			config.ProxyConfig()
+
+		if select_ {
+			// Interactive selection
+			if len(proxies) == 0 {
+				// If no proxies, add one first
+				proxies, _ = config.AddOrUpdateProxy()
+			}
+
+			selectedIndex, err := config.SelectProxy(proxies)
+			if err != nil {
+				log.Error("Failed to select proxy: %v", err)
+				cmd.SilenceUsage = true
+				return
+			}
+
+			_, err = config.EnableProxy(selectedIndex, proxies)
+			if err != nil {
+				log.Error("Failed to enable proxy: %v", err)
+				cmd.SilenceUsage = true
+				return
+			}
 		}
 	}
 }
