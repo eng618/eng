@@ -3,6 +3,19 @@
 ## [Unreleased]
 
 
+<a name="v0.17.8"></a>
+
+## [v0.17.8] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Feat
+
+- update: support WSL Linux systems
+
+
 <a name="v0.17.7"></a>
 
 ## [v0.17.7] - 2025-04-22
@@ -1168,7 +1181,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.7...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.8...HEAD
+[v0.17.8]: https://github.com/eng618/eng/compare/v0.17.7...v0.17.8
 [v0.17.7]: https://github.com/eng618/eng/compare/v0.17.6...v0.17.7
 [v0.17.6]: https://github.com/eng618/eng/compare/v0.17.5...v0.17.6
 [v0.17.5]: https://github.com/eng618/eng/compare/v0.17.4...v0.17.5
