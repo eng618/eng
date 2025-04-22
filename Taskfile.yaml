@@ -112,8 +112,8 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - echo "Running tests..."
-      - go test ./...
+      - echo "Running tests with coverage report..."
+      - go test ./... -cover -race -coverprofile=coverage.out -covermode=atomic
 
   validate:
     desc: Run lint and tests

@@ -168,7 +168,7 @@ func UnsetProxyEnvVars() {
 
 	for _, v := range vars {
 		if err := os.Unsetenv(v); err != nil {
-			log.Warn("Failed to unset environment variable %s: %w", v, err)
+			log.Warn("Failed to unset environment variable %s: %v", v, err)
 		} else {
 			log.Info("Unset environment variable: %s", v)
 		}
@@ -196,7 +196,7 @@ func SetProxyEnvVars(proxyValue string) {
 	// Set the environment variables
 	for _, v := range vars {
 		if err := os.Setenv(v, proxyValue); err != nil {
-			log.Warn("Failed to set environment variable %s=%s: %w", v, proxyValue, err)
+			log.Warn("Failed to set environment variable %s=%s: %v", v, proxyValue, err)
 		} else {
 			log.Info("Set environment variable: %s=%s", v, proxyValue)
 		}
