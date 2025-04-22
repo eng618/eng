@@ -3,6 +3,19 @@
 ## [Unreleased]
 
 
+<a name="v0.17.7"></a>
+
+## [v0.17.7] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Feat
+
+- add version assignment to Homebrew formula without 'v' prefix
+
+
 <a name="v0.17.6"></a>
 
 ## [v0.17.6] - 2025-04-22
@@ -1155,7 +1168,8 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.6...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.17.7...HEAD
+[v0.17.7]: https://github.com/eng618/eng/compare/v0.17.6...v0.17.7
 [v0.17.6]: https://github.com/eng618/eng/compare/v0.17.5...v0.17.6
 [v0.17.5]: https://github.com/eng618/eng/compare/v0.17.4...v0.17.5
 [v0.17.4]: https://github.com/eng618/eng/compare/v0.17.3...v0.17.4
