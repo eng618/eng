@@ -21,13 +21,20 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 			return
 		}
 
+		log.Start("Scanning for non-movie folders...")
+
 		directory := args[0]
 		isDryRun, _ := cmd.Flags().GetBool("dry-run")
 		isVerbose := utils.IsVerbose(cmd)
 
 		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
 
+		spinner := utils.NewSpinner("Scanning for non-movie folders...")
+		spinner.Start()
+		defer spinner.Stop()
+
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory)
+		spinner.Stop()
 		if err != nil {
 			log.Error("Error finding non-movie folders: %s", err)
 			return
@@ -63,6 +70,7 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 				}
 			}
 		}
+		log.Success("Scan complete.")
 	},
 }
 
