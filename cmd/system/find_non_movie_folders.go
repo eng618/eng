@@ -62,33 +62,35 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 				continue
 			}
 
-			if strings.TrimSpace(string(files)) == "" {
-				// No movie files found, log all files that would be deleted
-				listFilesCmd := exec.Command("find", folder, "-type", "f")
-				filesToDelete, err := listFilesCmd.Output()
-				if err != nil {
-					log.Error("Error listing files in folder %s: %s", folder, err)
-					continue
-				}
-				if verbose {
-					for _, file := range strings.Split(string(filesToDelete), "\n") {
-						if file != "" {
-							log.Warn("Would delete file: %s", file)
-						}	
-					}
-					log.Warn("Would delete folder: %s", folder)
-				}
-				if dryRun {
-					log.Message("Dry-run: Found non-movie folder: %s", folder)
-				} else {
-					log.Message("Deleting non-movie folder: %s", folder)
-					deleteCmd := exec.Command("rm", "-rf", folder)
-					if err := deleteCmd.Run(); err != nil {
-						log.Error("Error deleting folder %s: %s", folder, err)
-					}
-				}
-			} else {
+			if len(strings.TrimSpace(string(files))) > 0 {
+				// Movie files found, skip deletion
 				log.Verbose(verbose, "Skipping folder (contains movie file): %s", folder)
+				continue
+			}
+
+			// No movie files found, log all files that would be deleted
+			listFilesCmd := exec.Command("find", folder, "-type", "f")
+			filesToDelete, err := listFilesCmd.Output()
+			if err != nil {
+				log.Error("Error listing files in folder %s: %s", folder, err)
+				continue
+			}
+			if verbose {
+				for _, file := range strings.Split(string(filesToDelete), "\n") {
+					if file != "" {
+						log.Warn("Would delete file: %s", file)
+					}
+				}
+				log.Warn("Would delete folder: %s", folder)
+			}
+			if dryRun {
+				log.Message("Dry-run: Found non-movie folder: %s", folder)
+			} else {
+				log.Message("Deleting non-movie folder: %s", folder)
+				deleteCmd := exec.Command("rm", "-rf", folder)
+				if err := deleteCmd.Run(); err != nil {
+					log.Error("Error deleting folder %s: %s", folder, err)
+				}
 			}
 		}
 	},
