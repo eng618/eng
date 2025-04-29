@@ -8,7 +8,7 @@ dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 vars:
   # --- Versioning ---
   # The Go import path for the package where version variables are defined
-  PACKAGE_PATH: github.com/eng618/eng/cmd
+  PACKAGE_PATH: github.com/eng618/eng/cmd/version
   # Get the latest git tag, or commit hash if no tags
   VERSION:
     sh: git describe --tags --always --dirty --abbrev=0
@@ -19,7 +19,7 @@ vars:
   DATE:
     sh: date -u +'%Y-%m-%dT%H:%M:%SZ'
   # Construct the ldflags string
-  LDFLAGS_STRING: '-X "{{.PACKAGE_PATH}}.version={{.VERSION}}" -X "{{.PACKAGE_PATH}}.commit={{.COMMIT}}" -X "{{.PACKAGE_PATH}}.date={{.DATE}}"'
+  LDFLAGS_STRING: '-X "{{.PACKAGE_PATH}}.Version={{.VERSION}}" -X "{{.PACKAGE_PATH}}.Commit={{.COMMIT}}" -X "{{.PACKAGE_PATH}}.Date={{.DATE}}"'
   # Add ldflags to Go build/install commands
   GO_BUILD_FLAGS: '-ldflags="{{.LDFLAGS_STRING}}"'
   # Output binary name

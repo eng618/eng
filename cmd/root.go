@@ -22,14 +22,13 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
+	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
@@ -38,10 +37,6 @@ import (
 
 var (
 	cfgFile string
-	// These variables are set at build time using -ldflags
-	version = "dev"     // Default value if not built with ldflags
-	commit  = "none"    // Default value
-	date    = "unknown" // Default value
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -76,7 +71,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Set the version string for the root command's --version flag
-	rootCmd.Version = version // Use the version variable set at build time
+	// Use the exported Version variable from the version package
+	rootCmd.Version = version.Version
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -97,7 +93,7 @@ func init() {
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
-	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(version.VersionCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -127,18 +123,4 @@ func initConfig() {
 	} else {
 		log.Verbose(utils.IsVerbose(rootCmd), "No config file found, using defaults.")
 	}
-}
-
-// versionCmd represents the version command
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number of eng",
-	Long:  `All software has versions. This is eng's. It shows the Git tag, commit hash, and build date.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("eng version: %s\n", version)
-		fmt.Printf("  Git Commit: %s\n", commit)
-		fmt.Printf("  Build Date: %s\n", date)
-		fmt.Printf("  Go Version: %s\n", runtime.Version())
-		fmt.Printf("  OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH)
-	},
 }
