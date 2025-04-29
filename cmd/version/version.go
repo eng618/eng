@@ -1,4 +1,3 @@
-// /Users/EricGarciaMBP/Development/eng/cmd/version/version.go
 package version
 
 import (
@@ -8,8 +7,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/Masterminds/semver/v3" // Import the semver library
+	"github.com/Masterminds/semver/v3"
 	"github.com/eng618/eng/utils"
+	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 )
 
@@ -42,13 +42,12 @@ var VersionCmd = &cobra.Command{
 It shows the Git tag, commit hash, build date, Go version, OS/Arch,
 and checks GitHub for the latest available release.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Print current version details
-		fmt.Printf("eng version: %s\n", Version)
-		fmt.Printf("  Git Commit: %s\n", Commit)
-		fmt.Printf("  Build Date: %s\n", Date)
-		fmt.Printf("  Go Version: %s\n", runtime.Version())
-		fmt.Printf("  OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH)
-		fmt.Println() // Add a newline for separation
+		log.Info("eng version: %s", Version)
+		log.Message("  Git Commit: %s", Commit)
+		log.Message("  Build Date: %s", Date)
+		log.Message("  Go Version: %s", runtime.Version())
+		log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
+		log.Message("") // Add a newline for separation
 
 		// --- Start Spinner ---
 		// Create and start the spinner before the potentially long operation
@@ -63,51 +62,51 @@ and checks GitHub for the latest available release.`,
 		// --- Process Results ---
 		if err != nil {
 			// Make sure spinner is stopped before printing error (defer handles this)
-			fmt.Printf("\n  Warning: Could not check for updates: %v\n", err) // Add newline for cleaner output after spinner stops
+			log.Warn("Could not check for updates: %v", err)
 			return // Exit after printing the warning
 		}
 
 		if latestRelease == nil || latestRelease.TagName == "" {
 			// Make sure spinner is stopped (defer handles this)
-			fmt.Println("\n  Could not determine latest release version.") // Add newline
+			log.Warn("Could not determine latest release version.")
 			return
 		}
 
 		// Compare versions if the current version is not "dev"
 		if Version == "dev" {
-			fmt.Printf("\n  Currently running development version.\n") // Add newline
-			fmt.Printf("  Latest release is %s: %s\n", latestRelease.TagName, latestRelease.HTMLURL)
+			log.Info("Currently running development version.")
+			log.Info("Latest release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
 			return
 		}
 
 		currentSemVer, err := semver.NewVersion(Version)
 		if err != nil {
-			fmt.Printf("\n  Warning: Could not parse current version (%s) for comparison: %v\n", Version, err) // Add newline
-			fmt.Printf("  Latest release is %s: %s\n", latestRelease.TagName, latestRelease.HTMLURL)
+			log.Warn("Could not parse current version (%s) for comparison: %v", Version, err)
+			log.Info("Latest release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL) // Still show latest release info
 			return
 		}
 
 		latestSemVer, err := semver.NewVersion(latestRelease.TagName)
 		if err != nil {
-			fmt.Printf("\n  Warning: Could not parse latest release tag (%s) for comparison: %v\n", latestRelease.TagName, err) // Add newline
+			log.Warn("Could not parse latest release tag (%s) for comparison: %v", latestRelease.TagName, err)
 			return
 		}
 
 		// Perform the comparison
 		if latestSemVer.GreaterThan(currentSemVer) {
-			fmt.Printf("\n  A newer version is available: %s\n", latestRelease.TagName) // Add newline
-			fmt.Printf("  Get it here: %s\n", latestRelease.HTMLURL)
+			log.Success("A newer version is available: %s", latestRelease.TagName)
+			log.Info("  Get it here: %s", latestRelease.HTMLURL) // Info for the link
 		} else if latestSemVer.Equal(currentSemVer) {
-			fmt.Println("\n  You are running the latest version.") // Add newline
+			log.Success("You are running the latest version.")
 		} else {
 			// This case might happen if running a pre-release or dev build newer than the latest stable
-			fmt.Printf("\n  You are running a version newer than the latest release (%s).\n", latestRelease.TagName) // Add newline
+			log.Info("You are running a version newer than the latest release (%s).", latestRelease.TagName)
 		}
 	},
 }
 
 // getLatestRelease fetches the latest release information from GitHub API
-func getLatestRelease(owner, repo string) (*githubReleaseInfo, error) {
+func getLatestRelease(owner, repo string) (release *githubReleaseInfo, err error) {
 	url := fmt.Sprintf(githubAPIURL, owner, repo)
 
 	client := &http.Client{
@@ -126,13 +125,22 @@ func getLatestRelease(owner, repo string) (*githubReleaseInfo, error) {
 		// Network errors, timeouts etc.
 		return nil, fmt.Errorf("failed to fetch releases: %w", err)
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		closeErr := resp.Body.Close()
+		// Only assign the close error if the function wasn't already returning an error
+		if err == nil && closeErr != nil {
+			err = fmt.Errorf("failed to close response body: %w", closeErr)
+		}
+		if closeErr != nil {
+			log.Warn("Error closing response body: %v", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		// Handle common cases like 404 Not Found (no releases) or 403 Forbidden (rate limit)
 		if resp.StatusCode == http.StatusNotFound {
 			// Changed this to return nil error but nil info, as "no releases" isn't strictly an error for the check
-			// return nil, fmt.Errorf("no releases found for repository %s/%s", owner, repo)
 			return nil, nil // Indicate no release found, but not a technical error
 		}
 		if resp.StatusCode == http.StatusForbidden {
@@ -150,7 +158,6 @@ func getLatestRelease(owner, repo string) (*githubReleaseInfo, error) {
 	if releaseInfo.TagName == "" {
 		return nil, fmt.Errorf("latest release found but tag name is empty")
 	}
-
 
 	return &releaseInfo, nil
 }
