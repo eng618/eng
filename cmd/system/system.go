@@ -21,5 +21,5 @@ func init() {
 	SystemCmd.AddCommand(ProxyCmd)
 
 	// Add flags for subcommands if needed
-	FindNonMovieFoldersCmd.Flags().Bool("dry-run", false, "Only print the directories that do not contain movie files")
+	FindNonMovieFoldersCmd.Flags().Bool("dry-run", true, "Perform a dry run without deleting folders. Set to false to enable deletion.") // Default to TRUE for safety
 }
