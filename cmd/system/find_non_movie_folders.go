@@ -3,6 +3,7 @@ package system
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/eng618/eng/utils"
@@ -65,32 +66,24 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 	},
 }
 
-// findNonMovieFolders returns a list of directories under rootDir that do not contain any movie files.
+// findNonMovieFolders returns a list of top-level directories under rootDir that do not contain any movie files anywhere inside them.
 func findNonMovieFolders(isVerbose bool, rootDir string) ([]string, error) {
 	var nonMovieFolders []string
 
-	log.Verbose(isVerbose, "Running: find %s -type d", rootDir)
-	findCmd := exec.Command("find", rootDir, "-type", "d")
-	combinedOutput, err := findCmd.CombinedOutput()
-	outputStr := string(combinedOutput)
+	entries, err := os.ReadDir(rootDir)
 	if err != nil {
-		log.Verbose(isVerbose, "find command error: %v", err)
-		// Continue processing even if find returns error (e.g., missing dirs)
+		return nil, err
 	}
 
-	for _, folder := range strings.Split(outputStr, "\n") {
-		if folder == "" || strings.Contains(folder, "No such file or directory") {
+	for _, entry := range entries {
+		if !entry.IsDir() {
 			continue
 		}
-		
-		log.Verbose(isVerbose, "Checking folder: %s", folder)
-		if _, err := os.Stat(folder); err != nil {
-			log.Verbose(isVerbose, "Skipping missing folder: %s (%v)", folder, err)
-			continue
-		}
+		dirPath := filepath.Join(rootDir, entry.Name())
+		log.Verbose(isVerbose, "Checking top-level directory: %s", dirPath)
 
-		log.Verbose(isVerbose, "Running: find %s -type f (movie extensions)", folder)
-		checkCmd := exec.Command("find", folder, "-type", "f", "(",
+		// Recursively search for movie files in this directory
+		checkCmd := exec.Command("find", dirPath, "-type", "f", "(",
 			"-iname", "*.mp4", "-o",
 			"-iname", "*.mkv", "-o",
 			"-iname", "*.avi", "-o",
@@ -103,15 +96,17 @@ func findNonMovieFolders(isVerbose bool, rootDir string) ([]string, error) {
 			")")
 		files, err := checkCmd.Output()
 		if err != nil {
-			log.Verbose(isVerbose, "Error checking for movie files in %s: %v", folder, err)
+			log.Verbose(isVerbose, "Error checking for movie files in %s: %v", dirPath, err)
 			continue
 		}
+
 		if len(strings.TrimSpace(string(files))) == 0 {
-			log.Verbose(isVerbose, "No movie files found in: %s", folder)
-			nonMovieFolders = append(nonMovieFolders, folder)
+			log.Verbose(isVerbose, "No movie files found in: %s", dirPath)
+			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
-			log.Verbose(isVerbose, "Movie files found in: %s", folder)
+			log.Verbose(isVerbose, "Movie files found in: %s", dirPath)
 		}
 	}
+	
 	return nonMovieFolders, nil
 }
