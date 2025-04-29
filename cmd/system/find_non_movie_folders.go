@@ -21,53 +21,20 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 		}
 
 		directory := args[0]
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		verbose := utils.IsVerbose(cmd)
+		isDryRun, _ := cmd.Flags().GetBool("dry-run")
+		isVerbose := utils.IsVerbose(cmd)
 
-		log.Verbose(verbose, "Searching for directories in: %s", directory)
+		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
 
-		findCmd := exec.Command("find", directory, "-type", "d")
-		combinedOutput, err := findCmd.CombinedOutput()
-		outputStr := string(combinedOutput)
+		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory)
 		if err != nil {
-			log.Warn("find command returned error: %s", err)
-			// Print stderr lines as warnings, but continue
-			for _, line := range strings.Split(outputStr, "\n") {
-				if strings.Contains(line, "No such file or directory") {
-					log.Warn(line)
-				}
-			}
+			log.Error("Error finding non-movie folders: %s", err)
+			return
 		}
 
-		log.Verbose(verbose, "Found directories: %s", strings.TrimSpace(outputStr))
+		log.Verbose(isVerbose, "Found non-movie folders: %s", strings.Join(nonMovieFolders, ", "))
 
-		for _, folder := range strings.Split(outputStr, "\n") {
-			if folder == "" || strings.Contains(folder, "No such file or directory") {
-				continue
-			}
-
-			// Check if folder still exists
-			if _, err := os.Stat(folder); err != nil {
-				log.Warn("Skipping missing folder: %s (%s)", folder, err)
-				continue
-			}
-
-			log.Verbose(verbose, "Checking folder: %s", folder)
-
-			// Check for any movie file downstream in this folder
-			checkCmd := exec.Command("find", folder, "-type", "f", "-iregex", ".*\\.(mp4|mkv|avi|mov|wmv|flv|webm|mpeg|mpg)")
-			files, err := checkCmd.Output()
-			if err != nil {
-				log.Error("Error checking folder %s: %s", folder, err)
-				continue
-			}
-
-			if len(strings.TrimSpace(string(files))) > 0 {
-				// Movie files found, skip deletion
-				log.Verbose(verbose, "Skipping folder (contains movie file): %s", folder)
-				continue
-			}
-
+		for _, folder := range nonMovieFolders {
 			// No movie files found, log all files that would be deleted
 			listFilesCmd := exec.Command("find", folder, "-type", "f")
 			filesToDelete, err := listFilesCmd.Output()
@@ -75,7 +42,8 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 				log.Error("Error listing files in folder %s: %s", folder, err)
 				continue
 			}
-			if verbose {
+
+			if isVerbose {
 				for _, file := range strings.Split(string(filesToDelete), "\n") {
 					if file != "" {
 						log.Warn("Would delete file: %s", file)
@@ -83,7 +51,8 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 				}
 				log.Warn("Would delete folder: %s", folder)
 			}
-			if dryRun {
+
+			if isDryRun {
 				log.Message("Dry-run: Found non-movie folder: %s", folder)
 			} else {
 				log.Message("Deleting non-movie folder: %s", folder)
@@ -94,4 +63,55 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+// findNonMovieFolders returns a list of directories under rootDir that do not contain any movie files.
+func findNonMovieFolders(isVerbose bool, rootDir string) ([]string, error) {
+	var nonMovieFolders []string
+
+	log.Verbose(isVerbose, "Running: find %s -type d", rootDir)
+	findCmd := exec.Command("find", rootDir, "-type", "d")
+	combinedOutput, err := findCmd.CombinedOutput()
+	outputStr := string(combinedOutput)
+	if err != nil {
+		log.Verbose(isVerbose, "find command error: %v", err)
+		// Continue processing even if find returns error (e.g., missing dirs)
+	}
+
+	for _, folder := range strings.Split(outputStr, "\n") {
+		if folder == "" || strings.Contains(folder, "No such file or directory") {
+			continue
+		}
+		
+		log.Verbose(isVerbose, "Checking folder: %s", folder)
+		if _, err := os.Stat(folder); err != nil {
+			log.Verbose(isVerbose, "Skipping missing folder: %s (%v)", folder, err)
+			continue
+		}
+
+		log.Verbose(isVerbose, "Running: find %s -type f (movie extensions)", folder)
+		checkCmd := exec.Command("find", folder, "-type", "f", "(",
+			"-iname", "*.mp4", "-o",
+			"-iname", "*.mkv", "-o",
+			"-iname", "*.avi", "-o",
+			"-iname", "*.mov", "-o",
+			"-iname", "*.wmv", "-o",
+			"-iname", "*.flv", "-o",
+			"-iname", "*.webm", "-o",
+			"-iname", "*.mpeg", "-o",
+			"-iname", "*.mpg",
+			")")
+		files, err := checkCmd.Output()
+		if err != nil {
+			log.Verbose(isVerbose, "Error checking for movie files in %s: %v", folder, err)
+			continue
+		}
+		if len(strings.TrimSpace(string(files))) == 0 {
+			log.Verbose(isVerbose, "No movie files found in: %s", folder)
+			nonMovieFolders = append(nonMovieFolders, folder)
+		} else {
+			log.Verbose(isVerbose, "Movie files found in: %s", folder)
+		}
+	}
+	return nonMovieFolders, nil
 }
