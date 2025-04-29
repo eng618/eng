@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
@@ -61,7 +60,6 @@ By default, --dry-run is true.`,
 		// Update spinner message after scanning is complete
 		spinner.UpdateMessage("Scan complete.")
 		spinner.SetProgressBar(1.0)
-		time.Sleep(200 * time.Millisecond) // Shorter pause
 
 		log.Verbose(isVerbose, "Found %d potential non-movie folders.", len(nonMovieFolders))
 
