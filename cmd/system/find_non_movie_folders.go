@@ -28,7 +28,11 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 		findCmd := exec.Command("find", directory, "-type", "d")
 		folders, err := findCmd.Output()
 		if err != nil {
-			log.Error("Error finding directories: %s", err)
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				log.Error("Error finding directories: %s\n%s", err, string(exitErr.Stderr))
+			} else {
+				log.Error("Error finding directories: %s", err)
+			}
 			return
 		}
 
