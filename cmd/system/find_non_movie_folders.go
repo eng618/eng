@@ -1,6 +1,7 @@
 package system
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 
@@ -26,20 +27,28 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 		log.Verbose(verbose, "Searching for directories in: %s", directory)
 
 		findCmd := exec.Command("find", directory, "-type", "d")
-		folders, err := findCmd.Output()
+		combinedOutput, err := findCmd.CombinedOutput()
+		outputStr := string(combinedOutput)
 		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				log.Error("Error finding directories: %s\n%s", err, string(exitErr.Stderr))
-			} else {
-				log.Error("Error finding directories: %s", err)
+			log.Warn("find command returned error: %s", err)
+			// Print stderr lines as warnings, but continue
+			for _, line := range strings.Split(outputStr, "\n") {
+				if strings.Contains(line, "No such file or directory") {
+					log.Warn(line)
+				}
 			}
-			return
 		}
 
-		log.Verbose(verbose, "Found directories: %s", strings.TrimSpace(string(folders)))
+		log.Verbose(verbose, "Found directories: %s", strings.TrimSpace(outputStr))
 
-		for _, folder := range strings.Split(string(folders), "\n") {
-			if folder == "" {
+		for _, folder := range strings.Split(outputStr, "\n") {
+			if folder == "" || strings.Contains(folder, "No such file or directory") {
+				continue
+			}
+
+			// Check if folder still exists
+			if _, err := os.Stat(folder); err != nil {
+				log.Warn("Skipping missing folder: %s (%s)", folder, err)
 				continue
 			}
 
