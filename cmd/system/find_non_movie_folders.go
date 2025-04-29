@@ -47,6 +47,7 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 				log.Verbose(verbose, "Checking folder: %s", folder)
 			}
 
+			// Check for any movie file downstream in this folder
 			checkCmd := exec.Command("find", folder, "-type", "f", "-iregex", ".*\\.(mp4|mkv|avi|mov|wmv|flv|webm|mpeg|mpg)")
 			files, err := checkCmd.Output()
 			if err != nil {
@@ -55,7 +56,11 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 			}
 
 			if verbose {
-				log.Verbose(verbose, "Files found in folder %s: %s", folder, strings.TrimSpace(string(files)))
+				if strings.TrimSpace(string(files)) == "" {
+					log.Verbose(verbose, "Would delete folder: %s", folder)
+				} else {
+					log.Verbose(verbose, "Skipping folder (contains movie file): %s", folder)
+				}
 			}
 
 			if strings.TrimSpace(string(files)) == "" {
