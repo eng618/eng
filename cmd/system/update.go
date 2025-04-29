@@ -44,6 +44,20 @@ var UpdateCmd = &cobra.Command{
 	},
 }
 
+var BrewCmd = &cobra.Command{
+	Use:   "brew",
+	Short: "Update Homebrew packages only",
+	Long:  `This command updates only Homebrew packages, skipping system updates.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		isVerbose := utils.IsVerbose(cmd)
+		updateBrew(isVerbose)
+	},
+}
+
+func init() {
+	UpdateCmd.AddCommand(BrewCmd)
+}
+
 func updateUbuntu(isVerbose bool) {
 	log.Message("Running system update for Ubuntu/Linux...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
