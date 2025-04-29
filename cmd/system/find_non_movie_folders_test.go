@@ -10,11 +10,24 @@ import (
 func TestFindNonMovieFolders(t *testing.T) {
 	dir := t.TempDir()
 
+	createDir := func(name string) string {
+		p := filepath.Join(dir, name)
+		if err := os.MkdirAll(p, 0o755); err != nil {
+			t.Fatalf("failed to create dir %s: %v", p, err)
+		}
+		return p
+	}
+	writeFile := func(dir, fname string) {
+		f := filepath.Join(dir, fname)
+		if err := os.WriteFile(f, []byte("dummy"), 0o644); err != nil {
+			t.Fatalf("failed to write file %s: %v", f, err)
+		}
+	}
+
 	t.Run("movie file in root", func(t *testing.T) {
-		movieDir := filepath.Join(dir, "MovieRoot")
-		os.Mkdir(movieDir, 0o755)
-		os.WriteFile(filepath.Join(movieDir, "movie.mkv"), []byte("dummy"), 0o644)
-		folders, _ := findNonMovieFolders(false, dir)
+		movieDir := createDir("MovieRoot")
+		writeFile(movieDir, "movie.mkv")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		for _, f := range folders {
 			if f == movieDir {
 				t.Errorf("Should not mark folder with movie file for deletion: %s", f)
@@ -23,10 +36,9 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("non-movie file in root", func(t *testing.T) {
-		nonMovieDir := filepath.Join(dir, "NonMovieRoot")
-		os.Mkdir(nonMovieDir, 0o755)
-		os.WriteFile(filepath.Join(nonMovieDir, "file.txt"), []byte("dummy"), 0o644)
-		folders, _ := findNonMovieFolders(false, dir)
+		nonMovieDir := createDir("NonMovieRoot")
+		writeFile(nonMovieDir, "file.txt")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		found := false
 		for _, f := range folders {
 			if f == nonMovieDir {
@@ -39,9 +51,8 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("empty folder", func(t *testing.T) {
-		emptyDir := filepath.Join(dir, "EmptyRoot")
-		os.Mkdir(emptyDir, 0o755)
-		folders, _ := findNonMovieFolders(false, dir)
+		emptyDir := createDir("EmptyRoot")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		found := false
 		for _, f := range folders {
 			if f == emptyDir {
@@ -54,10 +65,10 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("nested movie file", func(t *testing.T) {
-		nestedDir := filepath.Join(dir, "NestedMovie")
-		os.MkdirAll(filepath.Join(nestedDir, "sub"), 0o755)
-		os.WriteFile(filepath.Join(nestedDir, "sub", "movie.mp4"), []byte("dummy"), 0o644)
-		folders, _ := findNonMovieFolders(false, dir)
+		nestedDir := createDir("NestedMovie")
+		sub := createDir(filepath.Join("NestedMovie", "sub"))
+		writeFile(sub, "movie.mp4")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		for _, f := range folders {
 			if f == nestedDir {
 				t.Errorf("Should not mark parent folder with nested movie file for deletion: %s", f)
@@ -66,10 +77,10 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("nested non-movie file", func(t *testing.T) {
-		nestedNonMovie := filepath.Join(dir, "NestedNonMovie")
-		os.MkdirAll(filepath.Join(nestedNonMovie, "sub"), 0o755)
-		os.WriteFile(filepath.Join(nestedNonMovie, "sub", "file.doc"), []byte("dummy"), 0o644)
-		folders, _ := findNonMovieFolders(false, dir)
+		nestedNonMovie := createDir("NestedNonMovie")
+		sub := createDir(filepath.Join("NestedNonMovie", "sub"))
+		writeFile(sub, "file.doc")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		found := false
 		for _, f := range folders {
 			if f == nestedNonMovie {
@@ -82,11 +93,11 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("mixed content", func(t *testing.T) {
-		mixedDir := filepath.Join(dir, "MixedContent")
-		os.MkdirAll(filepath.Join(mixedDir, "sub"), 0o755)
-		os.WriteFile(filepath.Join(mixedDir, "file.txt"), []byte("dummy"), 0o644)
-		os.WriteFile(filepath.Join(mixedDir, "sub", "movie.avi"), []byte("dummy"), 0o644)
-		folders, _ := findNonMovieFolders(false, dir)
+		mixedDir := createDir("MixedContent")
+		sub := createDir(filepath.Join("MixedContent", "sub"))
+		writeFile(mixedDir, "file.txt")
+		writeFile(sub, "movie.avi")
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		for _, f := range folders {
 			if f == mixedDir {
 				t.Errorf("Should not mark folder with any movie file (even nested) for deletion: %s", f)
@@ -95,10 +106,9 @@ func TestFindNonMovieFolders(t *testing.T) {
 	})
 
 	t.Run("deleted folder", func(t *testing.T) {
-		deletedDir := filepath.Join(dir, "DeletedFolder")
-		os.Mkdir(deletedDir, 0o755)
+		deletedDir := createDir("DeletedFolder")
 		os.RemoveAll(deletedDir)
-		folders, _ := findNonMovieFolders(false, dir)
+		folders, _ := findNonMovieFolders(false, dir, nil)
 		for _, f := range folders {
 			if f == deletedDir {
 				t.Errorf("Should not include deleted/missing folder: %s", f)

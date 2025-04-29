@@ -1,6 +1,7 @@
 package system
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,13 +30,12 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 
 		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
 
-		spinner := utils.NewSpinner("Scanning for non-movie folders...")
+		spinner := utils.NewProgressSpinner("Scanning for non-movie folders...")
 		spinner.Start()
 		defer spinner.Stop()
 
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, func(done, total int) {
-			// Update the spinner with the progress
-			spinner.SetProgress(float64(done) / float64(total))
+			spinner.SetProgressBar(float64(done)/float64(total), fmt.Sprintf("Scanning... (%d/%d)", done, total))
 		})
 		spinner.Stop()
 		if err != nil {
