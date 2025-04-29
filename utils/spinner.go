@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -27,4 +28,12 @@ func (sp *Spinner) Stop() {
 
 func (sp *Spinner) UpdateMessage(msg string) {
 	sp.s.Suffix = " " + msg
+}
+
+func (sp *Spinner) SetProgress(progress float64, msg ...string) {
+	if len(msg) > 0 {
+		sp.s.Suffix = fmt.Sprintf(" %s", msg[0])
+	} else {
+		sp.s.Suffix = fmt.Sprintf(" (%.0f%%)", progress*100)
+	}
 }

@@ -33,7 +33,10 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 		spinner.Start()
 		defer spinner.Stop()
 
-		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory)
+		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, func(done, total int) {
+			// Update the spinner with the progress
+			spinner.SetProgress(float64(done) / float64(total))
+		})
 		spinner.Stop()
 		if err != nil {
 			log.Error("Error finding non-movie folders: %s", err)
@@ -75,13 +78,21 @@ var FindNonMovieFoldersCmd = &cobra.Command{
 }
 
 // findNonMovieFolders returns a list of top-level directories under rootDir that do not contain any movie files anywhere inside them.
-func findNonMovieFolders(isVerbose bool, rootDir string) ([]string, error) {
+func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, total int)) ([]string, error) {
 	var nonMovieFolders []string
 
 	entries, err := os.ReadDir(rootDir)
 	if err != nil {
 		return nil, err
 	}
+
+	total := 0
+	for _, entry := range entries {
+		if entry.IsDir() {
+			total++
+		}
+	}
+	done := 0
 
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -107,14 +118,16 @@ func findNonMovieFolders(isVerbose bool, rootDir string) ([]string, error) {
 			log.Verbose(isVerbose, "Error checking for movie files in %s: %v", dirPath, err)
 			continue
 		}
-
 		if len(strings.TrimSpace(string(files))) == 0 {
 			log.Verbose(isVerbose, "No movie files found in: %s", dirPath)
 			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
 			log.Verbose(isVerbose, "Movie files found in: %s", dirPath)
 		}
+		done++
+		if progress != nil {
+			progress(done, total)
+		}
 	}
-	
 	return nonMovieFolders, nil
 }
