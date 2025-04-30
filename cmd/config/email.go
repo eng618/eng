@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// EmailCmd defines the command for setting the user's email in the configuration.
 var EmailCmd = &cobra.Command{
 	Use:   "email",
 	Short: "Update config email",

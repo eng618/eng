@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// VerboseCmd defines the command for managing the verbose output setting.
 var VerboseCmd = &cobra.Command{
 	Use:   "verbose",
 	Short: "Show or set the current verbose flag value",

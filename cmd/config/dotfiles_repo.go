@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// DotfilesRepoCmd defines the command for setting the local dotfiles repository path.
 var DotfilesRepoCmd = &cobra.Command{
 	Use:   "dotfiles-repo",
 	Short: "Set dotfiles repo path",
