@@ -6,7 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
@@ -31,7 +35,12 @@ const (
 	githubRepoName  = "eng"
 	githubAPIURL    = "https://api.github.com/repos/%s/%s/releases/latest"
 	requestTimeout  = 5 * time.Second // Timeout for the GitHub API request.
+	brewCmd         = "brew"          // Command for Homebrew
+	brewPkgName     = "eng"           // Package name in Homebrew
 )
+
+// Flag variable for the --update flag
+var updateFlag bool
 
 // githubReleaseInfo defines the structure for decoding the relevant fields
 // from the GitHub API's latest release endpoint response.
@@ -42,6 +51,7 @@ type githubReleaseInfo struct {
 
 // VersionCmd represents the Cobra command for 'eng version'.
 // It displays the current version details and checks GitHub for the latest release.
+// Includes an optional --update flag to attempt an update via Homebrew.
 var VersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number of eng and check for updates",
@@ -49,135 +59,232 @@ var VersionCmd = &cobra.Command{
 and target OS/Architecture.
 
 It also checks the GitHub repository for the latest official release
-and compares it with the currently running version.`,
+and compares it with the currently running version.
+
+If a newer version is available and eng was installed via Homebrew,
+you can use the --update flag to attempt an automatic upgrade.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("eng version: %s", Version)
-		log.Message("  Git Commit: %s", Commit)
-		log.Message("  Build Date: %s", Date)
-		log.Message("  Go Version: %s", runtime.Version())
-		log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
-		log.Message("") // Separator line
+		printVersionInfo()
 
 		sp := utils.NewSpinner("Checking for latest version...")
 		sp.Start()
-
 		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName)
-
-		// Stop the spinner *before* printing the results so the output is clean.
-		sp.Stop()
+		sp.Stop() // Stop spinner before printing results or attempting update
 
 		if err != nil {
 			log.Warn("Could not check for updates: %v", err)
 			return
 		}
 
-		// Handle cases where no release information was found (e.g., 404, empty response)
 		if latestRelease == nil || latestRelease.TagName == "" {
 			log.Warn("Could not determine the latest release version from GitHub.")
 			return
 		}
 
-		// If running a development build, just show the latest release info.
 		if Version == "dev" {
-			log.Info("Currently running development version.")
+			handleDevVersion(latestRelease)
+			return
+		}
+
+		currentSemVer, latestSemVer, err := parseVersions(Version, latestRelease.TagName)
+		if err != nil {
+			// Errors are logged within parseVersions, just provide latest release info
 			log.Info("Latest release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
 			return
 		}
 
-		// Attempt to parse the current version string as semantic version.
-		currentSemVer, err := semver.NewVersion(Version)
-		if err != nil {
-			log.Warn("Could not parse current version (%s) for comparison: %v", Version, err)
-			// Still provide info about the latest release even if comparison fails.
-			log.Info("Latest release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
-			return
-		}
-
-		// Attempt to parse the latest release tag name as semantic version.
-		// GitHub tags might not always be perfect semver (e.g., missing 'v'),
-		// but NewVersion is generally robust enough.
-		latestSemVer, err := semver.NewVersion(latestRelease.TagName)
-		if err != nil {
-			log.Warn("Could not parse latest release tag (%s) as semver: %v", latestRelease.TagName, err)
-			// Log the raw tag name if parsing fails.
-			log.Info("Latest release tag is: %s", latestRelease.TagName)
-			log.Info("  Release page: %s", latestRelease.HTMLURL)
-			return
-		}
-
-		// Compare the versions and report the result.
-		if latestSemVer.GreaterThan(currentSemVer) {
-			log.Success("A newer version is available: %s", latestRelease.TagName)
-			log.Info("  Get it here: %s", latestRelease.HTMLURL)
-		} else if latestSemVer.Equal(currentSemVer) {
-			log.Success("You are running the latest version.")
-		} else {
-			// This case implies the current version is newer than the latest *stable* release
-			// (e.g., running a pre-release or a local build from a newer commit).
-			log.Info("You are running a version newer than the latest official release (%s).", latestRelease.TagName)
-		}
+		compareAndHandleUpdate(currentSemVer, latestSemVer, latestRelease)
 	},
 }
 
+// init registers the command and its flags.
+func init() {
+	// Add the --update flag
+	VersionCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+	// Note: You would typically add VersionCmd to your root command in cmd/root.go
+	// Example: rootCmd.AddCommand(version.VersionCmd)
+}
+
+// printVersionInfo displays the static build and runtime information.
+func printVersionInfo() {
+	log.Info("eng version: %s", Version)
+	log.Message("  Git Commit: %s", Commit)
+	log.Message("  Build Date: %s", Date)
+	log.Message("  Go Version: %s", runtime.Version())
+	log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
+	log.Message("") // Separator line
+}
+
+// handleDevVersion logs information when running a development version.
+func handleDevVersion(latestRelease *githubReleaseInfo) {
+	log.Info("Currently running development version.")
+	log.Info("Latest official release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
+	if updateFlag {
+		log.Info("--update flag ignored when running a dev version.")
+	}
+}
+
+// parseVersions attempts to parse both current and latest versions using semver.
+// It logs warnings if parsing fails.
+func parseVersions(currentVerStr, latestTagStr string) (current, latest *semver.Version, err error) {
+	current, err = semver.NewVersion(currentVerStr)
+	if err != nil {
+		log.Warn("Could not parse current version (%s) for comparison: %v", currentVerStr, err)
+		return nil, nil, err // Return error to signal failure
+	}
+
+	latest, err = semver.NewVersion(latestTagStr)
+	if err != nil {
+		log.Warn("Could not parse latest release tag (%s) as semver: %v", latestTagStr, err)
+		// Log raw tag info if parsing fails, but don't return an error here,
+		// as we might still want to show the current version status.
+		// The calling function will handle the nil latest version.
+		return current, nil, err // Return error to signal failure
+	}
+	return current, latest, nil
+}
+
+// compareAndHandleUpdate compares versions and handles the update logic if requested.
+func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestRelease *githubReleaseInfo) {
+	brewDetected := isBrewInstallation()
+
+	if latestSemVer.GreaterThan(currentSemVer) {
+		log.Success("A newer version is available: %s", latestRelease.TagName)
+
+		if updateFlag {
+			if brewDetected {
+				log.Info("Attempting update via Homebrew...")
+				err := runBrewUpgrade()
+				if err != nil {
+					log.Error("Brew update failed: %v", err)
+					log.Info("  Please try manually: %s upgrade %s", brewCmd, brewPkgName)
+					log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
+				} else {
+					log.Success("Update via %s successful!", brewCmd)
+					// Optionally: You could re-verify the version here, but exiting is simpler.
+				}
+				// Exit after attempting update, regardless of success/failure
+				// to avoid printing redundant "Get it here" messages.
+				return
+			} else {
+				log.Warn("--update flag specified, but cannot automatically update.")
+				log.Info("  Installation method not recognized as Homebrew.")
+				log.Info("  Get the latest version manually: %s", latestRelease.HTMLURL)
+			}
+		} else {
+			// Just inform the user how to update
+			if brewDetected {
+				log.Info("  Run `%s upgrade %s` to update.", brewCmd, brewPkgName)
+			}
+			log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
+		}
+	} else if latestSemVer.Equal(currentSemVer) {
+		log.Success("You are running the latest version.")
+		if updateFlag {
+			log.Info("--update flag specified, but no newer version is available.")
+		}
+	} else {
+		// Current version is newer than the latest official release
+		log.Info("You are running a version newer than the latest official release (%s).", latestRelease.TagName)
+		if updateFlag {
+			log.Info("--update flag specified, but you are already running a newer version.")
+		}
+	}
+}
+
+// isBrewInstallation checks if the executable path suggests a Homebrew installation.
+// This is a heuristic and might not cover all edge cases or future Brew changes.
+func isBrewInstallation() bool {
+	executablePath, err := os.Executable()
+	if err != nil {
+		log.Debug("Could not get executable path: %v", err)
+		return false
+	}
+
+	// Resolve symlinks, as brew often uses them (e.g., /usr/local/bin/eng -> ../Cellar/eng/0.1.0/bin/eng)
+	resolvedPath, err := filepath.EvalSymlinks(executablePath)
+	if err != nil {
+		// If symlink resolution fails, use the original path
+		resolvedPath = executablePath
+		log.Debug("Could not resolve symlink for executable path: %v", err)
+	}
+
+	// Common Homebrew installation prefixes (Intel and Apple Silicon)
+	brewPrefixes := []string{"/usr/local/Cellar", "/opt/homebrew/Cellar"}
+
+	for _, prefix := range brewPrefixes {
+		if strings.HasPrefix(resolvedPath, prefix) {
+			log.Debug("Detected Homebrew installation path: %s", resolvedPath)
+			// Check if 'brew' command actually exists for higher confidence
+			_, err := exec.LookPath(brewCmd)
+			if err != nil {
+				log.Debug("Executable path looks like Brew, but '%s' command not found in PATH.", brewCmd)
+				return false // Path looks right, but brew command missing? Be cautious.
+			}
+			return true
+		}
+	}
+
+	log.Debug("Executable path does not match known Homebrew prefixes: %s", resolvedPath)
+	return false
+}
+
+// runBrewUpgrade executes the 'brew upgrade eng' command.
+// It streams the command's output directly to the user's terminal.
+func runBrewUpgrade() error {
+	cmd := exec.Command(brewCmd, "upgrade", brewPkgName)
+	cmd.Stdout = os.Stdout // Pipe brew's stdout to our stdout
+	cmd.Stderr = os.Stderr // Pipe brew's stderr to our stderr
+
+	log.Debug("Executing command: %s", cmd.String()) // Log the command being run
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("'%s upgrade %s' command failed: %w", brewCmd, brewPkgName, err)
+	}
+	return nil
+}
+
 // getLatestRelease fetches the latest release information for a given GitHub repository.
-// It sends a GET request to the GitHub API's 'latest release' endpoint.
-// If the repository has no releases (404 Not Found), it returns (nil, nil).
-// For other HTTP errors or decoding issues, it returns an error.
 func getLatestRelease(owner, repo string) (release *githubReleaseInfo, err error) {
 	url := fmt.Sprintf(githubAPIURL, owner, repo)
-
-	client := &http.Client{
-		Timeout: requestTimeout,
-	}
+	client := &http.Client{Timeout: requestTimeout}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	// Request the specific GitHub API v3 format.
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("http request failed: %w", err)
 	}
-
-	// Ensure the response body is closed, handling potential errors during close.
 	defer func() {
 		closeErr := resp.Body.Close()
 		if err == nil && closeErr != nil {
-			// Only assign closeErr if no other error occurred during the function.
 			err = fmt.Errorf("failed to close response body: %w", closeErr)
 		} else if closeErr != nil {
-			// Log if an error occurs during close but another error already happened.
-			log.Error("Error closing response body: %v", closeErr) // Use Debug for less critical errors
+			log.Debug("Error closing response body: %v", closeErr)
 		}
 	}()
 
-	// Handle non-successful status codes.
 	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
 		case http.StatusNotFound:
-			// Treat "no releases found" as a valid state, not an error.
-			return nil, nil
+			return nil, nil // No releases found is not an error here
 		case http.StatusForbidden:
-			// Likely rate limiting or authentication issue.
 			return nil, fmt.Errorf("github API request forbidden (status %d). Check rate limits or token permissions", resp.StatusCode)
 		default:
-			// Catch-all for other unexpected statuses.
 			return nil, fmt.Errorf("unexpected status code %d from GitHub API", resp.StatusCode)
 		}
 	}
 
-	// Decode the JSON response body into the githubReleaseInfo struct.
 	var releaseInfo githubReleaseInfo
 	if decodeErr := json.NewDecoder(resp.Body).Decode(&releaseInfo); decodeErr != nil {
 		return nil, fmt.Errorf("failed to decode GitHub API response: %w", decodeErr)
 	}
-
-	// Basic validation: Ensure the tag name is present.
 	if releaseInfo.TagName == "" {
-		// This shouldn't typically happen for the /latest endpoint if status is 200 OK.
 		return nil, fmt.Errorf("received success status but latest release tag name is empty")
 	}
 

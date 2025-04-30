@@ -5,6 +5,7 @@ that allow you to simply write output to the screen for various scenarios.
 - Start     ==> Blue
 - Success   ==> Green
 - Info      ==> Cyan
+- Debug     ==> Magenta
 - Warn      ==> Yellow
 - Error     ==> Red
 - Fatal     ==> Red (and exits the program)
@@ -65,6 +66,11 @@ func Success(format string, a ...any) {
 // Info prints a message to the terminal in cyan, indicating informational output.
 func Info(format string, a ...any) {
 	color.Cyan("==> "+format, a...)
+}
+
+// Debug prints a message to the terminal in magenta, for debugging output.
+func Debug(format string, a ...any) {
+	color.Magenta("==> "+format, a...)
 }
 
 // Warn prints a message to the terminal in yellow, indicating a warning.
