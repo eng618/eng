@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
+// directories that do not contain common video file types.
 var FindNonMovieFoldersCmd = &cobra.Command{
 	Use:   "findNonMovieFolders [directory]",
 	Short: "Find and optionally delete non-movie folders",
@@ -21,6 +23,7 @@ that do not contain video files (mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, 
 It identifies top-level subdirectories within the supplied directory that lack
 any such files anywhere within their structure.
 
+It lists the files within the identified folders before taking action.
 It can optionally delete these identified directories if the --dry-run flag is set to false.
 By default, --dry-run is true.`,
 	Args: cobra.ExactArgs(1),
@@ -52,21 +55,16 @@ By default, --dry-run is true.`,
 			spinner.SetProgressBar(progress, fmt.Sprintf("Scanning... (%d/%d)", done, total))
 		})
 
-		// --- Explicitly Stop Spinner ---
+		// Explicitly Stop Spinner before printing results
 		if err != nil {
 			spinner.Stop() // Stop spinner even if there was an error during scan
 			log.Error("Error finding non-movie folders: %s", err)
 			return
 		}
-
-		// Update spinner message to final state and stop it *before* printing results
 		spinner.UpdateMessage("Scan complete.")
 		spinner.SetProgressBar(1.0) // Ensure it shows 100%
-		spinner.Stop()              // Stop the spinner now!
-		// Give the terminal a brief moment to process the spinner stop, might help prevent race conditions
-		time.Sleep(100 * time.Millisecond)
-
-		// --- End Spinner Stop ---
+		spinner.Stop()
+		time.Sleep(100 * time.Millisecond) // Allow terminal to process spinner stop
 
 		log.Verbose(isVerbose, "Found %d potential non-movie folders.", len(nonMovieFolders))
 
@@ -75,74 +73,89 @@ By default, --dry-run is true.`,
 			return
 		}
 
-		// Now print the processing message *after* the spinner is gone
-		log.Message("\nProcessing %d non-movie folder(s)...", len(nonMovieFolders)) // Added newline for clarity
+		log.Message("\nProcessing %d non-movie folder(s)...", len(nonMovieFolders))
 
 		deletedCount := 0
 		skippedCount := 0
 		errorMessages := []string{}
 
 		for _, folder := range nonMovieFolders {
-			// List files for logging purposes, handle potential errors
-			listFilesCmd := exec.Command("find", folder, "-type", "f")
+			// List files within the folder for detailed output.
+			// Use find to get relative paths from within the folder itself.
+			listFilesCmd := exec.Command("find", ".", "-type", "f") // Find files relative to the folder
+			listFilesCmd.Dir = folder                               // Execute the command *inside* the target folder
+
 			filesToDeleteBytes, listErr := listFilesCmd.Output()
 
-			// Prepare file list string for logging
-			var filesListStr string
+			var actualFiles []string
 			var fileCount int
+			var listErrorString string
+
 			if listErr != nil {
-				// Capture the specific error for later display
+				// Capture the specific error for later display if listing fails.
 				errMsg := fmt.Sprintf("Could not list files in folder %s (may be empty or permission issue): %s", folder, listErr)
-				log.Warn(errMsg) // Log immediately as warning
-				errorMessages = append(errorMessages, errMsg) // Also collect if needed later
-				filesListStr = "(error listing files)"
+				log.Warn(errMsg)
+				errorMessages = append(errorMessages, errMsg)
+				listErrorString = "(error listing files)"
 				fileCount = 0 // Assume 0 if we can't list
 			} else {
 				filesList := strings.Split(strings.TrimSpace(string(filesToDeleteBytes)), "\n")
-				actualFiles := []string{}
+				// Filter out empty strings which can happen if the output is empty.
 				if len(filesList) > 0 && filesList[0] != "" {
 					actualFiles = filesList
 				}
 				fileCount = len(actualFiles)
-
-				if isVerbose && fileCount > 0 {
-					log.Info("Files within %s:", folder)
-					for _, file := range actualFiles {
-						log.Info("  - %s", file)
-					}
-				} else if isVerbose {
-					log.Info("Folder %s is empty or contains only empty subdirectories.", folder)
-				}
-				filesListStr = fmt.Sprintf("%d files/items", fileCount)
+				listErrorString = "" // No error string needed if successful
 			}
 
-
+			// Output the folder and its contents (or status)
 			if isDryRun {
-				log.Message("[Dry Run] Would delete folder: %s (%s)", folder, filesListStr)
+				log.Message("[Dry Run] Would delete folder: %s", folder)
+				if listErrorString != "" {
+					log.Message("  %s", listErrorString) // Show error if listing failed
+				} else if fileCount > 0 {
+					for _, file := range actualFiles {
+						// Construct a display path relative to the parent of the folder being processed.
+						displayPath := filepath.Join(filepath.Base(folder), strings.TrimPrefix(file, "./"))
+						log.Message("  - %s", displayPath)
+					}
+				} else {
+					log.Message("  (Contains no files or only empty subdirectories)")
+				}
 				skippedCount++
-			} else {
-				log.Warn("Deleting non-movie folder: %s (%s)", folder, filesListStr)
+			} else { // Not Dry Run
+				log.Warn("Preparing to delete non-movie folder: %s", folder)
+				if listErrorString != "" {
+					log.Warn("  %s", listErrorString) // Show list error before attempting delete
+				} else if fileCount > 0 {
+					log.Message("  Files within this folder:")
+					for _, file := range actualFiles {
+						displayPath := filepath.Join(filepath.Base(folder), strings.TrimPrefix(file, "./"))
+						log.Message("    - %s", displayPath)
+					}
+				} else {
+					log.Message("  (Folder contains no files or only empty subdirectories)")
+				}
+
+				// Perform the deletion
+				log.Warn("Executing delete: rm -rf %s", folder)
 				deleteCmd := exec.Command("rm", "-rf", "--", folder)
 				if err := deleteCmd.Run(); err != nil {
 					errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
 					log.Error(errMsg)
-					errorMessages = append(errorMessages, errMsg) // Collect error
+					errorMessages = append(errorMessages, errMsg)
 					skippedCount++
 				} else {
 					log.Success("Deleted: %s", folder)
 					deletedCount++
 				}
 			}
+			log.Message("") // Add a blank line between folder processing for readability
 		}
 
 		// Final summary
-		log.Message("") // Add a blank line before summary for better spacing
 		if len(errorMessages) > 0 {
 			log.Warn("Encountered %d error(s) during processing.", len(errorMessages))
-			// Optionally print collected errors again here if needed
-			// for _, errMsg := range errorMessages {
-			// 	log.Warn("  - %s", errMsg)
-			// }
 		}
 
 		if isDryRun {
@@ -153,7 +166,18 @@ By default, --dry-run is true.`,
 	},
 }
 
-// findNonMovieFolders function remains the same...
+// findNonMovieFolders scans the immediate subdirectories of rootDir.
+// It returns a slice of paths to subdirectories that do not contain any files
+// matching common video extensions (recursively within each subdirectory).
+//
+// Parameters:
+//   - isVerbose: If true, logs verbose messages during the scan.
+//   - rootDir: The path to the directory whose subdirectories will be scanned.
+//   - progress: A callback function to report progress (done, total). Can be nil.
+//
+// Returns:
+//   - A slice of strings, where each string is the absolute path to a non-movie folder.
+//   - An error if reading the root directory fails or if there's an unexpected issue executing 'find'.
 func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, total int)) ([]string, error) {
 	var nonMovieFolders []string
 
@@ -162,6 +186,7 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 		return nil, fmt.Errorf("failed to read directory %s: %w", rootDir, err)
 	}
 
+	// Filter for directories only
 	var dirEntries []os.DirEntry
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -173,14 +198,15 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 	done := 0
 
 	if progress != nil {
-		progress(done, total)
+		progress(done, total) // Initial progress report (0/total)
 	}
 
 	for _, entry := range dirEntries {
 		dirPath := filepath.Join(rootDir, entry.Name())
 		log.Verbose(isVerbose, "Checking directory: %s", dirPath)
 
-		// Use find to search recursively for any movie file.
+		// Use find to search recursively for *any* movie file within the subdirectory.
+		// The command uses -quit to exit immediately after finding the first match for efficiency.
 		checkCmd := exec.Command("find", dirPath, "-type", "f", "(",
 			"-iname", "*.mp4", "-o",
 			"-iname", "*.mkv", "-o",
@@ -192,22 +218,31 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 			"-iname", "*.mpeg", "-o",
 			"-iname", "*.mpg", "-o",
 			"-iname", "*.m4v",
-			")", "-print") // Removed -quit
+			")", "-print", "-quit")
 
 		output, err := checkCmd.Output()
 
+		// Check the error type. An ExitError is expected if find exits due to -quit
+		// (finding a file) or if it finds nothing. Any other error is unexpected.
 		if err != nil {
-			if _, ok := err.(*exec.ExitError); !ok {
-				log.Warn("Error executing find command in %s: %v. Skipping directory.", dirPath, err)
+			exitErr, ok := err.(*exec.ExitError)
+			// If it's NOT an ExitError, it's some other problem (permissions, command not found etc.)
+			if !ok {
+				log.Warn("Unexpected error executing find command in %s: %v. Skipping directory.", dirPath, err)
 				done++
 				if progress != nil {
 					progress(done, total)
 				}
-				continue
+				continue // Skip this directory due to the error
 			}
+			// If it *is* an ExitError, we proceed to check the output length.
+			// An ExitError with non-empty output means -quit worked (movie file found).
+			// An ExitError with empty output means nothing was found.
+			_ = exitErr // Avoid unused variable error if not debugging
 		}
 
-		if len(output) == 0 {
+		// If the output is empty, no movie files were found.
+		if len(strings.TrimSpace(string(output))) == 0 {
 			log.Verbose(isVerbose, "No movie files found in: %s", dirPath)
 			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
@@ -218,7 +253,7 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 		if progress != nil {
 			progress(done, total)
 		}
-	} // End of loop through directories
+	}
 
 	return nonMovieFolders, nil
 }
