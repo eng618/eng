@@ -30,9 +30,10 @@ builds:
       - arm64
     # Inject version info using ldflags and Goreleaser's template variables
     ldflags:
-      - -X github.com/eng618/eng/cmd.version={{.Version}}
-      - -X github.com/eng618/eng/cmd.commit={{.ShortCommit}}
-      - -X github.com/eng618/eng/cmd.date={{.Date}}
+      - -s -w # Strip symbols and debug info
+      - -X github.com/eng618/eng/cmd/version.Version={{.Version}}
+      - -X github.com/eng618/eng/cmd/version.Commit={{.ShortCommit}} # Use ShortCommit for brevity
+      - -X github.com/eng618/eng/cmd/version.Date={{.Date}} # Use GoReleaser's build date
 
 archives:
   - formats:
@@ -54,7 +55,7 @@ checksum:
   name_template: 'checksums.txt'
 snapshot:
   # Use commit hash for snapshot version template for clarity
-  version_template: "{{ .ShortCommit }}-next"
+  version_template: '{{ .ShortCommit }}-next'
 
 changelog:
   sort: asc
