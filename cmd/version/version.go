@@ -177,9 +177,10 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 		} else {
 			// Just inform the user how to update
 			if brewDetected {
-				log.Info("  Run `%s upgrade %s` to update.", brewCmd, brewPkgName)
+				log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
+			} else { // If not brew detected, suggest go install
+				log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 			}
-			log.Info("  Or try: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 			log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 		}
 	} else if latestSemVer.Equal(currentSemVer) {
