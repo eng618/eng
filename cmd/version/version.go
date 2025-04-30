@@ -211,8 +211,12 @@ func isBrewInstallation(isVerbose bool) bool {
 		log.Verbose(isVerbose, "Could not resolve symlink for executable path: %v", err)
 	}
 
-	// Common Homebrew installation prefixes (Intel and Apple Silicon)
-	brewPrefixes := []string{"/usr/local/Cellar", "/opt/homebrew/Cellar"}
+	// Common Homebrew installation prefixes:
+	// - macOS Intel: /usr/local/Cellar
+	// - macOS Apple Silicon: /opt/homebrew/Cellar
+	// - Linux (Linuxbrew): /home/linuxbrew/.linuxbrew/Cellar
+	brewPrefixes := []string{"/usr/local/Cellar", "/opt/homebrew/Cellar", "/home/linuxbrew/.linuxbrew/Cellar"}
+
 
 	for _, prefix := range brewPrefixes {
 		if strings.HasPrefix(resolvedPath, prefix) {
