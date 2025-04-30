@@ -19,11 +19,12 @@ import (
 // Parameters:
 //   - c: A pointer to an exec.Cmd struct representing the command to be executed.
 //
-// The function starts the command and waits for it to finish. If the command exits with an error,
-// it logs the error and exits gracefully. If the command completes successfully, it logs a success message
-// and exits with a status code of 0.
-func StartChildProcess(c *exec.Cmd) {
-	c.Stdin = os.Stdin
+// Returns:
+//   - error: An error if the command fails to start or exits with a non-zero status.
+//     Returns nil if the command completes successfully.
+//
+// The function starts the command and waits for it to finish.
+func StartChildProcess(c *exec.Cmd) error {
 	c.Stdout = log.Writer()
 	c.Stderr = log.ErrorWriter()
 
@@ -33,7 +34,9 @@ func StartChildProcess(c *exec.Cmd) {
 
 	// Starting the dev command
 	err := c.Start()
-	cobra.CheckErr(err)
+	if err != nil {
+		return err // Return the error instead of calling cobra.CheckErr
+	}
 
 	go func() {
 		// Wait for a signal and forward it to the child process.
@@ -45,16 +48,11 @@ func StartChildProcess(c *exec.Cmd) {
 	// Wait for the command to finish.
 	if err := c.Wait(); err != nil {
 		// Though the child process failed, we can still log the error and exit gracefully.
-		log.Error("child process exited with error: %s", err)
-
-		// c.ProcessState.Exited() = false when the process exited because of a signal
-		if !c.ProcessState.Exited() {
-			os.Exit(0)
-		}
-	} else {
-		log.Success("command completed successfully")
-		os.Exit(0)
+		log.Debug("child process exited with error: %s", err) // Log as debug, return the error for handling
+		return err                                           // Return the error from Wait()
 	}
+	log.Success("command completed successfully")
+	return nil // Return nil on success
 }
 
 // IsVerbose checks if the "verbose" flag is set for the given Cobra command.
