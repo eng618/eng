@@ -171,13 +171,15 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 			} else {
 				log.Warn("--update flag specified, but cannot automatically update.")
 				log.Info("  Installation method not recognized as Homebrew.")
-				log.Info("  Get the latest version manually: %s", latestRelease.HTMLURL)
+				log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+				log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
 			}
 		} else {
 			// Just inform the user how to update
 			if brewDetected {
 				log.Info("  Run `%s upgrade %s` to update.", brewCmd, brewPkgName)
 			}
+			log.Info("  Or try: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 			log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 		}
 	} else if latestSemVer.Equal(currentSemVer) {
