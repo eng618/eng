@@ -71,6 +71,7 @@ func IsVerbose(cmd *cobra.Command) bool {
 	if cmd.Flags().Changed("verbose") {
 		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
+			log.Error("failed to get verbose flag: %s", err)
 			return false
 		}
 		return verbose
