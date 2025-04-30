@@ -58,17 +58,19 @@ var VersionCmd = &cobra.Command{
 	Long: `Displays the application's version, build commit, build date, Go version,
 and target OS/Architecture.
 
-It also checks the GitHub repository for the latest official release
+It also checks the GitHub repository (eng618/eng) for the latest official release
 and compares it with the currently running version.
 
 If a newer version is available and eng was installed via Homebrew,
 you can use the --update flag to attempt an automatic upgrade.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		isVerbose, _ := cmd.Flags().GetBool("verbose")
+
 		printVersionInfo()
 
 		sp := utils.NewSpinner("Checking for latest version...")
 		sp.Start()
-		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName)
+		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName, isVerbose)
 		sp.Stop() // Stop spinner before printing results or attempting update
 
 		if err != nil {
@@ -93,7 +95,7 @@ you can use the --update flag to attempt an automatic upgrade.`,
 			return
 		}
 
-		compareAndHandleUpdate(currentSemVer, latestSemVer, latestRelease)
+		compareAndHandleUpdate(currentSemVer, latestSemVer, latestRelease, isVerbose)
 	},
 }
 
@@ -145,8 +147,8 @@ func parseVersions(currentVerStr, latestTagStr string) (current, latest *semver.
 }
 
 // compareAndHandleUpdate compares versions and handles the update logic if requested.
-func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestRelease *githubReleaseInfo) {
-	brewDetected := isBrewInstallation()
+func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestRelease *githubReleaseInfo, isVerbose bool) {
+	brewDetected := isBrewInstallation(isVerbose)
 
 	if latestSemVer.GreaterThan(currentSemVer) {
 		log.Success("A newer version is available: %s", latestRelease.TagName)
@@ -154,7 +156,7 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 		if updateFlag {
 			if brewDetected {
 				log.Info("Attempting update via Homebrew...")
-				err := runBrewUpgrade()
+				err := runBrewUpgrade(isVerbose)
 				if err != nil {
 					log.Error("Brew update failed: %v", err)
 					log.Info("  Please try manually: %s upgrade %s", brewCmd, brewPkgName)
@@ -194,10 +196,10 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 
 // isBrewInstallation checks if the executable path suggests a Homebrew installation.
 // This is a heuristic and might not cover all edge cases or future Brew changes.
-func isBrewInstallation() bool {
+func isBrewInstallation(isVerbose bool) bool {
 	executablePath, err := os.Executable()
 	if err != nil {
-		log.Debug("Could not get executable path: %v", err)
+		log.Verbose(isVerbose, "Could not get executable path: %v", err)
 		return false
 	}
 
@@ -206,7 +208,7 @@ func isBrewInstallation() bool {
 	if err != nil {
 		// If symlink resolution fails, use the original path
 		resolvedPath = executablePath
-		log.Debug("Could not resolve symlink for executable path: %v", err)
+		log.Verbose(isVerbose, "Could not resolve symlink for executable path: %v", err)
 	}
 
 	// Common Homebrew installation prefixes (Intel and Apple Silicon)
@@ -214,39 +216,55 @@ func isBrewInstallation() bool {
 
 	for _, prefix := range brewPrefixes {
 		if strings.HasPrefix(resolvedPath, prefix) {
-			log.Debug("Detected Homebrew installation path: %s", resolvedPath)
+			log.Verbose(isVerbose, "Detected Homebrew installation path: %s", resolvedPath)
 			// Check if 'brew' command actually exists for higher confidence
 			_, err := exec.LookPath(brewCmd)
 			if err != nil {
-				log.Debug("Executable path looks like Brew, but '%s' command not found in PATH.", brewCmd)
+				log.Verbose(isVerbose, "Executable path looks like Brew, but '%s' command not found in PATH.", brewCmd)
 				return false // Path looks right, but brew command missing? Be cautious.
 			}
 			return true
 		}
 	}
 
-	log.Debug("Executable path does not match known Homebrew prefixes: %s", resolvedPath)
+	log.Verbose(isVerbose, "Executable path does not match known Homebrew prefixes: %s", resolvedPath)
 	return false
 }
 
 // runBrewUpgrade executes the 'brew upgrade eng' command.
-// It streams the command's output directly to the user's terminal.
-func runBrewUpgrade() error {
-	cmd := exec.Command(brewCmd, "upgrade", brewPkgName)
-	cmd.Stdout = os.Stdout // Pipe brew's stdout to our stdout
-	cmd.Stderr = os.Stderr // Pipe brew's stderr to our stderr
-
-	log.Debug("Executing command: %s", cmd.String()) // Log the command being run
-
-	err := cmd.Run()
+// It first runs 'brew update' to refresh formula information (including taps),
+// then runs 'brew upgrade eng'. It streams the commands' output directly
+// to the user's terminal, respecting verbosity for command logging.
+func runBrewUpgrade(isVerbose bool) error {
+	// Step 1: Update brew formula information
+	log.Info("Running '%s update'...", brewCmd)
+	updateCmd := exec.Command(brewCmd, "update")
+	updateCmd.Stdout = log.Writer()
+	updateCmd.Stderr = log.ErrorWriter()
+	log.Verbose(isVerbose, "Executing command: %s", updateCmd.String())
+	err := updateCmd.Run()
 	if err != nil {
+		// Don't necessarily fail the whole process if 'brew update' has minor issues,
+		// but log it. The subsequent upgrade might still work.
+		log.Warn("'%s update' command finished with error (proceeding with upgrade attempt): %v", brewCmd, err)
+	}
+
+	// Step 2: Upgrade the specific package
+	log.Info("Running '%s upgrade %s'...", brewCmd, brewPkgName)
+	upgradeCmd := exec.Command(brewCmd, "upgrade", brewPkgName)
+	upgradeCmd.Stdout = log.Writer()
+	upgradeCmd.Stderr = log.ErrorWriter()
+	log.Verbose(isVerbose, "Executing command: %s", upgradeCmd.String())
+	err = upgradeCmd.Run()
+	if err != nil {
+		// Return the error from the upgrade command specifically
 		return fmt.Errorf("'%s upgrade %s' command failed: %w", brewCmd, brewPkgName, err)
 	}
 	return nil
 }
 
 // getLatestRelease fetches the latest release information for a given GitHub repository.
-func getLatestRelease(owner, repo string) (release *githubReleaseInfo, err error) {
+func getLatestRelease(owner, repo string, isVerbose bool) (release *githubReleaseInfo, err error) {
 	url := fmt.Sprintf(githubAPIURL, owner, repo)
 	client := &http.Client{Timeout: requestTimeout}
 
@@ -265,7 +283,7 @@ func getLatestRelease(owner, repo string) (release *githubReleaseInfo, err error
 		if err == nil && closeErr != nil {
 			err = fmt.Errorf("failed to close response body: %w", closeErr)
 		} else if closeErr != nil {
-			log.Debug("Error closing response body: %v", closeErr)
+			log.Verbose(isVerbose, "Error closing response body: %v", closeErr)
 		}
 	}()
 
