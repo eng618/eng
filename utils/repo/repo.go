@@ -55,10 +55,10 @@ func PullLatestCode(repoPath string, branchName string) error {
 	return err
 }
 
-// EnsureOnMaster ensures that the repository is on the master branch.
+// EnsureOnMain ensures that the repository is on the master branch.
 // It takes the repository path `repoPath` as input and returns an error if the
-// repository is not on the master branch or if the operation fails.
-func EnsureOnMaster(repoPath string) error {
+// repository is not on the main branch or if the operation fails.
+func EnsureOnMain(repoPath string) error {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return err
@@ -74,17 +74,21 @@ func EnsureOnMaster(repoPath string) error {
 		return err
 	}
 
-	if h.Name().Short() != "master" {
-		log.Warn("head is currently at %s, attempting to switch to master", h.Name().Short())
+	mainRef := plumbing.NewBranchReferenceName("main")
+
+	if h.Name().Short() != "main" {
+		log.Warn("head is currently at %s, attempting to switch to main", h.Name().Short())
 		err = w.Checkout(&git.CheckoutOptions{
-			Force: true,
+			Branch: mainRef,
+			Force:  true, // Force checkout even if the working tree is dirty
 		})
 		if err != nil {
 			return err
 		}
+		log.Success("Switched to main branch")
+	} else {
+		log.Success("Already on main branch")
 	}
-
-	log.Success("you are now on master")
 
 	return nil
 }
