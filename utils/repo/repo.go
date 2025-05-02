@@ -113,7 +113,7 @@ func FetchBareRepo(repoPath string, workTree string) error {
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
 func PullRebaseBareRepo(repoPath string, workTree string) error {
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase")
+	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase", "--autostash", "--progress")
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
