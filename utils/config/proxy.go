@@ -103,14 +103,21 @@ func GetActiveProxy() (string, bool) {
 	return "", false
 }
 
-// SaveProxyConfigs saves the provided proxy configurations to viper config
-func SaveProxyConfigs(proxies []ProxyConfig) error {
+// SaveProxyConfigsFunc defines the function type for saving proxy configs
+type SaveProxyConfigsFunc func(proxies []ProxyConfig) error
+
+// SaveProxyConfigsImpl is the actual implementation of saving proxy configurations to viper config
+func SaveProxyConfigsImpl(proxies []ProxyConfig) error {
 	viper.Set("proxies", proxies)
 	if err := viper.WriteConfig(); err != nil {
 		return errors.New(color.RedString("Error writing config file: %v", err))
 	}
 	return nil
 }
+
+// SaveProxyConfigs is a variable that holds the function to save proxy configurations
+// This can be overridden in tests
+var SaveProxyConfigs = SaveProxyConfigsImpl
 
 // EnableProxy enables the proxy at the given index and disables all others
 func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {

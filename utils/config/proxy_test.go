@@ -2,6 +2,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -14,8 +15,8 @@ const invalidConfigPath = "/invalid/path/test_config.json"
 
 var (
 	// Standard test proxies to reduce duplication
-	testProxy1 = ProxyConfig{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false}
-	testProxy2 = ProxyConfig{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: true}
+	testProxy1 = ProxyConfig{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false, NoProxy: ""}
+	testProxy2 = ProxyConfig{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: true, NoProxy: "internal.example.com"}
 	
 	// Environment variables that get modified during tests
 	proxyEnvVars = []string{
@@ -104,8 +105,8 @@ func TestGetProxyConfigs(t *testing.T) {
 			setup: func() {
 				setupViper(testConfigPath)
 				setupProxies([]ProxyConfig{
-					{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false},
-					{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false},
+					{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false, NoProxy: ""},
+					{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""},
 				})
 			},
 			expectedProxies: 2,
@@ -160,8 +161,8 @@ func TestGetActiveProxy(t *testing.T) {
 			setup: func() {
 				setupViper(testConfigPath)
 				setupProxies([]ProxyConfig{
-					{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false},
-					{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false},
+					{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false, NoProxy: ""},
+					{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""},
 				})
 			},
 			expectedVal:  "http://proxy1:8080",
@@ -202,12 +203,17 @@ func TestSaveProxyConfigs(t *testing.T) {
 	})
 }
 
+// Mock function for saving configs that simulates a failure
+func mockSaveProxyConfigsFailure(proxies []ProxyConfig) error {
+	return errors.New("Error writing config file: mock error")
+}
+
 // Group 4: EnableProxy tests
 func TestEnableProxy(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		setupViper(testConfigPath)
 		proxies := []ProxyConfig{testProxy1, 
-			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false}}
+			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""}}
 		
 		updatedProxies, err := EnableProxy(1, proxies)
 		assert.NoError(t, err, "Expected no error when enabling a proxy")
@@ -224,14 +230,24 @@ func TestEnableProxy(t *testing.T) {
 		assert.Equal(t, "proxy index out of range", err.Error(), "Expected specific error message")
 	})
 	
+	// Use a temporary function override for testing SaveProxyConfigs failure
 	t.Run("SaveConfigError", func(t *testing.T) {
-		setupViper(invalidConfigPath)
+		setupViper(testConfigPath) // Use valid path but mock the save function
 		proxies := []ProxyConfig{testProxy1, 
-			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false}}
+			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""}}
 		
+		// Store original function
+		originalSaveFunc := SaveProxyConfigs
+		// Override with mock
+		SaveProxyConfigs = mockSaveProxyConfigsFailure
+		
+		// Test with mocked function
 		_, err := EnableProxy(1, proxies)
-		assert.Error(t, err, "Expected error when saving to invalid path")
+		assert.Error(t, err, "Expected error when saving")
 		assert.Contains(t, err.Error(), "Error writing config file", "Expected error message for config write failure")
+		
+		// Restore original function
+		SaveProxyConfigs = originalSaveFunc
 	})
 }
 
@@ -240,8 +256,8 @@ func TestDisableAllProxies(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		setupViper(testConfigPath)
 		setupProxies([]ProxyConfig{
-			{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true},
-			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false},
+			{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true, NoProxy: ""},
+			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""},
 		})
 		
 		err := DisableAllProxies()
@@ -261,12 +277,20 @@ func TestDisableAllProxies(t *testing.T) {
 	})
 	
 	t.Run("SaveConfigError", func(t *testing.T) {
-		setupViper(invalidConfigPath)
-		setupProxies([]ProxyConfig{{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true}})
+		setupViper(testConfigPath) // Use valid path but mock the save function
+		setupProxies([]ProxyConfig{{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true, NoProxy: ""}})
+		
+		// Store original function
+		originalSaveFunc := SaveProxyConfigs
+		// Override with mock
+		SaveProxyConfigs = mockSaveProxyConfigsFailure
 		
 		err := DisableAllProxies()
 		assert.Error(t, err, "Expected error for invalid config path")
 		assert.Contains(t, err.Error(), "Error writing config file", "Expected config write error message")
+		
+		// Restore original function
+		SaveProxyConfigs = originalSaveFunc
 	})
 }
 
@@ -287,6 +311,10 @@ func TestProxyEnvironmentVariables(t *testing.T) {
 	})
 	
 	t.Run("SetProxyEnvVars_WithProxyValue", func(t *testing.T) {
+		// Setup test environment with an active proxy that has a custom NoProxy value
+		setupViper(testConfigPath)
+		setupProxies([]ProxyConfig{testProxy1, testProxy2})
+		
 		proxyValue := "http://proxy1:8080"
 		SetProxyEnvVars(proxyValue)
 		
@@ -295,10 +323,10 @@ func TestProxyEnvironmentVariables(t *testing.T) {
 			assert.Equal(t, proxyValue, os.Getenv(envVar), "Expected %s to be set to proxy value", envVar)
 		}
 		
-		// Check no_proxy vars
-		noProxyValue := "localhost,127.0.0.1,::1,.local"
-		assert.Equal(t, noProxyValue, os.Getenv("NO_PROXY"), "Expected NO_PROXY to be properly set")
-		assert.Equal(t, noProxyValue, os.Getenv("no_proxy"), "Expected no_proxy to be properly set")
+		// Check no_proxy vars - should include both default and custom values from active proxy
+		expectedNoProxy := "localhost,127.0.0.1,::1,.local,internal.example.com"
+		assert.Equal(t, expectedNoProxy, os.Getenv("NO_PROXY"), "Expected NO_PROXY to include both default and custom values")
+		assert.Equal(t, expectedNoProxy, os.Getenv("no_proxy"), "Expected no_proxy to include both default and custom values")
 	})
 	
 	t.Run("SetProxyEnvVars_EmptyValue", func(t *testing.T) {
