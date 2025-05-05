@@ -18,6 +18,7 @@ type ProxyConfig struct {
 	Title   string
 	Value   string
 	Enabled bool
+	NoProxy string
 }
 
 // GetProxyConfigs checks for proxy settings in the configuration and returns the current proxies
@@ -178,7 +179,11 @@ func UnsetProxyEnvVars() {
 }
 
 // SetProxyEnvVars sets all proxy-related environment variables to the provided value
+// and handles custom no_proxy settings
 func SetProxyEnvVars(proxyValue string) {
+	// Get the active proxy configuration to access custom NoProxy settings
+	proxies, activeIndex := GetProxyConfigs()
+	
 	// List of proxy environment variables to set
 	vars := []string{
 		"ALL_PROXY",
@@ -215,8 +220,15 @@ func SetProxyEnvVars(proxyValue string) {
 		log.Info("Set environment variable: https_proxy=%s", proxyValue)
 	}
 
-	// Set the NO_PROXY variable to common local addresses
+	// Set the NO_PROXY variable with default values and any custom values
 	noProxyValue := "localhost,127.0.0.1,::1,.local"
+	
+	// Add custom no_proxy settings if available for the active proxy
+	if activeIndex >= 0 && activeIndex < len(proxies) && proxies[activeIndex].NoProxy != "" {
+		noProxyValue = noProxyValue + "," + proxies[activeIndex].NoProxy
+		log.Info("Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
+	}
+	
 	if err := os.Setenv("NO_PROXY", noProxyValue); err != nil {
 		log.Warn("Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
 	} else {
@@ -250,6 +262,14 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	err = survey.AskOne(prompt2, &value)
 	cobra.CheckErr(err)
 
+	var noProxy string
+	prompt3 := &survey.Input{
+		Message: "Enter additional no_proxy values (comma-separated, leave empty for defaults only):",
+		Help:    "These values will be appended to the default no_proxy list: localhost,127.0.0.1,::1,.local",
+	}
+	err = survey.AskOne(prompt3, &noProxy)
+	cobra.CheckErr(err)
+
 	// Check if we're updating an existing proxy
 	index := -1
 	for i, proxy := range proxies {
@@ -262,11 +282,13 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	if index >= 0 {
 		// Update existing proxy
 		proxies[index].Value = value
+		proxies[index].NoProxy = noProxy
 	} else {
 		// Add new proxy
 		newProxy := ProxyConfig{
 			Title:   title,
 			Value:   value,
+			NoProxy: noProxy,
 			Enabled: false,
 		}
 		proxies = append(proxies, newProxy)
