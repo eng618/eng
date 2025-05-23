@@ -24,4 +24,5 @@ func init() {
 	ConfigCmd.AddCommand(EmailCmd)
 	ConfigCmd.AddCommand(DotfilesRepoCmd)
 	ConfigCmd.AddCommand(VerboseCmd)
+	ConfigCmd.AddCommand(ProxyConfigCmd)
 }

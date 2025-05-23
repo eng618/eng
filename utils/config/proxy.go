@@ -21,10 +21,20 @@ type ProxyConfig struct {
 	NoProxy string
 }
 
+// Silent mode controls whether log messages are displayed
+var SilentMode bool
+
+// conditionalLog only logs if not in silent mode
+func conditionalLog(logFn func(format string, args ...interface{}), format string, args ...interface{}) {
+	if !SilentMode {
+		logFn(format, args...)
+	}
+}
+
 // GetProxyConfigs checks for proxy settings in the configuration and returns the current proxies
 // and the index of the active proxy (-1 if none are active)
 func GetProxyConfigs() ([]ProxyConfig, int) {
-	log.Start("Checking for proxy configurations")
+	conditionalLog(log.Start, "Checking for proxy configurations")
 
 	var proxies []ProxyConfig
 	activeIndex := -1
@@ -33,7 +43,7 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 	if !viper.IsSet("proxies") {
 		// Handle migration from old format if there's a legacy proxy config
 		if viper.IsSet("proxy.value") {
-			log.Info("Migrating from old single proxy format to multi-proxy format...")
+			conditionalLog(log.Info, "Migrating from old single proxy format to multi-proxy format...")
 
 			title := "Default"
 			value := viper.GetString("proxy.value")
@@ -57,7 +67,7 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 				err := errors.New(color.RedString("Error writing config file: %w", err))
 				cobra.CheckErr(err)
 			}
-			log.Success("Migration complete: old proxy configuration has been converted to the new format")
+			conditionalLog(log.Success, "Migration complete: old proxy configuration has been converted to the new format")
 		} else {
 			// No old format and no new format - initialize with empty array
 			viper.Set("proxies", []ProxyConfig{})
@@ -65,13 +75,13 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 				err := errors.New(color.RedString("Error writing config file: %v", err))
 				cobra.CheckErr(err)
 			}
-			log.Info("Initialized empty proxy configurations array")
+			conditionalLog(log.Info, "Initialized empty proxy configurations array")
 		}
 	} else {
 		// Load existing multi-proxy configuration
 		err := viper.UnmarshalKey("proxies", &proxies)
 		if err != nil {
-			log.Error("Failed to unmarshal proxy configurations: %v", err)
+			conditionalLog(log.Error, "Failed to unmarshal proxy configurations: %v", err)
 			return []ProxyConfig{}, -1
 		}
 
@@ -84,7 +94,7 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 		}
 	}
 
-	log.Success("Proxy configurations loaded")
+	conditionalLog(log.Success, "Proxy configurations loaded")
 	return proxies, activeIndex
 }
 
@@ -141,7 +151,7 @@ func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {
 		return proxies, err
 	}
 
-	log.Success("Proxy '%s' enabled", proxies[index].Title)
+	conditionalLog(log.Success, "Proxy '%s' enabled", proxies[index].Title)
 	return proxies, nil
 }
 
@@ -176,13 +186,13 @@ func UnsetProxyEnvVars() {
 
 	for _, v := range vars {
 		if err := os.Unsetenv(v); err != nil {
-			log.Warn("Failed to unset environment variable %s: %v", v, err)
+			conditionalLog(log.Warn, "Failed to unset environment variable %s: %v", v, err)
 		} else {
-			log.Info("Unset environment variable: %s", v)
+			conditionalLog(log.Info, "Unset environment variable: %s", v)
 		}
 	}
 
-	log.Success("All proxy environment variables have been unset")
+	conditionalLog(log.Success, "All proxy environment variables have been unset")
 }
 
 // SetProxyEnvVars sets all proxy-related environment variables to the provided value
@@ -208,23 +218,23 @@ func SetProxyEnvVars(proxyValue string) {
 	// Set the environment variables
 	for _, v := range vars {
 		if err := os.Setenv(v, proxyValue); err != nil {
-			log.Warn("Failed to set environment variable %s=%s: %v", v, proxyValue, err)
+			conditionalLog(log.Warn, "Failed to set environment variable %s=%s: %v", v, proxyValue, err)
 		} else {
-			log.Info("Set environment variable: %s=%s", v, proxyValue)
+			conditionalLog(log.Info, "Set environment variable: %s=%s", v, proxyValue)
 		}
 	}
 
 	// Also set lowercase versions
 	if err := os.Setenv("http_proxy", proxyValue); err != nil {
-		log.Warn("Failed to set environment variable http_proxy=%s: %v", proxyValue, err)
+		conditionalLog(log.Warn, "Failed to set environment variable http_proxy=%s: %v", proxyValue, err)
 	} else {
-		log.Info("Set environment variable: http_proxy=%s", proxyValue)
+		conditionalLog(log.Info, "Set environment variable: http_proxy=%s", proxyValue)
 	}
 
 	if err := os.Setenv("https_proxy", proxyValue); err != nil {
-		log.Warn("Failed to set environment variable https_proxy=%s: %v", proxyValue, err)
+		conditionalLog(log.Warn, "Failed to set environment variable https_proxy=%s: %v", proxyValue, err)
 	} else {
-		log.Info("Set environment variable: https_proxy=%s", proxyValue)
+		conditionalLog(log.Info, "Set environment variable: https_proxy=%s", proxyValue)
 	}
 
 	// Set the NO_PROXY variable with default values and any custom values
@@ -233,22 +243,22 @@ func SetProxyEnvVars(proxyValue string) {
 	// Add custom no_proxy settings if available for the active proxy
 	if activeIndex >= 0 && activeIndex < len(proxies) && proxies[activeIndex].NoProxy != "" {
 		noProxyValue = noProxyValue + "," + proxies[activeIndex].NoProxy
-		log.Info("Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
+		conditionalLog(log.Info, "Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
 	}
 	
 	if err := os.Setenv("NO_PROXY", noProxyValue); err != nil {
-		log.Warn("Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
+		conditionalLog(log.Warn, "Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
 	} else {
-		log.Info("Set environment variable: NO_PROXY=%s", noProxyValue)
+		conditionalLog(log.Info, "Set environment variable: NO_PROXY=%s", noProxyValue)
 	}
 
 	if err := os.Setenv("no_proxy", noProxyValue); err != nil {
-		log.Warn("Failed to set environment variable no_proxy=%s: %v", noProxyValue, err)
+		conditionalLog(log.Warn, "Failed to set environment variable no_proxy=%s: %v", noProxyValue, err)
 	} else {
-		log.Info("Set environment variable: no_proxy=%s", noProxyValue)
+		conditionalLog(log.Info, "Set environment variable: no_proxy=%s", noProxyValue)
 	}
 
-	log.Success("All proxy environment variables have been set")
+	conditionalLog(log.Success, "All proxy environment variables have been set")
 }
 
 // AddOrUpdateProxy adds a new proxy or updates an existing one
@@ -307,7 +317,7 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 		cobra.CheckErr(err)
 	}
 
-	log.Success("Proxy '%s' added/updated successfully", title)
+	conditionalLog(log.Success, "Proxy '%s' added/updated successfully", title)
 	return proxies, index
 }
 
@@ -337,4 +347,55 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 	}
 
 	return selectedIndex, nil
+}
+
+// EditProxy edits an existing proxy by index, pre-populating the survey with existing values
+func EditProxy(index int) ([]ProxyConfig, int) {
+	proxies, _ := GetProxyConfigs()
+	
+	if index < 0 || index >= len(proxies) {
+		conditionalLog(log.Error, "Invalid proxy index for editing")
+		return proxies, -1
+	}
+	
+	proxyToEdit := proxies[index]
+	
+	// Prepare survey with default values from existing proxy
+	var title string
+	prompt := &survey.Input{
+		Message: "Enter a title for this proxy configuration:",
+		Default: proxyToEdit.Title,
+	}
+	err := survey.AskOne(prompt, &title)
+	cobra.CheckErr(err)
+
+	var value string
+	prompt2 := &survey.Input{
+		Message: "Enter the proxy address (e.g., http://proxy:port):",
+		Default: proxyToEdit.Value,
+	}
+	err = survey.AskOne(prompt2, &value)
+	cobra.CheckErr(err)
+
+	var noProxy string
+	prompt3 := &survey.Input{
+		Message: "Enter additional no_proxy values (comma-separated, leave empty for defaults only):",
+		Help:    "These values will be appended to the default no_proxy list: localhost,127.0.0.1,::1,.local",
+		Default: proxyToEdit.NoProxy,
+	}
+	err = survey.AskOne(prompt3, &noProxy)
+	cobra.CheckErr(err)
+	
+	// Update the existing proxy
+	proxies[index].Title = title
+	proxies[index].Value = value
+	proxies[index].NoProxy = noProxy
+	
+	// Save configurations
+	if err := SaveProxyConfigs(proxies); err != nil {
+		cobra.CheckErr(err)
+	}
+
+	conditionalLog(log.Success, "Proxy '%s' updated successfully", title)
+	return proxies, index
 }
