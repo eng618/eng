@@ -95,8 +95,9 @@ func updatePackageJSON() error {
 	}
 	scripts["format"] = "prettier --write ."
 	scripts["format:ci"] = "prettier --check ."
-	scripts["lint"] = "eslint . --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
-	scripts["lint:fix"] = "eslint . --fix --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
+	scripts["lint"] = "eslint . --cache --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
+	scripts["lint:fix"] = "eslint . --cache --fix --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
+	scripts["lint:report"] = "eslint . --cache --ext .js,.jsx,.ts,.tsx,.mjs,.cjs -o ./eslintReport.html -f html"
 	scripts["prepare"] = "husky || echo 'Husky not installed, probably in ci'"
 	pkg["scripts"] = scripts
 	// Add lint-staged config
@@ -199,7 +200,7 @@ var LintSetupCmd = &cobra.Command{
 			log.Error("Failed to set up Husky: %v", err)
 			return
 		}
-		
+
 		log.Success("Linting, formatting, and pre-commit hooks are set up!")
 	},
 }
