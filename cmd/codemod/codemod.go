@@ -4,8 +4,10 @@ package codemod
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
@@ -33,19 +35,47 @@ var LintSetupCmd = &cobra.Command{
 		}
 
 		log.Info("Installing lint/format dependencies via npm...")
-		installCmd := execCommand("npm", "install", "--save-dev",
-			"eslint", "@eslint/js",
-			"@typescript-eslint/eslint-plugin", "@typescript-eslint/parser",
-			"eslint-config-prettier", "eslint-plugin-prettier",
-			"@eng618/prettier-config", "globals",
-			"echo-eslint-config", "husky", "lint-staged", "prettier",
-		)
-		installCmd.Stdout = log.Writer()
-		installCmd.Stderr = log.ErrorWriter()
-		if err := installCmd.Run(); err != nil {
-			log.Error("npm install failed: %v", err)
-			return
-		}
+			installArgs := []string{"install", "--save-dev",
+				"eslint", "@eslint/js",
+				"@typescript-eslint/eslint-plugin", "@typescript-eslint/parser",
+				"eslint-config-prettier", "eslint-plugin-prettier",
+				"@eng618/prettier-config", "globals",
+				"echo-eslint-config", "husky", "lint-staged", "prettier",
+			}
+			installCmd := execCommand("npm", installArgs...)
+			installCmd.Stdout = log.Writer()
+
+			// Capture stderr for error analysis
+			stderrPipe, err := installCmd.StderrPipe()
+			if err != nil {
+				log.Error("Failed to get stderr pipe: %v", err)
+				return
+			}
+			if err := installCmd.Start(); err != nil {
+				log.Error("npm install failed to start: %v", err)
+				return
+			}
+
+			// Read stderr output
+			stderrBytes, _ := io.ReadAll(stderrPipe)
+			err = installCmd.Wait()
+			if err != nil {
+				stderrStr := string(stderrBytes)
+				if strings.Contains(stderrStr, "--legacy-peer-deps") || strings.Contains(stderrStr, "could not resolve dependency") {
+					log.Info("npm install failed due to peer deps, retrying with --legacy-peer-deps...")
+					installArgs = append(installArgs, "--legacy-peer-deps")
+					installCmd2 := execCommand("npm", installArgs...)
+					installCmd2.Stdout = log.Writer()
+					installCmd2.Stderr = log.ErrorWriter()
+					if err2 := installCmd2.Run(); err2 != nil {
+						log.Error("npm install with --legacy-peer-deps failed: %v", err2)
+						return
+					}
+				} else {
+					log.Error("npm install failed: %v", err)
+					return
+				}
+			}
 
 		log.Info("Writing eslint.config.mjs...")
 		eslintConfig := `import echoConfig, { echoGlobalsOverride, echoJestGlobalsOverride } from 'echo-eslint-config';
