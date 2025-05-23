@@ -11,8 +11,14 @@ import (
 func TestLintSetupCmd_ModifiesPackageJson(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWd, _ := os.Getwd()
-	defer os.Chdir(oldWd)
-	os.Chdir(tempDir)
+	defer func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Fatalf("failed to restore working directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(tempDir); err != nil {
+		t.Fatalf("failed to change to temp dir: %v", err)
+	}
 	// Setup: create a minimal package.json
 	pkg := map[string]interface{}{
 		"name": "testpkg",
