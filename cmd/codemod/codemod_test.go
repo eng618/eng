@@ -58,3 +58,105 @@ func TestLintSetupCmd_ModifiesPackageJson(t *testing.T) {
 		t.Error("expected prettier in package.json")
 	}
 }
+
+func TestWriteESLintConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	err := writeESLintConfig()
+	if err != nil {
+		t.Fatalf("writeESLintConfig failed: %v", err)
+	}
+	data, err := os.ReadFile("eslint.config.mjs")
+	if err != nil {
+		t.Fatalf("eslint.config.mjs not written: %v", err)
+	}
+	if !strings.Contains(string(data), "echo-eslint-config") {
+		t.Error("eslint.config.mjs missing expected content")
+	}
+}
+
+func TestUpdatePackageJSON_OrderAndValues(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+	pkg := map[string]interface{}{
+		"name": "testpkg",
+		"foo": "bar",
+	}
+	data, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", data, 0644)
+	if err := updatePackageJSON(); err != nil {
+		t.Fatalf("updatePackageJSON failed: %v", err)
+	}
+	out, _ := os.ReadFile("package.json")
+	if !strings.Contains(string(out), "\"scripts\":") {
+		t.Error("scripts not present in package.json")
+	}
+	if !strings.Contains(string(out), "\"lint-staged\":") {
+		t.Error("lint-staged not present in package.json")
+	}
+	if !strings.Contains(string(out), "\"prettier\":") {
+		t.Error("prettier not present in package.json")
+	}
+	// Check order: name should come before scripts
+	nameIdx := strings.Index(string(out), "\"name\"")
+	scriptsIdx := strings.Index(string(out), "\"scripts\"")
+	if nameIdx == -1 || scriptsIdx == -1 || nameIdx > scriptsIdx {
+		t.Error("fields not in expected order")
+	}
+	// Extra key should be present
+	if !strings.Contains(string(out), "foo") {
+		t.Error("extra key not preserved")
+	}
+}
+
+func TestSetupHusky(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+	// Mock execCommand
+	oldCommand := execCommand
+	defer func() { execCommand = oldCommand }()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		return exec.Command("echo", append([]string{name}, arg...)...)
+	}
+	_ = os.MkdirAll(".husky", 0755)
+	// Remove .husky/pre-commit if it exists to simulate fresh state
+	_ = os.Remove(".husky/pre-commit")
+	if err := setupHusky(); err != nil {
+		t.Fatalf("setupHusky failed: %v", err)
+	}
+	data, err := os.ReadFile(".husky/pre-commit")
+	if err != nil {
+		t.Fatalf("pre-commit hook not written: %v", err)
+	}
+	if !strings.Contains(string(data), "npx lint-staged") {
+		t.Error("pre-commit hook missing lint-staged command")
+	}
+}
+
+func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
+	called := 0
+	oldCommand := execCommand
+	defer func() { execCommand = oldCommand }()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		called++
+		if called == 1 {
+			// Simulate peer dep error on first call
+			return exec.Command("sh", "-c", "echo 'could not resolve dependency --legacy-peer-deps' 1>&2; exit 1")
+		}
+		return exec.Command("echo", append([]string{name}, arg...)...)
+	}
+	err := installLintDependencies()
+	if err != nil {
+		t.Fatalf("installLintDependencies should succeed after retry, got: %v", err)
+	}
+	if called < 2 {
+		t.Error("expected retry with --legacy-peer-deps")
+	}
+}
