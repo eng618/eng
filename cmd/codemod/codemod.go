@@ -134,19 +134,20 @@ export default [
 		}
 
 		log.Info("Setting up Husky and pre-commit hook...")
-		huskyInstall := execCommand("npx", "husky", "init")
-		huskyInstall.Stdout = log.Writer()
-		huskyInstall.Stderr = log.ErrorWriter()
-		if err := huskyInstall.Run(); err != nil {
+		// Use 'npx husky init' to set up Husky and create the pre-commit file
+		huskyInit := execCommand("npx", "husky", "init")
+		huskyInit.Stdout = log.Writer()
+		huskyInit.Stderr = log.ErrorWriter()
+		if err := huskyInit.Run(); err != nil {
 			log.Error("Failed to run 'npx husky init': %v", err)
 			return
 		}
 
-		huskyAdd := execCommand("npx", "husky", "add", ".husky/pre-commit", "npx lint-staged")
-		huskyAdd.Stdout = log.Writer()
-		huskyAdd.Stderr = log.ErrorWriter()
-		if err := huskyAdd.Run(); err != nil {
-			log.Error("Failed to add pre-commit hook: %v", err)
+		// Overwrite .husky/pre-commit with the correct contents
+		preCommitPath := ".husky/pre-commit"
+		hookContent := "npx lint-staged\n"
+		if err := os.WriteFile(preCommitPath, []byte(hookContent), 0644); err != nil {
+			log.Error("Failed to write pre-commit hook: %v", err)
 			return
 		}
 
