@@ -24,6 +24,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/system"
@@ -94,6 +95,7 @@ func init() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
 	rootCmd.AddCommand(version.VersionCmd)
+	rootCmd.AddCommand(codemod.CodemodCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -1,3 +1,10 @@
 {
-  "cSpell.words": ["iregex", "repopath", "tailscale", "Worktree"]
+  "cSpell.words": [
+    "Codemod",
+    "codemods",
+    "iregex",
+    "repopath",
+    "tailscale",
+    "Worktree"
+  ]
 }
