@@ -36,11 +36,11 @@ var LintSetupCmd = &cobra.Command{
 
 		log.Info("Installing lint/format dependencies via npm...")
 			installArgs := []string{"install", "--save-dev",
-				"eslint", "@eslint/js",
-				"@typescript-eslint/eslint-plugin", "@typescript-eslint/parser",
-				"eslint-config-prettier", "eslint-plugin-prettier",
-				"@eng618/prettier-config", "globals",
-				"echo-eslint-config", "husky", "lint-staged", "prettier",
+				"eslint@latest", "@eslint/js@latest",
+				"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
+				"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
+				"@eng618/prettier-config@latest", "globals",
+				"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
 			}
 			installCmd := execCommand("npm", installArgs...)
 			installCmd.Stdout = log.Writer()
@@ -134,11 +134,11 @@ export default [
 		}
 
 		log.Info("Setting up Husky and pre-commit hook...")
-		huskyInstall := execCommand("npx", "husky", "install")
+		huskyInstall := execCommand("npx", "husky", "init")
 		huskyInstall.Stdout = log.Writer()
 		huskyInstall.Stderr = log.ErrorWriter()
 		if err := huskyInstall.Run(); err != nil {
-			log.Error("Failed to run 'npx husky install': %v", err)
+			log.Error("Failed to run 'npx husky init': %v", err)
 			return
 		}
 
