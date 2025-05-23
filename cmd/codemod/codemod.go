@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/eng618/eng/utils/log"
@@ -122,13 +123,54 @@ export default [
 		// Add prettier config
 		pkg["prettier"] = "@eng618/prettier-config"
 
-		// Write back to package.json
-		newPkgData, err := json.MarshalIndent(pkg, "", "  ")
-		if err != nil {
-			log.Error("Failed to marshal package.json: %v", err)
-			return
+		// Write back to package.json with standard field order
+		standardOrder := []string{
+			"name", "version", "description", "keywords", "homepage", "bugs", "license", "author", "contributors", "funding", "main", "module", "types", "exports", "files", "bin", "directories", "repository", "scripts", "dependencies", "devDependencies", "peerDependencies", "optionalDependencies", "engines", "os", "cpu", "private", "publishConfig", "lint-staged", "prettier",
 		}
-		if err := os.WriteFile("package.json", newPkgData, 0644); err != nil {
+		// Collect all keys
+		allKeys := make(map[string]struct{})
+		for k := range pkg {
+			allKeys[k] = struct{}{}
+		}
+		// Add extra keys not in standardOrder
+		var extraKeys []string
+		for k := range allKeys {
+			found := false
+			for _, std := range standardOrder {
+				if k == std {
+					found = true
+					break
+				}
+			}
+			if !found {
+				extraKeys = append(extraKeys, k)
+			}
+		}
+		// Sort extra keys alphabetically
+		sort.Strings(extraKeys)
+		// Build ordered map for output
+		ordered := make([]byte, 0, 4096)
+		indent := "  "
+		first := true
+		writeField := func(key string) {
+			if val, ok := pkg[key]; ok {
+				if !first {
+					ordered = append(ordered, ',', '\n')
+				}
+				first = false
+				ordered = append(ordered, []byte(indent+"\""+key+"\": ")...)
+				valBytes, _ := json.MarshalIndent(val, indent, indent)
+				ordered = append(ordered, valBytes...)
+			}
+		}
+		for _, k := range standardOrder {
+			writeField(k)
+		}
+		for _, k := range extraKeys {
+			writeField(k)
+		}
+		ordered = append(ordered, '\n', '}')
+		if err := os.WriteFile("package.json", ordered, 0644); err != nil {
 			log.Error("Failed to write package.json: %v", err)
 			return
 		}
