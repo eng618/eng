@@ -31,7 +31,7 @@ func installLintDependencies() error {
 		"eslint@latest", "@eslint/js@latest",
 		"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
 		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-		"@eng618/prettier-config@latest", "globals",
+		"@eng618/prettier-config@latest", "globals@latest",
 		"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
 	}
 	installCmd := execCommand("npm", installArgs...)
@@ -102,7 +102,8 @@ func updatePackageJSON() error {
 	pkg["scripts"] = scripts
 	// Add lint-staged config
 	pkg["lint-staged"] = map[string]interface{}{
-		"*.{js,ts,md,jsx,tsx,mdx}": []string{"prettier --write", "eslint --cache --fix"},
+		"*.(md)?(x)": []string{"prettier --write"},
+		"*.(js|ts|mjs|cjs)?(x)": []string{"prettier --write", "eslint --cache --fix"},
 	}
 	// Add prettier config
 	pkg["prettier"] = "@eng618/prettier-config"
