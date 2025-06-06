@@ -141,6 +141,11 @@ func TestSetupHusky(t *testing.T) {
 }
 
 func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+	_ = os.WriteFile("package.json", []byte(`{"name":"test"}`), 0644)
 	called := 0
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()
@@ -150,7 +155,8 @@ func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
 			// Simulate peer dep error on first call
 			return exec.Command("sh", "-c", "echo 'could not resolve dependency --legacy-peer-deps' 1>&2; exit 1")
 		}
-		return exec.Command("echo", append([]string{name}, arg...)...)
+		// On retry, simulate success
+		return exec.Command("sh", "-c", "exit 0")
 	}
 	err := installLintDependencies()
 	if err != nil {
@@ -158,5 +164,63 @@ func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
 	}
 	if called < 2 {
 		t.Error("expected retry with --legacy-peer-deps")
+	}
+}
+
+func TestInstallLintDependencies_UsesYarnIfPresent(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+	// Create a yarn.lock file to trigger yarn usage
+	_ = os.WriteFile("yarn.lock", []byte(""), 0644)
+	called := struct{ npm, yarn int }{}
+	oldCommand := execCommand
+	defer func() { execCommand = oldCommand }()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		if name == "yarn" {
+			called.yarn++
+		} else if name == "npm" {
+			called.npm++
+		}
+		return exec.Command("echo", append([]string{name}, arg...)...)
+	}
+	err := installLintDependencies()
+	if err != nil {
+		t.Fatalf("installLintDependencies with yarn.lock should succeed, got: %v", err)
+	}
+	if called.yarn == 0 {
+		t.Error("expected yarn to be called when yarn.lock is present")
+	}
+	if called.npm != 0 {
+		t.Error("did not expect npm to be called when yarn.lock is present")
+	}
+}
+
+func TestInstallLintDependencies_UsesNpmIfNoYarnLock(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+	called := struct{ npm, yarn int }{}
+	oldCommand := execCommand
+	defer func() { execCommand = oldCommand }()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		if name == "yarn" {
+			called.yarn++
+		} else if name == "npm" {
+			called.npm++
+		}
+		return exec.Command("echo", append([]string{name}, arg...)...)
+	}
+	err := installLintDependencies()
+	if err != nil {
+		t.Fatalf("installLintDependencies with no yarn.lock should succeed, got: %v", err)
+	}
+	if called.npm == 0 {
+		t.Error("expected npm to be called when yarn.lock is not present")
+	}
+	if called.yarn != 0 {
+		t.Error("did not expect yarn to be called when yarn.lock is not present")
 	}
 }

@@ -29,7 +29,9 @@ func installLintDependencies() error {
 	log.Info("Installing lint/format dependencies via npm or yarn...")
 	var installCmd *exec.Cmd
 	var installArgs []string
+	usingNpm := true
 	if _, err := os.Stat("yarn.lock"); err == nil {
+		usingNpm = false
 		installArgs = append([]string{"add", "--dev"},
 			"eslint@latest", "@eslint/js@latest",
 			"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
@@ -58,7 +60,7 @@ func installLintDependencies() error {
 	}
 	stderrBytes, _ := io.ReadAll(stderrPipe)
 	err = installCmd.Wait()
-	if err != nil && installCmd.Path == "npm" {
+	if err != nil && usingNpm {
 		stderrStr := string(stderrBytes)
 		if strings.Contains(stderrStr, "--legacy-peer-deps") || strings.Contains(stderrStr, "could not resolve dependency") {
 			log.Info("npm install failed due to peer deps, retrying with --legacy-peer-deps...")
