@@ -24,17 +24,30 @@ var CodemodCmd = &cobra.Command{
 	Long:  `Run codemods or setup helpers for various project types.`,
 }
 
-// installLintDependencies installs lint/format dependencies via npm and handles peer dep errors.
+// installLintDependencies installs lint/format dependencies via npm or yarn and handles peer dep errors for npm.
 func installLintDependencies() error {
-	log.Info("Installing lint/format dependencies via npm...")
-	installArgs := []string{"install", "--save-dev",
-		"eslint@latest", "@eslint/js@latest",
-		"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
-		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-		"@eng618/prettier-config@latest", "globals@latest",
-		"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
+	log.Info("Installing lint/format dependencies via npm or yarn...")
+	var installCmd *exec.Cmd
+	var installArgs []string
+	if _, err := os.Stat("yarn.lock"); err == nil {
+		installArgs = append([]string{"add", "--dev"},
+			"eslint@latest", "@eslint/js@latest",
+			"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
+			"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
+			"@eng618/prettier-config@latest", "globals@latest",
+			"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
+		)
+		installCmd = execCommand("yarn", installArgs...)
+	} else {
+		installArgs = []string{"install", "--save-dev",
+			"eslint@latest", "@eslint/js@latest",
+			"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
+			"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
+			"@eng618/prettier-config@latest", "globals@latest",
+			"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
+		}
+		installCmd = execCommand("npm", installArgs...)
 	}
-	installCmd := execCommand("npm", installArgs...)
 	installCmd.Stdout = log.Writer()
 	stderrPipe, err := installCmd.StderrPipe()
 	if err != nil {
@@ -45,7 +58,7 @@ func installLintDependencies() error {
 	}
 	stderrBytes, _ := io.ReadAll(stderrPipe)
 	err = installCmd.Wait()
-	if err != nil {
+	if err != nil && installCmd.Path == "npm" {
 		stderrStr := string(stderrBytes)
 		if strings.Contains(stderrStr, "--legacy-peer-deps") || strings.Contains(stderrStr, "could not resolve dependency") {
 			log.Info("npm install failed due to peer deps, retrying with --legacy-peer-deps...")
@@ -59,6 +72,8 @@ func installLintDependencies() error {
 		} else {
 			return err
 		}
+	} else if err != nil {
+		return err
 	}
 	return nil
 }
