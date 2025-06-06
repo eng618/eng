@@ -44,3 +44,7 @@ jobs:
 
       - name: Build
         run: go build -v ./...
+
+      - name: Generate and Commit Changelog (CI)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: task changelog-ci
