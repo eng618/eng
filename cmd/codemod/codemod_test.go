@@ -178,9 +178,10 @@ func TestInstallLintDependencies_UsesYarnIfPresent(t *testing.T) {
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
-		if name == "yarn" {
+		switch name {
+		case "yarn":
 			called.yarn++
-		} else if name == "npm" {
+		case "npm":
 			called.npm++
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
@@ -206,9 +207,10 @@ func TestInstallLintDependencies_UsesNpmIfNoYarnLock(t *testing.T) {
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
-		if name == "yarn" {
+		switch name {
+		case "yarn":
 			called.yarn++
-		} else if name == "npm" {
+		case "npm":
 			called.npm++
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
