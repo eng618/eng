@@ -66,13 +66,9 @@ func installLintDependencies() error {
 // writeESLintConfig writes the eslint.config.mjs file.
 func writeESLintConfig() error {
 	log.Info("Writing eslint.config.mjs...")
-	eslintConfig := `import echoConfig, { echoGlobalsOverride, echoJestGlobalsOverride } from 'echo-eslint-config';
+	eslintConfig := `import echoConfig from 'echo-eslint-config';
 
-export default [
-  ...echoConfig,
-  echoGlobalsOverride,
-  echoJestGlobalsOverride,
-];
+export default [...echoConfig];
 `
 	return os.WriteFile("eslint.config.mjs", []byte(eslintConfig), 0644)
 }
@@ -95,9 +91,9 @@ func updatePackageJSON() error {
 	}
 	scripts["format"] = "prettier --write ."
 	scripts["format:ci"] = "prettier --check ."
-	scripts["lint"] = "eslint . --cache --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
-	scripts["lint:fix"] = "eslint . --cache --fix --ext .js,.jsx,.ts,.tsx,.mjs,.cjs"
-	scripts["lint:report"] = "eslint . --cache --ext .js,.jsx,.ts,.tsx,.mjs,.cjs -o ./eslintReport.html -f html"
+	scripts["lint"] = "eslint . --cache"
+	scripts["lint:fix"] = "eslint . --cache --fix"
+	scripts["lint:report"] = "eslint . --cache -o ./eslintReport.html -f html"
 	scripts["prepare"] = "husky || echo 'Husky not installed, probably in ci'"
 	pkg["scripts"] = scripts
 	// Add lint-staged config
