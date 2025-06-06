@@ -1,6 +1,13 @@
+# Copilot Custom Instructions
+
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
-# Go
+## General
+
+- Keep the README.md file up to date with the latest information about the project.
+- Use clear and concise language in comments and documentation.
+
+## Go
 
 - Always write idiomatic Go code.
 - Use the Go standard library whenever possible.
