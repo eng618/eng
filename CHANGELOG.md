@@ -2,6 +2,376 @@
 
 ## [Unreleased]
 
+### Refactor
+
+- **codemod:** simplify command handling for lint dependency installation
+
+
+<a name="v0.21.3"></a>
+
+## [v0.21.3] - 2025-06-06
+
+### Chore
+
+- clean up code structure and improve readability
+
+### Refactor
+
+- **codemod:** enhance lint dependency installation logic
+
+
+<a name="v0.21.2"></a>
+
+## [v0.21.2] - 2025-06-06
+
+### Chore
+
+- remove outdated Makefile
+
+
+<a name="v0.21.1"></a>
+
+## [v0.21.1] - 2025-06-06
+
+### Chore
+
+- update go-git and other dependencies to latest versions
+
+
+<a name="v0.21.0"></a>
+
+## [v0.21.0] - 2025-06-06
+
+### Build
+
+- **deps:** update all packages
+- **deps:** bump golangci/golangci-lint-action from 7 to 8 ([#18](https://github.com/eng618/eng/issues/18))
+
+### Chore
+
+- PR reviewers from dependabot -> CODEOWNERS
+- update CODEOWNERS
+- move PR reviewers to CODEOWNER
+
+### Refactor
+
+- **codemod:** simplify eslint configuration and update lint scripts
+
+
+<a name="v0.20.5"></a>
+
+## [v0.20.5] - 2025-05-29
+
+### Feat
+
+- **codemod:** update lint dependencies and refine lint-staged config
+
+
+<a name="v0.20.4"></a>
+
+## [v0.20.4] - 2025-05-23
+
+### Feat
+
+- enhance lint scripts in package.json with caching and add lint report generation
+
+
+<a name="v0.20.3"></a>
+
+## [v0.20.3] - 2025-05-23
+
+### Feat
+
+- implement lint setup command with improved error handling and structured package.json updates
+- enhance package.json writing with ordered fields and improved error handling
+- streamline Husky setup by replacing command execution with direct file writing for pre-commit hook
+
+
+<a name="v0.20.2"></a>
+
+## [v0.20.2] - 2025-05-23
+
+### Feat
+
+- update lint setup command to use latest package versions and change husky installation command
+
+
+<a name="v0.20.1"></a>
+
+## [v0.20.1] - 2025-05-23
+
+### Feat
+
+- enhance lint setup command with improved error handling and support for legacy peer dependencies
+
+### Refactor
+
+- improve working directory management in TestLintSetupCmd
+
+
+<a name="v0.20.0"></a>
+
+## [v0.20.0] - 2025-05-23
+
+### Feat
+
+- add codemod command with lint setup functionality and update Copilot instructions
+
+### Test
+
+- refactor proxy configuration saving logic and enhance test coverage for proxy settings
+
+
+<a name="v0.19.8"></a>
+
+## [v0.19.8] - 2025-05-05
+
+### Feat
+
+- add support for custom no_proxy settings in proxy configuration
+
+
+<a name="v0.19.7"></a>
+
+## [v0.19.7] - 2025-05-01
+
+### Chore
+
+- update dependencies in go.mod and go.sum to latest versions
+
+### Feat
+
+- enhance PullRebaseBareRepo with autostash and progress options
+
+
+<a name="v0.19.6"></a>
+
+## [v0.19.6] - 2025-04-30
+
+### Docs
+
+- add command descriptions for config, dotfiles repo, email, and verbose commands
+
+### Feat
+
+- update version command to suggest automatic updates and provide alternative installation instructions
+- implement error handling in down and up commands; add utils functions for process management and verbose flag checks
+
+### Refactor
+
+- rename EnsureOnMaster to EnsureOnMain and update related logic
+
+
+<a name="v0.19.5"></a>
+
+## [v0.19.5] - 2025-04-30
+
+### Feat
+
+- enhance dotfiles commands with info flag and improved error messages
+
+
+<a name="v0.19.4"></a>
+
+## [v0.19.4] - 2025-04-30
+
+### Feat
+
+- enhance update instructions for Homebrew and manual installation methods
+
+
+<a name="v0.19.3"></a>
+
+## [v0.19.3] - 2025-04-30
+
+### Feat
+
+- extend Homebrew installation prefixes to include Linuxbrew support
+
+
+<a name="v0.19.2"></a>
+
+## [v0.19.2] - 2025-04-30
+
+### Feat
+
+- enhance version command with verbose logging for Homebrew update process and GitHub release fetching
+
+
+<a name="v0.19.1"></a>
+
+## [v0.19.1] - 2025-04-30
+
+### Feat
+
+- add --update flag to version command for Homebrew updates and enhance logging with debug level
+
+
+<a name="v0.19.0"></a>
+
+## [v0.19.0] - 2025-04-30
+
+### Feat
+
+- improve version command documentation and enhance error handling for GitHub API requests
+
+
+<a name="v0.18.4"></a>
+
+## [v0.18.4] - 2025-04-30
+
+### Feat
+
+- enhance findNonMovieFolders command with improved logging and spinner handling
+
+
+<a name="v0.18.3"></a>
+
+## [v0.18.3] - 2025-04-30
+
+### Feat
+
+- update ldflags in goreleaser.yaml for versioning and improve snapshot version template formatting
+
+
+<a name="v0.18.2"></a>
+
+## [v0.18.2] - 2025-04-29
+
+### Feat
+
+- refactor version command to use logging instead of fmt for output and improve error handling
+- enhance findNonMovieFolders command with improved spinner handling and error logging
+- improve version command with spinner for update checks and enhanced error handling
+
+
+<a name="v0.18.1"></a>
+
+## [v0.18.1] - 2025-04-29
+
+### Feat
+
+- enhance version command to check for latest release on GitHub
+- add version command with build information and refactor version handling
+- enhance killPort command with improved argument validation and error handling
+
+### Refactor
+
+- remove unnecessary time delay after scan completion
+
+
+<a name="v0.18.0"></a>
+
+## [v0.18.0] - 2025-04-29
+
+### Feat
+
+- enhance findNonMovieFolders command with improved argument handling and progress feedback
+
+
+<a name="v0.17.22"></a>
+
+## [v0.17.22] - 2025-04-29
+
+### Feat
+
+- enhance spinner functionality with progress tracking for folder scanning
+
+
+<a name="v0.17.21"></a>
+
+## [v0.17.21] - 2025-04-29
+
+### Feat
+
+- add progress tracking to findNonMovieFolders command with spinner updates
+- add spinner utility for improved command feedback during folder scanning
+
+
+<a name="v0.17.20"></a>
+
+## [v0.17.20] - 2025-04-29
+
+### Refactor
+
+- streamline findNonMovieFolders logic and improve directory handling
+
+
+<a name="v0.17.19"></a>
+
+## [v0.17.19] - 2025-04-29
+
+### Refactor
+
+- simplify findNonMovieFolders command and improve error handling
+
+
+<a name="v0.17.18"></a>
+
+## [v0.17.18] - 2025-04-29
+
+### Fix
+
+- streamline folder deletion logic in findNonMovieFolders command
+
+
+<a name="v0.17.17"></a>
+
+## [v0.17.17] - 2025-04-29
+
+### Refactor
+
+- improve error handling and logging in findNonMovieFolders command
+
+
+<a name="v0.17.16"></a>
+
+## [v0.17.16] - 2025-04-29
+
+### Refactor
+
+- enhance error logging for directory search in findNonMovieFolders command
+
+
+<a name="v0.17.15"></a>
+
+## [v0.17.15] - 2025-04-29
+
+### Feat
+
+- add Brew command to update Homebrew packages
+
+
+<a name="v0.17.14"></a>
+
+## [v0.17.14] - 2025-04-29
+
+### Refactor
+
+- streamline verbose logging in findNonMovieFolders command
+
+
+<a name="v0.17.13"></a>
+
+## [v0.17.13] - 2025-04-29
+
+### Refactor
+
+- improve logging for folder checks in findNonMovieFolders command
+
+
+<a name="v0.17.12"></a>
+
+## [v0.17.12] - 2025-04-22
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Refactor
+
+- **proxy:** enhance proxy command to manage multiple configurations and improve user interaction ([#16](https://github.com/eng618/eng/issues/16))
+
 
 <a name="v0.17.11"></a>
 
@@ -1224,7 +1594,42 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.17.11...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.21.3...HEAD
+[v0.21.3]: https://github.com/eng618/eng/compare/v0.21.2...v0.21.3
+[v0.21.2]: https://github.com/eng618/eng/compare/v0.21.1...v0.21.2
+[v0.21.1]: https://github.com/eng618/eng/compare/v0.21.0...v0.21.1
+[v0.21.0]: https://github.com/eng618/eng/compare/v0.20.5...v0.21.0
+[v0.20.5]: https://github.com/eng618/eng/compare/v0.20.4...v0.20.5
+[v0.20.4]: https://github.com/eng618/eng/compare/v0.20.3...v0.20.4
+[v0.20.3]: https://github.com/eng618/eng/compare/v0.20.2...v0.20.3
+[v0.20.2]: https://github.com/eng618/eng/compare/v0.20.1...v0.20.2
+[v0.20.1]: https://github.com/eng618/eng/compare/v0.20.0...v0.20.1
+[v0.20.0]: https://github.com/eng618/eng/compare/v0.19.8...v0.20.0
+[v0.19.8]: https://github.com/eng618/eng/compare/v0.19.7...v0.19.8
+[v0.19.7]: https://github.com/eng618/eng/compare/v0.19.6...v0.19.7
+[v0.19.6]: https://github.com/eng618/eng/compare/v0.19.5...v0.19.6
+[v0.19.5]: https://github.com/eng618/eng/compare/v0.19.4...v0.19.5
+[v0.19.4]: https://github.com/eng618/eng/compare/v0.19.3...v0.19.4
+[v0.19.3]: https://github.com/eng618/eng/compare/v0.19.2...v0.19.3
+[v0.19.2]: https://github.com/eng618/eng/compare/v0.19.1...v0.19.2
+[v0.19.1]: https://github.com/eng618/eng/compare/v0.19.0...v0.19.1
+[v0.19.0]: https://github.com/eng618/eng/compare/v0.18.4...v0.19.0
+[v0.18.4]: https://github.com/eng618/eng/compare/v0.18.3...v0.18.4
+[v0.18.3]: https://github.com/eng618/eng/compare/v0.18.2...v0.18.3
+[v0.18.2]: https://github.com/eng618/eng/compare/v0.18.1...v0.18.2
+[v0.18.1]: https://github.com/eng618/eng/compare/v0.18.0...v0.18.1
+[v0.18.0]: https://github.com/eng618/eng/compare/v0.17.22...v0.18.0
+[v0.17.22]: https://github.com/eng618/eng/compare/v0.17.21...v0.17.22
+[v0.17.21]: https://github.com/eng618/eng/compare/v0.17.20...v0.17.21
+[v0.17.20]: https://github.com/eng618/eng/compare/v0.17.19...v0.17.20
+[v0.17.19]: https://github.com/eng618/eng/compare/v0.17.18...v0.17.19
+[v0.17.18]: https://github.com/eng618/eng/compare/v0.17.17...v0.17.18
+[v0.17.17]: https://github.com/eng618/eng/compare/v0.17.16...v0.17.17
+[v0.17.16]: https://github.com/eng618/eng/compare/v0.17.15...v0.17.16
+[v0.17.15]: https://github.com/eng618/eng/compare/v0.17.14...v0.17.15
+[v0.17.14]: https://github.com/eng618/eng/compare/v0.17.13...v0.17.14
+[v0.17.13]: https://github.com/eng618/eng/compare/v0.17.12...v0.17.13
+[v0.17.12]: https://github.com/eng618/eng/compare/v0.17.11...v0.17.12
 [v0.17.11]: https://github.com/eng618/eng/compare/v0.17.10...v0.17.11
 [v0.17.10]: https://github.com/eng618/eng/compare/v0.17.9...v0.17.10
 [v0.17.9]: https://github.com/eng618/eng/compare/v0.17.8...v0.17.9
