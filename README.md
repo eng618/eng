@@ -25,7 +25,8 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 
 ## Features
 
-- **Modular CLI**: Each command is a self-contained module (dotfiles, system, codemod, ts, version, config)
+- **Modular CLI**: Each command is a self-contained module (git, dotfiles, system, codemod, ts, version, config)
+- **Git Repository Management**: Bulk operations across multiple git repositories with intelligent branch detection
 - **Dotfiles Management**: Manage dotfiles via a bare git repo, with sync/fetch helpers
 - **System Utilities**: MacOS/Linux helpers (kill port, find folders, proxy, update)
 - **Codemod Automation**: Project codemods (e.g., lint setup for JS/TS projects)
@@ -40,38 +41,43 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 ## Architecture
 
 ```mermaid
-graph TD
+graph LR
     A[main.go] --> B[cmd/root.go]
-    B --> C1[cmd/dotfiles/]
-    B --> C2[cmd/system/]
-    B --> C3[cmd/codemod/]
-    B --> C4[cmd/ts/]
-    B --> C5[cmd/version/]
-    B --> C6[cmd/config/]
-    C1 --> D1[dotfiles.go]
-    C1 --> D2[sync.go]
-    C1 --> D3[fetch.go]
-    C2 --> D4[system.go]
-    C2 --> D5[kill_port.go]
-    C2 --> D6[find_non_movie_folders.go]
-    C2 --> D7[proxy.go]
-    C2 --> D8[update.go]
-    C3 --> D9[codemod.go]
-    C3 --> D10[codemod_test.go]
-    C4 --> D11[ts.go]
-    C4 --> D12[up.go]
-    C4 --> D13[down.go]
-    C5 --> D14[version.go]
-    C6 --> D15[config.go]
-    B --> E[utils/]
-    E --> F1[log/]
-    E --> F2[repo/]
-    E --> F3[config/]
-    E --> F4[files.go]
-    E --> F5[command.go]
+    
+    B --> C1[Git Commands]
+    C1 --> D1[sync-all]
+    C1 --> D2[fetch-all]
+    C1 --> D3[pull-all]
+    C1 --> D4[push-all]
+    C1 --> D5[status-all]
+    C1 --> D6[list]
+    C1 --> D7[branch-all]
+    C1 --> D8[stash-all]
+    C1 --> D9[clean-all]
+    
+    B --> C2[Dotfiles]
+    C2 --> E1[sync]
+    C2 --> E2[fetch]
+    
+    B --> C3[System]
+    C3 --> F1[kill-port]
+    C3 --> F2[find-non-movie-folders]
+    C3 --> F3[proxy]
+    C3 --> F4[update]
+    
+    B --> C4[Other Commands]
+    C4 --> G1[codemod]
+    C4 --> G2[ts up/down]
+    C4 --> G3[version]
+    C4 --> G4[config]
+    
+    B --> C5[Utils]
+    C5 --> H1[log]
+    C5 --> H2[repo]
+    C5 --> H3[config]
+    C5 --> H4[files]
+    C5 --> H5[command]
 ```
-
----
 
 ## Installation
 
@@ -106,6 +112,7 @@ eng [command] [flags]
 
 ### Common Commands
 
+- `eng git` — Git repository management across multiple repos
 - `eng dotfiles` — Manage dotfiles (sync, fetch, info)
 - `eng system` — System utilities (kill-port, find-non-movie-folders, update, proxy)
 - `eng codemod` — Project codemods (e.g., lint-setup)
@@ -116,6 +123,34 @@ eng [command] [flags]
 ---
 
 ## Command Reference
+
+### Git Repository Management
+
+Manage multiple git repositories in your development folder with a comprehensive set of commands. All commands support the `--current` flag to operate on the current directory instead of the configured development path.
+
+#### Setup
+
+```sh
+# Configure your development folder path
+eng config git-dev-path /path/to/your/dev/folder
+```
+
+#### Repository Operations
+
+- `eng git sync-all [--current] [--dry-run]` — Fetch and pull with rebase across all repositories
+- `eng git fetch-all [--current] [--dry-run]` — Fetch latest changes from remote for all repositories  
+- `eng git pull-all [--current] [--dry-run]` — Pull latest changes with rebase for all repositories
+- `eng git push-all [--current] [--dry-run]` — Push local changes to remote for all repositories
+- `eng git status-all [--current]` — Show git status for all repositories
+- `eng git list [--current]` — List all git repositories found
+- `eng git branch-all [--current]` — Show current branch for all repositories
+- `eng git stash-all [--current] [--dry-run]` — Stash changes in all repositories
+- `eng git clean-all [--current] [--dry-run]` — Clean untracked files in all repositories
+
+#### Flags
+
+- `--current` — Use current working directory instead of configured development path
+- `--dry-run` — Show what would be done without making changes (where applicable)
 
 ### Dotfiles
 
@@ -148,6 +183,7 @@ eng [command] [flags]
 
 - `eng config` — Show config
 - `eng config edit` — Edit config
+- `eng config git-dev-path` — Set development folder path for git commands
 
 ---
 
