@@ -27,6 +27,7 @@ import (
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
+	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
@@ -92,6 +93,7 @@ func init() {
 	// Add subcommands
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
+	rootCmd.AddCommand(git.GitCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
 	rootCmd.AddCommand(version.VersionCmd)

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"os/exec"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -31,10 +32,16 @@ func IsDirty(repoPath string) (bool, error) {
 	return !status.IsClean(), nil
 }
 
-// PullLatestCode pulls the latest changes from the specified branch of the repository.
-// It takes the repository path `repoPath` and branch name `branchName` as inputs and
-// returns an error if the operation fails.
-func PullLatestCode(repoPath string, branchName string) error {
+// PullLatestCode pulls the latest changes from the current branch of the repository.
+// It takes the repository path `repoPath` as input and returns an error if the operation fails.
+// The function automatically detects the current branch and pulls from the corresponding remote.
+func PullLatestCode(repoPath string) error {
+	// Get current branch
+	currentBranch, err := GetCurrentBranch(repoPath)
+	if err != nil {
+		return err
+	}
+
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return err
@@ -45,7 +52,7 @@ func PullLatestCode(repoPath string, branchName string) error {
 		return err
 	}
 
-	refName := plumbing.NewBranchReferenceName(branchName)
+	refName := plumbing.NewBranchReferenceName(currentBranch)
 	err = w.Pull(&git.PullOptions{
 		RemoteName:    "origin",
 		ReferenceName: refName,
@@ -55,10 +62,31 @@ func PullLatestCode(repoPath string, branchName string) error {
 	return err
 }
 
-// EnsureOnMain ensures that the repository is on the master branch.
-// It takes the repository path `repoPath` as input and returns an error if the
-// repository is not on the main branch or if the operation fails.
-func EnsureOnMain(repoPath string) error {
+// EnsureOnDefaultBranch ensures that the repository is on the default branch (main or master).
+// It dynamically detects the default branch and switches to it if necessary.
+// It takes the repository path `repoPath` as input and returns an error if the operation fails.
+func EnsureOnDefaultBranch(repoPath string) error {
+	// Get the main branch name for this repository
+	mainBranch, err := GetMainBranch(repoPath)
+	if err != nil {
+		return err
+	}
+
+	// Get current branch
+	currentBranch, err := GetCurrentBranch(repoPath)
+	if err != nil {
+		return err
+	}
+
+	// If we're already on the main branch, no need to switch
+	if currentBranch == mainBranch {
+		log.Success("Already on default branch: %s", mainBranch)
+		return nil
+	}
+
+	// Switch to the main branch
+	log.Warn("Currently on %s, attempting to switch to default branch: %s", currentBranch, mainBranch)
+	
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return err
@@ -69,27 +97,16 @@ func EnsureOnMain(repoPath string) error {
 		return err
 	}
 
-	h, err := r.Head()
+	mainRef := plumbing.NewBranchReferenceName(mainBranch)
+	err = w.Checkout(&git.CheckoutOptions{
+		Branch: mainRef,
+		Force:  true, // Force checkout even if the working tree is dirty
+	})
 	if err != nil {
 		return err
 	}
-
-	mainRef := plumbing.NewBranchReferenceName("main")
-
-	if h.Name().Short() != "main" {
-		log.Warn("head is currently at %s, attempting to switch to main", h.Name().Short())
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: mainRef,
-			Force:  true, // Force checkout even if the working tree is dirty
-		})
-		if err != nil {
-			return err
-		}
-		log.Success("Switched to main branch")
-	} else {
-		log.Success("Already on main branch")
-	}
-
+	
+	log.Success("Switched to default branch: %s", mainBranch)
 	return nil
 }
 
@@ -123,4 +140,78 @@ func PullRebaseBareRepo(repoPath string, workTree string) error {
 	log.Info("PullRebaseBareRepo output: %s", string(out)) // Log the output
 
 	return nil
+}
+
+// GetMainBranch returns the main branch name for the repository (main or master).
+// It checks for both main and master branches and returns the one that exists.
+func GetMainBranch(repoPath string) (string, error) {
+	// First check if main branch exists
+	if branchExists(repoPath, "main") {
+		return "main", nil
+	}
+	
+	// Then check if master branch exists
+	if branchExists(repoPath, "master") {
+		return "master", nil
+	}
+	
+	// If neither exists, try to get the default branch from remote
+	defaultBranch, err := getRemoteDefaultBranch(repoPath)
+	if err == nil && defaultBranch != "" {
+		return defaultBranch, nil
+	}
+	
+	// Fall back to main as default
+	log.Warn("Could not determine main branch for %s, defaulting to 'main'", repoPath)
+	return "main", nil
+}
+
+// GetDevelopBranch returns the development branch name for the repository (develop, dev, or development).
+// It checks for common development branch names and returns the one that exists.
+func GetDevelopBranch(repoPath string) (string, error) {
+	developBranches := []string{"develop", "dev", "development"}
+	
+	for _, branch := range developBranches {
+		if branchExists(repoPath, branch) {
+			return branch, nil
+		}
+	}
+	
+	// If no development branch is found, return empty string
+	return "", nil
+}
+
+// GetCurrentBranch returns the current branch name for the repository.
+func GetCurrentBranch(repoPath string) (string, error) {
+	cmd := exec.Command("git", "-C", repoPath, "branch", "--show-current")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+// branchExists checks if a branch exists in the repository.
+func branchExists(repoPath string, branchName string) bool {
+	cmd := exec.Command("git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branchName)
+	err := cmd.Run()
+	return err == nil
+}
+
+// getRemoteDefaultBranch tries to get the default branch from the remote.
+func getRemoteDefaultBranch(repoPath string) (string, error) {
+	cmd := exec.Command("git", "-C", repoPath, "symbolic-ref", "refs/remotes/origin/HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	
+	// Parse the output to get just the branch name
+	ref := strings.TrimSpace(string(output))
+	parts := strings.Split(ref, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1], nil
+	}
+	
+	return "", nil
 }
