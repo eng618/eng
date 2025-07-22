@@ -64,7 +64,12 @@ func init() {
 // getWorkingPath returns either the current working directory (if --current flag is used)
 // or the configured development path from the config file.
 func getWorkingPath(cmd *cobra.Command) (string, error) {
-	useCurrent, _ := cmd.Flags().GetBool("current")
+	// Check for the persistent flag on the root git command or inherited
+	useCurrent, _ := cmd.PersistentFlags().GetBool("current")
+	if !useCurrent {
+		// Try to get from local flags if not found in persistent flags
+		useCurrent, _ = cmd.Flags().GetBool("current")
+	}
 	
 	if useCurrent {
 		devPath, err := os.Getwd()
