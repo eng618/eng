@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -21,32 +22,49 @@ func setupTestRepo(t *testing.T, branchName string) string {
 	cmd := exec.Command("git", "init")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
-		os.RemoveAll(tmpDir)
+		if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+			t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+		}
 		t.Fatalf("Failed to init git repo: %v", err)
 	}
 
 	// Configure git user (required for commits)
-	exec.Command("git", "config", "user.name", "Test User").Run()
-	exec.Command("git", "config", "user.email", "test@example.com").Run()
+	cmd = exec.Command("git", "config", "user.name", "Test User")
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		t.Logf("Warning: failed to set git user.name: %v", err)
+	}
+	
+	cmd = exec.Command("git", "config", "user.email", "test@example.com")
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		t.Logf("Warning: failed to set git user.email: %v", err)
+	}
 
 	// Create initial commit
 	testFile := filepath.Join(tmpDir, "test.txt")
 	if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
-		os.RemoveAll(tmpDir)
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("Warning: failed to cleanup tmpDir: %v", err)
+		}
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
 	cmd = exec.Command("git", "add", "test.txt")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
-		os.RemoveAll(tmpDir)
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("Warning: failed to cleanup tmpDir: %v", err)
+		}
 		t.Fatalf("Failed to add file: %v", err)
 	}
 
 	cmd = exec.Command("git", "commit", "-m", "Initial commit")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
-		os.RemoveAll(tmpDir)
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("Warning: failed to cleanup tmpDir: %v", err)
+		}
 		t.Fatalf("Failed to commit: %v", err)
 	}
 
@@ -55,8 +73,25 @@ func setupTestRepo(t *testing.T, branchName string) string {
 		cmd = exec.Command("git", "checkout", "-b", branchName)
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(tmpDir)
+			if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+				t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+			}
 			t.Fatalf("Failed to create branch %s: %v", branchName, err)
+		}
+	} else if branchName == "master" {
+		// If we want master, rename the default branch to master
+		cmd = exec.Command("git", "branch", "-m", "main", "master")
+		cmd.Dir = tmpDir
+		if err := cmd.Run(); err != nil {
+			// Try renaming from whatever the default branch is
+			cmd = exec.Command("git", "branch", "-m", "master")
+			cmd.Dir = tmpDir
+			if err := cmd.Run(); err != nil {
+				if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+					t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+				}
+				t.Fatalf("Failed to rename branch to master: %v", err)
+			}
 		}
 	}
 
@@ -77,7 +112,9 @@ func setupTestRepoWithBranches(t *testing.T, branches []string) string {
 		cmd := exec.Command("git", "checkout", "-b", branch)
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(tmpDir)
+			if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+				t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+			}
 			t.Fatalf("Failed to create branch %s: %v", branch, err)
 		}
 
@@ -85,7 +122,9 @@ func setupTestRepoWithBranches(t *testing.T, branches []string) string {
 		cmd = exec.Command("git", "checkout", "main")
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(tmpDir)
+			if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+				t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+			}
 			t.Fatalf("Failed to checkout main: %v", err)
 		}
 	}
@@ -114,16 +153,11 @@ func TestGetMainBranch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := setupTestRepo(t, tt.setupBranch)
-			defer os.RemoveAll(tmpDir)
-
-			// If we're testing master, rename main to master
-			if tt.setupBranch == "master" {
-				cmd := exec.Command("git", "branch", "-m", "main", "master")
-				cmd.Dir = tmpDir
-				if err := cmd.Run(); err != nil {
-					t.Fatalf("Failed to rename branch to master: %v", err)
+			defer func() {
+				if err := os.RemoveAll(tmpDir); err != nil {
+					t.Logf("Warning: failed to cleanup tmpDir: %v", err)
 				}
-			}
+			}()
 
 			branch, err := GetMainBranch(tmpDir)
 			if err != nil {
@@ -174,7 +208,11 @@ func TestGetDevelopBranch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := setupTestRepoWithBranches(t, tt.branches)
-			defer os.RemoveAll(tmpDir)
+			defer func() {
+				if err := os.RemoveAll(tmpDir); err != nil {
+					t.Logf("Warning: failed to cleanup tmpDir: %v", err)
+				}
+			}()
 
 			branch, err := GetDevelopBranch(tmpDir)
 			if err != nil {
@@ -191,7 +229,11 @@ func TestGetDevelopBranch(t *testing.T) {
 
 func TestGetCurrentBranch(t *testing.T) {
 	tmpDir := setupTestRepoWithBranches(t, []string{"develop", "feature/test"})
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("Warning: failed to cleanup tmpDir: %v", err)
+		}
+	}()
 
 	// Test getting current branch when on main
 	branch, err := GetCurrentBranch(tmpDir)
@@ -222,7 +264,9 @@ func TestGetCurrentBranch(t *testing.T) {
 
 func TestBranchExists(t *testing.T) {
 	tmpDir := setupTestRepoWithBranches(t, []string{"develop", "feature/test"})
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
 
 	tests := []struct {
 		name       string
@@ -263,7 +307,9 @@ func TestBranchExists(t *testing.T) {
 
 func TestIsDirty(t *testing.T) {
 	tmpDir := setupTestRepo(t, "main")
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
 
 	// Test clean repository
 	dirty, err := IsDirty(tmpDir)
@@ -294,7 +340,9 @@ func TestIsDirty(t *testing.T) {
 
 func TestEnsureOnDefaultBranch(t *testing.T) {
 	tmpDir := setupTestRepoWithBranches(t, []string{"develop"})
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
 
 	// Switch to develop branch first
 	cmd := exec.Command("git", "checkout", "develop")
@@ -355,21 +403,46 @@ func TestGetMainBranch_Comprehensive(t *testing.T) {
 			name:           "Repository with both main and master - prefers main",
 			initialBranch:  "master",
 			additionalBranches: []string{"main"},
-			expectedBranch: "main",
+			expectedBranch: "main", // GetMainBranch prefers main over master
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoPath := setupTestRepo(t, tt.initialBranch)
-			defer os.RemoveAll(repoPath)
+			defer func() {
+				_ = os.RemoveAll(repoPath)
+			}()
 
 			// Create additional branches if specified
 			for _, branch := range tt.additionalBranches {
-				cmd := exec.Command("git", "checkout", "-b", branch)
+				// First check if we're trying to create a branch that already exists
+				cmd := exec.Command("git", "rev-parse", "--verify", branch)
+				cmd.Dir = repoPath
+				if cmd.Run() == nil {
+					// Branch already exists, skip creation
+					t.Logf("Branch %s already exists, skipping creation", branch)
+					continue
+				}
+				
+				// Get current branch to return to it after creating the new branch
+				currentBranch, err := getCurrentBranchInRepo(repoPath)
+				if err != nil {
+					t.Fatalf("Failed to get current branch: %v", err)
+				}
+				
+				// Create the new branch from the current branch
+				cmd = exec.Command("git", "checkout", "-b", branch)
 				cmd.Dir = repoPath
 				if err := cmd.Run(); err != nil {
 					t.Fatalf("Failed to create branch %s: %v", branch, err)
+				}
+				
+				// Return to the original branch
+				cmd = exec.Command("git", "checkout", currentBranch)
+				cmd.Dir = repoPath
+				if err := cmd.Run(); err != nil {
+					t.Fatalf("Failed to return to branch %s: %v", currentBranch, err)
 				}
 			}
 
@@ -383,6 +456,17 @@ func TestGetMainBranch_Comprehensive(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Helper function to get current branch for tests
+func getCurrentBranchInRepo(repoPath string) (string, error) {
+	cmd := exec.Command("git", "branch", "--show-current")
+	cmd.Dir = repoPath
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
 }
 
 func TestGetDevelopBranch_Comprehensive(t *testing.T) {
@@ -421,7 +505,9 @@ func TestGetDevelopBranch_Comprehensive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoPath := setupTestRepo(t, "main")
-			defer os.RemoveAll(repoPath)
+			defer func() {
+				_ = os.RemoveAll(repoPath)
+			}()
 
 			// Create test branches
 			for _, branch := range tt.branches {
@@ -446,7 +532,9 @@ func TestGetDevelopBranch_Comprehensive(t *testing.T) {
 
 func TestBranchExists_Comprehensive(t *testing.T) {
 	repoPath := setupTestRepo(t, "main")
-	defer os.RemoveAll(repoPath)
+	defer func() {
+		_ = os.RemoveAll(repoPath)
+	}()
 
 	// Create test branches
 	testBranches := []string{"test-branch", "feature/new-feature", "develop"}

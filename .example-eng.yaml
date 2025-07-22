@@ -2,4 +2,15 @@
 # This can be directly copied to your $HOME/.eng.yaml
 # You can further customize it from there.
 
-user-email: eng618@garciaericn.com
+dotfiles:
+  repopath: $HOME/.my-dotfiles
+  worktree: /Users/myuser
+git:
+  devpath: $HOME/Development
+proxies:
+  - enabled: false
+    noproxy: ""
+    title: My custom proxy
+    value: myproxy.example.com:8080
+user-email: myemail@example.com
+verbose: false

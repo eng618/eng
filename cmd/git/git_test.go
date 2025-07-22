@@ -21,7 +21,7 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 	for _, repoName := range repoNames {
 		repoPath := filepath.Join(workspace, repoName)
 		if err := os.MkdirAll(repoPath, 0755); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create repo directory %s: %v", repoName, err)
 		}
 
@@ -29,38 +29,42 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 		cmd := exec.Command("git", "init")
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to init git repo %s: %v", repoName, err)
 		}
 
 		// Configure git user (required for commits)
 		cmd = exec.Command("git", "config", "user.name", "Test User")
 		cmd.Dir = repoPath
-		cmd.Run()
+		if err := cmd.Run(); err != nil {
+			tb.Logf("Warning: failed to set git user.name: %v", err)
+		}
 		
 		cmd = exec.Command("git", "config", "user.email", "test@example.com")
 		cmd.Dir = repoPath
-		cmd.Run()
+		if err := cmd.Run(); err != nil {
+			tb.Logf("Warning: failed to set git user.email: %v", err)
+		}
 
 		// Create initial commit
 		testFile := filepath.Join(repoPath, "README.md")
 		content := "# " + repoName + "\n\nTest repository for " + repoName
 		if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create test file in %s: %v", repoName, err)
 		}
 
 		cmd = exec.Command("git", "add", "README.md")
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to add file in %s: %v", repoName, err)
 		}
 
 		cmd = exec.Command("git", "commit", "-m", "Initial commit")
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to commit in %s: %v", repoName, err)
 		}
 	}
@@ -78,14 +82,14 @@ func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos []string, nonGitDi
 	for _, dirName := range nonGitDirs {
 		dirPath := filepath.Join(workspace, dirName)
 		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create non-git directory %s: %v", dirName, err)
 		}
 
 		// Create a file in the directory to make it non-empty
 		testFile := filepath.Join(dirPath, "file.txt")
 		if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
-			os.RemoveAll(workspace)
+			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create file in non-git dir %s: %v", dirName, err)
 		}
 	}
@@ -129,7 +133,9 @@ func TestFindGitRepositories(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			workspace := setupTestWorkspaceWithNonGitDirs(t, tt.gitRepos, tt.nonGitDirs)
-			defer os.RemoveAll(workspace)
+			defer func() {
+				_ = os.RemoveAll(workspace)
+			}()
 
 			repos, err := findGitRepositories(workspace)
 			if err != nil {
@@ -186,7 +192,9 @@ func TestFindGitRepositoriesEmptyDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
 
 	repos, err := findGitRepositories(tmpDir)
 	if err != nil {
@@ -203,7 +211,9 @@ func TestFindGitRepositoriesEmptyDirectory(t *testing.T) {
 func TestGitWorkflow(t *testing.T) {
 	// Setup test workspace
 	workspace := setupTestWorkspace(t, []string{"test-repo1", "test-repo2"})
-	defer os.RemoveAll(workspace)
+	defer func() {
+		_ = os.RemoveAll(workspace)
+	}()
 
 	// Test that we can find the repositories
 	repos, err := findGitRepositories(workspace)
@@ -248,7 +258,9 @@ func BenchmarkFindGitRepositories(b *testing.B) {
 	}
 	
 	workspace := setupTestWorkspace(b, repoNames)
-	defer os.RemoveAll(workspace)
+	defer func() {
+		_ = os.RemoveAll(workspace)
+	}()
 
 	b.ResetTimer()
 	

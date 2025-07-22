@@ -38,7 +38,9 @@ func TestGetWorkingPath(t *testing.T) {
 			cmd.PersistentFlags().Bool("current", false, "Use current working directory")
 
 			if tt.useCurrentFlag {
-				cmd.PersistentFlags().Set("current", "true")
+				if err := cmd.PersistentFlags().Set("current", "true"); err != nil {
+					t.Fatalf("Failed to set current flag: %v", err)
+				}
 			}
 
 			path, err := getWorkingPath(cmd)
@@ -74,7 +76,9 @@ func setupTestCommandEnvironment(t *testing.T, repoNames []string) (string, func
 	
 	// Cleanup function
 	cleanup := func() {
-		os.RemoveAll(workspace)
+		if err := os.RemoveAll(workspace); err != nil {
+			t.Logf("Warning: failed to cleanup workspace: %v", err)
+		}
 	}
 	
 	return workspace, cleanup
@@ -86,7 +90,7 @@ func createTestCommandWithFlags(current bool) *cobra.Command {
 	cmd.Flags().Bool("dry-run", false, "Perform a dry run")
 	
 	if current {
-		cmd.PersistentFlags().Set("current", "true")
+		_ = cmd.PersistentFlags().Set("current", "true")
 	}
 	
 	return cmd
@@ -100,12 +104,20 @@ func TestSyncAllCommand_DryRun(t *testing.T) {
 
 	// Change to workspace directory
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workspace)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore original directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(workspace); err != nil {
+		t.Fatalf("Failed to change to workspace directory: %v", err)
+	}
 
 	// Create command with --current and --dry-run flags
 	cmd := createTestCommandWithFlags(true)
-	cmd.Flags().Set("dry-run", "true")
+	if err := cmd.Flags().Set("dry-run", "true"); err != nil {
+		t.Fatalf("Failed to set dry-run flag: %v", err)
+	}
 
 	// Test that the function doesn't panic and can find repos
 	repos, err := findGitRepositories(workspace)
@@ -139,8 +151,14 @@ func TestStatusAllCommand_WithCurrentFlag(t *testing.T) {
 
 	// Change to workspace directory
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workspace)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore original directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(workspace); err != nil {
+		t.Fatalf("Failed to change to workspace directory: %v", err)
+	}
 
 	// Test getWorkingPath with current flag
 	cmd := createTestCommandWithFlags(true)
@@ -174,8 +192,14 @@ func TestListAllCommand_WithPaths(t *testing.T) {
 	defer cleanup()
 
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workspace)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore original directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(workspace); err != nil {
+		t.Fatalf("Failed to change to workspace directory: %v", err)
+	}
 
 	// Test findGitRepositories function
 	repos, err := findGitRepositories(workspace)
@@ -215,8 +239,14 @@ func TestBranchAllCommand_DetectsBranches(t *testing.T) {
 	}
 
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workspace)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore original directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(workspace); err != nil {
+		t.Fatalf("Failed to change to workspace directory: %v", err)
+	}
 
 	repos, err := findGitRepositories(workspace)
 	if err != nil {
@@ -268,7 +298,9 @@ func TestPersistentFlagInheritance(t *testing.T) {
 		Use: "parent",
 	}
 	parentCmd.PersistentFlags().Bool("current", false, "Use current working directory")
-	parentCmd.PersistentFlags().Set("current", "true")
+	if err := parentCmd.PersistentFlags().Set("current", "true"); err != nil {
+		t.Fatalf("Failed to set current flag: %v", err)
+	}
 	
 	// Create a test subcommand
 	subCmd := &cobra.Command{
@@ -298,17 +330,29 @@ func TestPersistentFlagInheritance(t *testing.T) {
 func TestCurrentFlagWorkflow(t *testing.T) {
 	// Setup test workspace
 	workspace := setupTestWorkspace(t, []string{"repo1", "repo2"})
-	defer os.RemoveAll(workspace)
+	defer func() {
+		if err := os.RemoveAll(workspace); err != nil {
+			t.Logf("Warning: failed to cleanup workspace: %v", err)
+		}
+	}()
 
 	// Change to the workspace directory
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workspace)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore original directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(workspace); err != nil {
+		t.Fatalf("Failed to change to workspace directory: %v", err)
+	}
 
 	// Create a test command with --current flag
 	cmd := &cobra.Command{}
 	cmd.PersistentFlags().Bool("current", false, "Use current working directory")
-	cmd.PersistentFlags().Set("current", "true")
+	if err := cmd.PersistentFlags().Set("current", "true"); err != nil {
+		t.Fatalf("Failed to set current flag: %v", err)
+	}
 
 	// Test getWorkingPath with current flag
 	path, err := getWorkingPath(cmd)
@@ -339,7 +383,11 @@ func TestCurrentFlagWorkflow(t *testing.T) {
 // Test that commands can handle repositories with different branch names
 func TestDifferentBranchNames(t *testing.T) {
 	workspace := setupTestWorkspace(t, []string{"main-repo", "master-repo"})
-	defer os.RemoveAll(workspace)
+	defer func() {
+		if err := os.RemoveAll(workspace); err != nil {
+			t.Logf("Warning: failed to cleanup workspace: %v", err)
+		}
+	}()
 
 	// We can test that our helper functions work correctly
 	repos, err := findGitRepositories(workspace)
@@ -379,7 +427,9 @@ func TestEdgeCases(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create temp dir: %v", err)
 		}
-		defer os.RemoveAll(tmpDir)
+		defer func() {
+			_ = os.RemoveAll(tmpDir)
+		}()
 
 		repos, err := findGitRepositories(tmpDir)
 		if err != nil {

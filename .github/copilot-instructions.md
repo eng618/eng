@@ -13,6 +13,7 @@
 - Use the Go standard library whenever possible.
 - Use the `go` command to run tests, build, and install packages.
 - Use `golangci-lint` to format code.
+- Use `golangci-lint run` to check for linting issues.
 - Use `go test` to run tests.
 - Use `go mod` to manage dependencies.
 
