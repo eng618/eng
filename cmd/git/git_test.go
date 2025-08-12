@@ -46,6 +46,19 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 			tb.Logf("Warning: failed to set git user.email: %v", err)
 		}
 
+		// Disable commit signing for test repositories
+		cmd = exec.Command("git", "config", "commit.gpgsign", "false")
+		cmd.Dir = repoPath
+		if err := cmd.Run(); err != nil {
+			tb.Logf("Warning: failed to disable gpg signing: %v", err)
+		}
+
+		cmd = exec.Command("git", "config", "tag.gpgsign", "false")
+		cmd.Dir = repoPath
+		if err := cmd.Run(); err != nil {
+			tb.Logf("Warning: failed to disable tag signing: %v", err)
+		}
+
 		// Create initial commit
 		testFile := filepath.Join(repoPath, "README.md")
 		content := "# " + repoName + "\n\nTest repository for " + repoName

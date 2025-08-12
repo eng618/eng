@@ -22,3 +22,15 @@
 - Use `go test -cover` to check test coverage.
 - Use `go vet` to check for common mistakes.
 - Use `go doc` to generate documentation.
+
+## git Commit messages
+
+- Use conventional commit messages
+- Follow the commit message guidelines
+- See https://www.conventionalcommits.org/en/v1.0.0/
+- Start commit messages with a type (e.g., feat, fix, docs, style, refactor, test, chore)
+- Optionally include a scope in parentheses after the type (e.g., feat(parser): ...)
+- Use a short, imperative description after the type/scope
+- Separate the body from the header with a blank line if additional context is needed
+- Reference issues or pull requests in the footer if applicable
+- Mention breaking changes in the footer if present

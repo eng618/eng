@@ -41,6 +41,19 @@ func setupTestRepo(t *testing.T, branchName string) string {
 		t.Logf("Warning: failed to set git user.email: %v", err)
 	}
 
+	// Disable commit signing for test repositories
+	cmd = exec.Command("git", "config", "commit.gpgsign", "false")
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		t.Logf("Warning: failed to disable gpg signing: %v", err)
+	}
+
+	cmd = exec.Command("git", "config", "tag.gpgsign", "false")
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		t.Logf("Warning: failed to disable tag signing: %v", err)
+	}
+
 	// Create initial commit
 	testFile := filepath.Join(tmpDir, "test.txt")
 	if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {

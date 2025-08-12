@@ -67,6 +67,8 @@ graph LR
     
     B --> C4[Other Commands]
     C4 --> G1[codemod]
+    G1 --> G1a[lint-setup]
+    G1 --> G1b[copilot]
     C4 --> G2[ts up/down]
     C4 --> G3[version]
     C4 --> G4[config]
@@ -167,7 +169,14 @@ eng config git-dev-path /path/to/your/dev/folder
 
 ### Codemod
 
+Project automation and setup helpers for various development environments.
+
 - `eng codemod lint-setup` — Setup lint/format (eslint, prettier, husky, lint-staged) in JS/TS projects
+- `eng codemod copilot [--force]` — Create base custom Copilot instructions file at `.github/copilot-instructions.md`
+  - Validates you're in a Git repository (use `--force` to bypass)
+  - Creates `.github/` directory if it doesn't exist
+  - Won't overwrite existing files
+  - Includes comprehensive template with code quality guidelines
 
 ### TypeScript
 
