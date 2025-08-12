@@ -80,6 +80,13 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to commit in %s: %v", repoName, err)
 		}
+
+		// Ensure we're on the main branch (rename default branch if needed)
+		cmd = exec.Command("git", "branch", "-M", "main")
+		cmd.Dir = repoPath
+		if err := cmd.Run(); err != nil {
+			tb.Logf("Warning: failed to rename branch to main in %s: %v", repoName, err)
+		}
 	}
 
 	return workspace

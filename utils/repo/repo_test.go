@@ -81,29 +81,35 @@ func setupTestRepo(t *testing.T, branchName string) string {
 		t.Fatalf("Failed to commit: %v", err)
 	}
 
-	// Create and switch to specified branch if not main/master
-	if branchName != "main" && branchName != "master" {
-		cmd = exec.Command("git", "checkout", "-b", branchName)
-		cmd.Dir = tmpDir
-		if err := cmd.Run(); err != nil {
-			if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
-				t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
-			}
-			t.Fatalf("Failed to create branch %s: %v", branchName, err)
-		}
-	} else if branchName == "master" {
-		// If we want master, rename the default branch to master
-		cmd = exec.Command("git", "branch", "-m", "main", "master")
-		cmd.Dir = tmpDir
-		if err := cmd.Run(); err != nil {
-			// Try renaming from whatever the default branch is
-			cmd = exec.Command("git", "branch", "-m", "master")
+	// Ensure we have the correct branch name
+	// First, rename the default branch to main (this handles both master and main defaults)
+	cmd = exec.Command("git", "branch", "-M", "main")
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		t.Logf("Warning: failed to rename default branch to main: %v", err)
+	}
+
+	// Now create and switch to the specified branch if it's not main
+	if branchName != "main" {
+		if branchName == "master" {
+			// If we want master, rename main to master
+			cmd = exec.Command("git", "branch", "-M", "master")
 			cmd.Dir = tmpDir
 			if err := cmd.Run(); err != nil {
 				if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
 					t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
 				}
 				t.Fatalf("Failed to rename branch to master: %v", err)
+			}
+		} else {
+			// Create and switch to a new branch
+			cmd = exec.Command("git", "checkout", "-b", branchName)
+			cmd.Dir = tmpDir
+			if err := cmd.Run(); err != nil {
+				if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
+					t.Logf("Warning: failed to cleanup temp dir: %v", removeErr)
+				}
+				t.Fatalf("Failed to create branch %s: %v", branchName, err)
 			}
 		}
 	}
