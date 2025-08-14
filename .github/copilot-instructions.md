@@ -34,3 +34,9 @@
 - Separate the body from the header with a blank line if additional context is needed
 - Reference issues or pull requests in the footer if applicable
 - Mention breaking changes in the footer if present
+
+## Project specific
+
+- Always use the local logging package.
+- Utilize the verbose logging as well for more detailed output.
+- Always use the log Writer and ErrorWriter when logging output of an exec.Command.
