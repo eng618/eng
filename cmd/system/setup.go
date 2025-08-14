@@ -33,6 +33,7 @@ func init() {
 var execCommand = exec.Command
 
 func setupASDF() {
+	// Check error for os.UserHomeDir
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Error("Could not determine home directory: %v", err)
@@ -44,7 +45,11 @@ func setupASDF() {
 		log.Error("Could not open %s: %v", toolVersionsPath, err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			log.Error("Error closing file %s: %v", toolVersionsPath, cerr)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

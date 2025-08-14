@@ -21,8 +21,12 @@ func TestSetupASDF(t *testing.T) {
 
 	// Set HOME to tempDir for this test
 	homeOrig := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", homeOrig)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() {
+		if err := os.Setenv("HOME", homeOrig); err != nil {
+			t.Fatalf("Failed to restore HOME: %v", err)
+		}
+	}()
 
 	// Mock exec.Command for asdf plugin add and install
 	// This is a simple test to check the file parsing and command invocation logic
