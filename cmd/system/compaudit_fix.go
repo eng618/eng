@@ -20,7 +20,7 @@ var CompauditFixCmd = &cobra.Command{
 		isVerbose := utils.IsVerbose(cmd)
 
 		// Use an interactive zsh (-i) and run a command (-c) so compaudit (a zsh function) is available.
-		execCmd := exec.Command("zsh", "-ic", "compaudit | xargs chmod g-w,o-w")
+		execCmd := exec.Command("zsh", "-ic", "compaudit | xargs --no-run-if-empty chmod g-w,o-w")
 		log.Verbose(isVerbose, "Executing: %s", execCmd.String())
 
 		outputBytes, err := execCmd.CombinedOutput()
