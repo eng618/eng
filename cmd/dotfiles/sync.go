@@ -38,7 +38,8 @@ var SyncCmd = &cobra.Command{
 		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
 
 		log.Info("Fetching dotfiles")
-		err := repo.FetchBareRepo(repoPath, worktreePath)
+		// Use injectable function so tests can override and avoid executing git.
+		err := fetchRepo(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to fetch dotfiles: %s", err)
 			return
@@ -46,7 +47,7 @@ var SyncCmd = &cobra.Command{
 
 		// Then pull with rebase
 		log.Info("Pulling dotfiles with rebase")
-		err = repo.PullRebaseBareRepo(repoPath, worktreePath)
+		err = pullRebaseRepo(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to pull and rebase dotfiles: %s", err)
 			return
@@ -54,4 +55,9 @@ var SyncCmd = &cobra.Command{
 
 		log.Success("Dotfiles synced successfully")
 	},
+}
+
+// pullRebaseRepo is injectable for tests to avoid executing git.
+var pullRebaseRepo = func(repoPath, worktreePath string) error {
+	return repo.PullRebaseBareRepo(repoPath, worktreePath)
 }

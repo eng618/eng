@@ -30,7 +30,8 @@ var FetchCmd = &cobra.Command{
 			return
 		}
 
-		err := repo.FetchBareRepo(repoPath, worktreePath)
+		// Use an injectable function so tests can replace it and avoid running real git.
+		err := fetchRepo(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to fetch dotfiles: %s", err)
 			return
@@ -38,4 +39,10 @@ var FetchCmd = &cobra.Command{
 
 		log.Success("Dotfiles fetched successfully")
 	},
+}
+
+// fetchRepo is a package-level variable so tests can override the implementation.
+// By default it calls repo.FetchBareRepo.
+var fetchRepo = func(repoPath, worktreePath string) error {
+	return repo.FetchBareRepo(repoPath, worktreePath)
 }
