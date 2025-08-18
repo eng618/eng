@@ -41,10 +41,13 @@ func TestDotfilesCmd_InfoShowsConfig(t *testing.T) {
 	// Ensure DotfilesCmd writes help/info to our buffer
 	DotfilesCmd.SetOut(&buf)
 	DotfilesCmd.SetErr(&buf)
-	// Set the info flag on the command
-	// record prior value to restore
-	_ = DotfilesCmd.Flags().Set("info", "true")
-	defer DotfilesCmd.Flags().Set("info", "false")
+	// Set the info flag on the command and record prior value to restore
+	if err := DotfilesCmd.Flags().Set("info", "true"); err != nil {
+		t.Fatalf("failed to set info flag: %v", err)
+	}
+	defer func() {
+		_ = DotfilesCmd.Flags().Set("info", "false")
+	}()
 
 	DotfilesCmd.Run(DotfilesCmd, []string{})
 

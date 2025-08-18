@@ -19,6 +19,7 @@ func init() {
 	SystemCmd.AddCommand(FindNonMovieFoldersCmd)
 	SystemCmd.AddCommand(UpdateCmd)
 	SystemCmd.AddCommand(ProxyCmd)
+	SystemCmd.AddCommand(CompauditFixCmd)
 	SystemCmd.AddCommand(SetupCmd)
 
 	// Add flags for subcommands if needed

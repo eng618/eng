@@ -27,7 +27,7 @@ var Err io.Writer = os.Stderr
 // Message prints a formatted message to the configured Out writer.
 func Message(format string, a ...any) {
 	s := fmt.Sprintf(format, a...)
-	fmt.Fprintln(Out, s)
+	_, _ = fmt.Fprintln(Out, s)
 }
 
 // Writer returns an io.Writer that prints to the terminal using Message.
@@ -59,32 +59,32 @@ func ErrorWriter() *logErrorWriter {
 
 // Start prints a message to the terminal in blue, indicating a starting action.
 func Start(format string, a ...any) {
-	color.New(color.FgBlue).Fprintf(Out, "==> "+format+"\n", a...)
+	_, _ = color.New(color.FgBlue).Fprintf(Out, "==> "+format+"\n", a...)
 }
 
 // Success prints a message to the terminal in green, indicating a successful action.
 func Success(format string, a ...any) {
-	color.New(color.FgGreen).Fprintf(Out, "==> "+format+"\n", a...)
+	_, _ = color.New(color.FgGreen).Fprintf(Out, "==> "+format+"\n", a...)
 }
 
 // Info prints a message to the terminal in cyan, indicating informational output.
 func Info(format string, a ...any) {
-	color.New(color.FgCyan).Fprintf(Out, "==> "+format+"\n", a...)
+	_, _ = color.New(color.FgCyan).Fprintf(Out, "==> "+format+"\n", a...)
 }
 
 // Debug prints a message to the terminal in magenta, for debugging output.
 func Debug(format string, a ...any) {
-	color.New(color.FgMagenta).Fprintf(Out, "==> "+format+"\n", a...)
+	_, _ = color.New(color.FgMagenta).Fprintf(Out, "==> "+format+"\n", a...)
 }
 
 // Warn prints a message to the terminal in yellow, indicating a warning.
 func Warn(format string, a ...any) {
-	color.New(color.FgYellow).Fprintf(Out, "==x "+format+"\n", a...)
+	_, _ = color.New(color.FgYellow).Fprintf(Out, "==x "+format+"\n", a...)
 }
 
 // Error prints a message to the terminal in red, indicating an error.
 func Error(format string, a ...any) {
-	color.New(color.FgRed).Fprintf(Err, "==x "+format+"\n", a...)
+	_, _ = color.New(color.FgRed).Fprintf(Err, "==x "+format+"\n", a...)
 }
 
 // Fatal prints a message to the terminal in red, then exits the program with an error code.
