@@ -121,10 +121,23 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		log.Verbose(utils.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
-	} else if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+	} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		// Config file not found, create it
+		configFilePath := viper.ConfigFileUsed()
+		if configFilePath == "" {
+			// Construct the default config file path if not already set by viper
+			home, err := os.UserHomeDir()
+			cobra.CheckErr(err)
+			configFilePath = home + string(os.PathSeparator) + ".eng.yaml"
+		}
+
+		if err := viper.SafeWriteConfigAs(configFilePath); err != nil {
+			log.Warn("Error creating config file %s: %v", configFilePath, err)
+		} else {
+			log.Verbose(utils.IsVerbose(rootCmd), "Created new config file: %s", configFilePath)
+		}
+	} else {
 		// Config file was found but another error was produced
 		log.Warn("Error reading config file %s: %v", viper.ConfigFileUsed(), err)
-	} else {
-		log.Verbose(utils.IsVerbose(rootCmd), "No config file found, using defaults.")
 	}
 }
