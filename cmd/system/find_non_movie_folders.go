@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
@@ -21,16 +22,13 @@ that do not contain video files (mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, 
 It identifies top-level subdirectories within the supplied directory that lack
 any such files anywhere within their structure.
 
-It lists the files within the identified folders before taking action.
-It can optionally delete these identified directories if the --dry-run flag is set to false.
-By default, --dry-run is true.`,
+It lists the files within the identified folders and prompts for confirmation before deletion.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log.Start("Scanning for non-movie folders...")
 
 		directory := args[0]
-		isDryRun, _ := cmd.Flags().GetBool("dry-run")
 		isVerbose := utils.IsVerbose(cmd)
 
 		// Validate directory exists
@@ -40,8 +38,6 @@ By default, --dry-run is true.`,
 		}
 
 		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
-		log.Verbose(isVerbose, "Dry run mode: %t", isDryRun)
-
 		spinner := utils.NewProgressSpinner("Scanning directories...")
 
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, spinner, func(done, total int) {
@@ -69,11 +65,14 @@ By default, --dry-run is true.`,
 			return
 		}
 
-		log.Message("\nProcessing %d non-movie folder(s)...", len(nonMovieFolders))
+		log.Message("\nFound %d non-movie folder(s) that will be deleted:", len(nonMovieFolders))
 
-		deletedCount := 0
-		skippedCount := 0
-		errorMessages := []string{}
+		// Store folder contents for summary and confirmation
+		type FolderContent struct {
+			Files []string
+			Error string
+		}
+		folderContents := make(map[string]FolderContent)
 
 		for _, folder := range nonMovieFolders {
 			var files []string
@@ -91,56 +90,50 @@ By default, --dry-run is true.`,
 				return nil
 			})
 
-			fileCount := len(files)
 			listErrorString := ""
 			if walkErr != nil {
 				errMsg := fmt.Sprintf("Could not list files in folder %s: %s", folder, walkErr)
 				log.Warn(errMsg)
-				errorMessages = append(errorMessages, errMsg)
 				listErrorString = "(error listing files)"
 			}
+			folderContents[folder] = FolderContent{Files: files, Error: listErrorString}
 
-			// Output the folder and its contents (or status)
-			if isDryRun {
-				log.Message("[Dry Run] Would delete folder: %s", folder)
-				if listErrorString != "" {
-					log.Message("  %s", listErrorString) // Show error if listing failed
-				} else if fileCount > 0 {
-					for _, file := range files {
-						displayPath := filepath.Join(filepath.Base(folder), file)
-						log.Message("  - %s", displayPath)
-					}
-				} else {
-					log.Message("  (Contains no files or only empty subdirectories)")
+			log.Message("  - %s", folder)
+			if listErrorString != "" {
+				log.Message("    %s", listErrorString)
+			} else if len(files) > 0 {
+				for _, file := range files {
+					displayPath := filepath.Join(filepath.Base(folder), file)
+					log.Message("    - %s", displayPath)
 				}
-				skippedCount++
-			} else { // Not Dry Run
-				log.Warn("Preparing to delete non-movie folder: %s", folder)
-				if listErrorString != "" {
-					log.Warn("  %s", listErrorString) // Show list error before attempting delete
-				} else if fileCount > 0 {
-					log.Message("  Files within this folder:")
-					for _, file := range files {
-						displayPath := filepath.Join(filepath.Base(folder), file)
-						log.Message("    - %s", displayPath)
-					}
-				} else {
-					log.Message("  (Folder contains no files or only empty subdirectories)")
-				}
-
-				// Perform the deletion
-				log.Warn("Executing delete on: %s", folder)
-				if err := os.RemoveAll(folder); err != nil {
-					errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
-					log.Error(errMsg)
-					errorMessages = append(errorMessages, errMsg)
-					skippedCount++
-				} else {
-					log.Success("Deleted: %s", folder)
-					deletedCount++
-				}
+			} else {
+				log.Message("    (Contains no files or only empty subdirectories)")
 			}
-			log.Message("") // Add a blank line between folder processing for readability
+		}
+
+		log.Message("") // Add a blank line for readability
+
+		if !askForConfirmation("Do you want to delete these folders and their contents?") {
+			log.Info("Deletion cancelled by user.")
+			return
+		}
+
+		log.Start("Deleting non-movie folders...")
+		deletedCount := 0
+		skippedCount := 0
+		errorMessages := []string{}
+
+		for _, folder := range nonMovieFolders {
+			log.Warn("Attempting to delete: %s", folder)
+			if err := os.RemoveAll(folder); err != nil {
+				errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
+				log.Error(errMsg)
+				errorMessages = append(errorMessages, errMsg)
+				skippedCount++
+			} else {
+				log.Success("Deleted: %s", folder)
+				deletedCount++
+			}
 		}
 
 		// Final summary
@@ -148,12 +141,24 @@ By default, --dry-run is true.`,
 			log.Warn("Encountered %d error(s) during processing.", len(errorMessages))
 		}
 
-		if isDryRun {
-			log.Success("Dry run complete. %d folder(s) identified for deletion.", skippedCount)
-		} else {
-			log.Success("Processing complete. Deleted %d folder(s), skipped %d due to errors.", deletedCount, skippedCount)
-		}
+		log.Success("Processing complete. Deleted %d folder(s), skipped %d due to errors.", deletedCount, skippedCount)
 	},
+}
+
+// askForConfirmation prompts the user for a yes/no confirmation using survey.
+func askForConfirmation(prompt string) bool {
+	confirm := false
+	promptConfirm := &survey.Confirm{
+		Message: prompt,
+		Default: false, // Default to No for safety
+	}
+	err := survey.AskOne(promptConfirm, &confirm)
+	if err != nil {
+		// Handle error, e.g., log it and return false for safety
+		log.Error("Error during confirmation prompt: %v", err)
+		return false
+	}
+	return confirm
 }
 
 // findNonMovieFolders scans the immediate subdirectories of rootDir.
