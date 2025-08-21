@@ -3,7 +3,6 @@ package system
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -80,32 +79,28 @@ By default, --dry-run is true.`,
 		errorMessages := []string{}
 
 		for _, folder := range nonMovieFolders {
-			// List files within the folder for detailed output.
-			// Use find to get relative paths from within the folder itself.
-			listFilesCmd := exec.Command("find", ".", "-type", "f") // Find files relative to the folder
-			listFilesCmd.Dir = folder                               // Execute the command *inside* the target folder
+			var files []string
+			walkErr := filepath.WalkDir(folder, func(path string, d os.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if !d.IsDir() {
+					relPath, err := filepath.Rel(folder, path)
+					if err != nil {
+						return err
+					}
+					files = append(files, relPath)
+				}
+				return nil
+			})
 
-			filesToDeleteBytes, listErr := listFilesCmd.Output()
-
-			var actualFiles []string
-			var fileCount int
-			var listErrorString string
-
-			if listErr != nil {
-				// Capture the specific error for later display if listing fails.
-				errMsg := fmt.Sprintf("Could not list files in folder %s (may be empty or permission issue): %s", folder, listErr)
+			fileCount := len(files)
+			listErrorString := ""
+			if walkErr != nil {
+				errMsg := fmt.Sprintf("Could not list files in folder %s: %s", folder, walkErr)
 				log.Warn(errMsg)
 				errorMessages = append(errorMessages, errMsg)
 				listErrorString = "(error listing files)"
-				fileCount = 0 // Assume 0 if we can't list
-			} else {
-				filesList := strings.Split(strings.TrimSpace(string(filesToDeleteBytes)), "\n")
-				// Filter out empty strings which can happen if the output is empty.
-				if len(filesList) > 0 && filesList[0] != "" {
-					actualFiles = filesList
-				}
-				fileCount = len(actualFiles)
-				listErrorString = "" // No error string needed if successful
 			}
 
 			// Output the folder and its contents (or status)
@@ -114,9 +109,8 @@ By default, --dry-run is true.`,
 				if listErrorString != "" {
 					log.Message("  %s", listErrorString) // Show error if listing failed
 				} else if fileCount > 0 {
-					for _, file := range actualFiles {
-						// Construct a display path relative to the parent of the folder being processed.
-						displayPath := filepath.Join(filepath.Base(folder), strings.TrimPrefix(file, "./"))
+					for _, file := range files {
+						displayPath := filepath.Join(filepath.Base(folder), file)
 						log.Message("  - %s", displayPath)
 					}
 				} else {
@@ -129,8 +123,8 @@ By default, --dry-run is true.`,
 					log.Warn("  %s", listErrorString) // Show list error before attempting delete
 				} else if fileCount > 0 {
 					log.Message("  Files within this folder:")
-					for _, file := range actualFiles {
-						displayPath := filepath.Join(filepath.Base(folder), strings.TrimPrefix(file, "./"))
+					for _, file := range files {
+						displayPath := filepath.Join(filepath.Base(folder), file)
 						log.Message("    - %s", displayPath)
 					}
 				} else {
@@ -138,9 +132,8 @@ By default, --dry-run is true.`,
 				}
 
 				// Perform the deletion
-				log.Warn("Executing delete: rm -rf %s", folder)
-				deleteCmd := exec.Command("rm", "-rf", "--", folder)
-				if err := deleteCmd.Run(); err != nil {
+				log.Warn("Executing delete on: %s", folder)
+				if err := os.RemoveAll(folder); err != nil {
 					errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
 					log.Error(errMsg)
 					errorMessages = append(errorMessages, errMsg)
@@ -177,7 +170,7 @@ By default, --dry-run is true.`,
 //
 // Returns:
 //   - A slice of strings, where each string is the absolute path to a non-movie folder.
-//   - An error if reading the root directory fails or if there's an unexpected issue executing 'find'.
+//   - An error if reading the root directory fails.
 func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, total int)) ([]string, error) {
 	var nonMovieFolders []string
 
@@ -201,48 +194,38 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 		progress(done, total) // Initial progress report (0/total)
 	}
 
+	videoExtensions := map[string]bool{
+		".mp4": true, ".mkv": true, ".avi": true, ".mov": true, ".wmv": true,
+		".flv": true, ".webm": true, ".mpeg": true, ".mpg": true, ".m4v": true,
+	}
+
 	for _, entry := range dirEntries {
 		dirPath := filepath.Join(rootDir, entry.Name())
 		log.Verbose(isVerbose, "Checking directory: %s", dirPath)
 
-		// Use find to search recursively for *any* movie file within the subdirectory.
-		// The command uses -quit to exit immediately after finding the first match for efficiency.
-		checkCmd := exec.Command("find", dirPath, "-type", "f", "(",
-			"-iname", "*.mp4", "-o",
-			"-iname", "*.mkv", "-o",
-			"-iname", "*.avi", "-o",
-			"-iname", "*.mov", "-o",
-			"-iname", "*.wmv", "-o",
-			"-iname", "*.flv", "-o",
-			"-iname", "*.webm", "-o",
-			"-iname", "*.mpeg", "-o",
-			"-iname", "*.mpg", "-o",
-			"-iname", "*.m4v",
-			")", "-print", "-quit")
-
-		output, err := checkCmd.Output()
-
-		// Check the error type. An ExitError is expected if find exits due to -quit
-		// (finding a file) or if it finds nothing. Any other error is unexpected.
-		if err != nil {
-			exitErr, ok := err.(*exec.ExitError)
-			// If it's NOT an ExitError, it's some other problem (permissions, command not found etc.)
-			if !ok {
-				log.Warn("Unexpected error executing find command in %s: %v. Skipping directory.", dirPath, err)
-				done++
-				if progress != nil {
-					progress(done, total)
-				}
-				continue // Skip this directory due to the error
+		foundMovieFile := false
+		walkErr := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err // Propagate errors
 			}
-			// If it *is* an ExitError, we proceed to check the output length.
-			// An ExitError with non-empty output means -quit worked (movie file found).
-			// An ExitError with empty output means nothing was found.
-			_ = exitErr // Avoid unused variable error if not debugging
+			if !d.IsDir() {
+				ext := strings.ToLower(filepath.Ext(d.Name()))
+				if videoExtensions[ext] {
+					foundMovieFile = true
+					// Return a special error to stop walking, since we found what we need.
+					return filepath.SkipAll
+				}
+			}
+			return nil
+		})
+
+		// If walkErr is filepath.SkipAll, it means we found a movie file and stopped early.
+		// This is our success condition for finding a movie, not a real error.
+		if walkErr != nil && walkErr != filepath.SkipAll {
+			log.Warn("Error scanning directory %s: %v. Skipping.", dirPath, walkErr)
 		}
 
-		// If the output is empty, no movie files were found.
-		if len(strings.TrimSpace(string(output))) == 0 {
+		if !foundMovieFile {
 			log.Verbose(isVerbose, "No movie files found in: %s", dirPath)
 			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
