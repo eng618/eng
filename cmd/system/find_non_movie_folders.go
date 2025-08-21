@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
@@ -44,9 +43,8 @@ By default, --dry-run is true.`,
 		log.Verbose(isVerbose, "Dry run mode: %t", isDryRun)
 
 		spinner := utils.NewProgressSpinner("Scanning directories...")
-		spinner.Start()
 
-		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, func(done, total int) {
+		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, spinner, func(done, total int) {
 			progress := 0.0
 			if total > 0 {
 				progress = float64(done) / float64(total)
@@ -63,7 +61,6 @@ By default, --dry-run is true.`,
 		spinner.UpdateMessage("Scan complete.")
 		spinner.SetProgressBar(1.0) // Ensure it shows 100%
 		spinner.Stop()
-		time.Sleep(100 * time.Millisecond) // Allow terminal to process spinner stop
 
 		log.Verbose(isVerbose, "Found %d potential non-movie folders.", len(nonMovieFolders))
 
@@ -166,12 +163,13 @@ By default, --dry-run is true.`,
 // Parameters:
 //   - isVerbose: If true, logs verbose messages during the scan.
 //   - rootDir: The path to the directory whose subdirectories will be scanned.
+//   - spinner: A pointer to the progress spinner.
 //   - progress: A callback function to report progress (done, total). Can be nil.
 //
 // Returns:
 //   - A slice of strings, where each string is the absolute path to a non-movie folder.
 //   - An error if reading the root directory fails.
-func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, total int)) ([]string, error) {
+func findNonMovieFolders(isVerbose bool, rootDir string, spinner *utils.Spinner, progress func(done, total int)) ([]string, error) {
 	var nonMovieFolders []string
 
 	entries, err := os.ReadDir(rootDir)
@@ -201,7 +199,9 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 
 	for _, entry := range dirEntries {
 		dirPath := filepath.Join(rootDir, entry.Name())
-		log.Verbose(isVerbose, "Checking directory: %s", dirPath)
+		if isVerbose {
+			spinner.Logf("--- Checking directory: %s\n", dirPath)
+		}
 
 		foundMovieFile := false
 		walkErr := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
@@ -226,10 +226,14 @@ func findNonMovieFolders(isVerbose bool, rootDir string, progress func(done, tot
 		}
 
 		if !foundMovieFile {
-			log.Verbose(isVerbose, "No movie files found in: %s", dirPath)
+			if isVerbose {
+				spinner.Logf("--- No movie files found in: %s\n", dirPath)
+			}
 			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
-			log.Verbose(isVerbose, "Movie file(s) found in %s.", dirPath)
+			if isVerbose {
+				spinner.Logf("--- Movie file(s) found in %s.\n", dirPath)
+			}
 		}
 
 		done++

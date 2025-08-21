@@ -2,120 +2,122 @@ package utils
 
 import (
 	"fmt"
-	"time"
+	"os"
 
-	"github.com/briandowns/spinner"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 )
 
+// Spinner wraps the mpb.Progress container and a single bar.
+// It's designed to manage a single progress bar and allow logging
+// messages above the bar without disrupting it.
 type Spinner struct {
-	s             *spinner.Spinner
-	charSet       []string // Store the character set for progress calculation
-	isProgressBar bool     // Flag to indicate if this spinner uses a progress charset
-	baseMessage   string   // Store the core message
+	p           *mpb.Progress
+	bar         *mpb.Bar
+	msgCh       chan string
+	baseMessage string
 }
 
-// NewSpinner creates a new standard spinner with the given message.
+// NewSpinner creates a new spinner with a default indeterminate style.
 func NewSpinner(message string) *Spinner {
-	s := spinner.New(spinner.CharSets[14], 120*time.Millisecond) // Default spinner
-	s.Suffix = " " + message
+	p := mpb.New(mpb.WithOutput(os.Stderr))
+	msgCh := make(chan string, 1)
+	msgCh <- message
+
+	bar := p.New(0, // Total is 0 for an indeterminate spinner
+		mpb.SpinnerStyle(),
+		mpb.PrependDecorators(
+			decor.Any(func(s decor.Statistics) string {
+				select {
+				case msg := <-msgCh:
+					return msg
+				default:
+					return ""
+				}
+			}),
+		),
+		mpb.AppendDecorators(
+			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 4}),
+		),
+	)
+
 	return &Spinner{
-		s:             s,
-		charSet:       spinner.CharSets[14], // Store the actual charset
-		isProgressBar: false,
-		baseMessage:   message, // Store the base message
+		p:           p,
+		bar:         bar,
+		msgCh:       msgCh,
+		baseMessage: message,
 	}
 }
 
-// NewProgressSpinner creates a new spinner styled as a progress bar.
-// Use SetProgressBar() on the returned spinner to update its progress.
+// NewProgressSpinner creates a spinner that displays progress as a bar.
 func NewProgressSpinner(message string) *Spinner {
-	// Using CharSet 36 as the default progress bar style
-	progressCharSet := spinner.CharSets[36]
-	s := spinner.New(progressCharSet, 120*time.Millisecond)
-	s.Suffix = " " + message // Initial suffix includes the message
-	// Initialize prefix to the first frame (0%)
-	s.Prefix = progressCharSet[0] + " "
+	p := mpb.New(mpb.WithOutput(os.Stderr))
+	msgCh := make(chan string, 1)
+	msgCh <- message
+
+	bar := p.New(100, // Total is 100 for percentage-based progress
+		mpb.BarStyle().Lbound("[").Filler("=").Tip(">").Padding("-").Rbound("]"),
+		mpb.PrependDecorators(
+			decor.Any(func(s decor.Statistics) string {
+				select {
+				case msg := <-msgCh:
+					return msg
+				default:
+					return ""
+				}
+			}),
+			decor.Percentage(decor.WCSyncSpace),
+		),
+		mpb.AppendDecorators(
+			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 4}),
+		),
+	)
+
 	return &Spinner{
-		s:             s,
-		charSet:       progressCharSet, // Store the progress charset
-		isProgressBar: true,
-		baseMessage:   message, // Store the base message
+		p:           p,
+		bar:         bar,
+		msgCh:       msgCh,
+		baseMessage: message,
 	}
 }
 
-func (sp *Spinner) Start() {
-	sp.s.Start()
+// Start does nothing in this implementation, as the bar is visible on creation.
+func (s *Spinner) Start() {
+	// The bar is displayed automatically by the mpb.Progress container.
 }
 
-func (sp *Spinner) Stop() {
-	sp.s.Stop()
-}
-
-// UpdateMessage updates the base message of the spinner.
-// For non-progress spinners, it updates the suffix immediately.
-// For progress spinners, the change will be reflected on the next SetProgressBar call
-// if no specific message is provided to SetProgressBar.
-func (sp *Spinner) UpdateMessage(msg string) {
-	sp.baseMessage = msg // Update the stored base message
-	// Only update the immediate suffix if it's not a progress bar,
-	// as SetProgressBar handles suffix formatting for progress bars.
-	if !sp.isProgressBar {
-		sp.s.Suffix = " " + msg
+// Stop marks the bar as completed and waits for the progress container to finish.
+func (s *Spinner) Stop() {
+	if s.bar != nil {
+		s.bar.SetTotal(0, true) // Mark as complete
 	}
-	// If it IS a progress bar, the next call to SetProgressBar
-	// will pick up the new baseMessage if no specific message is passed to it.
+	if s.p != nil {
+		s.p.Wait() // Wait for the container to finish rendering
+	}
 }
 
-// SetProgressBar updates the visual progress of the spinner.
-// It assumes the spinner was created using NewProgressSpinner or configured
-// with a character set suitable for displaying progress steps (like CharSets[36]).
-// The progress value should be between 0.0 and 1.0.
-// If msg is provided, it overrides the base message for this update.
-// If msg is not provided, the stored base message is used.
-func (sp *Spinner) SetProgressBar(progress float64, msg ...string) {
-	// Determine the message to display for this update
-	currentMessage := sp.baseMessage // Default to stored base message
-	if len(msg) > 0 {
-		currentMessage = msg[0] // Override with provided message for this update
-	}
+// UpdateMessage updates the message displayed next to the spinner/bar.
+func (s *Spinner) UpdateMessage(msg string) {
+	s.baseMessage = msg
+	s.msgCh <- msg
+}
 
-	// Handle non-progress bar spinners (just update suffix with percentage)
-	if !sp.isProgressBar || len(sp.charSet) == 0 {
-		// Format suffix based on whether there's a message
-		if currentMessage != "" {
-			sp.s.Suffix = fmt.Sprintf(" %s (%.0f%%)", currentMessage, progress*100)
-		} else {
-			sp.s.Suffix = fmt.Sprintf(" (%.0f%%)", progress*100)
+// SetProgressBar sets the progress of the bar. Progress should be from 0.0 to 1.0.
+func (s *Spinner) SetProgressBar(progress float64, msg ...string) {
+	if s.bar != nil {
+		currentMessage := s.baseMessage
+		if len(msg) > 0 {
+			currentMessage = msg[0]
 		}
-		// Don't try to set prefix if not a progress bar type
-		// Note: We don't return here anymore, allowing suffix update even if isProgressBar is true but charSet is empty
-		if !sp.isProgressBar {
-			return
-		}
+		s.UpdateMessage(currentMessage)
+		s.bar.SetCurrent(int64(progress * 100))
 	}
+}
 
-	// --- Progress Bar Specific Logic ---
-
-	// Calculate frame index based on progress
-	frames := sp.charSet
-	idx := int(progress * float64(len(frames)-1))
-
-	// Clamp index
-	if idx < 0 {
-		idx = 0
-	}
-	if idx >= len(frames) {
-		idx = len(frames) - 1
-	}
-
-	// Update Prefix to show the progress character
-	sp.s.Prefix = frames[idx] + " "
-
-	// Update Suffix to show the message (current or base) and percentage
-	if currentMessage != "" {
-		sp.s.Suffix = fmt.Sprintf(" %s (%.0f%%)", currentMessage, progress*100)
-	} else {
-		// If no message provided and base message was empty, just show percentage
-		sp.s.Suffix = fmt.Sprintf(" (%.0f%%)", progress*100)
+// Logf prints a formatted message above the progress bar.
+func (s *Spinner) Logf(format string, a ...interface{}) {
+	if s.p != nil {
+		//nolint:errcheck
+		fmt.Fprintf(s.p, format, a...)
 	}
 }
