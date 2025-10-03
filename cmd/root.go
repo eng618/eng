@@ -27,6 +27,7 @@ import (
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
+	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
@@ -91,13 +92,14 @@ func init() {
 	// when this action is called directly.
 
 	// Add subcommands
-	rootCmd.AddCommand(system.SystemCmd)
-	rootCmd.AddCommand(dotfiles.DotfilesCmd)
-	rootCmd.AddCommand(git.GitCmd)
+	rootCmd.AddCommand(codemod.CodemodCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(dotfiles.DotfilesCmd)
+	rootCmd.AddCommand(files.FilesCmd)
+	rootCmd.AddCommand(git.GitCmd)
+	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
 	rootCmd.AddCommand(version.VersionCmd)
-	rootCmd.AddCommand(codemod.CodemodCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
