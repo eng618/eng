@@ -20,4 +20,5 @@ var CodemodCmd = &cobra.Command{
 func init() {
 	CodemodCmd.AddCommand(LintSetupCmd)
 	CodemodCmd.AddCommand(CopilotSetupCmd)
+	CodemodCmd.AddCommand(PrettierCmd)
 }
