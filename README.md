@@ -17,6 +17,7 @@
 
 [![Go](https://github.com/eng618/eng/actions/workflows/go.yml/badge.svg)](https://github.com/eng618/eng/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eng618/eng)](https://goreportcard.com/report/github.com/eng618/eng)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/42051a6b1c374821b86ac29d18fb4ba2)](https://app.codacy.com/gh/ENG618/eng/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![GitHub Release](https://img.shields.io/github/v/release/eng618/eng)
 
 A modern, modular CLI tool for developer automation, dotfiles management, system utilities, and project codemods. Built in Go, designed for extensibility and productivity.
