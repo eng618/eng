@@ -59,13 +59,77 @@ func TestLintSetupCmd_ModifiesPackageJson(t *testing.T) {
 	}
 }
 
+func TestLintSetupCmd_Echo(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Fatalf("failed to restore working directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(tempDir); err != nil {
+		t.Fatalf("failed to change to temp dir: %v", err)
+	}
+	// Setup: create a minimal package.json
+	pkg := map[string]interface{}{
+		"name": "testpkg",
+	}
+	data, _ := json.Marshal(pkg)
+	if err := os.WriteFile("package.json", data, 0644); err != nil {
+		t.Fatalf("failed to write package.json: %v", err)
+	}
+	// Mock exec.Command to avoid running npm/husky
+	oldCommand := execCommand
+	defer func() { execCommand = oldCommand }()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		return exec.Command("echo", append([]string{name}, arg...)...)
+	}
+	// Set echo flag manually (since global)
+	oldEcho := echo
+	echo = true
+	defer func() { echo = oldEcho }()
+	// Run
+	cmd := LintSetupCmd
+	output := &strings.Builder{}
+	cmd.SetOut(output)
+	cmd.SetArgs([]string{})
+	cmd.Run(cmd, []string{})
+	// Check eslint.config.mjs was created for echo
+	eslintData, err := os.ReadFile("eslint.config.mjs")
+	if err != nil {
+		t.Fatalf("failed to read eslint.config.mjs: %v", err)
+	}
+	if !strings.Contains(string(eslintData), "echo-eslint-config") {
+		t.Error("expected echo-eslint-config in eslint.config.mjs")
+	}
+}
+
 func TestWriteESLintConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWd, _ := os.Getwd()
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(tempDir)
 
-	err := writeESLintConfig()
+	err := writeESLintConfig(false)
+	if err != nil {
+		t.Fatalf("writeESLintConfig failed: %v", err)
+	}
+	data, err := os.ReadFile("eslint.config.mjs")
+	if err != nil {
+		t.Fatalf("eslint.config.mjs not written: %v", err)
+	}
+	if strings.Contains(string(data), "echo-eslint-config") {
+		t.Error("eslint.config.mjs should not contain echo-eslint-config for standard setup")
+	}
+}
+
+func TestWriteESLintConfig_EchoMode(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	err := writeESLintConfig(true)
 	if err != nil {
 		t.Fatalf("writeESLintConfig failed: %v", err)
 	}
@@ -74,7 +138,7 @@ func TestWriteESLintConfig(t *testing.T) {
 		t.Fatalf("eslint.config.mjs not written: %v", err)
 	}
 	if !strings.Contains(string(data), "echo-eslint-config") {
-		t.Error("eslint.config.mjs missing expected content")
+		t.Error("eslint.config.mjs missing echo-eslint-config for echo mode")
 	}
 }
 
@@ -85,7 +149,7 @@ func TestUpdatePackageJSON_OrderAndValues(t *testing.T) {
 	_ = os.Chdir(tempDir)
 	pkg := map[string]interface{}{
 		"name": "testpkg",
-		"foo": "bar",
+		"foo":  "bar",
 	}
 	data, _ := json.Marshal(pkg)
 	_ = os.WriteFile("package.json", data, 0644)
@@ -158,7 +222,7 @@ func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
 		// On retry, simulate success
 		return exec.Command("sh", "-c", "exit 0")
 	}
-	err := installLintDependencies()
+	err := installLintDependencies(false)
 	if err != nil {
 		t.Fatalf("installLintDependencies should succeed after retry, got: %v", err)
 	}
@@ -186,7 +250,7 @@ func TestInstallLintDependencies_UsesYarnIfPresent(t *testing.T) {
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}
-	err := installLintDependencies()
+	err := installLintDependencies(false)
 	if err != nil {
 		t.Fatalf("installLintDependencies with yarn.lock should succeed, got: %v", err)
 	}
@@ -215,7 +279,7 @@ func TestInstallLintDependencies_UsesNpmIfNoYarnLock(t *testing.T) {
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}
-	err := installLintDependencies()
+	err := installLintDependencies(false)
 	if err != nil {
 		t.Fatalf("installLintDependencies with no yarn.lock should succeed, got: %v", err)
 	}

@@ -26,12 +26,12 @@ var LintSetupCmd = &cobra.Command{
 			return
 		}
 
-		if err := installLintDependencies(); err != nil {
+		if err := installLintDependencies(echo); err != nil {
 			log.Error("npm install failed: %v", err)
 			return
 		}
 
-		if err := writeESLintConfig(); err != nil {
+		if err := writeESLintConfig(echo); err != nil {
 			log.Error("Failed to write eslint.config.mjs: %v", err)
 			return
 		}
@@ -51,31 +51,33 @@ var LintSetupCmd = &cobra.Command{
 }
 
 // installLintDependencies installs lint/format dependencies via npm or yarn and handles peer dep errors for npm.
-func installLintDependencies() error {
+func installLintDependencies(echo bool) error {
 	log.Info("Installing lint/format dependencies via npm or yarn...")
 	var installCmd *exec.Cmd
 	var installArgs []string
 	usingNpm := true
+
+	baseDeps := []string{
+		"eslint@latest", "@eslint/js@latest",
+		"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
+		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
+		"@eng618/prettier-config@latest", "globals@latest",
+		"husky@latest", "lint-staged@latest", "prettier@latest",
+	}
+
+	if echo {
+		baseDeps = append(baseDeps, "echo-eslint-config@latest")
+	}
+
 	if _, err := os.Stat("yarn.lock"); err == nil {
 		usingNpm = false
-		installArgs = append([]string{"add", "--dev"},
-			"eslint@latest", "@eslint/js@latest",
-			"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
-			"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-			"@eng618/prettier-config@latest", "globals@latest",
-			"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
-		)
+		installArgs = append([]string{"add", "--dev"}, baseDeps...)
 		installCmd = execCommand("yarn", installArgs...)
 	} else {
-		installArgs = []string{"install", "--save-dev",
-			"eslint@latest", "@eslint/js@latest",
-			"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
-			"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-			"@eng618/prettier-config@latest", "globals@latest",
-			"echo-eslint-config@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
-		}
+		installArgs = append([]string{"install", "--save-dev"}, baseDeps...)
 		installCmd = execCommand("npm", installArgs...)
 	}
+
 	installCmd.Stdout = log.Writer()
 	stderrPipe, err := installCmd.StderrPipe()
 	if err != nil {
@@ -107,12 +109,74 @@ func installLintDependencies() error {
 }
 
 // writeESLintConfig writes the eslint.config.mjs file.
-func writeESLintConfig() error {
+func writeESLintConfig(echo bool) error {
 	log.Info("Writing eslint.config.mjs...")
-	eslintConfig := `import echoConfig from 'echo-eslint-config';
+	var eslintConfig string
+	if echo {
+		eslintConfig = `import echoConfig from 'echo-eslint-config';
 
 export default [...echoConfig];
 `
+	} else {
+		eslintConfig = `import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import pluginPrettier from 'eslint-plugin-prettier';
+import configPrettier from 'eslint-config-prettier';
+
+export default [
+  {
+    ignores: ['dist', 'node_modules', 'coverage', 'eslint.config.mjs'],
+  },
+  {
+    linterOptions: {
+      noInlineConfig: true,
+      reportUnusedDisableDirectives: true,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+  },
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
+    languageOptions: {
+      parser: tseslint.parser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      ...tseslint.configs.base.rules,
+      ...tseslint.configs.eslintRecommended.rules,
+      ...tseslint.configs.recommended.rules,
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
+    plugins: {
+      
+    },
+    rules: {
+      ...tseslint.configs.base.rules,
+      ...tseslint.configs.eslintRecommended.rules,
+    },
+  },
+  {
+    plugins: {
+      prettier: pluginPrettier,
+    },
+    rules: {
+      ...configPrettier.rules,
+    },
+  },
+];
+`
+	}
 	return os.WriteFile("eslint.config.mjs", []byte(eslintConfig), 0644)
 }
 
@@ -141,7 +205,7 @@ func updatePackageJSON() error {
 	pkg["scripts"] = scripts
 	// Add lint-staged config
 	pkg["lint-staged"] = map[string]interface{}{
-		"*.(md)?(x)": []string{"prettier --write"},
+		"*.(md)?(x)":            []string{"prettier --write"},
 		"*.(js|ts|mjs|cjs)?(x)": []string{"prettier --write", "eslint --cache --fix"},
 	}
 	// Add prettier config

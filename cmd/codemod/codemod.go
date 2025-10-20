@@ -17,8 +17,12 @@ var CodemodCmd = &cobra.Command{
 	Long:  `Run codemods or setup helpers for various project types.`,
 }
 
+var echo bool
+
 func init() {
 	CodemodCmd.AddCommand(LintSetupCmd)
 	CodemodCmd.AddCommand(CopilotSetupCmd)
 	CodemodCmd.AddCommand(PrettierCmd)
+
+	LintSetupCmd.Flags().BoolVarP(&echo, "echo", "e", false, "Use echo linting setup")
 }
