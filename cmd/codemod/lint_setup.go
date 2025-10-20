@@ -3,6 +3,7 @@
 package codemod
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"io"
@@ -14,6 +15,12 @@ import (
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 )
+
+//go:embed eslint.config.standard.tmpl
+var standardConfigTmpl []byte
+
+//go:embed eslint.config.echo.tmpl
+var echoConfigTmpl []byte
 
 // LintSetupCmd sets up linting, formatting, and pre-commit hooks for a Node.js project.
 var LintSetupCmd = &cobra.Command{
@@ -111,73 +118,13 @@ func installLintDependencies(echo bool) error {
 // writeESLintConfig writes the eslint.config.mjs file.
 func writeESLintConfig(echo bool) error {
 	log.Info("Writing eslint.config.mjs...")
-	var eslintConfig string
+	var data []byte
 	if echo {
-		eslintConfig = `import echoConfig from 'echo-eslint-config';
-
-export default [...echoConfig];
-`
+		data = echoConfigTmpl
 	} else {
-		eslintConfig = `import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import pluginPrettier from 'eslint-plugin-prettier';
-import configPrettier from 'eslint-config-prettier';
-
-export default [
-  {
-    ignores: ['dist', 'node_modules', 'coverage', 'eslint.config.mjs'],
-  },
-  {
-    linterOptions: {
-      noInlineConfig: true,
-      reportUnusedDisableDirectives: true,
-    },
-    languageOptions: {
-      globals: {
-        ...globals.node,
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-  },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
-    languageOptions: {
-      parser: tseslint.parser,
-    },
-    plugins: {
-      "@typescript-eslint": tseslint.plugin,
-    },
-    rules: {
-      ...tseslint.configs.base.rules,
-      ...tseslint.configs.eslintRecommended.rules,
-      ...tseslint.configs.recommended.rules,
-    },
-  },
-  {
-    files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
-    plugins: {
-      
-    },
-    rules: {
-      ...tseslint.configs.base.rules,
-      ...tseslint.configs.eslintRecommended.rules,
-    },
-  },
-  {
-    plugins: {
-      prettier: pluginPrettier,
-    },
-    rules: {
-      ...configPrettier.rules,
-    },
-  },
-];
-`
+		data = standardConfigTmpl
 	}
-	return os.WriteFile("eslint.config.mjs", []byte(eslintConfig), 0644)
+	return os.WriteFile("eslint.config.mjs", data, 0644)
 }
 
 // updatePackageJSON updates scripts, lint-staged, and prettier config in package.json with standard field order.
