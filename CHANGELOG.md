@@ -2,6 +2,246 @@
 
 ## [Unreleased]
 
+
+<a name="v0.25.14"></a>
+
+## [v0.25.14] - 2025-10-20
+
+### Chore
+
+- **eslint:** Update ESLint config templates to latest import styles
+
+
+<a name="v0.25.13"></a>
+
+## [v0.25.13] - 2025-10-20
+
+### Refactor
+
+- **eslint-config:** remove TS parser import and use string reference
+
+
+<a name="v0.25.12"></a>
+
+## [v0.25.12] - 2025-10-20
+
+### Docs
+
+- add Codacy code quality badge to README
+
+### Feat
+
+- **codemod:** add TS detection and update ESLint configs
+
+
+<a name="v0.25.11"></a>
+
+## [v0.25.11] - 2025-10-20
+
+### Feat
+
+- **codemod:** embed ESLint config templates for enhanced maintainability
+
+
+<a name="v0.25.10"></a>
+
+## [v0.25.10] - 2025-10-20
+
+### Feat
+
+- **codemod:** add optional echo linting setup
+
+
+<a name="v0.25.9"></a>
+
+## [v0.25.9] - 2025-10-14
+
+### Chore
+
+- **deps:** update Go dependencies including go-git, crypto, net, and sys modules
+
+### Feat
+
+- **codemod:** add prettier command for code formatting
+
+
+<a name="v0.25.8"></a>
+
+## [v0.25.8] - 2025-10-06
+
+### Build
+
+- update tooling
+
+### Fix
+
+- linter issues
+
+
+<a name="v0.25.7"></a>
+
+## [v0.25.7] - 2025-10-03
+
+### Build
+
+- **deps:** update indirect dependencies in go.mod and go.sum
+- **deps:** bump github.com/spf13/cobra from 1.9.1 to 1.10.1 ([#23](https://github.com/eng618/eng/issues/23))
+- **deps:** bump github.com/spf13/viper from 1.20.1 to 1.21.0 ([#22](https://github.com/eng618/eng/issues/22))
+- **deps:** bump github.com/stretchr/testify from 1.10.0 to 1.11.1 ([#24](https://github.com/eng618/eng/issues/24))
+- **deps:** bump actions/download-artifact from 4 to 5 ([#25](https://github.com/eng618/eng/issues/25))
+- **deps:** bump actions/setup-go from 5 to 6 ([#26](https://github.com/eng618/eng/issues/26))
+- **deps:** bump actions/checkout from 4 to 5 ([#27](https://github.com/eng618/eng/issues/27))
+
+### Feat
+
+- **files:** add find and delete command for managing file types
+
+
+<a name="v0.25.6"></a>
+
+## [v0.25.6] - 2025-08-21
+
+### Refactor
+
+- **findNonMovieFolders:** use prompt instead of dry-run flag
+
+
+<a name="v0.25.5"></a>
+
+## [v0.25.5] - 2025-08-21
+
+### Fix
+
+- update find non movies for better more reliable handling.
+
+### Refactor
+
+- **progress bar:** improve spinner handling
+
+
+<a name="v0.25.4"></a>
+
+## [v0.25.4] - 2025-08-19
+
+### Fix
+
+- **config:** create config file if it does not exist
+
+
+<a name="v0.25.3"></a>
+
+## [v0.25.3] - 2025-08-18
+
+### Ci
+
+- only run go 1.25
+- add missing deps
+
+
+<a name="v0.25.2"></a>
+
+## [v0.25.2] - 2025-08-18
+
+### Fix
+
+- **compaudit:** allow run if empty
+
+
+<a name="v0.25.1"></a>
+
+## [v0.25.1] - 2025-08-18
+
+
+<a name="v0.25.0"></a>
+
+## [v0.25.0] - 2025-08-18
+
+### Feat
+
+- **system:** add compauditFix command to fix insecure directories reported by compaudit fix(log): ensure log functions handle errors when writing output fix(tests): improve error handling when setting info flag in DotfilesCmd tests fix(vscode): add "compaudit" to cSpell words for spell checking
+- **tests:** add unit tests for dotfiles and fetch commands, and improve logging output handling
+
+### Fix
+
+- **dependencies:** update locafero and conc versions, and upgrade crypto, net, sys, term, and text packages
+
+
+<a name="v0.24.1"></a>
+
+## [v0.24.1] - 2025-08-14
+
+### Fix
+
+- **setup:** improve error handling for home directory and file closure
+
+
+<a name="v0.24.0"></a>
+
+## [v0.24.0] - 2025-08-14
+
+### Feat
+
+- **system:** add setup command for managing asdf plugins
+
+
+<a name="v0.23.1"></a>
+
+## [v0.23.1] - 2025-08-12
+
+### Feat
+
+- **tests:** ensure default branch is renamed to main in setup functions
+
+
+<a name="v0.23.0"></a>
+
+## [v0.23.0] - 2025-08-12
+
+### Chore
+
+- **workflows:** update permissions for GitHub Actions
+
+### Feat
+
+- Add Copilot command for custom instructions setup
+
+### Fix
+
+- **CODEOWNERS:** update CODEOWNERS to reflect correct username
+
+
+<a name="v0.22.1"></a>
+
+## [v0.22.1] - 2025-07-22
+
+### Feat
+
+- **config:** update example config and enhance proxy settings
+
+
+<a name="v0.22.0"></a>
+
+## [v0.22.0] - 2025-07-22
+
+### Build
+
+- **deps:** update all
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Docs
+
+- update copilot instructions and enhance README structure
+- **README:** update features and command reference for git management
+
+### Feat
+
+- **git:** enhance getWorkingPath to support persistent flags
+- **git:** add commands for managing multiple git repositories
+- **go.yml:** add changelog generation step for CI
+
 ### Refactor
 
 - **codemod:** simplify command handling for lint dependency installation
@@ -1594,7 +1834,28 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.21.3...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.25.14...HEAD
+[v0.25.14]: https://github.com/eng618/eng/compare/v0.25.13...v0.25.14
+[v0.25.13]: https://github.com/eng618/eng/compare/v0.25.12...v0.25.13
+[v0.25.12]: https://github.com/eng618/eng/compare/v0.25.11...v0.25.12
+[v0.25.11]: https://github.com/eng618/eng/compare/v0.25.10...v0.25.11
+[v0.25.10]: https://github.com/eng618/eng/compare/v0.25.9...v0.25.10
+[v0.25.9]: https://github.com/eng618/eng/compare/v0.25.8...v0.25.9
+[v0.25.8]: https://github.com/eng618/eng/compare/v0.25.7...v0.25.8
+[v0.25.7]: https://github.com/eng618/eng/compare/v0.25.6...v0.25.7
+[v0.25.6]: https://github.com/eng618/eng/compare/v0.25.5...v0.25.6
+[v0.25.5]: https://github.com/eng618/eng/compare/v0.25.4...v0.25.5
+[v0.25.4]: https://github.com/eng618/eng/compare/v0.25.3...v0.25.4
+[v0.25.3]: https://github.com/eng618/eng/compare/v0.25.2...v0.25.3
+[v0.25.2]: https://github.com/eng618/eng/compare/v0.25.1...v0.25.2
+[v0.25.1]: https://github.com/eng618/eng/compare/v0.25.0...v0.25.1
+[v0.25.0]: https://github.com/eng618/eng/compare/v0.24.1...v0.25.0
+[v0.24.1]: https://github.com/eng618/eng/compare/v0.24.0...v0.24.1
+[v0.24.0]: https://github.com/eng618/eng/compare/v0.23.1...v0.24.0
+[v0.23.1]: https://github.com/eng618/eng/compare/v0.23.0...v0.23.1
+[v0.23.0]: https://github.com/eng618/eng/compare/v0.22.1...v0.23.0
+[v0.22.1]: https://github.com/eng618/eng/compare/v0.22.0...v0.22.1
+[v0.22.0]: https://github.com/eng618/eng/compare/v0.21.3...v0.22.0
 [v0.21.3]: https://github.com/eng618/eng/compare/v0.21.2...v0.21.3
 [v0.21.2]: https://github.com/eng618/eng/compare/v0.21.1...v0.21.2
 [v0.21.1]: https://github.com/eng618/eng/compare/v0.21.0...v0.21.1
