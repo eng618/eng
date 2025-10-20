@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -21,6 +22,54 @@ var standardConfigTmpl []byte
 
 //go:embed eslint.config.echo.tmpl
 var echoConfigTmpl []byte
+
+//go:embed eslint.config.js-only.tmpl
+var jsOnlyConfigTmpl []byte
+
+// detectTypeScriptUsage checks if the project uses TypeScript by looking for .ts/.tsx files or typescript dependency
+func detectTypeScriptUsage() bool {
+	// Check for TypeScript files
+	hasTSFiles := false
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // ignore errors
+		}
+		if !info.IsDir() && (strings.HasSuffix(info.Name(), ".ts") || strings.HasSuffix(info.Name(), ".tsx")) {
+			hasTSFiles = true
+			return filepath.SkipAll // found, no need to continue
+		}
+		return nil
+	})
+	if err != nil {
+		// If walk fails, assume no TS files
+		hasTSFiles = false
+	}
+
+	// Check package.json for typescript dependency
+	if !hasTSFiles {
+		if pkgData, err := os.ReadFile("package.json"); err == nil {
+			var pkg map[string]interface{}
+			if json.Unmarshal(pkgData, &pkg) == nil {
+				// Check dependencies and devDependencies for typescript
+				checkDeps := func(deps interface{}) bool {
+					if depsMap, ok := deps.(map[string]interface{}); ok {
+						for pkgName := range depsMap {
+							if strings.HasPrefix(pkgName, "typescript") {
+								return true
+							}
+						}
+					}
+					return false
+				}
+				if checkDeps(pkg["dependencies"]) || checkDeps(pkg["devDependencies"]) {
+					hasTSFiles = true
+				}
+			}
+		}
+	}
+
+	return hasTSFiles
+}
 
 // LintSetupCmd sets up linting, formatting, and pre-commit hooks for a Node.js project.
 var LintSetupCmd = &cobra.Command{
@@ -66,10 +115,14 @@ func installLintDependencies(echo bool) error {
 
 	baseDeps := []string{
 		"eslint@latest", "@eslint/js@latest",
-		"@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest",
 		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
 		"@eng618/prettier-config@latest", "globals@latest",
 		"husky@latest", "lint-staged@latest", "prettier@latest",
+	}
+
+	// Add TypeScript ESLint dependencies only if TypeScript is detected
+	if detectTypeScriptUsage() {
+		baseDeps = append(baseDeps, "@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest")
 	}
 
 	if echo {
@@ -121,8 +174,10 @@ func writeESLintConfig(echo bool) error {
 	var data []byte
 	if echo {
 		data = echoConfigTmpl
-	} else {
+	} else if detectTypeScriptUsage() {
 		data = standardConfigTmpl
+	} else {
+		data = jsOnlyConfigTmpl
 	}
 	return os.WriteFile("eslint.config.mjs", data, 0644)
 }

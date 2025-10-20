@@ -142,6 +142,118 @@ func TestWriteESLintConfig_EchoMode(t *testing.T) {
 	}
 }
 
+func TestDetectTypeScriptUsage_TypeScriptFiles(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Create a TypeScript file
+	_ = os.WriteFile("index.ts", []byte("console.log('hello');"), 0644)
+
+	if !detectTypeScriptUsage() {
+		t.Error("detectTypeScriptUsage should return true for projects with .ts files")
+	}
+}
+
+func TestDetectTypeScriptUsage_TypeScriptDependency(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Create package.json with typescript dependency
+	pkg := map[string]interface{}{
+		"devDependencies": map[string]interface{}{
+			"typescript": "^4.0.0",
+		},
+	}
+	pkgData, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", pkgData, 0644)
+
+	if !detectTypeScriptUsage() {
+		t.Error("detectTypeScriptUsage should return true for projects with typescript dependency")
+	}
+}
+
+func TestDetectTypeScriptUsage_JavaScriptOnly(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Create a JavaScript file and package.json without typescript
+	pkg := map[string]interface{}{
+		"name": "test",
+	}
+	pkgData, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", pkgData, 0644)
+	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0644)
+
+	if detectTypeScriptUsage() {
+		t.Error("detectTypeScriptUsage should return false for pure JavaScript projects")
+	}
+}
+
+func TestWriteESLintConfig_TypeScriptProject(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Create TypeScript project
+	pkg := map[string]interface{}{
+		"devDependencies": map[string]interface{}{
+			"typescript": "^4.0.0",
+		},
+	}
+	pkgData, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", pkgData, 0644)
+
+	err := writeESLintConfig(false)
+	if err != nil {
+		t.Fatalf("writeESLintConfig failed: %v", err)
+	}
+	data, err := os.ReadFile("eslint.config.mjs")
+	if err != nil {
+		t.Fatalf("eslint.config.mjs not written: %v", err)
+	}
+	if !strings.Contains(string(data), "@typescript-eslint") {
+		t.Error("@typescript-eslint imports should be used for TypeScript projects")
+	}
+}
+
+func TestWriteESLintConfig_JavaScriptProject(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Create JavaScript-only project
+	pkg := map[string]interface{}{
+		"name": "test",
+	}
+	pkgData, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", pkgData, 0644)
+	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0644)
+
+	err := writeESLintConfig(false)
+	if err != nil {
+		t.Fatalf("writeESLintConfig failed: %v", err)
+	}
+	data, err := os.ReadFile("eslint.config.mjs")
+	if err != nil {
+		t.Fatalf("eslint.config.mjs not written: %v", err)
+	}
+	if strings.Contains(string(data), "typescript-eslint") {
+		t.Error("typescript-eslint config should not be used for JavaScript projects")
+	}
+	// Should contain prettier config but no typescript-eslint import
+	if !strings.Contains(string(data), "prettier") {
+		t.Error("prettier config should be included for JavaScript projects")
+	}
+}
+
 func TestUpdatePackageJSON_OrderAndValues(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWd, _ := os.Getwd()

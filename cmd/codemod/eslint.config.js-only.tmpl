@@ -1,12 +1,8 @@
 import globals from 'globals';
-import js from '@eslint/js';
-import tsParser from '@typescript-eslint/parser';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
 import pluginPrettier from 'eslint-plugin-prettier';
 import configPrettier from 'eslint-config-prettier';
 
 export default [
-  js.configs.recommended,
   {
     ignores: ['dist', 'node_modules', 'coverage', 'eslint.config.mjs'],
   },
@@ -26,24 +22,8 @@ export default [
     },
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
-    languageOptions: {
-      parser: tsParser,
-    },
-    plugins: {
-      '@typescript-eslint': tsPlugin,
-    },
-    rules: {
-      ...tsPlugin.configs.base,
-      ...tsPlugin.configs['eslint-recommended'],
-      ...tsPlugin.configs.recommended,
-    },
-  },
-  {
     files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
-    rules: {
-      ...js.configs.recommended.rules,
-    },
+    rules: {},
   },
   {
     plugins: {
