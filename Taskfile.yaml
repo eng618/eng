@@ -63,6 +63,8 @@ tasks:
       - git-chglog -o CHANGELOG.md
       - git add --update
       - 'git commit -m "chore(CHANGELOG): update [skip-ci]"'
+      - echo "Changelog updated and committed."
+    silent: true
 
   changelog-ci:
     desc: Generate changelog and commit (for CI)
