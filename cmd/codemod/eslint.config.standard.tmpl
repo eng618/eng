@@ -1,14 +1,15 @@
 import globals from 'globals';
 import js from '@eslint/js';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import pluginPrettier from 'eslint-plugin-prettier';
-import configPrettier from 'eslint-config-prettier';
+import ts from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
 
 export default [
-  js.configs.recommended,
   {
     ignores: ['dist', 'node_modules', 'coverage', 'eslint.config.mjs'],
   },
+  js.configs.recommended,
   {
     linterOptions: {
       noInlineConfig: true,
@@ -27,15 +28,15 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     languageOptions: {
-      parser: '@typescript-eslint/parser',
+      parser: tsParser,
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
+      '@typescript-eslint': ts,
     },
     rules: {
-      ...tsPlugin.configs.base,
-      ...tsPlugin.configs['eslint-recommended'],
-      ...tsPlugin.configs.recommended,
+      ...ts.configs.base.rules,
+      ...ts.configs['eslint-recommended'].rules,
+      ...ts.configs.recommended.rules,
     },
   },
   {
@@ -46,10 +47,11 @@ export default [
   },
   {
     plugins: {
-      prettier: pluginPrettier,
+      prettier: prettier,
     },
     rules: {
-      ...configPrettier.rules,
+      ...prettierConfig.rules,
+      'prettier/prettier': 'error',
     },
   },
 ];

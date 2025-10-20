@@ -1,11 +1,13 @@
 import globals from 'globals';
-import pluginPrettier from 'eslint-plugin-prettier';
-import configPrettier from 'eslint-config-prettier';
+import js from '@eslint/js';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
 
 export default [
   {
     ignores: ['dist', 'node_modules', 'coverage', 'eslint.config.mjs'],
   },
+  js.configs.recommended,
   {
     linterOptions: {
       noInlineConfig: true,
@@ -23,14 +25,17 @@ export default [
   },
   {
     files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
-    rules: {},
+    rules: {
+      ...js.configs.recommended.rules,
+    },
   },
   {
     plugins: {
-      prettier: pluginPrettier,
+      prettier: prettier,
     },
     rules: {
-      ...configPrettier.rules,
+      ...prettierConfig.rules,
+      'prettier/prettier': 'error',
     },
   },
 ];
