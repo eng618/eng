@@ -122,9 +122,30 @@ tasks:
       - echo "Running tests with coverage report..."
       - CGO_ENABLED=1 go test ./... -cover -race -coverprofile=coverage.out -covermode=atomic
 
+  format:
+    desc: Format Go code
+    cmds:
+      - gofmt -w .
+
+  format-check:
+    desc: Check Go code formatting
+    cmds:
+      - |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "The following files are not formatted:"
+          echo "$unformatted"
+          echo "Run 'task format' to fix."
+          exit 1
+        else
+          echo "All Go files are properly formatted."
+        fi
+    silent: true
+
   validate:
     desc: Run lint and tests
     cmds:
+      - task: format-check
       - task: lint
       - task: test
 
