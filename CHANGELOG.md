@@ -3,6 +3,56 @@
 ## [Unreleased]
 
 
+<a name="v0.26.1"></a>
+
+## [v0.26.1] - 2025-11-04
+
+### Feat
+
+- add Go code formatting tasks to Taskfile
+
+### Style
+
+- standardize indentation to spaces in Go files
+
+
+<a name="v0.26.0"></a>
+
+## [v0.26.0] - 2025-11-04
+
+### Feat
+
+- **cmd:** move FindNonMovieFoldersCmd from system to files
+
+
+<a name="v0.25.16"></a>
+
+## [v0.25.16] - 2025-11-04
+
+### Feat
+
+- **files:** add --list-extensions flag to list file extensions
+
+
+<a name="v0.25.15"></a>
+
+## [v0.25.15] - 2025-11-04
+
+### Build
+
+- **deps:** bump actions/download-artifact from 5 to 6 ([#29](https://github.com/eng618/eng/issues/29))
+- **deps:** bump actions/upload-artifact from 4 to 5 ([#28](https://github.com/eng618/eng/issues/28))
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+- **build:** add echo feedback and silence to changelog task
+
+### Feat
+
+- **files:** add findAndDelete command with extended file type support
+
+
 <a name="v0.25.14"></a>
 
 ## [v0.25.14] - 2025-10-20
@@ -1834,7 +1884,11 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.25.14...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.26.1...HEAD
+[v0.26.1]: https://github.com/eng618/eng/compare/v0.26.0...v0.26.1
+[v0.26.0]: https://github.com/eng618/eng/compare/v0.25.16...v0.26.0
+[v0.25.16]: https://github.com/eng618/eng/compare/v0.25.15...v0.25.16
+[v0.25.15]: https://github.com/eng618/eng/compare/v0.25.14...v0.25.15
 [v0.25.14]: https://github.com/eng618/eng/compare/v0.25.13...v0.25.14
 [v0.25.13]: https://github.com/eng618/eng/compare/v0.25.12...v0.25.13
 [v0.25.12]: https://github.com/eng618/eng/compare/v0.25.11...v0.25.12
