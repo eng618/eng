@@ -220,7 +220,6 @@ func isBrewInstallation(isVerbose bool) bool {
 	// - Linux (Linuxbrew): /home/linuxbrew/.linuxbrew/Cellar
 	brewPrefixes := []string{"/usr/local/Cellar", "/opt/homebrew/Cellar", "/home/linuxbrew/.linuxbrew/Cellar"}
 
-
 	for _, prefix := range brewPrefixes {
 		if strings.HasPrefix(resolvedPath, prefix) {
 			log.Verbose(isVerbose, "Detected Homebrew installation path: %s", resolvedPath)
