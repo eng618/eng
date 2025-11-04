@@ -104,7 +104,7 @@ func TestCopilotSetupCmd_ForceFlag(t *testing.T) {
 	_ = os.Chdir(tempDir)
 
 	// Don't create .git directory to simulate non-git directory
-	
+
 	// Mock exec.Command
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()

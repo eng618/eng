@@ -16,7 +16,7 @@ var CopilotSetupCmd = &cobra.Command{
 	Long:  `Create a base custom Copilot instructions file at .github/copilot-instructions.md. By default, this command assumes you are in the root of a Git repository. Use --force to bypass this check.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
-		
+
 		// Check if we're in a git repository unless force is used
 		if !force {
 			if !isGitRepository() {
@@ -43,7 +43,7 @@ func isGitRepository() bool {
 	if _, err := os.Stat(".git"); err == nil {
 		return true
 	}
-	
+
 	// Check if we're inside a git worktree by running git rev-parse
 	cmd := execCommand("git", "rev-parse", "--git-dir")
 	err := cmd.Run()
@@ -53,19 +53,19 @@ func isGitRepository() bool {
 // createCopilotInstructions creates the .github/copilot-instructions.md file with base template.
 func createCopilotInstructions() error {
 	log.Info("Creating .github/copilot-instructions.md...")
-	
+
 	// Create .github directory if it doesn't exist
 	if err := os.MkdirAll(".github", 0755); err != nil {
 		return err
 	}
-	
+
 	// Check if file already exists
 	filePath := ".github/copilot-instructions.md"
 	if _, err := os.Stat(filePath); err == nil {
 		log.Info("Copilot instructions file already exists, skipping creation.")
 		return nil
 	}
-	
+
 	// Base template for copilot instructions
 	template := `# Copilot Custom Instructions
 
@@ -114,6 +114,6 @@ func createCopilotInstructions() error {
 
 <!-- Add project-specific instructions here -->
 `
-	
+
 	return os.WriteFile(filePath, []byte(template), 0644)
 }

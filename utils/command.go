@@ -49,7 +49,7 @@ func StartChildProcess(c *exec.Cmd) error {
 	if err := c.Wait(); err != nil {
 		// Though the child process failed, we can still log the error and exit gracefully.
 		log.Debug("child process exited with error: %s", err) // Log as debug, return the error for handling
-		return err                                           // Return the error from Wait()
+		return err                                            // Return the error from Wait()
 	}
 	log.Success("command completed successfully")
 	return nil // Return nil on success

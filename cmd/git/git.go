@@ -70,7 +70,7 @@ func getWorkingPath(cmd *cobra.Command) (string, error) {
 		// Try to get from local flags if not found in persistent flags
 		useCurrent, _ = cmd.Flags().GetBool("current")
 	}
-	
+
 	if useCurrent {
 		devPath, err := os.Getwd()
 		if err != nil {

@@ -134,13 +134,13 @@ var exportCmd = &cobra.Command{
 			fmt.Printf("export GLOBAL_AGENT_HTTP_PROXY='%s'\n", proxyValue)
 			fmt.Printf("export http_proxy='%s'\n", proxyValue)
 			fmt.Printf("export https_proxy='%s'\n", proxyValue)
-			
+
 			// Combine default no_proxy with any custom settings
 			noProxyValue := "localhost,127.0.0.1,::1,.local"
 			if proxies[activeIndex].NoProxy != "" {
 				noProxyValue = noProxyValue + "," + proxies[activeIndex].NoProxy
 			}
-			
+
 			fmt.Printf("export NO_PROXY='%s'\n", noProxyValue)
 			fmt.Printf("export no_proxy='%s'\n", noProxyValue)
 		} else {

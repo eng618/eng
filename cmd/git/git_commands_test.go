@@ -71,16 +71,16 @@ func TestGetWorkingPath(t *testing.T) {
 
 func setupTestCommandEnvironment(t *testing.T, repoNames []string) (string, func()) {
 	t.Helper()
-	
+
 	workspace := setupTestWorkspace(t, repoNames)
-	
+
 	// Cleanup function
 	cleanup := func() {
 		if err := os.RemoveAll(workspace); err != nil {
 			t.Logf("Warning: failed to cleanup workspace: %v", err)
 		}
 	}
-	
+
 	return workspace, cleanup
 }
 
@@ -88,11 +88,11 @@ func createTestCommandWithFlags(current bool) *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.PersistentFlags().Bool("current", false, "Use current working directory")
 	cmd.Flags().Bool("dry-run", false, "Perform a dry run")
-	
+
 	if current {
 		_ = cmd.PersistentFlags().Set("current", "true")
 	}
-	
+
 	return cmd
 }
 
@@ -170,7 +170,7 @@ func TestStatusAllCommand_WithCurrentFlag(t *testing.T) {
 	// Resolve both paths to handle macOS symlink differences
 	expectedPath, _ := filepath.EvalSymlinks(workspace)
 	actualPath, _ := filepath.EvalSymlinks(path)
-	
+
 	if actualPath != expectedPath {
 		t.Errorf("getWorkingPath returned %s, expected %s", actualPath, expectedPath)
 	}
@@ -179,7 +179,7 @@ func TestStatusAllCommand_WithCurrentFlag(t *testing.T) {
 func TestFetchAllCommand_ErrorHandling(t *testing.T) {
 	// Test with non-existent directory
 	cmd := createTestCommandWithFlags(false)
-	
+
 	// This should fail because we don't have a valid workspace
 	_, err := getWorkingPath(cmd)
 	if err == nil {
@@ -292,7 +292,7 @@ func getCurrentBranch(repoPath string) (string, error) {
 
 func TestPersistentFlagInheritance(t *testing.T) {
 	// Test that persistent flags are properly inherited by subcommands
-	
+
 	// Create a test parent command with persistent flag
 	parentCmd := &cobra.Command{
 		Use: "parent",
@@ -301,15 +301,15 @@ func TestPersistentFlagInheritance(t *testing.T) {
 	if err := parentCmd.PersistentFlags().Set("current", "true"); err != nil {
 		t.Fatalf("Failed to set current flag: %v", err)
 	}
-	
+
 	// Create a test subcommand
 	subCmd := &cobra.Command{
 		Use: "sub",
 	}
-	
+
 	// Add subcommand to parent
 	parentCmd.AddCommand(subCmd)
-	
+
 	// Test that the subcommand can access the parent's persistent flag
 	flagValue, err := subCmd.PersistentFlags().GetBool("current")
 	if err != nil {
@@ -318,7 +318,7 @@ func TestPersistentFlagInheritance(t *testing.T) {
 			flagValue, err = parent.PersistentFlags().GetBool("current")
 		}
 	}
-	
+
 	if err != nil {
 		t.Errorf("Subcommand cannot access --current flag: %v", err)
 	} else if !flagValue {
@@ -363,7 +363,7 @@ func TestCurrentFlagWorkflow(t *testing.T) {
 	// Resolve both paths to handle macOS symlink differences
 	expectedPath, _ := filepath.EvalSymlinks(workspace)
 	actualPath, _ := filepath.EvalSymlinks(path)
-	
+
 	// Verify the path is the current workspace
 	if actualPath != expectedPath {
 		t.Errorf("getWorkingPath() returned %s, expected %s", actualPath, expectedPath)

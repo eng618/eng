@@ -11,7 +11,7 @@ import (
 // setupTestRepo creates a temporary git repository for testing
 func setupTestRepo(t *testing.T, branchName string) string {
 	t.Helper()
-	
+
 	// Create temporary directory
 	tmpDir, err := os.MkdirTemp("", "test-repo-*")
 	if err != nil {
@@ -34,7 +34,7 @@ func setupTestRepo(t *testing.T, branchName string) string {
 	if err := cmd.Run(); err != nil {
 		t.Logf("Warning: failed to set git user.name: %v", err)
 	}
-	
+
 	cmd = exec.Command("git", "config", "user.email", "test@example.com")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
@@ -120,14 +120,14 @@ func setupTestRepo(t *testing.T, branchName string) string {
 // setupTestRepoWithBranches creates a test repo with multiple branches
 func setupTestRepoWithBranches(t *testing.T, branches []string) string {
 	t.Helper()
-	
+
 	tmpDir := setupTestRepo(t, "main")
 
 	for _, branch := range branches {
 		if branch == "main" || branch == "master" {
 			continue // Skip if it's the default branch
 		}
-		
+
 		cmd := exec.Command("git", "checkout", "-b", branch)
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
@@ -401,28 +401,28 @@ func TestEnsureOnDefaultBranch(t *testing.T) {
 
 func TestGetMainBranch_Comprehensive(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialBranch  string
+		name               string
+		initialBranch      string
 		additionalBranches []string
-		expectedBranch string
+		expectedBranch     string
 	}{
 		{
-			name:           "Repository with main branch",
-			initialBranch:  "main",
+			name:               "Repository with main branch",
+			initialBranch:      "main",
 			additionalBranches: []string{},
-			expectedBranch: "main",
+			expectedBranch:     "main",
 		},
 		{
-			name:           "Repository with master branch",
-			initialBranch:  "master",
+			name:               "Repository with master branch",
+			initialBranch:      "master",
 			additionalBranches: []string{},
-			expectedBranch: "master",
+			expectedBranch:     "master",
 		},
 		{
-			name:           "Repository with both main and master - prefers main",
-			initialBranch:  "master",
+			name:               "Repository with both main and master - prefers main",
+			initialBranch:      "master",
 			additionalBranches: []string{"main"},
-			expectedBranch: "main", // GetMainBranch prefers main over master
+			expectedBranch:     "main", // GetMainBranch prefers main over master
 		},
 	}
 
@@ -443,20 +443,20 @@ func TestGetMainBranch_Comprehensive(t *testing.T) {
 					t.Logf("Branch %s already exists, skipping creation", branch)
 					continue
 				}
-				
+
 				// Get current branch to return to it after creating the new branch
 				currentBranch, err := getCurrentBranchInRepo(repoPath)
 				if err != nil {
 					t.Fatalf("Failed to get current branch: %v", err)
 				}
-				
+
 				// Create the new branch from the current branch
 				cmd = exec.Command("git", "checkout", "-b", branch)
 				cmd.Dir = repoPath
 				if err := cmd.Run(); err != nil {
 					t.Fatalf("Failed to create branch %s: %v", branch, err)
 				}
-				
+
 				// Return to the original branch
 				cmd = exec.Command("git", "checkout", currentBranch)
 				cmd.Dir = repoPath

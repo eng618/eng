@@ -10,7 +10,7 @@ import (
 // setupTestWorkspace creates a temporary workspace with multiple git repositories
 func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 	tb.Helper()
-	
+
 	// Create temporary workspace directory
 	workspace, err := os.MkdirTemp("", "test-workspace-*")
 	if err != nil {
@@ -39,7 +39,7 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 		if err := cmd.Run(); err != nil {
 			tb.Logf("Warning: failed to set git user.name: %v", err)
 		}
-		
+
 		cmd = exec.Command("git", "config", "user.email", "test@example.com")
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
@@ -95,7 +95,7 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 // setupTestWorkspaceWithNonGitDirs creates a workspace with both git repos and non-git directories
 func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos []string, nonGitDirs []string) string {
 	tb.Helper()
-	
+
 	workspace := setupTestWorkspace(tb, gitRepos)
 
 	// Create non-git directories
@@ -119,10 +119,10 @@ func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos []string, nonGitDi
 
 func TestFindGitRepositories(t *testing.T) {
 	tests := []struct {
-		name         string
-		gitRepos     []string
-		nonGitDirs   []string
-		expectedLen  int
+		name        string
+		gitRepos    []string
+		nonGitDirs  []string
+		expectedLen int
 	}{
 		{
 			name:        "Multiple git repositories",
@@ -195,12 +195,12 @@ func TestFindGitRepositories(t *testing.T) {
 
 func TestFindGitRepositoriesNonExistentPath(t *testing.T) {
 	nonExistentPath := "/this/path/does/not/exist"
-	
+
 	repos, err := findGitRepositories(nonExistentPath)
 	if err == nil {
 		t.Errorf("findGitRepositories() with non-existent path should return error, got nil")
 	}
-	
+
 	if repos != nil {
 		t.Errorf("findGitRepositories() with non-existent path should return nil repos, got %v", repos)
 	}
@@ -252,7 +252,7 @@ func TestGitWorkflow(t *testing.T) {
 			t.Errorf("Failed to check if repository %s is dirty: %v", repoPath, err)
 			continue
 		}
-		
+
 		if dirty {
 			t.Errorf("Repository %s should be clean initially", repoPath)
 		}
@@ -276,14 +276,14 @@ func BenchmarkFindGitRepositories(b *testing.B) {
 	for i := 0; i < 50; i++ {
 		repoNames[i] = filepath.Join("repo", string(rune('A'+i%26)), string(rune('0'+i/26)))
 	}
-	
+
 	workspace := setupTestWorkspace(b, repoNames)
 	defer func() {
 		_ = os.RemoveAll(workspace)
 	}()
 
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		_, err := findGitRepositories(workspace)
 		if err != nil {

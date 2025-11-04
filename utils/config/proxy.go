@@ -190,7 +190,7 @@ func UnsetProxyEnvVars() {
 func SetProxyEnvVars(proxyValue string) {
 	// Get the active proxy configuration to access custom NoProxy settings
 	proxies, activeIndex := GetProxyConfigs()
-	
+
 	// List of proxy environment variables to set
 	vars := []string{
 		"ALL_PROXY",
@@ -229,13 +229,13 @@ func SetProxyEnvVars(proxyValue string) {
 
 	// Set the NO_PROXY variable with default values and any custom values
 	noProxyValue := "localhost,127.0.0.1,::1,.local"
-	
+
 	// Add custom no_proxy settings if available for the active proxy
 	if activeIndex >= 0 && activeIndex < len(proxies) && proxies[activeIndex].NoProxy != "" {
 		noProxyValue = noProxyValue + "," + proxies[activeIndex].NoProxy
 		log.Info("Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
 	}
-	
+
 	if err := os.Setenv("NO_PROXY", noProxyValue); err != nil {
 		log.Warn("Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
 	} else {

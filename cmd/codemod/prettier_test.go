@@ -55,7 +55,7 @@ func TestGetNpmPrefix(t *testing.T) {
 	defer func() { execCommand = originalExecCommand }()
 
 	expectedPrefix := "/usr/local"
-	
+
 	// Mock execCommand
 	execCommand = func(command string, args ...string) *exec.Cmd {
 		return exec.Command("echo", expectedPrefix)
@@ -77,7 +77,7 @@ func TestGetConfigPath(t *testing.T) {
 
 	expectedPath := "/path/to/prettier-config"
 	packageName := "@eng618/prettier-config"
-	
+
 	// Mock execCommand
 	execCommand = func(command string, args ...string) *exec.Cmd {
 		return exec.Command("echo", expectedPath)

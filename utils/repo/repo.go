@@ -86,7 +86,7 @@ func EnsureOnDefaultBranch(repoPath string) error {
 
 	// Switch to the main branch
 	log.Warn("Currently on %s, attempting to switch to default branch: %s", currentBranch, mainBranch)
-	
+
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func EnsureOnDefaultBranch(repoPath string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	log.Success("Switched to default branch: %s", mainBranch)
 	return nil
 }
@@ -149,18 +149,18 @@ func GetMainBranch(repoPath string) (string, error) {
 	if branchExists(repoPath, "main") {
 		return "main", nil
 	}
-	
+
 	// Then check if master branch exists
 	if branchExists(repoPath, "master") {
 		return "master", nil
 	}
-	
+
 	// If neither exists, try to get the default branch from remote
 	defaultBranch, err := getRemoteDefaultBranch(repoPath)
 	if err == nil && defaultBranch != "" {
 		return defaultBranch, nil
 	}
-	
+
 	// Fall back to main as default
 	log.Warn("Could not determine main branch for %s, defaulting to 'main'", repoPath)
 	return "main", nil
@@ -170,13 +170,13 @@ func GetMainBranch(repoPath string) (string, error) {
 // It checks for common development branch names and returns the one that exists.
 func GetDevelopBranch(repoPath string) (string, error) {
 	developBranches := []string{"develop", "dev", "development"}
-	
+
 	for _, branch := range developBranches {
 		if branchExists(repoPath, branch) {
 			return branch, nil
 		}
 	}
-	
+
 	// If no development branch is found, return empty string
 	return "", nil
 }
@@ -205,13 +205,13 @@ func getRemoteDefaultBranch(repoPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Parse the output to get just the branch name
 	ref := strings.TrimSpace(string(output))
 	parts := strings.Split(ref, "/")
 	if len(parts) > 0 {
 		return parts[len(parts)-1], nil
 	}
-	
+
 	return "", nil
 }
