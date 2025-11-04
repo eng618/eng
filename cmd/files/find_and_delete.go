@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -24,16 +25,17 @@ type FileTypeCategory struct {
 
 // FindAndDeleteCmd scans a directory for selected file types and deletes them after confirmation.
 var (
-	globPattern string
-	extension   string
+	globPattern    string
+	extension      string
+	listExtensions bool
 )
 
 var FindAndDeleteCmd = &cobra.Command{
 	Use:   "findAndDelete [directory]",
-	Short: "Find and delete files of selected types",
+	Short: "Find and delete files of selected types, or list extensions",
 	Long: `Recursively scan the provided directory for files of types selected by the user
-and delete them after an interactive confirmation. Starts with JSON files; more
-types (movies, images, etc.) will be added later.
+and delete them after an interactive confirmation. Use --list-extensions to list
+all file extensions in the directory instead.
 `,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -42,6 +44,19 @@ types (movies, images, etc.) will be added later.
 
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			log.Error("Provided directory does not exist: %s", dir)
+			return
+		}
+
+		if listExtensions {
+			extensions, err := ListExtensions(dir)
+			if err != nil {
+				log.Error("Error listing extensions: %v", err)
+				return
+			}
+			log.Message("File extensions found in %s:", dir)
+			for _, ext := range extensions {
+				log.Message("  - %s", ext)
+			}
 			return
 		}
 
@@ -324,4 +339,30 @@ func ScanFiles(dir string, matchFn func(name string) bool, spinner *utils.Spinne
 	})
 
 	return matches, totalSize, walkErr
+}
+
+func ListExtensions(dir string) ([]string, error) {
+	extSet := make(map[string]bool)
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			log.Warn("Error accessing path %s: %v", path, err)
+			return nil
+		}
+		if !d.IsDir() {
+			ext := strings.ToLower(filepath.Ext(d.Name()))
+			if ext != "" {
+				extSet[ext] = true
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	var extensions []string
+	for ext := range extSet {
+		extensions = append(extensions, ext)
+	}
+	sort.Strings(extensions)
+	return extensions, nil
 }

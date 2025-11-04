@@ -107,6 +107,27 @@ func TestBuildMatchFunction(t *testing.T) {
 	}
 }
 
+// TestListExtensions tests the ListExtensions function
+func TestListExtensions(t *testing.T) {
+	tmpDir, _ := setupTestFiles(t)
+
+	extensions, err := ListExtensions(tmpDir)
+	if err != nil {
+		t.Fatalf("ListExtensions error: %v", err)
+	}
+
+	expected := []string{".avi", ".bak", ".ds_store", ".gif", ".jpeg", ".jpg", ".json", ".mkv", ".mov", ".mp4", ".png", ".txt"}
+	if len(extensions) != len(expected) {
+		t.Fatalf("expected %d extensions, got %d (%v)", len(expected), len(extensions), extensions)
+	}
+
+	for i, exp := range expected {
+		if extensions[i] != exp {
+			t.Errorf("expected extension %s at index %d, got %s", exp, i, extensions[i])
+		}
+	}
+}
+
 // TestDeleteFiles tests the parallel file deletion
 func TestDeleteFiles(t *testing.T) {
 	tmpDir, files := setupTestFiles(t)

@@ -19,4 +19,5 @@ func init() {
 
 	FindAndDeleteCmd.Flags().StringVarP(&globPattern, "glob", "g", "", "Glob pattern to match files (e.g., '*.bak'). Bypasses extension selection.")
 	FindAndDeleteCmd.Flags().StringVarP(&extension, "ext", "e", "", "File extension to match (e.g., '.json'). Bypasses extension selection.")
+	FindAndDeleteCmd.Flags().BoolVarP(&listExtensions, "list-extensions", "l", false, "List all file extensions in the directory")
 }
