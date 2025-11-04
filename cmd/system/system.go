@@ -16,12 +16,10 @@ var SystemCmd = &cobra.Command{
 
 func init() {
 	SystemCmd.AddCommand(KillPortCmd)
-	SystemCmd.AddCommand(FindNonMovieFoldersCmd)
 	SystemCmd.AddCommand(UpdateCmd)
 	SystemCmd.AddCommand(ProxyCmd)
 	SystemCmd.AddCommand(CompauditFixCmd)
 	SystemCmd.AddCommand(SetupCmd)
 
 	// Add flags for subcommands if needed
-	FindNonMovieFoldersCmd.Flags().Bool("dry-run", true, "Perform a dry run without deleting folders. Set to false to enable deletion.") // Default to TRUE for safety
 }

@@ -1,5 +1,5 @@
 //nolint:errcheck
-package system
+package files
 
 import (
 	"os"
