@@ -48,6 +48,7 @@ func TestBuildMatchFunction(t *testing.T) {
 		name        string
 		glob        string
 		ext         string
+		filename    string
 		testFile    string
 		shouldMatch bool
 		wantErr     bool
@@ -76,6 +77,18 @@ func TestBuildMatchFunction(t *testing.T) {
 			shouldMatch: true,
 		},
 		{
+			name:        "specific filename match",
+			filename:    "package.json",
+			testFile:    "package.json",
+			shouldMatch: true,
+		},
+		{
+			name:        "specific filename no match",
+			filename:    "package.json",
+			testFile:    "other.json",
+			shouldMatch: false,
+		},
+		{
 			name:        "no pattern",
 			testFile:    "test.txt",
 			shouldMatch: false,
@@ -84,7 +97,7 @@ func TestBuildMatchFunction(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			matchFn, err := buildMatchFunction(tc.glob, tc.ext)
+			matchFn, err := buildMatchFunction(tc.glob, tc.ext, tc.filename)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error, got nil")
@@ -236,6 +249,14 @@ func TestScanFiles(t *testing.T) {
 			},
 			expectedFiles: []string{"a.json", "sub/c.json", "sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv"},
 			expectedSize:  2750, // 100 + 300 + 400 + 550 + 650 + 750
+		},
+		{
+			name: "specific filename match",
+			matchFn: func(name string) bool {
+				return name == "a.json"
+			},
+			expectedFiles: []string{"a.json"},
+			expectedSize:  100,
 		},
 	}
 

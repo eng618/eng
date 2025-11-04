@@ -27,6 +27,7 @@ type FileTypeCategory struct {
 var (
 	globPattern    string
 	extension      string
+	filename       string
 	listExtensions bool
 )
 
@@ -35,7 +36,8 @@ var FindAndDeleteCmd = &cobra.Command{
 	Short: "Find and delete files of selected types, or list extensions",
 	Long: `Recursively scan the provided directory for files of types selected by the user
 and delete them after an interactive confirmation. Use --list-extensions to list
-all file extensions in the directory instead.
+all file extensions in the directory instead. Use --filename to target a specific
+filename, --glob for glob patterns, or --ext for file extensions.
 `,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -60,7 +62,7 @@ all file extensions in the directory instead.
 			return
 		}
 
-		matchFn, err := buildMatchFunction(globPattern, extension)
+		matchFn, err := buildMatchFunction(globPattern, extension, filename)
 		if err != nil {
 			log.Error("Error building match function: %v", err)
 			return
@@ -210,7 +212,7 @@ all file extensions in the directory instead.
 // ScanFiles walks dir recursively and returns files that match the provided function.
 // Also returns the total size of matched files. spinner may be nil.
 // buildMatchFunction creates a file matching function based on provided patterns
-func buildMatchFunction(globPattern, extension string) (func(name string) bool, error) {
+func buildMatchFunction(globPattern, extension, filename string) (func(name string) bool, error) {
 	if globPattern != "" {
 		pattern := globPattern
 		// Validate pattern before returning the function
@@ -230,6 +232,12 @@ func buildMatchFunction(globPattern, extension string) (func(name string) bool, 
 		}
 		return func(name string) bool {
 			return strings.ToLower(filepath.Ext(name)) == ext
+		}, nil
+	}
+
+	if filename != "" {
+		return func(name string) bool {
+			return name == filename
 		}, nil
 	}
 
