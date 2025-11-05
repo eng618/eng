@@ -330,6 +330,7 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 	prompt := &survey.Select{
 		Message: "Select a proxy configuration:",
 		Options: options,
+		Help:    "Use arrow keys to navigate, and Enter to select.",
 	}
 	err := survey.AskOne(prompt, &selectedIndex)
 	if err != nil {
