@@ -11,6 +11,7 @@ import (
 func setupTestFiles(t *testing.T) (string, map[string]int) {
 	tmpDir := t.TempDir()
 	files := map[string]int{
+		// Original test files
 		"a.json":           100,
 		"b.txt":            200,
 		"sub/c.json":       300,
@@ -26,6 +27,60 @@ func setupTestFiles(t *testing.T) (string, map[string]int) {
 		"sub/j.jpeg":       850,
 		"sub/k.gif":        950,
 		"sub/l.ds_store":   50,
+
+		// New category test files
+		// Microsoft documents
+		"document.doc":      1200,
+		"document.docx":     1300,
+		"spreadsheet.xls":   1400,
+		"spreadsheet.xlsx":  1500,
+		"presentation.ppt":  1600,
+		"presentation.pptx": 1700,
+
+		// Archive files
+		"archive.zip": 1800,
+		"archive.rar": 1900,
+		"archive.7z":  2000,
+		"archive.tar": 2100,
+		"archive.gz":  2200,
+		"archive.bz2": 2300,
+
+		// Audio files
+		"music.mp3":  2400,
+		"sound.wav":  2500,
+		"audio.flac": 2600,
+		"song.aac":   2700,
+		"track.ogg":  2800,
+
+		// PDF documents
+		"document.pdf": 2900,
+
+		// Text files
+		"readme.md": 300,
+		"notes.rtf": 3100,
+
+		// Log files
+		"app.log": 3200,
+
+		// Temporary files
+		"temp.tmp":   3300,
+		"cache.temp": 3400,
+		"swap.swp":   3500,
+
+		// Backup files
+		"config.backup": 3600,
+		"data.old":      3700,
+
+		// Executable files
+		"program.exe":   3800,
+		"installer.msi": 3900,
+		"app.dmg":       4000,
+		"package.pkg":   4100,
+		"software.deb":  4200,
+		"rpm.rpm":       4300,
+
+		// Additional video file for .m4v
+		"video.m4v": 4400,
 	}
 
 	for f, size := range files {
@@ -129,7 +184,13 @@ func TestListExtensions(t *testing.T) {
 		t.Fatalf("ListExtensions error: %v", err)
 	}
 
-	expected := []string{".avi", ".bak", ".ds_store", ".gif", ".jpeg", ".jpg", ".json", ".mkv", ".mov", ".mp4", ".png", ".txt"}
+	expected := []string{
+		".7z", ".aac", ".avi", ".backup", ".bak", ".bz2", ".deb", ".dmg", ".doc", ".docx",
+		".ds_store", ".exe", ".flac", ".gif", ".gz", ".jpeg", ".jpg", ".json", ".log", ".m4v",
+		".md", ".mkv", ".mov", ".mp3", ".mp4", ".msi", ".ogg", ".old", ".pdf", ".pkg", ".png",
+		".ppt", ".pptx", ".rar", ".rpm", ".rtf", ".swp", ".tar", ".temp", ".tmp", ".txt",
+		".wav", ".xls", ".xlsx", ".zip",
+	}
 	if len(extensions) != len(expected) {
 		t.Fatalf("expected %d extensions, got %d (%v)", len(expected), len(extensions), extensions)
 	}
@@ -257,6 +318,102 @@ func TestScanFiles(t *testing.T) {
 			},
 			expectedFiles: []string{"a.json"},
 			expectedSize:  100,
+		},
+		{
+			name: "microsoft documents match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".doc" || ext == ".docx" || ext == ".xls" || ext == ".xlsx" || ext == ".ppt" || ext == ".pptx"
+			},
+			expectedFiles: []string{"document.doc", "document.docx", "spreadsheet.xls", "spreadsheet.xlsx", "presentation.ppt", "presentation.pptx"},
+			expectedSize:  8700, // 1200 + 1300 + 1400 + 1500 + 1600 + 1700
+		},
+		{
+			name: "archive files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".zip" || ext == ".rar" || ext == ".7z" || ext == ".tar" || ext == ".gz" || ext == ".bz2"
+			},
+			expectedFiles: []string{"archive.zip", "archive.rar", "archive.7z", "archive.tar", "archive.gz", "archive.bz2"},
+			expectedSize:  12300, // 1800 + 1900 + 2000 + 2100 + 2200 + 2300
+		},
+		{
+			name: "audio files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".mp3" || ext == ".wav" || ext == ".flac" || ext == ".aac" || ext == ".ogg"
+			},
+			expectedFiles: []string{"music.mp3", "sound.wav", "audio.flac", "song.aac", "track.ogg"},
+			expectedSize:  13000, // 2400 + 2500 + 2600 + 2700 + 2800
+		},
+		{
+			name: "pdf documents match",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".pdf"
+			},
+			expectedFiles: []string{"document.pdf"},
+			expectedSize:  2900,
+		},
+		{
+			name: "text files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".txt" || ext == ".md" || ext == ".rtf"
+			},
+			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "readme.md", "notes.rtf"},
+			expectedSize:  4000, // 150 + 200 + 250 + 300 + 3100
+		},
+		{
+			name: "log files match",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".log"
+			},
+			expectedFiles: []string{"app.log"},
+			expectedSize:  3200,
+		},
+		{
+			name: "temporary files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".tmp" || ext == ".temp" || ext == ".swp"
+			},
+			expectedFiles: []string{"temp.tmp", "cache.temp", "swap.swp"},
+			expectedSize:  10200, // 3300 + 3400 + 3500
+		},
+		{
+			name: "backup files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".bak" || ext == ".backup" || ext == ".old"
+			},
+			expectedFiles: []string{"test.bak", "config.backup", "data.old"},
+			expectedSize:  7800, // 500 + 3600 + 3700
+		},
+		{
+			name: "executable files match",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".exe" || ext == ".msi" || ext == ".dmg" || ext == ".pkg" || ext == ".deb" || ext == ".rpm"
+			},
+			expectedFiles: []string{"program.exe", "installer.msi", "app.dmg", "package.pkg", "software.deb", "rpm.rpm"},
+			expectedSize:  24300, // 3800 + 3900 + 4000 + 4100 + 4200 + 4300
+		},
+		{
+			name: "m4v video files match",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".m4v"
+			},
+			expectedFiles: []string{"video.m4v"},
+			expectedSize:  4400,
+		},
+		{
+			name: "all video files match including m4v",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" || ext == ".m4v"
+			},
+			expectedFiles: []string{"sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv", "video.m4v"},
+			expectedSize:  6750, // 400 + 550 + 650 + 750 + 4400
 		},
 	}
 

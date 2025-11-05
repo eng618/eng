@@ -73,6 +73,15 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				"JSON files (.json)",
 				"Video files (.mp4, .mov, .avi, .mkv, .m4v)",
 				"Image files (.jpg, .jpeg, .png, .gif)",
+				"Microsoft documents (.doc, .docx, .xls, .xlsx, .ppt, .pptx)",
+				"Archive files (.zip, .rar, .7z, .tar, .gz, .bz2)",
+				"Audio files (.mp3, .wav, .flac, .aac, .ogg)",
+				"PDF documents (.pdf)",
+				"Text files (.txt, .md, .rtf)",
+				"Log files (.log)",
+				"Temporary files (.tmp, .temp, .swp)",
+				"Backup files (.bak, .backup, .old)",
+				"Executable files (.exe, .msi, .dmg, .pkg, .deb, .rpm)",
 				"System files (.DS_Store)",
 			}
 			var selected []string
@@ -109,6 +118,58 @@ filename, --glob for glob patterns, or --ext for file extensions.
 					extLookup[".jpeg"] = true
 					extLookup[".png"] = true
 					extLookup[".gif"] = true
+				}
+				if strings.Contains(s, "microsoft") {
+					extLookup[".doc"] = true
+					extLookup[".docx"] = true
+					extLookup[".xls"] = true
+					extLookup[".xlsx"] = true
+					extLookup[".ppt"] = true
+					extLookup[".pptx"] = true
+				}
+				if strings.Contains(s, "archive") {
+					extLookup[".zip"] = true
+					extLookup[".rar"] = true
+					extLookup[".7z"] = true
+					extLookup[".tar"] = true
+					extLookup[".gz"] = true
+					extLookup[".bz2"] = true
+				}
+				if strings.Contains(s, "audio") {
+					extLookup[".mp3"] = true
+					extLookup[".wav"] = true
+					extLookup[".flac"] = true
+					extLookup[".aac"] = true
+					extLookup[".ogg"] = true
+				}
+				if strings.Contains(s, "pdf") {
+					extLookup[".pdf"] = true
+				}
+				if strings.Contains(s, "text") {
+					extLookup[".txt"] = true
+					extLookup[".md"] = true
+					extLookup[".rtf"] = true
+				}
+				if strings.Contains(s, "log") {
+					extLookup[".log"] = true
+				}
+				if strings.Contains(s, "temporary") || strings.Contains(s, "temp") {
+					extLookup[".tmp"] = true
+					extLookup[".temp"] = true
+					extLookup[".swp"] = true
+				}
+				if strings.Contains(s, "backup") {
+					extLookup[".bak"] = true
+					extLookup[".backup"] = true
+					extLookup[".old"] = true
+				}
+				if strings.Contains(s, "executable") {
+					extLookup[".exe"] = true
+					extLookup[".msi"] = true
+					extLookup[".dmg"] = true
+					extLookup[".pkg"] = true
+					extLookup[".deb"] = true
+					extLookup[".rpm"] = true
 				}
 				if strings.Contains(s, "system") {
 					extLookup[".ds_store"] = true
