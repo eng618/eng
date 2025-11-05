@@ -71,7 +71,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			// Prompt the user for file types to search for (multi-select).
 			options := []string{
 				"JSON files (.json)",
-				"Video files (.mp4, .mov, .avi, .mkv, .m4v)",
+				"Video files (.mp4, .mov, .avi, .mkv, .m4v, .wmv, .3gp)",
 				"Image files (.jpg, .jpeg, .png, .gif)",
 				"Microsoft documents (.doc, .docx, .xls, .xlsx, .ppt, .pptx)",
 				"Archive files (.zip, .rar, .7z, .tar, .gz, .bz2)",
@@ -112,6 +112,8 @@ filename, --glob for glob patterns, or --ext for file extensions.
 					extLookup[".avi"] = true
 					extLookup[".mkv"] = true
 					extLookup[".m4v"] = true
+					extLookup[".wmv"] = true
+					extLookup[".3gp"] = true
 				}
 				if strings.Contains(s, "image") {
 					extLookup[".jpg"] = true

@@ -79,8 +79,10 @@ func setupTestFiles(t *testing.T) (string, map[string]int) {
 		"software.deb":  4200,
 		"rpm.rpm":       4300,
 
-		// Additional video file for .m4v
+		// Additional video files for .m4v, .wmv, .3gp
 		"video.m4v": 4400,
+		"movie.wmv": 4500,
+		"clip.3gp":  4600,
 
 		// Edge case test files
 		"my.file.txt":  100, // file with multiple dots
@@ -191,11 +193,11 @@ func TestListExtensions(t *testing.T) {
 	}
 
 	expected := []string{
-		".7z", ".aac", ".avi", ".backup", ".bak", ".bz2", ".deb", ".dmg", ".doc", ".docx",
+		".3gp", ".7z", ".aac", ".avi", ".backup", ".bak", ".bz2", ".deb", ".dmg", ".doc", ".docx",
 		".ds_store", ".exe", ".flac", ".gif", ".gz", ".jpeg", ".jpg", ".json", ".log", ".m4v",
 		".md", ".mkv", ".mov", ".mp3", ".mp4", ".msi", ".ogg", ".old", ".pdf", ".pkg", ".png",
 		".ppt", ".pptx", ".rar", ".rpm", ".rtf", ".swp", ".tar", ".temp", ".tmp", ".txt",
-		".wav", ".xls", ".xlsx", ".zip",
+		".wav", ".wmv", ".xls", ".xlsx", ".zip",
 	}
 	if len(extensions) != len(expected) {
 		t.Fatalf("expected %d extensions, got %d (%v)", len(expected), len(extensions), extensions)
@@ -413,13 +415,13 @@ func TestScanFiles(t *testing.T) {
 			expectedSize:  4400,
 		},
 		{
-			name: "all video files match including m4v",
+			name: "all video files match including m4v, wmv, 3gp",
 			matchFn: func(name string) bool {
 				ext := strings.ToLower(filepath.Ext(name))
-				return ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" || ext == ".m4v"
+				return ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" || ext == ".m4v" || ext == ".wmv" || ext == ".3gp"
 			},
-			expectedFiles: []string{"sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv", "video.m4v"},
-			expectedSize:  6750, // 400 + 550 + 650 + 750 + 4400
+			expectedFiles: []string{"sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv", "video.m4v", "movie.wmv", "clip.3gp"},
+			expectedSize:  15850, // 400 + 550 + 650 + 750 + 4400 + 4500 + 4600
 		},
 		// Edge case tests for safety
 		{
