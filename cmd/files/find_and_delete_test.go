@@ -81,6 +81,12 @@ func setupTestFiles(t *testing.T) (string, map[string]int) {
 
 		// Additional video file for .m4v
 		"video.m4v": 4400,
+
+		// Edge case test files
+		"my.file.txt":  100, // file with multiple dots
+		"noextension":  200, // file without extension
+		"DOCUMENT.PDF": 300, // uppercase extension
+		"config.BAK":   400, // uppercase backup extension
 	}
 
 	for f, size := range files {
@@ -265,8 +271,8 @@ func TestScanFiles(t *testing.T) {
 			matchFn: func(name string) bool {
 				return strings.ToLower(filepath.Ext(name)) == ".txt"
 			},
-			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt"},
-			expectedSize:  600, // 150 + 200 + 250
+			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "my.file.txt"},
+			expectedSize:  700, // 150 + 200 + 250 + 100
 		},
 		{
 			name: "no match",
@@ -351,8 +357,8 @@ func TestScanFiles(t *testing.T) {
 			matchFn: func(name string) bool {
 				return strings.ToLower(filepath.Ext(name)) == ".pdf"
 			},
-			expectedFiles: []string{"document.pdf"},
-			expectedSize:  2900,
+			expectedFiles: []string{"document.pdf", "DOCUMENT.PDF"},
+			expectedSize:  3200, // 2900 + 300
 		},
 		{
 			name: "text files match",
@@ -360,8 +366,8 @@ func TestScanFiles(t *testing.T) {
 				ext := strings.ToLower(filepath.Ext(name))
 				return ext == ".txt" || ext == ".md" || ext == ".rtf"
 			},
-			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "readme.md", "notes.rtf"},
-			expectedSize:  4000, // 150 + 200 + 250 + 300 + 3100
+			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "my.file.txt", "readme.md", "notes.rtf"},
+			expectedSize:  4100, // 150 + 200 + 250 + 100 + 300 + 3100
 		},
 		{
 			name: "log files match",
@@ -386,8 +392,8 @@ func TestScanFiles(t *testing.T) {
 				ext := strings.ToLower(filepath.Ext(name))
 				return ext == ".bak" || ext == ".backup" || ext == ".old"
 			},
-			expectedFiles: []string{"test.bak", "config.backup", "data.old"},
-			expectedSize:  7800, // 500 + 3600 + 3700
+			expectedFiles: []string{"test.bak", "config.backup", "data.old", "config.BAK"},
+			expectedSize:  8200, // 500 + 3600 + 3700 + 400
 		},
 		{
 			name: "executable files match",
@@ -414,6 +420,72 @@ func TestScanFiles(t *testing.T) {
 			},
 			expectedFiles: []string{"sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv", "video.m4v"},
 			expectedSize:  6750, // 400 + 550 + 650 + 750 + 4400
+		},
+		// Edge case tests for safety
+		{
+			name: "edge case - files with multiple dots",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".txt"
+			},
+			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "my.file.txt"},
+			expectedSize:  700, // 150 + 200 + 250 + 100 - should match "my.file.txt" correctly
+		},
+		{
+			name: "edge case - files without extensions don't match",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".txt"
+			},
+			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "my.file.txt"},
+			expectedSize:  700, // Files without extensions should not match
+		},
+		{
+			name: "edge case - similar extensions don't cross-match",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".mp3"
+			},
+			expectedFiles: []string{"music.mp3"},
+			expectedSize:  2400, // Should not match .mp4 files
+		},
+		{
+			name: "edge case - doc vs docx distinction",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".doc"
+			},
+			expectedFiles: []string{"document.doc"},
+			expectedSize:  1200, // Should not match .docx files
+		},
+		{
+			name: "edge case - case insensitive matching",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".pdf"
+			},
+			expectedFiles: []string{"document.pdf", "DOCUMENT.PDF"},
+			expectedSize:  3200, // 2900 + 300 - Case should not matter
+		},
+		{
+			name: "edge case - backup files don't match other categories",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ".bak"
+			},
+			expectedFiles: []string{"test.bak", "config.BAK"},
+			expectedSize:  900, // 500 + 400 - Should not match .backup files
+		},
+		{
+			name: "edge case - temporary files with different extensions",
+			matchFn: func(name string) bool {
+				ext := strings.ToLower(filepath.Ext(name))
+				return ext == ".tmp" || ext == ".temp" || ext == ".swp"
+			},
+			expectedFiles: []string{"temp.tmp", "cache.temp", "swap.swp"},
+			expectedSize:  10200, // Should match exactly these extensions
+		},
+		{
+			name: "edge case - files without extensions are not matched",
+			matchFn: func(name string) bool {
+				return strings.ToLower(filepath.Ext(name)) == ""
+			},
+			expectedFiles: []string{"noextension"},
+			expectedSize:  200, // Only files without extensions should match
 		},
 	}
 
