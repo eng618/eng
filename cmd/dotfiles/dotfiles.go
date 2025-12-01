@@ -55,4 +55,5 @@ func init() {
 
 	DotfilesCmd.AddCommand(SyncCmd)
 	DotfilesCmd.AddCommand(FetchCmd)
+	DotfilesCmd.AddCommand(CopyChangesCmd)
 }
