@@ -155,7 +155,11 @@ func copyFile(srcPath, destPath string, isVerbose bool) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() {
+		if err := src.Close(); err != nil {
+			log.Error("Failed to close source file %s: %s", srcPath, err)
+		}
+	}()
 
 	srcInfo, err := src.Stat()
 	if err != nil {
@@ -166,7 +170,11 @@ func copyFile(srcPath, destPath string, isVerbose bool) error {
 	if err != nil {
 		return err
 	}
-	defer dest.Close()
+	defer func() {
+		if err := dest.Close(); err != nil {
+			log.Error("Failed to close destination file %s: %s", destPath, err)
+		}
+	}()
 
 	_, err = io.Copy(dest, src)
 	return err
