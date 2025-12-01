@@ -2,6 +2,7 @@ package dotfiles
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"os"
 	"os/exec"
@@ -113,14 +114,17 @@ var CopyChangesCmd = &cobra.Command{
 
 // getModifiedFilesFunc is injectable for tests
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
+	var buf bytes.Buffer
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain")
-	out, err := cmd.Output()
+	cmd.Stdout = &buf
+	cmd.Stderr = log.ErrorWriter()
+	err := cmd.Run()
 	if err != nil {
 		return nil, err
 	}
 
 	var files []string
-	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+	scanner := bufio.NewScanner(&buf)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, " M ") || strings.HasPrefix(line, "M ") {
@@ -137,6 +141,9 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 // resetFile runs git checkout -- file
 func resetFile(repoPath, worktreePath, file string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
+	cmd.Dir = repoPath // Run from repo directory
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
 	return cmd.Run()
 }
 
