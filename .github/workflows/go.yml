@@ -38,7 +38,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
 
