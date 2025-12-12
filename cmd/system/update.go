@@ -93,6 +93,7 @@ func updateUbuntu(isVerbose bool, autoApprove bool) {
 	runCleanup(isVerbose, autoApprove)
 
 	updateBrew(isVerbose)
+	updateAsdf(isVerbose)
 }
 
 // updateMacOS is a placeholder function for macOS system updates.
@@ -101,6 +102,7 @@ func updateMacOS(isVerbose bool) {
 	log.Message("System update for macOS is coming soon.")
 	log.Verbose(isVerbose, "macOS system update functionality not yet implemented")
 	updateBrew(isVerbose)
+	updateAsdf(isVerbose)
 }
 
 // updateRaspberryPi is a placeholder function for Raspberry Pi system updates.
@@ -109,6 +111,7 @@ func updateRaspberryPi(isVerbose bool) {
 	log.Message("System update for Raspberry Pi is coming soon.")
 	log.Verbose(isVerbose, "Raspberry Pi system update functionality not yet implemented")
 	updateBrew(isVerbose)
+	updateAsdf(isVerbose)
 }
 
 // updateBrew updates Homebrew packages on macOS and Linux systems.
@@ -134,6 +137,33 @@ func updateBrew(isVerbose bool) {
 	} else {
 		log.Success("Homebrew packages updated successfully.")
 		log.Verbose(isVerbose, "Homebrew update and upgrade completed successfully")
+	}
+}
+
+// updateAsdf updates asdf version manager plugins.
+// It checks if asdf is installed, and if so, runs asdf plugin update --all to update all plugins.
+// If asdf is not found, it displays a message and returns without error.
+// This works on all platforms where asdf is installed.
+func updateAsdf(isVerbose bool) {
+	_, err := exec.LookPath("asdf")
+	if err != nil {
+		log.Message("asdf version manager is not installed on this system.")
+		log.Verbose(isVerbose, "Could not find asdf executable in PATH")
+		return
+	}
+
+	log.Message("Running asdf plugin updates...")
+	log.Verbose(isVerbose, "Running: asdf plugin update --all")
+
+	updateCmd := execCommand("asdf", "plugin", "update", "--all")
+	updateCmd.Stdout = log.Writer()
+	updateCmd.Stderr = log.ErrorWriter()
+	if err := updateCmd.Run(); err != nil {
+		log.Error("Error updating asdf plugins: %s", err)
+		log.Verbose(isVerbose, "asdf plugin update failed with error: %v", err)
+	} else {
+		log.Success("asdf plugins updated successfully.")
+		log.Verbose(isVerbose, "asdf plugin update --all completed successfully")
 	}
 }
 
