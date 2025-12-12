@@ -142,4 +142,4 @@ jobs:
           git add eng.rb
           # Commit message still uses the full tag name (with 'v')
           git commit -m "Update eng to ${TAG_NAME}"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/eng618/homebrew-eng.git
+          git push https://oauth2:${{ secrets.PAT_TOKEN }}@github.com/eng618/homebrew-eng.git
