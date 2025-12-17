@@ -161,7 +161,7 @@ eng config git-dev-path /path/to/your/dev/folder
 
 Manage your dotfiles with a bare git repository approach. This allows you to version control your home directory configuration files without the overhead of a traditional git repository.
 
-#### Installation
+#### Install
 
 ```sh
 # First-time setup: Install dotfiles from your repository
@@ -170,10 +170,10 @@ eng dotfiles install
 
 This command will:
 
-- Check and install prerequisites (Homebrew, Git, Bash, GitHub CLI)
+- Check and install prerequisites (Homebrew, Git, Bash)
 - Verify you have a valid SSH key at `~/.ssh/github`
 - Prompt for and save your dotfiles repository URL and branch
-- Clone your repository as a bare repository (default: `~/.eng-cfg`)
+- Clone your repository as a bare repository using go-git (default: `~/.eng-cfg`)
 - Backup any conflicting files to a timestamped directory
 - Checkout dotfiles to your home directory
 - Initialize git submodules

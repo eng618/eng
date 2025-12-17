@@ -29,10 +29,6 @@ func EnsurePrerequisites() error {
 		return err
 	}
 
-	if err := ensureGitHubCLI(); err != nil {
-		return err
-	}
-
 	if err := ensureGitHubSSH(); err != nil {
 		return err
 	}
@@ -130,32 +126,6 @@ func ensureBash() error {
 	}
 
 	log.Success("Bash installed successfully")
-	return nil
-}
-
-// ensureGitHubCLI checks if GitHub CLI is installed, and if not, installs it via Homebrew.
-func ensureGitHubCLI() error {
-	log.Start("Checking for GitHub CLI")
-
-	_, err := exec.LookPath("gh")
-	if err == nil {
-		log.Success("GitHub CLI is installed")
-		return nil
-	}
-
-	log.Warn("GitHub CLI is not installed")
-	log.Start("Installing GitHub CLI via Homebrew")
-
-	cmd := exec.Command("brew", "install", "gh")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-
-	if err := cmd.Run(); err != nil {
-		log.Error("Failed to install GitHub CLI: %v", err)
-		return fmt.Errorf("GitHub CLI installation failed: %w", err)
-	}
-
-	log.Success("GitHub CLI installed successfully")
 	return nil
 }
 

@@ -30,7 +30,7 @@ var SetupDotfilesCmd = &cobra.Command{
 	Use:   "dotfiles",
 	Short: "Setup dotfiles from your git repository",
 	Long: `Setup dotfiles from your git repository. This command will:
-  - Check and install prerequisites (Homebrew, Git, Bash, GitHub CLI, SSH keys)
+  - Check and install prerequisites (Homebrew, Git, Bash, SSH keys)
   - Clone your dotfiles repository as a bare repository
   - Backup any conflicting files
   - Checkout dotfiles to your home directory

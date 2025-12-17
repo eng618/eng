@@ -1,7 +1,6 @@
 package dotfiles
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +9,11 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
@@ -20,7 +24,7 @@ var InstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install dotfiles from a bare git repository",
 	Long: `Install dotfiles from a bare git repository. This command will:
-  - Check and install prerequisites (Homebrew, Git, Bash, GitHub CLI, SSH keys)
+  - Check and install prerequisites (Homebrew, Git, Bash, SSH keys)
   - Clone your dotfiles repository as a bare repository
   - Backup any conflicting files
   - Checkout dotfiles to your home directory
@@ -144,27 +148,26 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 func updateBareRepo(bareRepoPath string) error {
 	log.Start("Updating existing repository")
 
-	homeDir, err := os.UserHomeDir()
+	// Open the bare repository
+	repo, err := git.PlainOpen(bareRepoPath)
 	if err != nil {
-		return fmt.Errorf("could not determine home directory: %w", err)
+		return fmt.Errorf("failed to open repository: %w", err)
+	}
+
+	// Get SSH auth
+	auth, err := getSSHAuth()
+	if err != nil {
+		return fmt.Errorf("failed to get SSH auth: %w", err)
 	}
 
 	// Fetch updates
-	fetchCmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "fetch", "origin")
-	fetchCmd.Stdout = log.Writer()
-	fetchCmd.Stderr = log.ErrorWriter()
-
-	if err := fetchCmd.Run(); err != nil {
+	err = repo.Fetch(&git.FetchOptions{
+		RemoteName: "origin",
+		Auth:       auth,
+		Progress:   log.Writer(),
+	})
+	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("failed to fetch updates: %w", err)
-	}
-
-	// Pull with rebase
-	pullCmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "pull", "--rebase")
-	pullCmd.Stdout = log.Writer()
-	pullCmd.Stderr = log.ErrorWriter()
-
-	if err := pullCmd.Run(); err != nil {
-		return fmt.Errorf("failed to pull updates: %w", err)
 	}
 
 	log.Success("Repository updated successfully")
@@ -188,11 +191,21 @@ func freshInstall(bareRepoPath, repoURL, branch string) error {
 func cloneBareRepo(repoURL, branch, bareRepoPath string) error {
 	log.Start("Cloning repository from: %s (branch: %s)", repoURL, branch)
 
-	cmd := exec.Command("gh", "repo", "clone", repoURL, bareRepoPath, "--", "--bare", "--branch", branch)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
+	// Get SSH auth
+	auth, err := getSSHAuth()
+	if err != nil {
+		return fmt.Errorf("failed to get SSH auth: %w", err)
+	}
 
-	if err := cmd.Run(); err != nil {
+	// Clone as bare repository
+	_, err = git.PlainClone(bareRepoPath, true, &git.CloneOptions{
+		URL:           repoURL,
+		Auth:          auth,
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
+		SingleBranch:  true,
+		Progress:      log.Writer(),
+	})
+	if err != nil {
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 
@@ -209,21 +222,35 @@ func backupConflicts(bareRepoPath, homeDir string) (string, bool, error) {
 	timestamp := time.Now().Format("20060102-150405")
 	backupPath := filepath.Join(homeDir, fmt.Sprintf(".config-backup-%s", timestamp))
 
-	// Get list of tracked files
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "ls-tree", "-r", "--name-only", "HEAD")
-	output, err := cmd.Output()
+	// Open the bare repository
+	repo, err := git.PlainOpen(bareRepoPath)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to list tracked files: %w", err)
+		return "", false, fmt.Errorf("failed to open repository: %w", err)
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	// Get the HEAD reference
+	ref, err := repo.Head()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get HEAD: %w", err)
+	}
+
+	// Get the commit object
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get commit: %w", err)
+	}
+
+	// Get the tree
+	tree, err := commit.Tree()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get tree: %w", err)
+	}
+
 	conflictCount := 0
 
-	for scanner.Scan() {
-		file := strings.TrimSpace(scanner.Text())
-		if file == "" {
-			continue
-		}
+	// Walk through all files in the tree
+	err = tree.Files().ForEach(func(f *object.File) error {
+		file := f.Name
 
 		filePath := filepath.Join(homeDir, file)
 
@@ -232,31 +259,31 @@ func backupConflicts(bareRepoPath, homeDir string) (string, bool, error) {
 			// File exists - back it up
 			if conflictCount == 0 {
 				// Create backup directory on first conflict
-				if err := os.MkdirAll(backupPath, 0755); err != nil {
-					return "", false, fmt.Errorf("failed to create backup directory: %w", err)
+				if err := os.MkdirAll(backupPath, 0o755); err != nil {
+					return fmt.Errorf("failed to create backup directory: %w", err)
 				}
 			}
 
 			backupFilePath := filepath.Join(backupPath, file)
 
 			// Create parent directories in backup
-			if err := os.MkdirAll(filepath.Dir(backupFilePath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(backupFilePath), 0o755); err != nil {
 				log.Warn("Failed to create backup directory for %s: %v", file, err)
-				continue
+				return nil // Continue with next file
 			}
 
 			// Move file to backup
 			if err := os.Rename(filePath, backupFilePath); err != nil {
 				log.Warn("Failed to backup %s: %v", file, err)
-				continue
+				return nil // Continue with next file
 			}
 
 			log.Message("Backed up: %s", file)
 			conflictCount++
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
+		return nil
+	})
+	if err != nil {
 		return "", false, fmt.Errorf("error reading tracked files: %w", err)
 	}
 
@@ -273,11 +300,53 @@ func backupConflicts(bareRepoPath, homeDir string) (string, bool, error) {
 func checkoutFiles(bareRepoPath, homeDir string) error {
 	log.Start("Checking out files to home directory")
 
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "checkout")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
+	// Open the bare repository
+	repo, err := git.PlainOpen(bareRepoPath)
+	if err != nil {
+		return fmt.Errorf("failed to open repository: %w", err)
+	}
 
-	if err := cmd.Run(); err != nil {
+	// Get the HEAD reference
+	ref, err := repo.Head()
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD: %w", err)
+	}
+
+	// Get the commit object
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return fmt.Errorf("failed to get commit: %w", err)
+	}
+
+	// Get the tree
+	tree, err := commit.Tree()
+	if err != nil {
+		return fmt.Errorf("failed to get tree: %w", err)
+	}
+
+	// Walk through all files in the tree and checkout each one
+	err = tree.Files().ForEach(func(f *object.File) error {
+		filePath := filepath.Join(homeDir, f.Name)
+
+		// Create parent directories
+		if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
+			return fmt.Errorf("failed to create directory for %s: %w", f.Name, err)
+		}
+
+		// Get file contents
+		contents, err := f.Contents()
+		if err != nil {
+			return fmt.Errorf("failed to get contents of %s: %w", f.Name, err)
+		}
+
+		// Write file - convert go-git FileMode to os.FileMode
+		if err := os.WriteFile(filePath, []byte(contents), os.FileMode(f.Mode)); err != nil {
+			return fmt.Errorf("failed to write %s: %w", f.Name, err)
+		}
+
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("failed to checkout files: %w", err)
 	}
 
@@ -289,27 +358,84 @@ func checkoutFiles(bareRepoPath, homeDir string) error {
 func initSubmodules(bareRepoPath, homeDir string) error {
 	log.Start("Initializing git submodules")
 
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "submodule", "update", "--init", "--recursive")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-
-	if err := cmd.Run(); err != nil {
+	// Open the bare repository
+	repo, err := git.PlainOpen(bareRepoPath)
+	if err != nil {
 		return err
+	}
+
+	// Get worktree (we need to use a special approach for bare repos)
+	w, err := repo.Worktree()
+	if err != nil {
+		// For bare repos, we can't get worktree directly
+		// Fall back to using git command for submodules as they require worktree
+		return initSubmodulesWithCommand(bareRepoPath, homeDir)
+	}
+
+	// Get SSH auth
+	auth, err := getSSHAuth()
+	if err != nil {
+		return err
+	}
+
+	// Initialize submodules
+	submodules, err := w.Submodules()
+	if err != nil {
+		return err
+	}
+
+	for _, submodule := range submodules {
+		if err := submodule.Init(); err != nil {
+			log.Warn("Failed to init submodule %s: %v", submodule.Config().Name, err)
+			continue
+		}
+
+		if err := submodule.Update(&git.SubmoduleUpdateOptions{
+			Init:              true,
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+			Auth:              auth,
+		}); err != nil {
+			log.Warn("Failed to update submodule %s: %v", submodule.Config().Name, err)
+			continue
+		}
 	}
 
 	log.Success("Git submodules initialized successfully")
 	return nil
 }
 
+// initSubmodulesWithCommand is a fallback for bare repositories where worktree isn't accessible.
+func initSubmodulesWithCommand(bareRepoPath, homeDir string) error {
+	// For bare repos, we need to use git command with work-tree
+	// This is one case where shelling out is necessary due to go-git limitations with bare repos
+	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "submodule", "update", "--init", "--recursive")
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+
+	return cmd.Run()
+}
+
 // configureGit sets git configuration to hide untracked files.
 func configureGit(bareRepoPath, homeDir string) error {
 	log.Start("Configuring git settings")
 
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "config", "status.showUntrackedFiles", "no")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
+	// Open the bare repository
+	repo, err := git.PlainOpen(bareRepoPath)
+	if err != nil {
+		return err
+	}
 
-	if err := cmd.Run(); err != nil {
+	// Get repository config
+	cfg, err := repo.Config()
+	if err != nil {
+		return err
+	}
+
+	// Set status.showUntrackedFiles to no
+	cfg.Raw.SetOption("status", "", "showUntrackedFiles", "no")
+
+	// Save config
+	if err := repo.Storer.SetConfig(cfg); err != nil {
 		return err
 	}
 
@@ -355,4 +481,22 @@ func printCompletionInstructions(bareRepoPath string, hasConflicts bool, backupP
 	log.Message("     alias cfg='git --git-dir=%s --work-tree=%s'", bareRepoPath, homeDir)
 	log.Message("")
 	log.Message("-----------------------------------------------------")
+}
+
+// getSSHAuth returns SSH authentication using the github SSH key.
+func getSSHAuth() (*ssh.PublicKeys, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("could not determine home directory: %w", err)
+	}
+
+	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
+
+	// Read the private key
+	auth, err := ssh.NewPublicKeysFromFile("git", sshKeyPath, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load SSH key from %s: %w", sshKeyPath, err)
+	}
+
+	return auth, nil
 }
