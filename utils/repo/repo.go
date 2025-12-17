@@ -139,14 +139,14 @@ func PullRebaseBareRepo(repoPath string, workTree string) error {
 		return err
 	}
 	currentBranch := strings.TrimSpace(string(output))
-	
+
 	if currentBranch == "" {
 		log.Error("No current branch found in bare repository")
 		return err
 	}
-	
+
 	log.Info("Pulling branch: %s", currentBranch)
-	
+
 	// Pull with explicit remote and branch
 	cmd = exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase", "--autostash", "--progress", "origin", currentBranch)
 	cmd.Stdout = log.Writer()
