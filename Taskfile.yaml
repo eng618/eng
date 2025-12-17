@@ -145,7 +145,7 @@ tasks:
   validate:
     desc: Run lint and tests
     cmds:
-      # - task: format-check
+      - task: format-check
       - task: lint
       - task: test
 

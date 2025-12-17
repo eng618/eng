@@ -121,6 +121,6 @@ func setupDotfiles() error {
 	log.Message("")
 	log.Message("Please run: eng dotfiles install")
 	log.Message("This will guide you through the dotfiles installation process")
-	
+
 	return nil
 }

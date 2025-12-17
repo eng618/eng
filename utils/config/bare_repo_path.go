@@ -29,7 +29,7 @@ func BareRepoPath() string {
 	} else {
 		// Expand environment variables in the path
 		bareRepoPath = os.ExpandEnv(bareRepoPath)
-		
+
 		// Verify this is the correct path they are expecting to use.
 		var confirm bool
 		prompt := &survey.Confirm{
@@ -75,9 +75,9 @@ func GetBareRepoPath() {
 func updateBareRepoPath() {
 	homeDir, err := os.UserHomeDir()
 	cobra.CheckErr(err)
-	
+
 	defaultPath := filepath.Join(homeDir, ".eng-cfg")
-	
+
 	var path string
 	prompt := &survey.Input{
 		Message: "Where should the bare repository be stored?",

@@ -59,7 +59,7 @@ func ensureHomebrew() error {
 	cobra.CheckErr(err)
 
 	if !confirm {
-		return fmt.Errorf("Homebrew installation declined - cannot proceed without Homebrew")
+		return fmt.Errorf("homebrew installation declined - cannot proceed without homebrew")
 	}
 
 	log.Start("Installing Homebrew (this may take a few minutes)")
@@ -70,7 +70,7 @@ func ensureHomebrew() error {
 
 	if err := installCmd.Run(); err != nil {
 		log.Error("Failed to install Homebrew: %v", err)
-		return fmt.Errorf("Homebrew installation failed: %w", err)
+		return fmt.Errorf("homebrew installation failed: %w", err)
 	}
 
 	log.Success("Homebrew installed successfully")
@@ -96,7 +96,7 @@ func ensureGit() error {
 
 	if err := cmd.Run(); err != nil {
 		log.Error("Failed to install Git: %v", err)
-		return fmt.Errorf("Git installation failed: %w", err)
+		return fmt.Errorf("git installation failed: %w", err)
 	}
 
 	log.Success("Git installed successfully")
@@ -122,7 +122,7 @@ func ensureBash() error {
 
 	if err := cmd.Run(); err != nil {
 		log.Error("Failed to install Bash: %v", err)
-		return fmt.Errorf("Bash installation failed: %w", err)
+		return fmt.Errorf("bash installation failed: %w", err)
 	}
 
 	log.Success("Bash installed successfully")
