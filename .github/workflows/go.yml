@@ -6,11 +6,13 @@ name: Go
 on:
   push:
     branches: ["main"]
+    tags:
+      - "v*"
   pull_request:
     branches: ["main"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -53,4 +55,10 @@ jobs:
 
       - name: Generate and Commit Changelog (CI)
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: task changelog-ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          task changelog-ci
+          git push origin main
