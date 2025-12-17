@@ -115,13 +115,14 @@ func EnsureOnDefaultBranch(repoPath string) error {
 // returns an error if the operation fails.
 func FetchBareRepo(repoPath string, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
 
-	out, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err != nil {
-		log.Error("FetchBareRepo output: %s", string(out)) // Log the output
+		log.Error("FetchBareRepo failed: %v", err)
 		return err
 	}
-	log.Info("FetchBareRepo output: %s", string(out)) // Log the output
 
 	return nil
 }
@@ -130,14 +131,32 @@ func FetchBareRepo(repoPath string, workTree string) error {
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
 func PullRebaseBareRepo(repoPath string, workTree string) error {
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase", "--autostash", "--progress")
-
-	out, err := cmd.CombinedOutput()
+	// Get the current branch for the bare repository
+	cmd := exec.Command("git", "--git-dir="+repoPath, "branch", "--show-current")
+	output, err := cmd.Output()
 	if err != nil {
-		log.Error("PullRebaseBareRepo output: %s", string(out)) // Log the output
+		log.Error("Failed to get current branch: %v", err)
 		return err
 	}
-	log.Info("PullRebaseBareRepo output: %s", string(out)) // Log the output
+	currentBranch := strings.TrimSpace(string(output))
+	
+	if currentBranch == "" {
+		log.Error("No current branch found in bare repository")
+		return err
+	}
+	
+	log.Info("Pulling branch: %s", currentBranch)
+	
+	// Pull with explicit remote and branch
+	cmd = exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase", "--autostash", "--progress", "origin", currentBranch)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+
+	err = cmd.Run()
+	if err != nil {
+		log.Error("PullRebaseBareRepo failed: %v", err)
+		return err
+	}
 
 	return nil
 }
