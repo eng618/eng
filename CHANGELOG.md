@@ -3,6 +3,188 @@
 ## [Unreleased]
 
 
+<a name="v0.28.3"></a>
+
+## [v0.28.3] - 2025-12-17
+
+
+<a name="v0.28.2"></a>
+
+## [v0.28.2] - 2025-12-17
+
+### Fix
+
+- **repo:** improve error logging and handle current branch in fetch and pull
+
+
+<a name="v0.28.1"></a>
+
+## [v0.28.1] - 2025-12-17
+
+### Fix
+
+- **prerequisites:** standardize error messages for Homebrew, Git, and Bash
+
+
+<a name="v0.28.0"></a>
+
+## [v0.28.0] - 2025-12-17
+
+### Feat
+
+- **dotfiles:** update installation instructions and remove GitHub CLI check
+- **dotfiles:** implement dotfiles installation and configuration commands
+
+
+<a name="v0.27.9"></a>
+
+## [v0.27.9] - 2025-12-12
+
+### Chore
+
+- **deps:** update Go module dependencies
+
+
+<a name="v0.27.8"></a>
+
+## [v0.27.8] - 2025-12-12
+
+### Build
+
+- **deps:** bump github.com/go-git/go-git/v5 from 5.16.3 to 5.16.4 ([#33](https://github.com/eng618/eng/issues/33))
+- **deps:** bump golangci/golangci-lint-action from 8 to 9 ([#32](https://github.com/eng618/eng/issues/32))
+
+### Chore
+
+- bump golang and golangci-lint versions
+
+
+<a name="v0.27.7"></a>
+
+## [v0.27.7] - 2025-12-12
+
+### Reverts
+
+- ci: update Homebrew publish workflow permissions and token
+
+
+<a name="v0.27.6"></a>
+
+## [v0.27.6] - 2025-12-12
+
+### Ci
+
+- update Homebrew publish workflow permissions and token
+
+
+<a name="v0.27.5"></a>
+
+## [v0.27.5] - 2025-12-12
+
+### Feat
+
+- **system:** add asdf plugin update to system update commands
+
+### Fix
+
+- **ci:** update Homebrew publish workflow to use oauth2 auth token
+
+
+<a name="v0.27.4"></a>
+
+## [v0.27.4] - 2025-12-12
+
+### Build
+
+- **deps:** bump actions/checkout from 5 to 6 ([#31](https://github.com/eng618/eng/issues/31))
+
+### Feat
+
+- **update:** add auto-approve flag for cleanup operations and implement runCleanup function
+
+
+<a name="v0.27.3"></a>
+
+## [v0.27.3] - 2025-12-01
+
+### Refactor
+
+- enhance error handling for file closing in copyFile function
+
+
+<a name="v0.27.2"></a>
+
+## [v0.27.2] - 2025-12-01
+
+### Fix
+
+- **dotfiles:** run git checkout from worktree directory in resetFile
+
+
+<a name="v0.27.1"></a>
+
+## [v0.27.1] - 2025-12-01
+
+### Refactor
+
+- **dotfiles:** improve git command execution with better output handling and logging
+
+
+<a name="v0.27.0"></a>
+
+## [v0.27.0] - 2025-12-01
+
+
+<a name="v0.26.6"></a>
+
+## [v0.26.6] - 2025-11-19
+
+### Chore
+
+- Update go module dependencies and add github.com/clipperhouse/stringish.
+
+
+<a name="v0.26.5"></a>
+
+## [v0.26.5] - 2025-11-05
+
+
+<a name="v0.26.4"></a>
+
+## [v0.26.4] - 2025-11-05
+
+### Feat
+
+- **files:** expand supported file types in find_and_delete command
+
+### Test
+
+- add edge case tests for file extension matching
+
+
+<a name="v0.26.3"></a>
+
+## [v0.26.3] - 2025-11-05
+
+### Feat
+
+- **config:** add help text to proxy selection prompt
+- **files:** add support for .m4v video files
+
+
+<a name="v0.26.2"></a>
+
+## [v0.26.2] - 2025-11-04
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Feat
+
+- add filename flag to find and delete command
+
+
 <a name="v0.26.1"></a>
 
 ## [v0.26.1] - 2025-11-04
@@ -1884,7 +2066,26 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.26.1...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.28.3...HEAD
+[v0.28.3]: https://github.com/eng618/eng/compare/v0.28.2...v0.28.3
+[v0.28.2]: https://github.com/eng618/eng/compare/v0.28.1...v0.28.2
+[v0.28.1]: https://github.com/eng618/eng/compare/v0.28.0...v0.28.1
+[v0.28.0]: https://github.com/eng618/eng/compare/v0.27.9...v0.28.0
+[v0.27.9]: https://github.com/eng618/eng/compare/v0.27.8...v0.27.9
+[v0.27.8]: https://github.com/eng618/eng/compare/v0.27.7...v0.27.8
+[v0.27.7]: https://github.com/eng618/eng/compare/v0.27.6...v0.27.7
+[v0.27.6]: https://github.com/eng618/eng/compare/v0.27.5...v0.27.6
+[v0.27.5]: https://github.com/eng618/eng/compare/v0.27.4...v0.27.5
+[v0.27.4]: https://github.com/eng618/eng/compare/v0.27.3...v0.27.4
+[v0.27.3]: https://github.com/eng618/eng/compare/v0.27.2...v0.27.3
+[v0.27.2]: https://github.com/eng618/eng/compare/v0.27.1...v0.27.2
+[v0.27.1]: https://github.com/eng618/eng/compare/v0.27.0...v0.27.1
+[v0.27.0]: https://github.com/eng618/eng/compare/v0.26.6...v0.27.0
+[v0.26.6]: https://github.com/eng618/eng/compare/v0.26.5...v0.26.6
+[v0.26.5]: https://github.com/eng618/eng/compare/v0.26.4...v0.26.5
+[v0.26.4]: https://github.com/eng618/eng/compare/v0.26.3...v0.26.4
+[v0.26.3]: https://github.com/eng618/eng/compare/v0.26.2...v0.26.3
+[v0.26.2]: https://github.com/eng618/eng/compare/v0.26.1...v0.26.2
 [v0.26.1]: https://github.com/eng618/eng/compare/v0.26.0...v0.26.1
 [v0.26.0]: https://github.com/eng618/eng/compare/v0.25.16...v0.26.0
 [v0.25.16]: https://github.com/eng618/eng/compare/v0.25.15...v0.25.16
