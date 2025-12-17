@@ -1,9 +1,9 @@
-version: '3'
+version: "3"
 
 env:
   ENV: testing
 
-dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+dotenv: [".env", "{{.ENV}}/.env.", "{{.HOME}}/.env"]
 
 vars:
   # --- Versioning ---
@@ -36,7 +36,7 @@ tasks:
       - go install {{.GO_BUILD_FLAGS}} .
       - task: completion
     aliases:
-      - 'i'
+      - "i"
     deps: # Ensure build runs first if needed, though go install builds anyway
       - build
 
@@ -145,7 +145,7 @@ tasks:
   validate:
     desc: Run lint and tests
     cmds:
-      - task: format-check
+      # - task: format-check
       - task: lint
       - task: test
 

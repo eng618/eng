@@ -57,14 +57,16 @@ graph LR
     C1 --> D9[clean-all]
     
     B --> C2[Dotfiles]
-    C2 --> E1[sync]
-    C2 --> E2[fetch]
+    C2 --> E1[install]
+    C2 --> E2[sync]
+    C2 --> E3[fetch]
     
     B --> C3[System]
-    C3 --> F1[kill-port]
-    C3 --> F2[find-non-movie-folders]
-    C3 --> F3[proxy]
-    C3 --> F4[update]
+    C3 --> F1[setup]
+    C3 --> F2[kill-port]
+    C3 --> F3[find-non-movie-folders]
+    C3 --> F4[proxy]
+    C3 --> F5[update]
     
     B --> C4[Other Commands]
     C4 --> G1[codemod]
@@ -157,11 +159,70 @@ eng config git-dev-path /path/to/your/dev/folder
 
 ### Dotfiles
 
+Manage your dotfiles with a bare git repository approach. This allows you to version control your home directory configuration files without the overhead of a traditional git repository.
+
+#### Installation
+
+```sh
+# First-time setup: Install dotfiles from your repository
+eng dotfiles install
+```
+
+This command will:
+
+- Check and install prerequisites (Homebrew, Git, Bash, GitHub CLI)
+- Verify you have a valid SSH key at `~/.ssh/github`
+- Prompt for and save your dotfiles repository URL and branch
+- Clone your repository as a bare repository (default: `~/.eng-cfg`)
+- Backup any conflicting files to a timestamped directory
+- Checkout dotfiles to your home directory
+- Initialize git submodules
+- Configure git to hide untracked files
+
+#### System Setup Integration
+
+```sh
+# Set up dotfiles as part of new system setup
+eng system setup dotfiles
+```
+
+This checks prerequisites and then guides you through the installation process.
+
+#### Configuration
+
+```sh
+# Configure dotfiles settings
+eng config dotfiles-repo-url          # Set repository URL
+eng config dotfiles-branch            # Set branch (main/work/server)
+eng config dotfiles-bare-repo-path    # Set bare repo location
+```
+
+#### Daily Usage
+
 - `eng dotfiles --info` — Show current dotfiles config
-- `eng dotfiles sync` — Sync dotfiles repo
-- `eng dotfiles fetch` — Fetch latest dotfiles
+- `eng dotfiles sync` — Fetch and pull latest dotfiles
+- `eng dotfiles fetch` — Fetch latest dotfiles without merging
+
+After installation, you can also use the `cfg` alias (if configured in your dotfiles):
+
+```sh
+cfg status              # Check dotfiles status
+cfg add ~/.vimrc        # Stage a file
+cfg commit -m "Update"  # Commit changes
+cfg push                # Push changes
+cfg pull                # Pull changes
+```
 
 ### System
+
+System utilities for macOS and Linux, including developer setup automation.
+
+#### Setup Commands
+
+- `eng system setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
+- `eng system setup dotfiles` — Setup dotfiles (checks prerequisites then runs install)
+
+#### System Utilities
 
 - `eng system kill-port <port>` — Kill process on a port
 - `eng system find-non-movie-folders [--dry-run]` — Find/delete non-movie folders

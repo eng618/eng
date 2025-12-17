@@ -23,6 +23,9 @@ It should be located at $HOME/.eng.yaml`,
 func init() {
 	ConfigCmd.AddCommand(EmailCmd)
 	ConfigCmd.AddCommand(DotfilesRepoCmd)
+	ConfigCmd.AddCommand(DotfilesRepoURLCmd)
+	ConfigCmd.AddCommand(DotfilesBranchCmd)
+	ConfigCmd.AddCommand(DotfilesBareRepoPathCmd)
 	ConfigCmd.AddCommand(GitDevPathCmd)
 	ConfigCmd.AddCommand(VerboseCmd)
 }

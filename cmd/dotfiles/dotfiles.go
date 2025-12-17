@@ -53,6 +53,7 @@ var DotfilesCmd = &cobra.Command{
 func init() {
 	DotfilesCmd.Flags().BoolP("info", "i", false, "Show current dotfiles configuration")
 
+	DotfilesCmd.AddCommand(InstallCmd)
 	DotfilesCmd.AddCommand(SyncCmd)
 	DotfilesCmd.AddCommand(FetchCmd)
 	DotfilesCmd.AddCommand(CopyChangesCmd)
