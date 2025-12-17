@@ -85,10 +85,10 @@ func setupTestFiles(t *testing.T) (string, map[string]int) {
 		"clip.3gp":  4600,
 
 		// Edge case test files
-		"my.file.txt":  100, // file with multiple dots
-		"noextension":  200, // file without extension
-		"DOCUMENT.PDF": 300, // uppercase extension
-		"config.BAK":   400, // uppercase backup extension
+		"my.file.txt":      100, // file with multiple dots
+		"noextension":      200, // file without extension
+		"001/DOCUMENT.PDF": 300, // uppercase extension in subdirectory to avoid case collision
+		"002/config.BAK":   400, // uppercase backup extension in subdirectory to avoid case collision
 	}
 
 	for f, size := range files {
@@ -359,7 +359,7 @@ func TestScanFiles(t *testing.T) {
 			matchFn: func(name string) bool {
 				return strings.ToLower(filepath.Ext(name)) == ".pdf"
 			},
-			expectedFiles: []string{"document.pdf", "DOCUMENT.PDF"},
+			expectedFiles: []string{"document.pdf", "001/DOCUMENT.PDF"},
 			expectedSize:  3200, // 2900 + 300
 		},
 		{
@@ -394,7 +394,7 @@ func TestScanFiles(t *testing.T) {
 				ext := strings.ToLower(filepath.Ext(name))
 				return ext == ".bak" || ext == ".backup" || ext == ".old"
 			},
-			expectedFiles: []string{"test.bak", "config.backup", "data.old", "config.BAK"},
+			expectedFiles: []string{"test.bak", "config.backup", "data.old", "002/config.BAK"},
 			expectedSize:  8200, // 500 + 3600 + 3700 + 400
 		},
 		{
@@ -461,7 +461,7 @@ func TestScanFiles(t *testing.T) {
 			matchFn: func(name string) bool {
 				return strings.ToLower(filepath.Ext(name)) == ".pdf"
 			},
-			expectedFiles: []string{"document.pdf", "DOCUMENT.PDF"},
+			expectedFiles: []string{"document.pdf", "001/DOCUMENT.PDF"},
 			expectedSize:  3200, // 2900 + 300 - Case should not matter
 		},
 		{
@@ -469,7 +469,7 @@ func TestScanFiles(t *testing.T) {
 			matchFn: func(name string) bool {
 				return strings.ToLower(filepath.Ext(name)) == ".bak"
 			},
-			expectedFiles: []string{"test.bak", "config.BAK"},
+			expectedFiles: []string{"test.bak", "002/config.BAK"},
 			expectedSize:  900, // 500 + 400 - Should not match .backup files
 		},
 		{
