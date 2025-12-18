@@ -63,7 +63,15 @@ func ensureHomebrew() error {
 	}
 
 	log.Start("Installing Homebrew (this may take a few minutes)")
-	installCmd := exec.Command("/bin/bash", "-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
+
+	// Determine which shell to use for installation
+	shellPath := "/bin/bash"
+	if _, err := os.Stat("/bin/bash"); os.IsNotExist(err) {
+		shellPath = "/bin/zsh"
+		log.Message("Using zsh for Homebrew installation (bash not found)")
+	}
+
+	installCmd := exec.Command(shellPath, "-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
 	installCmd.Stdin = os.Stdin
 	installCmd.Stdout = log.Writer()
 	installCmd.Stderr = log.ErrorWriter()
