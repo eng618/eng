@@ -14,9 +14,10 @@ import (
 // DotfilesCmd serves as the base command for all dotfiles related operations.
 // It doesn't perform any action itself but groups subcommands like sync and fetch.
 var DotfilesCmd = &cobra.Command{
-	Use:   "dotfiles",
-	Short: "Manage dotfiles",
-	Long:  `This command is used to facilitate the management of private hidden dot files.`,
+	Use:     "dotfiles",
+	Short:   "Manage dotfiles",
+	Long:    `This command is used to facilitate the management of private hidden dot files.`,
+	Aliases: []string{"cfg"},
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
 		isVerbose := utils.IsVerbose(cmd)
