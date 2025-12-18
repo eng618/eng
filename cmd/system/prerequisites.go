@@ -64,46 +64,33 @@ func ensureHomebrew() error {
 
 	log.Start("Installing Homebrew (this may take a few minutes)")
 
-	// Determine which shell to use for installation
-	shellPath := "/bin/bash"
-	if _, err := os.Stat("/bin/bash"); os.IsNotExist(err) {
-		shellPath = "/bin/zsh"
-		log.Message("Using zsh for Homebrew installation (bash not found)")
+	// Default to system-wide installation
+	log.Message("Installing Homebrew system-wide (may require sudo)...")
+
+	// Check for bash
+	bashPath, err := exec.LookPath("bash")
+	if err != nil {
+		return fmt.Errorf("bash is required for homebrew installation but was not found: %w", err)
 	}
 
-	// Ask user to choose installation method
-	var installChoice string
-	installPrompt := &survey.Select{
-		Message: "Choose Homebrew installation method:",
-		Options: []string{
-			"user-only - Install to ~/.homebrew (no sudo required, user-only access)",
-			"system-wide - Install to /usr/local or /opt/homebrew (requires sudo, system-wide access)",
-		},
-		Default: "user-only - Install to ~/.homebrew (no sudo required, user-only access)",
-		Help:    "User-only installation doesn't require admin access but only works for the current user. System-wide requires sudo but makes Homebrew available to all users.",
+	// Download the install script to a temporary file to ensure we can run it
+	// without piping (which breaks sudo password prompts).
+	tmpDir := os.TempDir()
+	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
+	
+	downloadCmd := exec.Command("curl", "-fsSL", "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", "-o", installScript)
+	downloadCmd.Stdout = log.Writer()
+	downloadCmd.Stderr = log.ErrorWriter()
+	if err := downloadCmd.Run(); err != nil {
+		return fmt.Errorf("failed to download homebrew install script: %w", err)
 	}
+	defer os.Remove(installScript)
 
-	if err := survey.AskOne(installPrompt, &installChoice); err != nil {
-		return fmt.Errorf("installation method selection failed: %w", err)
-	}
-
-	var installCmd *exec.Cmd
-	var env []string
-
-	if installChoice == "user-only - Install to ~/.homebrew (no sudo required, user-only access)" {
-		log.Message("Installing Homebrew in user-only mode (no sudo required)...")
-		installCmd = exec.Command(shellPath, "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash -s -- --prefix=$HOME/.homebrew")
-		env = append(os.Environ(), "NONINTERACTIVE=1")
-	} else {
-		log.Message("Installing Homebrew system-wide (may require sudo)...")
-		installCmd = exec.Command(shellPath, "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
-		env = os.Environ() // No NONINTERACTIVE for system-wide so sudo can prompt
-	}
-
+	// Run the script using bash
+	installCmd := exec.Command(bashPath, installScript)
 	installCmd.Stdin = os.Stdin
 	installCmd.Stdout = log.Writer()
 	installCmd.Stderr = log.ErrorWriter()
-	installCmd.Env = env
 
 	if err := installCmd.Run(); err != nil {
 		log.Error("Failed to install Homebrew: %v", err)
