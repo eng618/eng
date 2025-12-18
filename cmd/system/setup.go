@@ -2,6 +2,7 @@ package system
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,7 +15,21 @@ import (
 var SetupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Setup development tools",
-	Long:  `Setup various development tools. Example: eng system setup asdf`,
+	Long: `Setup various development tools.
+Running this command without subcommands will run all setup steps:
+- Oh My Zsh
+- ASDF plugins
+- Dotfiles installation`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := EnsurePrerequisites(); err != nil {
+			log.Fatal("Prerequisites check failed: %v", err)
+		}
+		setupOhMyZsh()
+		setupASDF()
+		if err := setupDotfiles(); err != nil {
+			log.Error("Dotfiles setup failed: %v", err)
+		}
+	},
 }
 
 var SetupASDFCmd = &cobra.Command{
@@ -43,9 +58,19 @@ var SetupDotfilesCmd = &cobra.Command{
 	},
 }
 
+var SetupOhMyZshCmd = &cobra.Command{
+	Use:   "oh-my-zsh",
+	Short: "Install Oh My Zsh",
+	Long:  `Downloads and installs Oh My Zsh. Skips if already installed.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		setupOhMyZsh()
+	},
+}
+
 func init() {
 	SetupCmd.AddCommand(SetupASDFCmd)
 	SetupCmd.AddCommand(SetupDotfilesCmd)
+	SetupCmd.AddCommand(SetupOhMyZshCmd)
 }
 
 var execCommand = exec.Command
@@ -105,22 +130,55 @@ func setupASDF() {
 	}
 }
 
-// setupDotfiles sets up dotfiles by checking prerequisites and installing from the configured repository.
+func setupOhMyZsh() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Error("Could not determine home directory: %v", err)
+		return
+	}
+	omzPath := filepath.Join(homeDir, ".oh-my-zsh")
+	if _, err := os.Stat(omzPath); err == nil {
+		log.Success("Oh My Zsh is already installed")
+		return
+	}
+
+	log.Start("Installing Oh My Zsh...")
+	// Use --unattended to prevent switching shell immediately
+	cmd := execCommand("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh -s -- --unattended")
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+	if err := cmd.Run(); err != nil {
+		log.Error("Failed to install Oh My Zsh: %v", err)
+	} else {
+		log.Success("Oh My Zsh installed successfully")
+	}
+}
+
+// setupDotfiles sets up dotfiles by checking prerequisites and running the install command.
 func setupDotfiles() error {
-	log.Start("Starting dotfiles setup")
+	log.Start("Checking dotfiles prerequisites")
 
 	// Check prerequisites
 	if err := EnsurePrerequisites(); err != nil {
 		return err
 	}
 
-	// Import dotfiles package for install functionality
-	// Note: This is handled by calling the install workflow directly
-	// through the dotfiles.InstallCmd which is registered in cmd/dotfiles/dotfiles.go
-	log.Success("Prerequisites satisfied, proceeding with dotfiles installation")
-	log.Message("")
-	log.Message("Please run: eng dotfiles install")
-	log.Message("This will guide you through the dotfiles installation process")
+	// Get the path to the current executable
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	log.Start("Running dotfiles install...")
+	// Run dependencies install command
+	cmd := execCommand(exe, "dotfiles", "install")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("dotfiles install failed: %w", err)
+	}
 
 	return nil
 }
