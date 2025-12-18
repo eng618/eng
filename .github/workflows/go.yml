@@ -24,6 +24,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Checkout main branch for changelog generation
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          git fetch origin main
+          git checkout main
 
       - name: Set up Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
