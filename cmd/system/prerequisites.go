@@ -77,7 +77,7 @@ func ensureHomebrew() error {
 	// without piping (which breaks sudo password prompts).
 	tmpDir := os.TempDir()
 	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
-	
+
 	downloadCmd := exec.Command("curl", "-fsSL", "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", "-o", installScript)
 	downloadCmd.Stdout = log.Writer()
 	downloadCmd.Stderr = log.ErrorWriter()
