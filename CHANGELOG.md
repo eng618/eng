@@ -2,6 +2,55 @@
 
 ## [Unreleased]
 
+### Refactor
+
+- **ci:** remove CI changelog generation, add local pre-commit hooks
+
+
+<a name="v0.28.7"></a>
+
+## [v0.28.7] - 2025-12-18
+
+### Feat
+
+- **ci:** add main branch checkout for changelog generation on tag pushes
+
+
+<a name="v0.28.6"></a>
+
+## [v0.28.6] - 2025-12-18
+
+### Chore
+
+- **ci:** add git-chglog installation to Go workflow
+
+
+<a name="v0.28.5"></a>
+
+## [v0.28.5] - 2025-12-18
+
+### Feat
+
+- **prerequisites:** add fallback to zsh for Homebrew installation when bash is unavailable
+
+
+<a name="v0.28.4"></a>
+
+## [v0.28.4] - 2025-12-17
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Feat
+
+- **dotfiles:** add status command to check dotfiles repository status
+
+### Fix
+
+- **tests:** update file paths in test cases to avoid case collisions
+- **workflow:** update permissions and improve changelog generation
+
 
 <a name="v0.28.3"></a>
 
@@ -2066,7 +2115,11 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.28.3...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.28.7...HEAD
+[v0.28.7]: https://github.com/eng618/eng/compare/v0.28.6...v0.28.7
+[v0.28.6]: https://github.com/eng618/eng/compare/v0.28.5...v0.28.6
+[v0.28.5]: https://github.com/eng618/eng/compare/v0.28.4...v0.28.5
+[v0.28.4]: https://github.com/eng618/eng/compare/v0.28.3...v0.28.4
 [v0.28.3]: https://github.com/eng618/eng/compare/v0.28.2...v0.28.3
 [v0.28.2]: https://github.com/eng618/eng/compare/v0.28.1...v0.28.2
 [v0.28.1]: https://github.com/eng618/eng/compare/v0.28.0...v0.28.1
