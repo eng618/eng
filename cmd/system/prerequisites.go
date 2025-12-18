@@ -71,7 +71,7 @@ func ensureHomebrew() error {
 		log.Message("Using zsh for Homebrew installation (bash not found)")
 	}
 
-	installCmd := exec.Command(shellPath, "-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
+	installCmd := exec.Command(shellPath, "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
 	installCmd.Stdin = os.Stdin
 	installCmd.Stdout = log.Writer()
 	installCmd.Stderr = log.ErrorWriter()
