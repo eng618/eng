@@ -71,6 +71,37 @@ tasks:
     cmds:
       - task changelog
 
+  changelog-hook:
+    desc: Update changelog and amend current commit
+    cmds:
+      - echo "Updating changelog and amending commit..."
+      - git-chglog -o CHANGELOG.md
+      - git add CHANGELOG.md
+      - git commit --amend --no-edit
+      - echo "Changelog updated and commit amended."
+    silent: true
+
+  setup-hooks:
+    desc: Set up git hooks for changelog automation
+    cmds:
+      - echo "Setting up pre-commit hook for changelog..."
+      - mkdir -p .git/hooks
+      - |
+        cat > .git/hooks/pre-commit << 'EOF'
+        #!/bin/sh
+        # Auto-update changelog before commit
+        if command -v git-chglog >/dev/null 2>&1; then
+            echo "Updating changelog..."
+            git-chglog -o CHANGELOG.md >/dev/null 2>&1
+            git add CHANGELOG.md >/dev/null 2>&1
+            echo "Changelog updated."
+        else
+            echo "Warning: git-chglog not found. Install with: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest"
+        fi
+        EOF
+      - chmod +x .git/hooks/pre-commit
+      - echo "Pre-commit hook installed. Changelog will be updated automatically before each commit."
+
   release-check:
     desc: Check goreleaser configuration
     cmds:

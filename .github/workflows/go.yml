@@ -24,14 +24,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Checkout main branch for changelog generation
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: |
-          git fetch origin main
-          git checkout main
 
       - name: Set up Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
@@ -47,9 +39,6 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
-      - name: Install git-chglog
-        run: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -63,13 +52,3 @@ jobs:
 
       - name: Build
         run: go build -v ./...
-
-      - name: Generate and Commit Changelog (CI)
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          task changelog-ci
-          git push origin main
