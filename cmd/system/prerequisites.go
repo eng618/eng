@@ -84,7 +84,7 @@ func ensureHomebrew() error {
 	if err := downloadCmd.Run(); err != nil {
 		return fmt.Errorf("failed to download homebrew install script: %w", err)
 	}
-	defer os.Remove(installScript)
+	defer func() { _ = os.Remove(installScript) }()
 
 	// Run the script using bash
 	installCmd := exec.Command(bashPath, installScript)
