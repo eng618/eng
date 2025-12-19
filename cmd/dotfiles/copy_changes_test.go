@@ -52,7 +52,8 @@ func TestCopyFile(t *testing.T) {
 	destFile := filepath.Join(destDir, "test.txt")
 
 	content := "test content"
-	if err := os.WriteFile(srcFile, []byte(content), 0644); err != nil {
+	//nolint:gosec
+	if err := os.WriteFile(srcFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write src file: %v", err)
 	}
 

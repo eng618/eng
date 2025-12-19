@@ -4,9 +4,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // CleanAllCmd defines the cobra command for cleaning untracked files in all git repositories.

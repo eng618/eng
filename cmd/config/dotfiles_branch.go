@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/eng618/eng/utils/config"
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/config"
 )
 
 // DotfilesBranchCmd represents the command to manage the dotfiles branch configuration.

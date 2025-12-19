@@ -1,9 +1,10 @@
 package dotfiles
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
-	"github.com/spf13/cobra"
 )
 
 // FetchCmd defines the cobra command for fetching the dotfiles repository.

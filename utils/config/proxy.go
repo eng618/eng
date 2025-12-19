@@ -13,7 +13,7 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// ProxyConfig represents a single proxy configuration
+// ProxyConfig represents a single proxy configuration.
 type ProxyConfig struct {
 	Title   string
 	Value   string
@@ -22,7 +22,7 @@ type ProxyConfig struct {
 }
 
 // GetProxyConfigs checks for proxy settings in the configuration and returns the current proxies
-// and the index of the active proxy (-1 if none are active)
+// and the index of the active proxy (-1 if none are active).
 func GetProxyConfigs() ([]ProxyConfig, int) {
 	log.Start("Checking for proxy configurations")
 
@@ -90,7 +90,7 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 
 // GetActiveProxy returns the currently active proxy value and true if any proxy is enabled
 // If no proxy is enabled, returns the first proxy value and false
-// If no proxies exist, returns an empty string and false
+// If no proxies exist, returns an empty string and false.
 func GetActiveProxy() (string, bool) {
 	proxies, activeIndex := GetProxyConfigs()
 
@@ -103,10 +103,10 @@ func GetActiveProxy() (string, bool) {
 	return "", false
 }
 
-// SaveProxyConfigsFunc defines the function type for saving proxy configs
+// SaveProxyConfigsFunc defines the function type for saving proxy configs.
 type SaveProxyConfigsFunc func(proxies []ProxyConfig) error
 
-// SaveProxyConfigsImpl is the actual implementation of saving proxy configurations to viper config
+// SaveProxyConfigsImpl is the actual implementation of saving proxy configurations to viper config.
 func SaveProxyConfigsImpl(proxies []ProxyConfig) error {
 	viper.Set("proxies", proxies)
 	if err := viper.WriteConfig(); err != nil {
@@ -116,10 +116,10 @@ func SaveProxyConfigsImpl(proxies []ProxyConfig) error {
 }
 
 // SaveProxyConfigs is a variable that holds the function to save proxy configurations
-// This can be overridden in tests
+// This can be overridden in tests.
 var SaveProxyConfigs = SaveProxyConfigsImpl
 
-// EnableProxy enables the proxy at the given index and disables all others
+// EnableProxy enables the proxy at the given index and disables all others.
 func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {
 	if index < 0 || index >= len(proxies) {
 		return proxies, errors.New("proxy index out of range")
@@ -145,7 +145,7 @@ func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {
 	return proxies, nil
 }
 
-// DisableAllProxies disables all proxy configurations and unsets environment variables
+// DisableAllProxies disables all proxy configurations and unsets environment variables.
 func DisableAllProxies() error {
 	proxies, _ := GetProxyConfigs()
 
@@ -160,7 +160,7 @@ func DisableAllProxies() error {
 	return SaveProxyConfigs(proxies)
 }
 
-// UnsetProxyEnvVars unsets all proxy-related environment variables
+// UnsetProxyEnvVars unsets all proxy-related environment variables.
 func UnsetProxyEnvVars() {
 	// List of proxy environment variables to unset
 	vars := []string{
@@ -186,7 +186,7 @@ func UnsetProxyEnvVars() {
 }
 
 // SetProxyEnvVars sets all proxy-related environment variables to the provided value
-// and handles custom no_proxy settings
+// and handles custom no_proxy settings.
 func SetProxyEnvVars(proxyValue string) {
 	// Get the active proxy configuration to access custom NoProxy settings
 	proxies, activeIndex := GetProxyConfigs()
@@ -251,7 +251,7 @@ func SetProxyEnvVars(proxyValue string) {
 	log.Success("All proxy environment variables have been set")
 }
 
-// AddOrUpdateProxy adds a new proxy or updates an existing one
+// AddOrUpdateProxy adds a new proxy or updates an existing one.
 func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	proxies, _ := GetProxyConfigs()
 
@@ -311,7 +311,7 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	return proxies, index
 }
 
-// SelectProxy prompts the user to select a proxy from the list and returns the index
+// SelectProxy prompts the user to select a proxy from the list and returns the index.
 func SelectProxy(proxies []ProxyConfig) (int, error) {
 	if len(proxies) == 0 {
 		return -1, errors.New("no proxy configurations found")

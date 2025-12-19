@@ -24,7 +24,7 @@ func TestLintSetupCmd_ModifiesPackageJson(t *testing.T) {
 		"name": "testpkg",
 	}
 	data, _ := json.Marshal(pkg)
-	if err := os.WriteFile("package.json", data, 0644); err != nil {
+	if err := os.WriteFile("package.json", data, 0o644); err != nil {
 		t.Fatalf("failed to write package.json: %v", err)
 	}
 	// Mock exec.Command to avoid running npm/husky
@@ -75,7 +75,7 @@ func TestLintSetupCmd_Echo(t *testing.T) {
 		"name": "testpkg",
 	}
 	data, _ := json.Marshal(pkg)
-	if err := os.WriteFile("package.json", data, 0644); err != nil {
+	if err := os.WriteFile("package.json", data, 0o644); err != nil {
 		t.Fatalf("failed to write package.json: %v", err)
 	}
 	// Mock exec.Command to avoid running npm/husky
@@ -149,7 +149,7 @@ func TestDetectTypeScriptUsage_TypeScriptFiles(t *testing.T) {
 	_ = os.Chdir(tempDir)
 
 	// Create a TypeScript file
-	_ = os.WriteFile("index.ts", []byte("console.log('hello');"), 0644)
+	_ = os.WriteFile("index.ts", []byte("console.log('hello');"), 0o644)
 
 	if !detectTypeScriptUsage() {
 		t.Error("detectTypeScriptUsage should return true for projects with .ts files")
@@ -169,7 +169,7 @@ func TestDetectTypeScriptUsage_TypeScriptDependency(t *testing.T) {
 		},
 	}
 	pkgData, _ := json.Marshal(pkg)
-	_ = os.WriteFile("package.json", pkgData, 0644)
+	_ = os.WriteFile("package.json", pkgData, 0o644)
 
 	if !detectTypeScriptUsage() {
 		t.Error("detectTypeScriptUsage should return true for projects with typescript dependency")
@@ -187,8 +187,8 @@ func TestDetectTypeScriptUsage_JavaScriptOnly(t *testing.T) {
 		"name": "test",
 	}
 	pkgData, _ := json.Marshal(pkg)
-	_ = os.WriteFile("package.json", pkgData, 0644)
-	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0644)
+	_ = os.WriteFile("package.json", pkgData, 0o644)
+	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0o644)
 
 	if detectTypeScriptUsage() {
 		t.Error("detectTypeScriptUsage should return false for pure JavaScript projects")
@@ -208,7 +208,7 @@ func TestWriteESLintConfig_TypeScriptProject(t *testing.T) {
 		},
 	}
 	pkgData, _ := json.Marshal(pkg)
-	_ = os.WriteFile("package.json", pkgData, 0644)
+	_ = os.WriteFile("package.json", pkgData, 0o644)
 
 	err := writeESLintConfig(false)
 	if err != nil {
@@ -234,8 +234,8 @@ func TestWriteESLintConfig_JavaScriptProject(t *testing.T) {
 		"name": "test",
 	}
 	pkgData, _ := json.Marshal(pkg)
-	_ = os.WriteFile("package.json", pkgData, 0644)
-	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0644)
+	_ = os.WriteFile("package.json", pkgData, 0o644)
+	_ = os.WriteFile("index.js", []byte("console.log('hello');"), 0o644)
 
 	err := writeESLintConfig(false)
 	if err != nil {
@@ -264,7 +264,7 @@ func TestUpdatePackageJSON_OrderAndValues(t *testing.T) {
 		"foo":  "bar",
 	}
 	data, _ := json.Marshal(pkg)
-	_ = os.WriteFile("package.json", data, 0644)
+	_ = os.WriteFile("package.json", data, 0o644)
 	if err := updatePackageJSON(); err != nil {
 		t.Fatalf("updatePackageJSON failed: %v", err)
 	}
@@ -301,7 +301,7 @@ func TestSetupHusky(t *testing.T) {
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}
-	_ = os.MkdirAll(".husky", 0755)
+	_ = os.MkdirAll(".husky", 0o755)
 	// Remove .husky/pre-commit if it exists to simulate fresh state
 	_ = os.Remove(".husky/pre-commit")
 	if err := setupHusky(); err != nil {
@@ -321,7 +321,7 @@ func TestInstallLintDependencies_PeerDepsRetry(t *testing.T) {
 	oldWd, _ := os.Getwd()
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(tempDir)
-	_ = os.WriteFile("package.json", []byte(`{"name":"test"}`), 0644)
+	_ = os.WriteFile("package.json", []byte(`{"name":"test"}`), 0o644)
 	called := 0
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()
@@ -349,7 +349,7 @@ func TestInstallLintDependencies_UsesYarnIfPresent(t *testing.T) {
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(tempDir)
 	// Create a yarn.lock file to trigger yarn usage
-	_ = os.WriteFile("yarn.lock", []byte(""), 0644)
+	_ = os.WriteFile("yarn.lock", []byte(""), 0o644)
 	called := struct{ npm, yarn int }{}
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()

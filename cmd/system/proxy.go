@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 var ProxyCmd = &cobra.Command{
@@ -18,7 +19,7 @@ var ProxyCmd = &cobra.Command{
 	},
 }
 
-// Common function to list proxy configurations
+// Common function to list proxy configurations.
 func listProxyConfigurations() {
 	proxies, activeIndex := config.GetProxyConfigs()
 
@@ -118,7 +119,7 @@ var disableCmd = &cobra.Command{
 	},
 }
 
-// Add a new export subcommand to enable easy exporting of proxy settings to shell
+// Add a new export subcommand to enable easy exporting of proxy settings to shell.
 var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export proxy settings as environment variables for the current shell",

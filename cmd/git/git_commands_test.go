@@ -145,7 +145,7 @@ func TestStatusAllCommand_WithCurrentFlag(t *testing.T) {
 	// Make one repo dirty
 	dirtyRepoPath := filepath.Join(workspace, "dirty-repo")
 	testFile := filepath.Join(dirtyRepoPath, "new-file.txt")
-	if err := os.WriteFile(testFile, []byte("uncommitted content"), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("uncommitted content"), 0o644); err != nil {
 		t.Fatalf("Failed to create uncommitted file: %v", err)
 	}
 
@@ -280,7 +280,7 @@ func TestBranchAllCommand_DetectsBranches(t *testing.T) {
 	}
 }
 
-// Helper function for branch detection (since we removed it from branch_all.go)
+// Helper function for branch detection (since we removed it from branch_all.go).
 func getCurrentBranch(repoPath string) (string, error) {
 	cmd := exec.Command("git", "-C", repoPath, "branch", "--show-current")
 	output, err := cmd.Output()
@@ -326,7 +326,7 @@ func TestPersistentFlagInheritance(t *testing.T) {
 	}
 }
 
-// Test the findGitRepositories function with the --current flag workflow
+// Test the findGitRepositories function with the --current flag workflow.
 func TestCurrentFlagWorkflow(t *testing.T) {
 	// Setup test workspace
 	workspace := setupTestWorkspace(t, []string{"repo1", "repo2"})
@@ -380,7 +380,7 @@ func TestCurrentFlagWorkflow(t *testing.T) {
 	}
 }
 
-// Test that commands can handle repositories with different branch names
+// Test that commands can handle repositories with different branch names.
 func TestDifferentBranchNames(t *testing.T) {
 	workspace := setupTestWorkspace(t, []string{"main-repo", "master-repo"})
 	defer func() {
@@ -419,7 +419,7 @@ func TestDifferentBranchNames(t *testing.T) {
 	}
 }
 
-// Test edge cases for directory handling
+// Test edge cases for directory handling.
 func TestEdgeCases(t *testing.T) {
 	t.Run("Empty directory", func(t *testing.T) {
 		// Create empty temporary directory

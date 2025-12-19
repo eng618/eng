@@ -1,9 +1,10 @@
 package config
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // VerboseCmd defines the command for managing the verbose output setting.

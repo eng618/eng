@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 // MigrateConfig handles the migration of old configuration keys to new standardized ones.

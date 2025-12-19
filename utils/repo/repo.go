@@ -113,7 +113,7 @@ func EnsureOnDefaultBranch(repoPath string) error {
 // FetchBareRepo fetches updates for a bare repository.
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
-func FetchBareRepo(repoPath string, workTree string) error {
+func FetchBareRepo(repoPath, workTree string) error {
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
@@ -130,7 +130,7 @@ func FetchBareRepo(repoPath string, workTree string) error {
 // PullRebaseBareRepo performs a pull with rebase operation for a bare repository.
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
-func PullRebaseBareRepo(repoPath string, workTree string) error {
+func PullRebaseBareRepo(repoPath, workTree string) error {
 	// Get the current branch for the bare repository
 	cmd := exec.Command("git", "--git-dir="+repoPath, "branch", "--show-current")
 	output, err := cmd.Output()
@@ -211,7 +211,7 @@ func GetCurrentBranch(repoPath string) (string, error) {
 }
 
 // branchExists checks if a branch exists in the repository.
-func branchExists(repoPath string, branchName string) bool {
+func branchExists(repoPath, branchName string) bool {
 	cmd := exec.Command("git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branchName)
 	err := cmd.Run()
 	return err == nil
@@ -240,7 +240,7 @@ func getRemoteDefaultBranch(repoPath string) (string, error) {
 // If force is true, it will discard any local changes and force the checkout.
 // If all is true, it will checkout all files from the index/HEAD.
 // Returns an error if the operation fails.
-func CheckoutBareRepo(repoPath string, workTree string, force bool, all bool) error {
+func CheckoutBareRepo(repoPath, workTree string, force, all bool) error {
 	args := []string{"--git-dir=" + repoPath, "--work-tree=" + workTree, "checkout"}
 
 	if force {

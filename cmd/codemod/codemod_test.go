@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TestCodemodCmd_Integration tests the main codemod command structure
+// TestCodemodCmd_Integration tests the main codemod command structure.
 func TestCodemodCmd_Integration(t *testing.T) {
 	// Test that the main command has the expected subcommands
 	subcommands := CodemodCmd.Commands()
@@ -28,7 +28,7 @@ func TestCodemodCmd_Integration(t *testing.T) {
 	}
 }
 
-// TestExecCommand_MockOverride tests that execCommand can be overridden for testing
+// TestExecCommand_MockOverride tests that execCommand can be overridden for testing.
 func TestExecCommand_MockOverride(t *testing.T) {
 	original := execCommand
 	defer func() { execCommand = original }()

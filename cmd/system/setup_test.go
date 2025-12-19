@@ -17,7 +17,8 @@ func TestSetupASDF(t *testing.T) {
 	// Write a fake .tool-versions file
 	plugins := []string{"nodejs 20.0.0", "python 3.11.0"}
 	content := strings.Join(plugins, "\n")
-	if err := os.WriteFile(toolVersionsPath, []byte(content), 0644); err != nil {
+	//nolint:gosec
+	if err := os.WriteFile(toolVersionsPath, []byte(content), 0o644); err != nil {
 		t.Fatalf("Failed to write .tool-versions: %v", err)
 	}
 

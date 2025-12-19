@@ -10,22 +10,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testConfigPath = "/tmp/test_config.json"
-const invalidConfigPath = "/invalid/path/test_config.json"
+const (
+	testConfigPath    = "/tmp/test_config.json"
+	invalidConfigPath = "/invalid/path/test_config.json"
+)
 
 var (
-	// Standard test proxies to reduce duplication
+	// Standard test proxies to reduce duplication.
 	testProxy1 = ProxyConfig{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false, NoProxy: ""}
 	testProxy2 = ProxyConfig{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: true, NoProxy: "internal.example.com"}
 
-	// Environment variables that get modified during tests
+	// Environment variables that get modified during tests.
 	proxyEnvVars = []string{
 		"ALL_PROXY", "HTTP_PROXY", "HTTPS_PROXY", "GLOBAL_AGENT_HTTP_PROXY",
 		"NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
 	}
 )
 
-// TestMain handles global setup/teardown for all tests
+// TestMain handles global setup/teardown for all tests.
 func TestMain(m *testing.M) {
 	// Run tests
 	exitCode := m.Run()
@@ -36,26 +38,26 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-// Helper function to set up viper for testing
+// Helper function to set up viper for testing.
 func setupViper(configPath string) {
 	viper.Reset()
 	viper.SetConfigType("json")
 	viper.SetConfigFile(configPath)
 }
 
-// Helper function to setup proxies configuration
+// Helper function to setup proxies configuration.
 func setupProxies(proxies []ProxyConfig) {
 	viper.Set("proxies", proxies)
 }
 
-// Helper function to clean up environment variables
+// Helper function to clean up environment variables.
 func cleanupEnvVars() {
 	for _, envVar := range proxyEnvVars {
 		os.Unsetenv(envVar)
 	}
 }
 
-// Helper to set environment variables for testing
+// Helper to set environment variables for testing.
 func setTestEnvVars(proxyValue string) {
 	for _, envVar := range proxyEnvVars[:6] { // All except NO_PROXY vars
 		os.Setenv(envVar, proxyValue)
@@ -64,7 +66,7 @@ func setTestEnvVars(proxyValue string) {
 	os.Setenv("no_proxy", "localhost,127.0.0.1")
 }
 
-// Group 1: GetProxyConfigs tests
+// Group 1: GetProxyConfigs tests.
 func TestGetProxyConfigs(t *testing.T) {
 	testCases := []struct {
 		name            string
@@ -130,7 +132,7 @@ func TestGetProxyConfigs(t *testing.T) {
 	}
 }
 
-// Group 2: GetActiveProxy tests
+// Group 2: GetActiveProxy tests.
 func TestGetActiveProxy(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -180,7 +182,7 @@ func TestGetActiveProxy(t *testing.T) {
 	}
 }
 
-// Group 3: SaveProxyConfigs tests
+// Group 3: SaveProxyConfigs tests.
 func TestSaveProxyConfigs(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		setupViper(testConfigPath)
@@ -203,17 +205,19 @@ func TestSaveProxyConfigs(t *testing.T) {
 	})
 }
 
-// Mock function for saving configs that simulates a failure
+// Mock function for saving configs that simulates a failure.
 func mockSaveProxyConfigsFailure(proxies []ProxyConfig) error {
 	return errors.New("Error writing config file: mock error")
 }
 
-// Group 4: EnableProxy tests
+// Group 4: EnableProxy tests.
 func TestEnableProxy(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		setupViper(testConfigPath)
-		proxies := []ProxyConfig{testProxy1,
-			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""}}
+		proxies := []ProxyConfig{
+			testProxy1,
+			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""},
+		}
 
 		updatedProxies, err := EnableProxy(1, proxies)
 		assert.NoError(t, err, "Expected no error when enabling a proxy")
@@ -233,8 +237,10 @@ func TestEnableProxy(t *testing.T) {
 	// Use a temporary function override for testing SaveProxyConfigs failure
 	t.Run("SaveConfigError", func(t *testing.T) {
 		setupViper(testConfigPath) // Use valid path but mock the save function
-		proxies := []ProxyConfig{testProxy1,
-			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""}}
+		proxies := []ProxyConfig{
+			testProxy1,
+			{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: false, NoProxy: ""},
+		}
 
 		// Store original function
 		originalSaveFunc := SaveProxyConfigs
@@ -251,7 +257,7 @@ func TestEnableProxy(t *testing.T) {
 	})
 }
 
-// Group 5: DisableAllProxies tests
+// Group 5: DisableAllProxies tests.
 func TestDisableAllProxies(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		setupViper(testConfigPath)
@@ -294,7 +300,7 @@ func TestDisableAllProxies(t *testing.T) {
 	})
 }
 
-// Group 6: Environment Variable Management tests
+// Group 6: Environment Variable Management tests.
 func TestProxyEnvironmentVariables(t *testing.T) {
 	t.Run("UnsetProxyEnvVars", func(t *testing.T) {
 		// Setup env vars

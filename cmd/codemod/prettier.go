@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 // PrettierCmd formats the current directory with prettier, installing @eng618/prettier-config if needed.

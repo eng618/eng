@@ -1,10 +1,11 @@
 package dotfiles
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
-	"github.com/spf13/cobra"
 )
 
 // CheckoutCmd defines the cobra command for checking out files in the dotfiles repository.
@@ -57,6 +58,6 @@ func init() {
 }
 
 // checkoutRepo is injectable for tests to avoid executing git.
-var checkoutRepo = func(repoPath, worktreePath string, force bool, all bool) error {
+var checkoutRepo = func(repoPath, worktreePath string, force, all bool) error {
 	return repo.CheckoutBareRepo(repoPath, worktreePath, force, all)
 }

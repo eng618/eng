@@ -1,13 +1,15 @@
 package system
 
 import (
+	"errors"
 	"os/exec"
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 var KillPortCmd = &cobra.Command{
@@ -50,7 +52,8 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 			log.Verbose(isVerbose, "lsof output: %s", output)
 
 			// Check if the error is ExitError and output is empty - common case for "port not found"
-			if _, ok := err.(*exec.ExitError); ok && output == "" {
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) && output == "" {
 				log.Warn("No process found listening on port %s.", portStr)
 			} else {
 				// A different error occurred (e.g., lsof not found, permission denied)

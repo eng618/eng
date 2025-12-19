@@ -10,10 +10,11 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/utils"
+	"github.com/eng618/eng/utils/log"
 )
 
 // CopyChangesCmd defines the cobra command for copying modified dotfiles to the local git repository.
@@ -65,7 +66,7 @@ var CopyChangesCmd = &cobra.Command{
 
 			// Ensure destination directory exists
 			destDir := filepath.Dir(dest)
-			if err := os.MkdirAll(destDir, 0755); err != nil {
+			if err := os.MkdirAll(destDir, 0o755); err != nil {
 				log.Error("Failed to create directory %s: %s", destDir, err)
 				continue
 			}
@@ -106,7 +107,7 @@ var CopyChangesCmd = &cobra.Command{
 	},
 }
 
-// getModifiedFilesFunc is injectable for tests
+// getModifiedFilesFunc is injectable for tests.
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
 	var buf bytes.Buffer
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain")
@@ -132,8 +133,9 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 	return files, scanner.Err()
 }
 
-// resetFile runs git checkout -- file
+// resetFile runs git checkout -- file.
 func resetFile(repoPath, worktreePath, file string) error {
+	//nolint:
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
 	cmd.Dir = worktreePath // Run from worktree directory
 	cmd.Stdout = log.Writer()
@@ -141,7 +143,7 @@ func resetFile(repoPath, worktreePath, file string) error {
 	return cmd.Run()
 }
 
-// copyFile copies a file from srcPath to destPath
+// copyFile copies a file from srcPath to destPath.
 func copyFile(srcPath, destPath string, isVerbose bool) error {
 	log.Verbose(isVerbose, "Copying %s to %s", srcPath, destPath)
 

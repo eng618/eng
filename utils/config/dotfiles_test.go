@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestEmail tests the Email function logic
+// TestEmail tests the Email function logic.
 func TestEmail(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -50,7 +50,7 @@ func TestEmail(t *testing.T) {
 	}
 }
 
-// TestDotfilesRepo tests the DotfilesRepo function logic
+// TestDotfilesRepo tests the DotfilesRepo function logic.
 func TestDotfilesRepo(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -89,7 +89,7 @@ func TestDotfilesRepo(t *testing.T) {
 	}
 }
 
-// TestRepoURL tests the RepoURL function logic
+// TestRepoURL tests the RepoURL function logic.
 func TestRepoURL(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -128,7 +128,7 @@ func TestRepoURL(t *testing.T) {
 	}
 }
 
-// TestBranch tests the Branch function logic
+// TestBranch tests the Branch function logic.
 func TestBranch(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -167,7 +167,7 @@ func TestBranch(t *testing.T) {
 	}
 }
 
-// TestBareRepoPath tests the BareRepoPath function logic
+// TestBareRepoPath tests the BareRepoPath function logic.
 func TestBareRepoPath(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -206,7 +206,7 @@ func TestBareRepoPath(t *testing.T) {
 	}
 }
 
-// TestGitDevPath tests the GitDevPath function logic
+// TestGitDevPath tests the GitDevPath function logic.
 func TestGitDevPath(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -245,7 +245,7 @@ func TestGitDevPath(t *testing.T) {
 	}
 }
 
-// TestVerbose tests the Verbose function logic
+// TestVerbose tests the Verbose function logic.
 func TestVerbose(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -287,7 +287,7 @@ func TestVerbose(t *testing.T) {
 	}
 }
 
-// TestConfigFileOperations tests config file read/write operations
+// TestConfigFileOperations tests config file read/write operations.
 func TestConfigFileOperations(t *testing.T) {
 	t.Run("ConfigFileCreation", func(t *testing.T) {
 		// Reset viper for test
@@ -342,7 +342,7 @@ func TestConfigFileOperations(t *testing.T) {
 	})
 }
 
-// TestEnvironmentVariableExpansion tests path expansion with environment variables
+// TestEnvironmentVariableExpansion tests path expansion with environment variables.
 func TestEnvironmentVariableExpansion(t *testing.T) {
 	t.Run("HomeDirectoryExpansion", func(t *testing.T) {
 		// Reset viper for test
@@ -383,7 +383,7 @@ func TestEnvironmentVariableExpansion(t *testing.T) {
 	})
 }
 
-// TestConfigValidation tests various config validation scenarios
+// TestConfigValidation tests various config validation scenarios.
 func TestConfigValidation(t *testing.T) {
 	t.Run("EmailFormatValidation", func(t *testing.T) {
 		// Reset viper for test
@@ -440,7 +440,7 @@ func TestConfigValidation(t *testing.T) {
 	})
 }
 
-// TestBranchOptions tests the valid branch options
+// TestBranchOptions tests the valid branch options.
 func TestBranchOptions(t *testing.T) {
 	// Reset viper for test
 	viper.Reset()
@@ -454,7 +454,7 @@ func TestBranchOptions(t *testing.T) {
 	}
 }
 
-// TestDefaultValues tests default value handling
+// TestDefaultValues tests default value handling.
 func TestDefaultValues(t *testing.T) {
 	t.Run("DefaultBranch", func(t *testing.T) {
 		// Reset viper for test
@@ -475,7 +475,7 @@ func TestDefaultValues(t *testing.T) {
 	})
 }
 
-// TestBareRepoPathEnvironmentExpansion tests environment variable expansion in BareRepoPath
+// TestBareRepoPathEnvironmentExpansion tests environment variable expansion in BareRepoPath.
 func TestBareRepoPathEnvironmentExpansion(t *testing.T) {
 	testCases := []struct {
 		name            string
@@ -554,7 +554,7 @@ func TestBareRepoPathEnvironmentExpansion(t *testing.T) {
 	}
 }
 
-// TestConfigFileBackupAndRecovery tests config file backup and recovery scenarios
+// TestConfigFileBackupAndRecovery tests config file backup and recovery scenarios.
 func TestConfigFileBackupAndRecovery(t *testing.T) {
 	t.Run("ConfigFileBackupOnWrite", func(t *testing.T) {
 		// Reset viper for test
@@ -631,7 +631,7 @@ func TestConfigFileBackupAndRecovery(t *testing.T) {
 	})
 }
 
-// TestConfigMigrationScenarios tests various config migration scenarios
+// TestConfigMigrationScenarios tests various config migration scenarios.
 func TestConfigMigrationScenarios(t *testing.T) {
 	t.Run("EmptyConfigInitialization", func(t *testing.T) {
 		// Reset viper for test
@@ -694,7 +694,7 @@ func TestConfigMigrationScenarios(t *testing.T) {
 	})
 }
 
-// TestConfigEdgeCases tests edge cases in config handling
+// TestConfigEdgeCases tests edge cases in config handling.
 func TestConfigEdgeCases(t *testing.T) {
 	t.Run("SpecialCharactersInPaths", func(t *testing.T) {
 		// Reset viper for test
@@ -751,7 +751,7 @@ func TestConfigEdgeCases(t *testing.T) {
 	})
 }
 
-// TestConfigThreadSafetyNote documents that viper is not thread-safe
+// TestConfigThreadSafetyNote documents that viper is not thread-safe.
 func TestConfigThreadSafetyNote(t *testing.T) {
 	// This test documents that viper (the underlying config library) is not thread-safe
 	// and concurrent access should be avoided in production code
@@ -767,7 +767,7 @@ func TestConfigThreadSafetyNote(t *testing.T) {
 	// Each goroutine should use its own viper instance if concurrent access is needed
 }
 
-// TestConfigTypeValidation tests validation of different config value types
+// TestConfigTypeValidation tests validation of different config value types.
 func TestConfigTypeValidation(t *testing.T) {
 	// Reset viper for test
 	viper.Reset()

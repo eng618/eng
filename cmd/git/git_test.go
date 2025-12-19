@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// setupTestWorkspace creates a temporary workspace with multiple git repositories
+// setupTestWorkspace creates a temporary workspace with multiple git repositories.
 func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 	tb.Helper()
 
@@ -20,7 +20,7 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 	// Create multiple git repositories
 	for _, repoName := range repoNames {
 		repoPath := filepath.Join(workspace, repoName)
-		if err := os.MkdirAll(repoPath, 0755); err != nil {
+		if err := os.MkdirAll(repoPath, 0o755); err != nil {
 			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create repo directory %s: %v", repoName, err)
 		}
@@ -62,7 +62,7 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 		// Create initial commit
 		testFile := filepath.Join(repoPath, "README.md")
 		content := "# " + repoName + "\n\nTest repository for " + repoName
-		if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create test file in %s: %v", repoName, err)
 		}
@@ -92,8 +92,8 @@ func setupTestWorkspace(tb testing.TB, repoNames []string) string {
 	return workspace
 }
 
-// setupTestWorkspaceWithNonGitDirs creates a workspace with both git repos and non-git directories
-func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos []string, nonGitDirs []string) string {
+// setupTestWorkspaceWithNonGitDirs creates a workspace with both git repos and non-git directories.
+func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos, nonGitDirs []string) string {
 	tb.Helper()
 
 	workspace := setupTestWorkspace(tb, gitRepos)
@@ -101,14 +101,14 @@ func setupTestWorkspaceWithNonGitDirs(tb testing.TB, gitRepos []string, nonGitDi
 	// Create non-git directories
 	for _, dirName := range nonGitDirs {
 		dirPath := filepath.Join(workspace, dirName)
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
+		if err := os.MkdirAll(dirPath, 0o755); err != nil {
 			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create non-git directory %s: %v", dirName, err)
 		}
 
 		// Create a file in the directory to make it non-empty
 		testFile := filepath.Join(dirPath, "file.txt")
-		if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
+		if err := os.WriteFile(testFile, []byte("test content"), 0o644); err != nil {
 			_ = os.RemoveAll(workspace)
 			tb.Fatalf("Failed to create file in non-git dir %s: %v", dirName, err)
 		}
@@ -227,7 +227,7 @@ func TestFindGitRepositoriesEmptyDirectory(t *testing.T) {
 	}
 }
 
-// Integration test that tests the workflow of git commands
+// Integration test that tests the workflow of git commands.
 func TestGitWorkflow(t *testing.T) {
 	// Setup test workspace
 	workspace := setupTestWorkspace(t, []string{"test-repo1", "test-repo2"})
@@ -259,7 +259,7 @@ func TestGitWorkflow(t *testing.T) {
 	}
 }
 
-// Helper function to check if repository is dirty (for testing)
+// Helper function to check if repository is dirty (for testing).
 func isDirty(repoPath string) (bool, error) {
 	cmd := exec.Command("git", "-C", repoPath, "status", "--porcelain")
 	output, err := cmd.Output()
@@ -269,7 +269,7 @@ func isDirty(repoPath string) (bool, error) {
 	return len(output) > 0, nil
 }
 
-// Benchmark test for finding git repositories
+// Benchmark test for finding git repositories.
 func BenchmarkFindGitRepositories(b *testing.B) {
 	// Setup workspace with multiple repositories
 	repoNames := make([]string, 50) // Create 50 test repos

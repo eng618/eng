@@ -13,12 +13,12 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 var InstallCmd = &cobra.Command{
@@ -387,6 +387,7 @@ func initSubmodules(bareRepoPath, homeDir string) error {
 func initSubmodulesWithCommand(bareRepoPath, homeDir string) error {
 	// For bare repos, we need to use git command with work-tree
 	// This is one case where shelling out is necessary due to go-git limitations with bare repos
+	//nolint:gosec
 	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "submodule", "update", "--init", "--recursive")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
@@ -395,7 +396,7 @@ func initSubmodulesWithCommand(bareRepoPath, homeDir string) error {
 }
 
 // configureGit sets git configuration to hide untracked files.
-func configureGit(bareRepoPath, homeDir string) error {
+func configureGit(bareRepoPath, _ string) error {
 	log.Start("Configuring git settings")
 
 	// Open the bare repository

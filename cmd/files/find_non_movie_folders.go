@@ -1,15 +1,17 @@
 package files
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
@@ -25,7 +27,6 @@ any such files anywhere within their structure.
 It lists the files within the identified folders and prompts for confirmation before deletion.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
 		log.Start("Scanning for non-movie folders...")
 
 		directory := args[0]
@@ -47,7 +48,6 @@ It lists the files within the identified folders and prompts for confirmation be
 			}
 			spinner.SetProgressBar(progress, fmt.Sprintf("Scanning... (%d/%d)", done, total))
 		})
-
 		// Explicitly Stop Spinner before printing results
 		if err != nil {
 			spinner.Stop() // Stop spinner even if there was an error during scan
@@ -114,7 +114,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		log.Message("") // Add a blank line for readability
 
 		if !askForConfirmation("Do you want to delete these folders and their contents?") {
-			log.Info("Deletion cancelled by user.")
+			log.Info("Deletion canceled by user.")
 			return
 		}
 
@@ -209,7 +209,7 @@ func findNonMovieFolders(isVerbose bool, rootDir string, spinner *utils.Spinner,
 		}
 
 		foundMovieFile := false
-		walkErr := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
+		walkErr := filepath.WalkDir(dirPath, func(_ string, d os.DirEntry, err error) error {
 			if err != nil {
 				return err // Propagate errors
 			}
@@ -226,7 +226,7 @@ func findNonMovieFolders(isVerbose bool, rootDir string, spinner *utils.Spinner,
 
 		// If walkErr is filepath.SkipAll, it means we found a movie file and stopped early.
 		// This is our success condition for finding a movie, not a real error.
-		if walkErr != nil && walkErr != filepath.SkipAll {
+		if walkErr != nil && !errors.Is(walkErr, filepath.SkipAll) {
 			log.Warn("Error scanning directory %s: %v. Skipping.", dirPath, walkErr)
 		}
 

@@ -19,6 +19,7 @@ func TestFindNonMovieFolders(t *testing.T) {
 	}
 	writeFile := func(dir, fname string) {
 		f := filepath.Join(dir, fname)
+		//nolint:gosec
 		if err := os.WriteFile(f, []byte("dummy"), 0o644); err != nil {
 			t.Fatalf("failed to write file %s: %v", f, err)
 		}

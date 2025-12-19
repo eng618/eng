@@ -14,9 +14,10 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // Build-time variables
@@ -39,7 +40,7 @@ const (
 	brewPkgName     = "eng"           // Package name in Homebrew
 )
 
-// Flag variable for the --update flag
+// Flag variable for the --update flag.
 var updateFlag bool
 
 // githubReleaseInfo defines the structure for decoding the relevant fields
@@ -168,12 +169,12 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 				// Exit after attempting update, regardless of success/failure
 				// to avoid printing redundant "Get it here" messages.
 				return
-			} else {
-				log.Warn("--update flag specified, but cannot automatically update.")
-				log.Info("  Installation method not recognized as Homebrew.")
-				log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
-				log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
 			}
+			log.Warn("--update flag specified, but cannot automatically update.")
+			log.Info("  Installation method not recognized as Homebrew.")
+			log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+			log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
+			return
 		} else {
 			// Just inform the user how to update
 			if brewDetected {

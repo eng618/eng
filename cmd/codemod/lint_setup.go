@@ -13,8 +13,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 //go:embed eslint.config.standard.tmpl
@@ -26,11 +27,11 @@ var echoConfigTmpl []byte
 //go:embed eslint.config.js-only.tmpl
 var jsOnlyConfigTmpl []byte
 
-// detectTypeScriptUsage checks if the project uses TypeScript by looking for .ts/.tsx files or typescript dependency
+// detectTypeScriptUsage checks if the project uses TypeScript by looking for .ts/.tsx files or typescript dependency.
 func detectTypeScriptUsage() bool {
 	// Check for TypeScript files
 	hasTSFiles := false
-	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(".", func(_ string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // ignore errors
 		}
@@ -179,7 +180,7 @@ func writeESLintConfig(echo bool) error {
 	} else {
 		data = jsOnlyConfigTmpl
 	}
-	return os.WriteFile("eslint.config.mjs", data, 0644)
+	return os.WriteFile("eslint.config.mjs", data, 0o644)
 }
 
 // updatePackageJSON updates scripts, lint-staged, and prettier config in package.json with standard field order.
@@ -256,7 +257,7 @@ func updatePackageJSON() error {
 		writeField(k)
 	}
 	ordered = append(ordered, '\n', '}')
-	return os.WriteFile("package.json", ordered, 0644)
+	return os.WriteFile("package.json", ordered, 0o644)
 }
 
 // setupHusky runs husky init and overwrites the pre-commit hook.
@@ -270,7 +271,7 @@ func setupHusky() error {
 	}
 	preCommitPath := ".husky/pre-commit"
 	hookContent := "npx lint-staged\n"
-	if err := os.WriteFile(preCommitPath, []byte(hookContent), 0644); err != nil {
+	if err := os.WriteFile(preCommitPath, []byte(hookContent), 0o644); err != nil {
 		return err
 	}
 	return nil

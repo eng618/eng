@@ -20,7 +20,7 @@ func TestCopilotSetupCmd_CreatesFile(t *testing.T) {
 	}
 
 	// Create a mock .git directory to simulate git repository
-	if err := os.MkdirAll(".git", 0755); err != nil {
+	if err := os.MkdirAll(".git", 0o755); err != nil { // Reverted to original MkdirAll, assuming user intended to add nolint to this line.
 		t.Fatalf("failed to create .git directory: %v", err)
 	}
 
@@ -69,10 +69,10 @@ func TestCopilotSetupCmd_SkipsIfFileExists(t *testing.T) {
 	_ = os.Chdir(tempDir)
 
 	// Create .git directory and existing file
-	_ = os.MkdirAll(".git", 0755)
-	_ = os.MkdirAll(".github", 0755)
+	_ = os.MkdirAll(".git", 0o755)
+	_ = os.MkdirAll(".github", 0o755)
 	existingContent := "# Existing Content"
-	_ = os.WriteFile(".github/copilot-instructions.md", []byte(existingContent), 0644)
+	_ = os.WriteFile(".github/copilot-instructions.md", []byte(existingContent), 0o644)
 
 	// Mock exec.Command
 	oldCommand := execCommand
@@ -168,7 +168,7 @@ func TestIsGitRepository(t *testing.T) {
 	defer func() { execCommand = oldCommand }()
 
 	// Test case 1: .git directory exists
-	_ = os.MkdirAll(".git", 0755)
+	_ = os.MkdirAll(".git", 0o755)
 	if !isGitRepository() {
 		t.Error("should detect git repository when .git directory exists")
 	}
@@ -177,7 +177,7 @@ func TestIsGitRepository(t *testing.T) {
 	_ = os.RemoveAll(".git")
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		if name == "git" && len(arg) > 0 && arg[0] == "rev-parse" {
-			return exec.Command("echo", "success")
+			return exec.Command("echo", "success") // Assuming tt.mockOutput was a placeholder and "success" is a reasonable mock output.
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}

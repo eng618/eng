@@ -3,9 +3,10 @@ package git
 import (
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // ListCmd defines the cobra command for listing all git repositories.

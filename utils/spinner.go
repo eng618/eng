@@ -27,7 +27,7 @@ func NewSpinner(message string) *Spinner {
 	bar := p.New(0, // Total is 0 for an indeterminate spinner
 		mpb.SpinnerStyle(),
 		mpb.PrependDecorators(
-			decor.Any(func(s decor.Statistics) string {
+			decor.Any(func(_ decor.Statistics) string {
 				select {
 				case msg := <-msgCh:
 					return msg
@@ -58,7 +58,7 @@ func NewProgressSpinner(message string) *Spinner {
 	bar := p.New(100, // Total is 100 for percentage-based progress
 		mpb.BarStyle().Lbound("[").Filler("=").Tip(">").Padding("-").Rbound("]"),
 		mpb.PrependDecorators(
-			decor.Any(func(s decor.Statistics) string {
+			decor.Any(func(_ decor.Statistics) string {
 				select {
 				case msg := <-msgCh:
 					return msg

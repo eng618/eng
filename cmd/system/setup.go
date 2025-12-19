@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 var SetupCmd = &cobra.Command{
@@ -193,7 +194,7 @@ func setupSoftware(verbose bool) {
 	allSoftware := getSoftwareList()
 	var toInstall []Software
 	var optionalOptions []string
-	var optionalSoftwareMap = make(map[string]Software)
+	optionalSoftwareMap := make(map[string]Software)
 
 	// Filter and check
 	for _, sw := range allSoftware {

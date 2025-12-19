@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// setupTestRepo creates a temporary git repository for testing
+// setupTestRepo creates a temporary git repository for testing.
 func setupTestRepo(t *testing.T, branchName string) string {
 	t.Helper()
 
@@ -56,7 +56,7 @@ func setupTestRepo(t *testing.T, branchName string) string {
 
 	// Create initial commit
 	testFile := filepath.Join(tmpDir, "test.txt")
-	if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("test content"), 0o644); err != nil {
 		if err := os.RemoveAll(tmpDir); err != nil {
 			t.Logf("Warning: failed to cleanup tmpDir: %v", err)
 		}
@@ -117,7 +117,7 @@ func setupTestRepo(t *testing.T, branchName string) string {
 	return tmpDir
 }
 
-// setupTestRepoWithBranches creates a test repo with multiple branches
+// setupTestRepoWithBranches creates a test repo with multiple branches.
 func setupTestRepoWithBranches(t *testing.T, branches []string) string {
 	t.Helper()
 
@@ -342,7 +342,7 @@ func TestIsDirty(t *testing.T) {
 
 	// Make repository dirty
 	testFile := filepath.Join(tmpDir, "dirty.txt")
-	if err := os.WriteFile(testFile, []byte("dirty content"), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("dirty content"), 0o644); err != nil {
 		t.Fatalf("Failed to create dirty file: %v", err)
 	}
 
@@ -477,7 +477,7 @@ func TestGetMainBranch_Comprehensive(t *testing.T) {
 	}
 }
 
-// Helper function to get current branch for tests
+// Helper function to get current branch for tests.
 func getCurrentBranchInRepo(repoPath string) (string, error) {
 	cmd := exec.Command("git", "branch", "--show-current")
 	cmd.Dir = repoPath

@@ -3,10 +3,11 @@ package git
 import (
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
-	"github.com/spf13/cobra"
 )
 
 // StatusAllCmd defines the cobra command for checking status of all git repositories.

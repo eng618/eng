@@ -22,7 +22,11 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"errors"
 	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/config"
@@ -35,15 +39,11 @@ import (
 	"github.com/eng618/eng/utils"
 	configUtils "github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var (
-	cfgFile string
-)
+var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "eng",
 	Short: "A personal cli to facilitate my workflow.",
@@ -124,7 +124,7 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		log.Verbose(utils.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
-	} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+	} else if errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		// Config file not found, create it
 		configFilePath := viper.ConfigFileUsed()
 		if configFilePath == "" {

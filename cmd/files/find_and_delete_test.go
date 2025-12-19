@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// setupTestFiles creates a temporary directory with test files of various types and sizes
+// setupTestFiles creates a temporary directory with test files of various types and sizes.
 func setupTestFiles(t *testing.T) (string, map[string]int) {
 	tmpDir := t.TempDir()
 	files := map[string]int{
@@ -105,7 +105,7 @@ func setupTestFiles(t *testing.T) (string, map[string]int) {
 	return tmpDir, files
 }
 
-// TestBuildMatchFunction tests the pattern matching function builder
+// TestBuildMatchFunction tests the pattern matching function builder.
 func TestBuildMatchFunction(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -183,7 +183,7 @@ func TestBuildMatchFunction(t *testing.T) {
 	}
 }
 
-// TestListExtensions tests the ListExtensions function
+// TestListExtensions tests the ListExtensions function.
 func TestListExtensions(t *testing.T) {
 	tmpDir, _ := setupTestFiles(t)
 
@@ -210,7 +210,7 @@ func TestListExtensions(t *testing.T) {
 	}
 }
 
-// TestDeleteFiles tests the parallel file deletion
+// TestDeleteFiles tests the parallel file deletion.
 func TestDeleteFiles(t *testing.T) {
 	tmpDir, files := setupTestFiles(t)
 
@@ -241,7 +241,7 @@ func TestDeleteFiles(t *testing.T) {
 	}
 }
 
-// TestScanFiles creates a temp directory with a mix of files and tests different matching strategies
+// TestScanFiles creates a temp directory with a mix of files and tests different matching strategies.
 func TestScanFiles(t *testing.T) {
 	tmpDir, _ := setupTestFiles(t)
 

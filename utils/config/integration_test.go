@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestConfigWorkflowIntegration tests the complete config workflow
+// TestConfigWorkflowIntegration tests the complete config workflow.
 func TestConfigWorkflowIntegration(t *testing.T) {
 	// This test simulates the complete user workflow of setting up configuration
 	// It tests that all config functions work together properly
@@ -78,7 +78,7 @@ func TestConfigWorkflowIntegration(t *testing.T) {
 	})
 }
 
-// TestConfigUpdateScenarios tests various config update scenarios
+// TestConfigUpdateScenarios tests various config update scenarios.
 func TestConfigUpdateScenarios(t *testing.T) {
 	t.Run("IncrementalConfigUpdates", func(t *testing.T) {
 		// Reset viper for test
@@ -138,7 +138,7 @@ func TestConfigUpdateScenarios(t *testing.T) {
 	})
 }
 
-// TestConfigFileFormats tests different config file formats
+// TestConfigFileFormats tests different config file formats.
 func TestConfigFileFormats(t *testing.T) {
 	testCases := []struct {
 		name       string
@@ -180,7 +180,7 @@ func TestConfigFileFormats(t *testing.T) {
 	}
 }
 
-// TestConfigEnvironmentIntegration tests how config interacts with environment
+// TestConfigEnvironmentIntegration tests how config interacts with environment.
 func TestConfigEnvironmentIntegration(t *testing.T) {
 	t.Run("EnvironmentVariablePrecedence", func(t *testing.T) {
 		// Reset viper for test
@@ -224,7 +224,7 @@ func TestConfigEnvironmentIntegration(t *testing.T) {
 	})
 }
 
-// TestConfigDataTypes tests various data types in config
+// TestConfigDataTypes tests various data types in config.
 func TestConfigDataTypes(t *testing.T) {
 	t.Run("ComplexDataStructures", func(t *testing.T) {
 		// Reset viper for test
@@ -267,7 +267,7 @@ func TestConfigDataTypes(t *testing.T) {
 	})
 }
 
-// TestConfigPerformance tests config performance with large datasets
+// TestConfigPerformance tests config performance with large datasets.
 func TestConfigPerformance(t *testing.T) {
 	t.Run("LargeConfigHandling", func(t *testing.T) {
 		// Reset viper for test
@@ -302,7 +302,7 @@ func TestConfigPerformance(t *testing.T) {
 	})
 }
 
-// TestConfigRealWorldScenarios tests real-world usage scenarios
+// TestConfigRealWorldScenarios tests real-world usage scenarios.
 func TestConfigRealWorldScenarios(t *testing.T) {
 	t.Run("DotfilesSetupScenario", func(t *testing.T) {
 		// Reset viper for test

@@ -5,8 +5,9 @@ package codemod
 import (
 	"os"
 
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 // CopilotSetupCmd creates a base custom Copilot instructions file in .github/copilot-instructions.md.
@@ -55,7 +56,7 @@ func createCopilotInstructions() error {
 	log.Info("Creating .github/copilot-instructions.md...")
 
 	// Create .github directory if it doesn't exist
-	if err := os.MkdirAll(".github", 0755); err != nil {
+	if err := os.MkdirAll(".github", 0o755); err != nil {
 		return err
 	}
 
@@ -115,5 +116,5 @@ func createCopilotInstructions() error {
 <!-- Add project-specific instructions here -->
 `
 
-	return os.WriteFile(filePath, []byte(template), 0644)
+	return os.WriteFile(filePath, []byte(template), 0o644)
 }

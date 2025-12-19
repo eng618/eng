@@ -4,9 +4,10 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // UpdateCmd represents the system update command.
@@ -71,7 +72,7 @@ func init() {
 // It runs apt-get update and upgrade commands, then optionally performs cleanup operations.
 // If autoApprove is true, cleanup operations run automatically without prompting.
 // If autoApprove is false, the user is prompted to confirm cleanup operations.
-func updateUbuntu(isVerbose bool, autoApprove bool) {
+func updateUbuntu(isVerbose, autoApprove bool) {
 	log.Message("Running system update for Ubuntu/Linux...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
@@ -171,7 +172,7 @@ func updateAsdf(isVerbose bool) {
 // If autoApprove is true, cleanup runs automatically without prompting.
 // If autoApprove is false, the user is prompted to confirm running cleanup operations.
 // Docker system prune is only executed if Docker is installed on the system.
-func runCleanup(isVerbose bool, autoApprove bool) {
+func runCleanup(isVerbose, autoApprove bool) {
 	var runCleanup bool
 	if autoApprove {
 		runCleanup = true

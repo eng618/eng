@@ -21,8 +21,10 @@ import (
 )
 
 // Out and Err are writers used for normal and error output. Tests may replace them.
-var Out io.Writer = os.Stdout
-var Err io.Writer = os.Stderr
+var (
+	Out io.Writer = os.Stdout
+	Err io.Writer = os.Stderr
+)
 
 // Message prints a formatted message to the configured Out writer.
 func Message(format string, a ...any) {

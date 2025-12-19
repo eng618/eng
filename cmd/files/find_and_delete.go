@@ -16,7 +16,7 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// FileTypeCategory represents a category of file types with their extensions
+// FileTypeCategory represents a category of file types with their extensions.
 type FileTypeCategory struct {
 	Name       string
 	Extensions map[string]bool
@@ -226,7 +226,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			return
 		}
 		if !confirm {
-			log.Info("Deletion cancelled by user.")
+			log.Info("Deletion canceled by user.")
 			return
 		}
 
@@ -275,13 +275,13 @@ filename, --glob for glob patterns, or --ext for file extensions.
 
 // ScanFiles walks dir recursively and returns files that match the provided function.
 // Also returns the total size of matched files. spinner may be nil.
-// buildMatchFunction creates a file matching function based on provided patterns
+// buildMatchFunction creates a file matching function based on provided patterns.
 func buildMatchFunction(globPattern, extension, filename string) (func(name string) bool, error) {
 	if globPattern != "" {
 		pattern := globPattern
 		// Validate pattern before returning the function
 		if _, err := filepath.Match(pattern, "test"); err != nil {
-			return nil, fmt.Errorf("invalid glob pattern '%s': %v", pattern, err)
+			return nil, fmt.Errorf("invalid glob pattern '%s': %w", pattern, err)
 		}
 		return func(name string) bool {
 			matched, _ := filepath.Match(pattern, filepath.Base(name))
@@ -308,7 +308,7 @@ func buildMatchFunction(globPattern, extension, filename string) (func(name stri
 	return nil, nil
 }
 
-// deleteFiles deletes the given files in parallel and returns counts of successes and errors
+// deleteFiles deletes the given files in parallel and returns counts of successes and errors.
 func deleteFiles(files []string, isVerbose bool) (deleted, errors int64) {
 	var wg sync.WaitGroup
 	var deletedCount, errorCount atomic.Int64
@@ -367,7 +367,6 @@ func ScanFiles(dir string, matchFn func(name string) bool, spinner *utils.Spinne
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, 0, fmt.Errorf("error counting files: %w", err)
 	}

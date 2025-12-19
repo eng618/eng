@@ -3,8 +3,9 @@
 package config
 
 import (
-	"github.com/eng618/eng/utils/config"
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/utils/config"
 )
 
 // ConfigCmd represents the base command for all configuration related operations.

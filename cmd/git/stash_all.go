@@ -4,9 +4,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
-	"github.com/spf13/cobra"
 )
 
 // StashAllCmd defines the cobra command for stashing changes in all git repositories.
@@ -113,7 +114,7 @@ func init() {
 }
 
 // stashRepository performs a git stash operation on the given repository path.
-func stashRepository(repoPath string, message string) error {
+func stashRepository(repoPath, message string) error {
 	args := []string{"-C", repoPath, "stash", "push"}
 	if message != "" {
 		args = append(args, "-m", message)

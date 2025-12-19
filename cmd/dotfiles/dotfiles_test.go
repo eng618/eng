@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 func TestDotfilesCmd_InfoMissingKeys(t *testing.T) {
