@@ -67,14 +67,17 @@ func installDotfiles() error {
 		switch action {
 		case "skip":
 			log.Message("Skipping repository clone, using existing repository")
+			return nil
 		case "update":
-			if err := updateBareRepo(bareRepoPath); err != nil {
+			if err := updateBareRepoWorktree(bareRepoPath, homeDir); err != nil {
 				return err
 			}
+			return nil
 		case "fresh":
 			if err := freshInstall(bareRepoPath, repoURL, branch); err != nil {
 				return err
 			}
+			// Fall through to backup and checkout for fresh install
 		}
 	} else {
 		// Step 4: Clone bare repository
@@ -144,33 +147,22 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 	return "skip", nil
 }
 
-// updateBareRepo fetches and pulls the latest changes in the bare repository.
-func updateBareRepo(bareRepoPath string) error {
-	log.Start("Updating existing repository")
+// updateBareRepoWorktree fetches and pulls the latest changes in the bare repository to the worktree.
+// It uses the git command line tool because go-git has some limitations with bare repo worktrees.
+func updateBareRepoWorktree(bareRepoPath, homeDir string) error {
+	log.Start("Updating existing repository and worktree")
 
-	// Open the bare repository
-	repo, err := git.PlainOpen(bareRepoPath)
-	if err != nil {
-		return fmt.Errorf("failed to open repository: %w", err)
+	// We use git command here to perform a pull, which handles fetch + merge/checkout
+	// safely regarding existing files (git will complain if there are conflicts, which is desirable behavior for update vs overwrite)
+	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "pull")
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update repository: %w", err)
 	}
 
-	// Get SSH auth
-	auth, err := getSSHAuth()
-	if err != nil {
-		return fmt.Errorf("failed to get SSH auth: %w", err)
-	}
-
-	// Fetch updates
-	err = repo.Fetch(&git.FetchOptions{
-		RemoteName: "origin",
-		Auth:       auth,
-		Progress:   log.Writer(),
-	})
-	if err != nil && err != git.NoErrAlreadyUpToDate {
-		return fmt.Errorf("failed to fetch updates: %w", err)
-	}
-
-	log.Success("Repository updated successfully")
+	log.Success("Repository and worktree updated successfully")
 	return nil
 }
 
