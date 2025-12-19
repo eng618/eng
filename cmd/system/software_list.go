@@ -1,7 +1,6 @@
 package system
 
 import (
-	"os/exec"
 	"runtime"
 
 	"github.com/eng618/eng/utils/log"
@@ -34,7 +33,7 @@ func openURL(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
-	return exec.Command(cmd, args...).Start()
+	return execCommand(cmd, args...).Start()
 }
 
 func getSoftwareList() []Software {
@@ -47,7 +46,7 @@ func getSoftwareList() []Software {
 			Optional:    true,
 			URL:         "https://code.visualstudio.com/",
 			Check: func() bool {
-				_, err := exec.LookPath("code")
+				_, err := lookPath("code")
 				return err == nil
 			},
 			Install: func() error { return openURL("https://code.visualstudio.com/") },
@@ -58,12 +57,12 @@ func getSoftwareList() []Software {
 			Optional:    false,
 			Check: func() bool {
 				// Brew bundle check returns 0 if satisfied, 1 if not
-				cmd := exec.Command("brew", "bundle", "check")
+				cmd := execCommand("brew", "bundle", "check")
 				return cmd.Run() == nil
 			},
 			Install: func() error {
 				log.Info("Running brew bundle install...")
-				cmd := exec.Command("brew", "bundle", "install")
+				cmd := execCommand("brew", "bundle", "install")
 				cmd.Stdout = log.Writer()
 				cmd.Stderr = log.ErrorWriter()
 				return cmd.Run()
@@ -76,7 +75,7 @@ func getSoftwareList() []Software {
 			Optional:    false,
 			Check: func() bool {
 				// Checked in setup.go usually, but good to have here
-				cmd := exec.Command("sh", "-c", "[ -d \"$HOME/.oh-my-zsh\" ]")
+				cmd := execCommand("sh", "-c", "[ -d \"$HOME/.oh-my-zsh\" ]")
 				return cmd.Run() == nil
 			},
 			Install: func() error {
@@ -94,9 +93,9 @@ func getSoftwareList() []Software {
 			URL:         "https://www.google.com/chrome/",
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
-					return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'com.google.Chrome'").Run() == nil
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.google.Chrome'").Run() == nil
 				}
-				_, err := exec.LookPath("google-chrome")
+				_, err := lookPath("google-chrome")
 				return err == nil
 			},
 			Install: func() error { return openURL("https://www.google.com/chrome/") },
@@ -108,9 +107,9 @@ func getSoftwareList() []Software {
 			URL:         "https://brave.com/download/",
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
-					return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'com.brave.Browser'").Run() == nil
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.brave.Browser'").Run() == nil
 				}
-				_, err := exec.LookPath("brave-browser")
+				_, err := lookPath("brave-browser")
 				return err == nil
 			},
 			Install: func() error { return openURL("https://brave.com/download/") },
@@ -122,7 +121,7 @@ func getSoftwareList() []Software {
 			URL:         "https://iterm2.com/",
 			OS:          "darwin",
 			Check: func() bool {
-				return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'").Run() == nil
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'").Run() == nil
 			},
 			Install: func() error { return openURL("https://iterm2.com/") },
 		},
@@ -133,7 +132,7 @@ func getSoftwareList() []Software {
 			URL:         "https://www.alfredapp.com/",
 			OS:          "darwin",
 			Check: func() bool {
-				return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'").Run() == nil
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'").Run() == nil
 			},
 			Install: func() error { return openURL("https://www.alfredapp.com/") },
 		},
@@ -145,7 +144,7 @@ func getSoftwareList() []Software {
 			OS:          "darwin",
 			Check: func() bool {
 				// Simple check, might not accept all paths
-				return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'com.cockos.LICEcap'").Run() == nil
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.cockos.LICEcap'").Run() == nil
 			},
 			Install: func() error { return openURL("https://www.cockos.com/licecap/") },
 		},
@@ -172,9 +171,9 @@ func getSoftwareList() []Software {
 			URL:         "https://www.videolan.org/vlc/",
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
-					return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'org.videolan.vlc'").Run() == nil
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.videolan.vlc'").Run() == nil
 				}
-				_, err := exec.LookPath("vlc")
+				_, err := lookPath("vlc")
 				return err == nil
 			},
 			Install: func() error { return openURL("https://www.videolan.org/vlc/") },
@@ -186,7 +185,7 @@ func getSoftwareList() []Software {
 			URL:         "https://gpgtools.org/",
 			OS:          "darwin",
 			Check: func() bool {
-				return exec.Command("mdfind", "kMDItemCFBundleIdentifier == 'org.gpgtools.gpgkeychain'").Run() == nil
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.gpgtools.gpgkeychain'").Run() == nil
 			},
 			Install: func() error { return openURL("https://gpgtools.org/") },
 		},

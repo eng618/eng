@@ -1,0 +1,93 @@
+version: "2"
+
+run:
+  go: "1.25"
+  modules-download-mode: readonly
+  allow-parallel-runners: false
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - copyloopvar
+    - cyclop
+    - decorder
+    - errorlint
+    - godot
+    - gosec
+    - importas
+    - misspell
+    - revive
+    - whitespace
+  settings:
+    misspell:
+      locale: US
+    cyclop:
+      max-complexity: 15
+      package-average: 10
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: false
+          arguments:
+            - allowRegex: "^_"
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - revive
+          - cyclop
+        path: _test\.go
+      - linters:
+          - revive
+        text: "unused-parameter: parameter 'cmd' seems to be unused"
+      - linters:
+          - revive
+        text: "unused-parameter: parameter 'args' seems to be unused"
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  # Disable filter and show all errors defaults to 3
+  max-issues-per-linter: 0
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/eng618/eng)
+    gofmt:
+      simplify: true
+    gofumpt:
+      module-path: github.com/eng618/eng
+      extra-rules: true
+    goimports:
+      local-prefixes:
+        - github.com/eng618/eng
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -1,7 +1,6 @@
 package system
 
 import (
-	"os/exec"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -24,7 +23,7 @@ var UpdateCmd = &cobra.Command{
 		autoApprove, _ := cmd.Flags().GetBool("yes")
 		log.Verbose(isVerbose, "Checking system type...")
 
-		checkCmd := exec.Command("uname", "-a")
+		checkCmd := execCommand("uname", "-a")
 		output, err := checkCmd.Output()
 		if err != nil {
 			log.Error("Error checking system type: %s", err)
@@ -77,7 +76,7 @@ func updateUbuntu(isVerbose bool, autoApprove bool) {
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
 	log.Verbose(isVerbose, "Running: sudo apt-get update && sudo apt-get upgrade -y")
-	updateCmd := exec.Command("bash", "-c", "sudo apt-get update && sudo apt-get upgrade -y")
+	updateCmd := execCommand("bash", "-c", "sudo apt-get update && sudo apt-get upgrade -y")
 	updateCmd.Stdout = log.Writer()
 	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
@@ -118,7 +117,7 @@ func updateRaspberryPi(isVerbose bool) {
 // It checks if Homebrew is installed, and if so, runs brew update, brew outdated, and brew upgrade commands.
 // If Homebrew is not found, it displays a message and returns without error.
 func updateBrew(isVerbose bool) {
-	_, err := exec.LookPath("brew")
+	_, err := lookPath("brew")
 	if err != nil {
 		log.Message("Homebrew (brew) is not installed on this system.")
 		log.Verbose(isVerbose, "Could not find brew executable in PATH")
@@ -128,7 +127,7 @@ func updateBrew(isVerbose bool) {
 	log.Message("Running Homebrew update and upgrade...")
 	log.Verbose(isVerbose, "Running: brew update && brew outdated && brew upgrade")
 
-	updateCmd := exec.Command("bash", "-c", "brew update && brew outdated && brew upgrade")
+	updateCmd := execCommand("bash", "-c", "brew update && brew outdated && brew upgrade")
 	updateCmd.Stdout = log.Writer()
 	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
@@ -145,7 +144,7 @@ func updateBrew(isVerbose bool) {
 // If asdf is not found, it displays a message and returns without error.
 // This works on all platforms where asdf is installed.
 func updateAsdf(isVerbose bool) {
-	_, err := exec.LookPath("asdf")
+	_, err := lookPath("asdf")
 	if err != nil {
 		log.Message("asdf version manager is not installed on this system.")
 		log.Verbose(isVerbose, "Could not find asdf executable in PATH")
@@ -181,7 +180,7 @@ func runCleanup(isVerbose bool, autoApprove bool) {
 			Message: "Run system cleanup operations (autoremove, autoclean, docker prune)?",
 			Default: true,
 		}
-		err := survey.AskOne(prompt, &runCleanup)
+		err := askOne(prompt, &runCleanup)
 		if err != nil {
 			log.Error("Error getting user confirmation: %s", err)
 			return
@@ -197,7 +196,7 @@ func runCleanup(isVerbose bool, autoApprove bool) {
 
 	// Run apt autoremove --purge
 	log.Verbose(isVerbose, "Running: sudo apt autoremove --purge -y")
-	cleanupCmd := exec.Command("bash", "-c", "sudo apt autoremove --purge -y")
+	cleanupCmd := execCommand("bash", "-c", "sudo apt autoremove --purge -y")
 	cleanupCmd.Stdout = log.Writer()
 	cleanupCmd.Stderr = log.ErrorWriter()
 	if err := cleanupCmd.Run(); err != nil {
@@ -210,7 +209,7 @@ func runCleanup(isVerbose bool, autoApprove bool) {
 
 	// Run apt autoclean
 	log.Verbose(isVerbose, "Running: sudo apt autoclean")
-	cleanupCmd = exec.Command("bash", "-c", "sudo apt autoclean")
+	cleanupCmd = execCommand("bash", "-c", "sudo apt autoclean")
 	cleanupCmd.Stdout = log.Writer()
 	cleanupCmd.Stderr = log.ErrorWriter()
 	if err := cleanupCmd.Run(); err != nil {
@@ -222,13 +221,13 @@ func runCleanup(isVerbose bool, autoApprove bool) {
 	}
 
 	// Check if docker is available and run docker system prune
-	_, err := exec.LookPath("docker")
+	_, err := lookPath("docker")
 	if err != nil {
 		log.Message("Docker is not installed on this system, skipping docker system prune.")
 		log.Verbose(isVerbose, "Could not find docker executable in PATH")
 	} else {
 		log.Verbose(isVerbose, "Running: docker system prune -f")
-		cleanupCmd = exec.Command("bash", "-c", "docker system prune -f")
+		cleanupCmd = execCommand("bash", "-c", "docker system prune -f")
 		cleanupCmd.Stdout = log.Writer()
 		cleanupCmd.Stderr = log.ErrorWriter()
 		if err := cleanupCmd.Run(); err != nil {

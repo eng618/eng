@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -79,12 +78,10 @@ func init() {
 	SetupCmd.AddCommand(SetupOhMyZshCmd)
 }
 
-var execCommand = exec.Command
-
 func setupASDF(verbose bool) {
 	log.Verbose(verbose, "Starting ASDF setup...")
 	// Check error for os.UserHomeDir
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDir()
 	if err != nil {
 		log.Error("Could not determine home directory: %v", err)
 		return
@@ -138,13 +135,13 @@ func setupASDF(verbose bool) {
 }
 
 func setupOhMyZsh(verbose bool) {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDir()
 	if err != nil {
 		log.Error("Could not determine home directory: %v", err)
 		return
 	}
 	omzPath := filepath.Join(homeDir, ".oh-my-zsh")
-	if _, err := os.Stat(omzPath); err == nil {
+	if _, err := stat(omzPath); err == nil {
 		log.Verbose(verbose, "Oh My Zsh found at %s", omzPath)
 		log.Success("Oh My Zsh is already installed")
 		return
@@ -226,7 +223,7 @@ func setupSoftware(verbose bool) {
 			Message: "Select additional software to install:",
 			Options: optionalOptions,
 		}
-		if err := survey.AskOne(prompt, &selected); err != nil {
+		if err := askOne(prompt, &selected); err != nil {
 			log.Error("Selection canceled: %v", err)
 			return
 		}

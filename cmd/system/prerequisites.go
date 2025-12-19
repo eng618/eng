@@ -3,7 +3,6 @@ package system
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -41,7 +40,7 @@ func EnsurePrerequisites(verbose bool) error {
 func ensureHomebrew(verbose bool) error {
 	log.Verbose(verbose, "Checking for Homebrew")
 
-	_, err := exec.LookPath("brew")
+	_, err := lookPath("brew")
 	if err == nil {
 		log.Verbose(verbose, "Homebrew is installed")
 		return nil
@@ -55,7 +54,7 @@ func ensureHomebrew(verbose bool) error {
 		Message: "Would you like to install Homebrew now?",
 		Default: true,
 	}
-	err = survey.AskOne(prompt, &confirm)
+	err = askOne(prompt, &confirm)
 	cobra.CheckErr(err)
 
 	if !confirm {
@@ -68,7 +67,7 @@ func ensureHomebrew(verbose bool) error {
 	log.Message("Installing Homebrew system-wide (may require sudo)...")
 
 	// Check for bash
-	bashPath, err := exec.LookPath("bash")
+	bashPath, err := lookPath("bash")
 	if err != nil {
 		return fmt.Errorf("bash is required for homebrew installation but was not found: %w", err)
 	}
@@ -78,7 +77,7 @@ func ensureHomebrew(verbose bool) error {
 	tmpDir := os.TempDir()
 	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
 
-	downloadCmd := exec.Command("curl", "-fsSL", "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", "-o", installScript)
+	downloadCmd := execCommand("curl", "-fsSL", "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", "-o", installScript)
 	downloadCmd.Stdout = log.Writer()
 	downloadCmd.Stderr = log.ErrorWriter()
 	if err := downloadCmd.Run(); err != nil {
@@ -91,7 +90,7 @@ func ensureHomebrew(verbose bool) error {
 	}()
 
 	// Run the script using bash
-	installCmd := exec.Command(bashPath, installScript)
+	installCmd := execCommand(bashPath, installScript)
 	installCmd.Stdin = os.Stdin
 	installCmd.Stdout = log.Writer()
 	installCmd.Stderr = log.ErrorWriter()
@@ -109,7 +108,7 @@ func ensureHomebrew(verbose bool) error {
 func ensureGit(verbose bool) error {
 	log.Verbose(verbose, "Checking for Git")
 
-	_, err := exec.LookPath("git")
+	_, err := lookPath("git")
 	if err == nil {
 		log.Verbose(verbose, "Git is installed")
 		return nil
@@ -118,7 +117,7 @@ func ensureGit(verbose bool) error {
 	log.Warn("Git is not installed")
 	log.Start("Installing Git via Homebrew")
 
-	cmd := exec.Command("brew", "install", "git")
+	cmd := execCommand("brew", "install", "git")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 
@@ -135,7 +134,7 @@ func ensureGit(verbose bool) error {
 func ensureBash(verbose bool) error {
 	log.Verbose(verbose, "Checking for Bash")
 
-	_, err := exec.LookPath("bash")
+	_, err := lookPath("bash")
 	if err == nil {
 		log.Verbose(verbose, "Bash is installed")
 		return nil
@@ -144,7 +143,7 @@ func ensureBash(verbose bool) error {
 	log.Warn("Bash is not installed")
 	log.Start("Installing Bash via Homebrew")
 
-	cmd := exec.Command("brew", "install", "bash")
+	cmd := execCommand("brew", "install", "bash")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 
@@ -162,14 +161,14 @@ func ensureBash(verbose bool) error {
 func ensureGitHubSSH(verbose bool) error {
 	log.Verbose(verbose, "Checking for GitHub SSH key")
 
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not determine home directory: %w", err)
 	}
 
 	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
 
-	if _, err := os.Stat(sshKeyPath); err == nil {
+	if _, err := stat(sshKeyPath); err == nil {
 		log.Verbose(verbose, "GitHub SSH key found at ~/.ssh/github")
 		return nil
 	}

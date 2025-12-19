@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/AlecAivazis/survey/v2"
 )
 
 func TestSetupASDF(t *testing.T) {
@@ -96,4 +98,31 @@ func TestSetupDotfiles(t *testing.T) {
 	if !called {
 		t.Error("dotfiles install command was not called")
 	}
+}
+
+func TestSetupSoftware(t *testing.T) {
+	origLookPath := lookPath
+	origAskOne := askOne
+	origExec := execCommand
+	defer func() {
+		lookPath = origLookPath
+		askOne = origAskOne
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "/usr/bin/" + path, nil
+	}
+	// Mock select prompt
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		r := response.(*[]string)
+		*r = []string{} // No optional software selected
+		return nil
+	}
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		return exec.Command("echo", "success")
+	}
+
+	setupSoftware(false)
+	// If it doesn't panic and reaches here, basic flow works
 }
