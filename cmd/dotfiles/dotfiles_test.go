@@ -35,8 +35,8 @@ func TestDotfilesCmd_InfoShowsConfig(t *testing.T) {
 	defer log.ResetWriters()
 
 	viper.Reset()
-	viper.Set("dotfiles.repoPath", "/tmp/repo")
-	viper.Set("dotfiles.worktree", "/tmp/worktree")
+	viper.Set("dotfiles.bare_repo_path", "/tmp/repo")
+	viper.Set("dotfiles.worktree_path", "/tmp/worktree")
 
 	// Ensure DotfilesCmd writes help/info to our buffer
 	DotfilesCmd.SetOut(&buf)
@@ -52,7 +52,7 @@ func TestDotfilesCmd_InfoShowsConfig(t *testing.T) {
 	DotfilesCmd.Run(DotfilesCmd, []string{})
 
 	out := buf.String()
-	if !strings.Contains(out, "Repository Path (dotfiles.repoPath)") {
+	if !strings.Contains(out, "Repository Path:") {
 		t.Fatalf("repo path not shown: %s", out)
 	}
 	if !strings.Contains(out, "/tmp/repo") {

@@ -63,16 +63,9 @@ func init() {
 
 // getDotfilesConfig retrieves the repository and worktree paths from configuration.
 func getDotfilesConfig() (string, string, error) {
-	repoPath := viper.GetString("dotfiles.bare_repo_path")
-	if repoPath == "" {
-		repoPath = viper.GetString("dotfiles.repoPath")
-	}
-	repoPath = os.ExpandEnv(repoPath)
+	repoPath := os.ExpandEnv(viper.GetString("dotfiles.bare_repo_path"))
 
-	worktreePath := viper.GetString("dotfiles.workTree")
-	if worktreePath == "" {
-		worktreePath = viper.GetString("dotfiles.worktree")
-	}
+	worktreePath := viper.GetString("dotfiles.worktree_path")
 	if worktreePath == "" {
 		worktreePath = os.Getenv("HOME")
 	}

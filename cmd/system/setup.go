@@ -165,8 +165,6 @@ func setupOhMyZsh(verbose bool) {
 // setupDotfiles sets up dotfiles by checking prerequisites and running the install command.
 func setupDotfiles(verbose bool) error {
 	log.Verbose(verbose, "Starting dotfiles setup...")
-	
-	// Get the path to the current executable
 
 	// Get the path to the current executable
 	exe, err := os.Executable()
@@ -246,7 +244,7 @@ func setupSoftware(verbose bool) {
 				log.Error("Failed to open URL: %v", err)
 			}
 			fmt.Printf("Press Enter after installing %s to continue...", sw.Name)
-			bufio.NewReader(os.Stdin).ReadBytes('\n')
+			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 		} else {
 			if err := sw.Install(); err != nil {
 				log.Error("Failed to install %s: %v", sw.Name, err)

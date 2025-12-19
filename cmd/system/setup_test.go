@@ -38,7 +38,7 @@ func TestSetupASDF(t *testing.T) {
 	}
 	defer func() { execCommand = exec.Command }()
 
-	setupASDF()
+	setupASDF(false)
 
 	if len(called) == 0 {
 		t.Error("No commands were called, expected asdf plugin add and install")
@@ -51,5 +51,49 @@ func TestSetupASDF(t *testing.T) {
 	}
 	if !foundInstall {
 		t.Error("asdf install was not called")
+	}
+}
+
+func TestSetupOhMyZsh(t *testing.T) {
+	tempDir := t.TempDir()
+	homeOrig := os.Getenv("HOME")
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", homeOrig) }()
+
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "sh" && len(args) > 1 && strings.Contains(args[1], "ohmyzsh") {
+			called = true
+		}
+		return exec.Command("echo", "mock")
+	}
+	defer func() { execCommand = exec.Command }()
+
+	setupOhMyZsh(false)
+
+	if !called {
+		t.Error("Oh My Zsh installation command was not called")
+	}
+}
+
+func TestSetupDotfiles(t *testing.T) {
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		// setupDotfiles calls the executable with "dotfiles", "install"
+		for _, arg := range args {
+			if arg == "dotfiles" {
+				called = true
+			}
+		}
+		return exec.Command("echo", "mock")
+	}
+	defer func() { execCommand = exec.Command }()
+
+	// We expect this to fail in test because os.Executable() might not be what we expect or we don't handle it
+	// But we want to see if execCommand is called
+	_ = setupDotfiles(false)
+
+	if !called {
+		t.Error("dotfiles install command was not called")
 	}
 }

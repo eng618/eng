@@ -24,13 +24,13 @@ var GitCmd = &cobra.Command{
 
 		if showInfo {
 			log.Info("Current git repository management configuration:")
-			devPath := viper.GetString("git.devPath")
+			devPath := viper.GetString("git.dev_path")
 
 			if devPath == "" {
-				log.Warn("  Development Path (git.devPath): Not Set")
+				log.Warn("  Development Path: Not Set")
 				log.Info("  Use 'eng config git-dev-path' to set your development folder path")
 			} else {
-				log.Info("  Development Path (git.devPath): %s", devPath)
+				log.Info("  Development Path: %s", devPath)
 			}
 			return // Don't show help if info flag is used
 		}
@@ -80,9 +80,9 @@ func getWorkingPath(cmd *cobra.Command) (string, error) {
 		return devPath, nil
 	}
 
-	devPath := viper.GetString("git.devPath")
+	devPath := viper.GetString("git.dev_path")
 	if devPath == "" {
-		return "", fmt.Errorf("git.devPath is not set in the configuration file. Use 'eng config git-dev-path' to set your development folder path, or use --current flag")
+		return "", fmt.Errorf("development folder path is not set. Use 'eng config git-dev-path' to set it, or use the --current flag")
 	}
 
 	// Expand environment variables

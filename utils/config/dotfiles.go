@@ -2,8 +2,8 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -13,68 +13,127 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// DotfilesRepo checks for the dotfiles repository path in the configuration and prompts the user to confirm it.
-// If the path is not found or the user does not confirm it, the function will call updateDotfilesRepo() to update the path.
-// It logs the start and success of the path checking process and returns the confirmed path as a string.
-func DotfilesRepo() string {
-	log.Start("Checking for dotfiles repository path")
-
-	// Check for repo path defined in configs
-	repoPath := viper.GetString("dotfiles.repoPath")
-
-	if repoPath == "" {
-		updateDotfilesRepo()
-	} else {
-		// Verify this is the correct repo path they are expecting to use.
-		var rConfirm bool
-		prompt := &survey.Confirm{
-			Message: fmt.Sprintf("Confirm dotfiles repository path: %s?", color.CyanString(repoPath)),
-		}
-		prompt.Default = true
-		err := survey.AskOne(prompt, &rConfirm)
-		cobra.CheckErr(err)
-
-		if !rConfirm {
-			updateDotfilesRepo()
-		}
+// RepoURL checks for the dotfiles repository URL in the configuration and returns it.
+func RepoURL() string {
+	repoURL := viper.GetString("dotfiles.repo_url")
+	if repoURL == "" {
+		UpdateRepoURL()
+		repoURL = viper.GetString("dotfiles.repo_url")
 	}
-
-	log.Success("Confirmed dotfiles repository path")
-	return repoPath
+	return repoURL
 }
 
-// GetDotfilesRepo retrieves the dotfiles repository path from the configuration.
-// If the path is not found in the configuration, it prompts the user to update it.
-// Logs the process of checking and finding the path.
-func GetDotfilesRepo() {
-	log.Start("Checking for dotfiles repository path.")
-
-	// Check for repoPath defined in configs
-	repoPath := viper.GetString("dotfiles.repoPath")
-
-	if repoPath == "" {
-		updateDotfilesRepo()
-	}
-
-	log.Success("Found dotfiles repository path to be: %s", repoPath)
-}
-
-// updateDotfilesRepo prompts the user to input their dotfiles repository path, updates the
-// configuration with the provided path, and saves the updated configuration
-// back to the configuration file. If any error occurs during the process,
-// it is handled appropriately.
-func updateDotfilesRepo() {
-	var r string
+// UpdateRepoURL prompts the user to input their dotfiles repository URL.
+func UpdateRepoURL() {
+	var url string
 	prompt := &survey.Input{
-		Message: "What is your dotfiles repository path?",
+		Message: "What is your dotfiles repository URL? (e.g., https://github.com/username/dotfiles.git)",
 	}
-	err := survey.AskOne(prompt, &r)
+	err := survey.AskOne(prompt, &url)
 	cobra.CheckErr(err)
 
-	viper.Set("dotfiles.repoPath", r)
-	viper.Set("dotfiles.workTree", os.Getenv("HOME"))
+	viper.Set("dotfiles.repo_url", url)
+	saveConfig()
+}
 
-	// Save the updated configuration back to the file
+// Branch checks for the dotfiles branch in the configuration and returns it.
+func Branch() string {
+	branch := viper.GetString("dotfiles.branch")
+	if branch == "" {
+		UpdateBranch()
+		branch = viper.GetString("dotfiles.branch")
+	}
+	return branch
+}
+
+// UpdateBranch prompts the user to select their dotfiles branch.
+func UpdateBranch() {
+	var branch string
+	prompt := &survey.Select{
+		Message: "Which branch should be used for dotfiles?",
+		Options: []string{"main", "work", "server"},
+		Default: "main",
+	}
+	err := survey.AskOne(prompt, &branch)
+	cobra.CheckErr(err)
+
+	viper.Set("dotfiles.branch", branch)
+	saveConfig()
+}
+
+// BareRepoPath checks for the bare repository path in the configuration and returns it.
+func BareRepoPath() string {
+	bareRepoPath := viper.GetString("dotfiles.bare_repo_path")
+	if bareRepoPath == "" {
+		UpdateBareRepoPath()
+		bareRepoPath = viper.GetString("dotfiles.bare_repo_path")
+	}
+	return os.ExpandEnv(bareRepoPath)
+}
+
+// UpdateBareRepoPath prompts the user to input their bare repository path.
+func UpdateBareRepoPath() {
+	homeDir, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+
+	defaultPath := filepath.Join(homeDir, ".eng-cfg")
+
+	var path string
+	prompt := &survey.Input{
+		Message: "Where should the bare repository be stored?",
+		Default: defaultPath,
+	}
+	err = survey.AskOne(prompt, &path)
+	cobra.CheckErr(err)
+
+	viper.Set("dotfiles.bare_repo_path", path)
+	saveConfig()
+}
+
+// WorktreePath checks for the worktree path in the configuration and returns it.
+func WorktreePath() string {
+	worktreePath := viper.GetString("dotfiles.worktree_path")
+	if worktreePath == "" {
+		UpdateWorktreePath()
+		worktreePath = viper.GetString("dotfiles.worktree_path")
+	}
+	return os.ExpandEnv(worktreePath)
+}
+
+// UpdateWorktreePath prompts the user to input their worktree path.
+func UpdateWorktreePath() {
+	homeDir, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+
+	var path string
+	prompt := &survey.Input{
+		Message: "What is your worktree path (usually home)?",
+		Default: homeDir,
+	}
+	err = survey.AskOne(prompt, &path)
+	cobra.CheckErr(err)
+
+	viper.Set("dotfiles.worktree_path", path)
+	saveConfig()
+}
+
+// DotfilesRepo is an alias for BareRepoPath for backward compatibility with external callers.
+func DotfilesRepo() string {
+	return BareRepoPath()
+}
+
+// UpdateDotfilesRepo is an alias for UpdateBareRepoPath.
+func UpdateDotfilesRepo() {
+	UpdateBareRepoPath()
+}
+
+// GetDotfilesRepo logs the current dotfiles repository path.
+func GetDotfilesRepo() {
+	path := BareRepoPath()
+	log.Success("Dotfiles repository path: %s", path)
+}
+
+func saveConfig() {
 	if err := viper.WriteConfig(); err != nil {
 		err := errors.New(color.RedString("Error writing config file: %v", err))
 		cobra.CheckErr(err)

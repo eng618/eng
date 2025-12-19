@@ -34,12 +34,12 @@ var CopyChangesCmd = &cobra.Command{
 		log.Verbose(isVerbose, "Repository path: %s", repoPath)
 		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		devPath := os.ExpandEnv(viper.GetString("git.devPath"))
+		devPath := os.ExpandEnv(viper.GetString("git.dev_path"))
 		if devPath == "" {
-			log.Error("git.devPath is not set or resolves to an empty string in the configuration file")
+			log.Error("Development folder path is not set in configuration")
 			return
 		}
-		log.Verbose(isVerbose, "git.devPath: %s", devPath)
+		log.Verbose(isVerbose, "Development path: %s", devPath)
 
 		engCfgPath := filepath.Join(devPath, "eng-cfg")
 		log.Verbose(isVerbose, "eng-cfg path: %s", engCfgPath)

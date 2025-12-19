@@ -154,7 +154,7 @@ func getSoftwareList() []Software {
 			Description: "Secure Messaging",
 			Optional:    true,
 			URL:         "https://signal.org/download/",
-			Check: func() bool { return false }, 
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://signal.org/download/") },
 		},
 		{
@@ -162,7 +162,7 @@ func getSoftwareList() []Software {
 			Description: "Remote Desktop",
 			Optional:    true,
 			URL:         "https://www.realvnc.com/en/connect/download/viewer/",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://www.realvnc.com/en/connect/download/viewer/") },
 		},
 		{
@@ -195,7 +195,7 @@ func getSoftwareList() []Software {
 			Description: "YubiKey Configuration",
 			Optional:    true,
 			URL:         "https://www.yubico.com/support/download/yubikey-manager/",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://www.yubico.com/support/download/yubikey-manager/") },
 		},
 		{
@@ -203,7 +203,7 @@ func getSoftwareList() []Software {
 			Description: "Container Management",
 			Optional:    true,
 			URL:         "https://rancherdesktop.io/",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://rancherdesktop.io/") },
 		},
 		{
@@ -211,7 +211,7 @@ func getSoftwareList() []Software {
 			Description: "Headset Software",
 			Optional:    true,
 			URL:         "https://www.jabra.com/software-and-services/jabra-direct",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://www.jabra.com/software-and-services/jabra-direct") },
 		},
 		{
@@ -219,7 +219,7 @@ func getSoftwareList() []Software {
 			Description: "Screen Recorder",
 			Optional:    true,
 			URL:         "https://obsproject.com/",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://obsproject.com/") },
 		},
 		{
@@ -227,7 +227,7 @@ func getSoftwareList() []Software {
 			Description: "Video Transcoder",
 			Optional:    true,
 			URL:         "https://handbrake.fr/downloads.php",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://handbrake.fr/downloads.php") },
 		},
 		{
@@ -235,7 +235,7 @@ func getSoftwareList() []Software {
 			Description: "Notes & Collaboration",
 			Optional:    true,
 			URL:         "https://www.notion.so/desktop",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://www.notion.so/desktop") },
 		},
 		{
@@ -243,7 +243,7 @@ func getSoftwareList() []Software {
 			Description: "DNS Security",
 			Optional:    true,
 			URL:         "https://nextdns.io/",
-			Check: func() bool { return false },
+			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://nextdns.io/") },
 		},
 	}

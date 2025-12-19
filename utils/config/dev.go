@@ -20,7 +20,7 @@ func GitDevPath() string {
 	log.Start("Checking for development folder path")
 
 	// Check for dev path defined in configs
-	devPath := viper.GetString("git.devPath")
+	devPath := viper.GetString("git.dev_path")
 
 	if devPath == "" {
 		updateGitDevPath()
@@ -56,7 +56,7 @@ func updateGitDevPath() {
 	err := survey.AskOne(prompt, &d)
 	cobra.CheckErr(err)
 
-	viper.Set("git.devPath", d)
+	viper.Set("git.dev_path", d)
 
 	// Save the updated configuration back to the file
 	if err := viper.WriteConfig(); err != nil {

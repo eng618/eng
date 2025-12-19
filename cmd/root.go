@@ -33,6 +33,7 @@ import (
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/utils"
+	configUtils "github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -142,4 +143,7 @@ func initConfig() {
 		// Config file was found but another error was produced
 		log.Warn("Error reading config file %s: %v", viper.ConfigFileUsed(), err)
 	}
+
+	// Run migration to ensure keys are standardized
+	configUtils.MigrateConfig()
 }

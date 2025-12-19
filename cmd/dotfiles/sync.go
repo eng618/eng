@@ -40,12 +40,12 @@ func SyncRepo(repoPath, worktreePath string, isVerbose bool) error {
 	log.Verbose(isVerbose, "Syncing repository at %s with worktree %s", repoPath, worktreePath)
 
 	log.Info("Fetching dotfiles")
-	if err := repo.FetchBareRepo(repoPath, worktreePath); err != nil {
+	if err := fetchRepo(repoPath, worktreePath); err != nil {
 		return err
 	}
 
 	log.Info("Pulling dotfiles with rebase")
-	if err := repo.PullRebaseBareRepo(repoPath, worktreePath); err != nil {
+	if err := pullRebaseRepo(repoPath, worktreePath); err != nil {
 		return err
 	}
 

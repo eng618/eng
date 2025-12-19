@@ -19,8 +19,8 @@ func TestFetchCmd_MissingConfig(t *testing.T) {
 
 func TestFetchCmd_SuccessAndFailure(t *testing.T) {
 	viper.Reset()
-	viper.Set("dotfiles.repoPath", "/tmp/repo")
-	viper.Set("dotfiles.worktree", "/tmp/worktree")
+	viper.Set("dotfiles.bare_repo_path", "/tmp/repo")
+	viper.Set("dotfiles.worktree_path", "/tmp/worktree")
 
 	called := 0
 	// Override to simulate failure then success

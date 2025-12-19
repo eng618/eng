@@ -20,8 +20,9 @@ func TestCopyChangesCmd_MissingConfig(t *testing.T) {
 
 func TestGetModifiedFiles(t *testing.T) {
 	viper.Reset()
-	viper.Set("dotfiles.repoPath", "/tmp/repo")
-	viper.Set("dotfiles.worktree", "/tmp/worktree")
+	viper.Set("dotfiles.bare_repo_path", "/tmp/repo")
+	viper.Set("dotfiles.worktree_path", "/tmp/worktree")
+	viper.Set("git.dev_path", "/tmp/dev")
 
 	// Mock the function to return some files
 	original := getModifiedFilesFunc
