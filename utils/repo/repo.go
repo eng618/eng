@@ -234,3 +234,32 @@ func getRemoteDefaultBranch(repoPath string) (string, error) {
 
 	return "", nil
 }
+
+// CheckoutBareRepo performs a git checkout operation for a bare repository.
+// It takes the repository path `repoPath` and work tree `workTree` as inputs.
+// If force is true, it will discard any local changes and force the checkout.
+// If all is true, it will checkout all files from the index/HEAD.
+// Returns an error if the operation fails.
+func CheckoutBareRepo(repoPath string, workTree string, force bool, all bool) error {
+	args := []string{"--git-dir=" + repoPath, "--work-tree=" + workTree, "checkout"}
+
+	if force {
+		args = append(args, "--force")
+	}
+
+	if all {
+		args = append(args, ".")
+	}
+
+	cmd := exec.Command("git", args...)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+
+	err := cmd.Run()
+	if err != nil {
+		log.Error("CheckoutBareRepo failed: %v", err)
+		return err
+	}
+
+	return nil
+}

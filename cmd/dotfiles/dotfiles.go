@@ -59,4 +59,5 @@ func init() {
 	DotfilesCmd.AddCommand(FetchCmd)
 	DotfilesCmd.AddCommand(StatusCmd)
 	DotfilesCmd.AddCommand(CopyChangesCmd)
+	DotfilesCmd.AddCommand(CheckoutCmd)
 }
