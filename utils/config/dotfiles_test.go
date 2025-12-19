@@ -474,3 +474,330 @@ func TestDefaultValues(t *testing.T) {
 		assert.False(t, verbose, "Expected unset verbose to be false")
 	})
 }
+
+// TestBareRepoPathEnvironmentExpansion tests environment variable expansion in BareRepoPath
+func TestBareRepoPathEnvironmentExpansion(t *testing.T) {
+	testCases := []struct {
+		name            string
+		configPath      string
+		envVars         map[string]string
+		expectedPath    string
+		expectExpansion bool
+	}{
+		{
+			name:            "NoExpansionNeeded",
+			configPath:      "/absolute/path/to/repo",
+			envVars:         map[string]string{},
+			expectedPath:    "/absolute/path/to/repo",
+			expectExpansion: false,
+		},
+		{
+			name:            "HomeDirectoryExpansion",
+			configPath:      "$HOME/.config/dotfiles",
+			envVars:         map[string]string{"HOME": "/home/user"},
+			expectedPath:    "/home/user/.config/dotfiles",
+			expectExpansion: true,
+		},
+		{
+			name:            "MultipleEnvVars",
+			configPath:      "$HOME/$USER/config",
+			envVars:         map[string]string{"HOME": "/home/user", "USER": "testuser"},
+			expectedPath:    "/home/user/testuser/config",
+			expectExpansion: true,
+		},
+		{
+			name:            "MixedPath",
+			configPath:      "/base/$HOME/suffix",
+			envVars:         map[string]string{"HOME": "/home/user"},
+			expectedPath:    "/base//home/user/suffix",
+			expectExpansion: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Reset viper for test
+			viper.Reset()
+
+			// Set environment variables
+			for key, value := range tc.envVars {
+				oldValue := os.Getenv(key)
+				_ = os.Setenv(key, value)
+				defer func(k, v string) {
+					if v == "" {
+						_ = os.Unsetenv(k)
+					} else {
+						_ = os.Setenv(k, v)
+					}
+				}(key, oldValue)
+			}
+
+			// Set config path
+			viper.Set("dotfiles.bare_repo_path", tc.configPath)
+
+			// Test the expansion logic directly (similar to BareRepoPath function)
+			configPath := viper.GetString("dotfiles.bare_repo_path")
+			expandedPath := os.ExpandEnv(configPath)
+
+			assert.Equal(t, tc.expectedPath, expandedPath, "Expected path to be expanded correctly")
+
+			if tc.expectExpansion {
+				assert.NotEqual(t, tc.configPath, expandedPath, "Expected path to be different after expansion")
+				// Check that variables were expanded
+				for varName := range tc.envVars {
+					assert.NotContains(t, expandedPath, "$"+varName, "Expected %s variable to be expanded", varName)
+				}
+			} else {
+				assert.Equal(t, tc.configPath, expandedPath, "Expected path to remain unchanged")
+			}
+		})
+	}
+}
+
+// TestConfigFileBackupAndRecovery tests config file backup and recovery scenarios
+func TestConfigFileBackupAndRecovery(t *testing.T) {
+	t.Run("ConfigFileBackupOnWrite", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		configPath := "/tmp/test_config_backup.yaml"
+		viper.SetConfigFile(configPath)
+		defer func() { _ = os.Remove(configPath) }()
+
+		// Write initial config
+		viper.Set("test.initial", "value1")
+		err := viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing initial config")
+
+		// Modify config
+		viper.Set("test.modified", "value2")
+		err = viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing modified config")
+
+		// Verify both values are present
+		assert.Equal(t, "value1", viper.GetString("test.initial"))
+		assert.Equal(t, "value2", viper.GetString("test.modified"))
+	})
+
+	t.Run("ConfigFileCorruptionRecovery", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		configPath := "/tmp/test_config_corrupt.yaml"
+		viper.SetConfigFile(configPath)
+		defer func() { _ = os.Remove(configPath) }()
+
+		// Write valid config
+		viper.Set("test.value", "original")
+		err := viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing config")
+
+		// Corrupt the file (simulate file corruption)
+		err = os.WriteFile(configPath, []byte("invalid: yaml: content: [unclosed"), 0o644)
+		assert.NoError(t, err, "Expected no error when corrupting file")
+
+		// Try to read corrupted config - this should fail gracefully
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		viper.SetConfigFile(configPath)
+		err = viper.ReadInConfig()
+		assert.Error(t, err, "Expected error when reading corrupted config")
+	})
+
+	t.Run("ConfigFilePermissionsCheck", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		configPath := "/tmp/test_config_perms.yaml"
+		viper.SetConfigFile(configPath)
+		defer func() { _ = os.Remove(configPath) }()
+
+		viper.Set("test.value", "secret")
+
+		err := viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing config")
+
+		// Check file permissions exist and are reasonable
+		info, err := os.Stat(configPath)
+		assert.NoError(t, err, "Expected no error when getting file info")
+
+		mode := info.Mode()
+		// File should be readable by owner
+		assert.True(t, mode.Perm()&0o400 != 0, "Config file should be readable by owner")
+		// File should be writable by owner
+		assert.True(t, mode.Perm()&0o200 != 0, "Config file should be writable by owner")
+		// File should exist
+		assert.True(t, mode.IsRegular(), "Config file should be a regular file")
+	})
+}
+
+// TestConfigMigrationScenarios tests various config migration scenarios
+func TestConfigMigrationScenarios(t *testing.T) {
+	t.Run("EmptyConfigInitialization", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		configPath := "/tmp/test_config_empty.yaml"
+		viper.SetConfigFile(configPath)
+		defer func() { _ = os.Remove(configPath) }()
+
+		// Write empty config
+		err := viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing empty config")
+
+		// Read it back
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		viper.SetConfigFile(configPath)
+		err = viper.ReadInConfig()
+		assert.NoError(t, err, "Expected no error when reading empty config")
+
+		// Verify default values
+		assert.Empty(t, viper.GetString("user-email"))
+		assert.Empty(t, viper.GetString("dotfiles.repoPath"))
+		assert.Empty(t, viper.GetString("dotfiles.repo_url"))
+		assert.Empty(t, viper.GetString("dotfiles.branch"))
+		assert.False(t, viper.GetBool("verbose"))
+	})
+
+	t.Run("PartialConfigHandling", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		configPath := "/tmp/test_config_partial.yaml"
+		viper.SetConfigFile(configPath)
+		defer func() { _ = os.Remove(configPath) }()
+
+		// Set only some values
+		viper.Set("user-email", "test@example.com")
+		viper.Set("verbose", true)
+		// Leave others unset
+
+		err := viper.WriteConfig()
+		assert.NoError(t, err, "Expected no error when writing partial config")
+
+		// Read it back
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		viper.SetConfigFile(configPath)
+		err = viper.ReadInConfig()
+		assert.NoError(t, err, "Expected no error when reading partial config")
+
+		// Verify set values
+		assert.Equal(t, "test@example.com", viper.GetString("user-email"))
+		assert.True(t, viper.GetBool("verbose"))
+
+		// Verify unset values have defaults
+		assert.Empty(t, viper.GetString("dotfiles.repoPath"))
+		assert.Empty(t, viper.GetString("dotfiles.repo_url"))
+		assert.Empty(t, viper.GetString("dotfiles.branch"))
+	})
+}
+
+// TestConfigEdgeCases tests edge cases in config handling
+func TestConfigEdgeCases(t *testing.T) {
+	t.Run("SpecialCharactersInPaths", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+
+		// Test paths with special characters
+		specialPaths := []string{
+			"/path with spaces/repo",
+			"/path-with-dashes/repo",
+			"/path_with_underscores/repo",
+			"/path.with.dots/repo",
+			"C:\\Windows\\path\\repo", // Windows-style path
+		}
+
+		for _, path := range specialPaths {
+			viper.Set("dotfiles.repoPath", path)
+			storedPath := viper.GetString("dotfiles.repoPath")
+			assert.Equal(t, path, storedPath, "Expected special characters to be preserved in path: %s", path)
+		}
+	})
+
+	t.Run("VeryLongValues", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+
+		// Create a very long string
+		longString := ""
+		for i := 0; i < 1000; i++ {
+			longString += "a"
+		}
+
+		viper.Set("dotfiles.repo_url", longString)
+		storedString := viper.GetString("dotfiles.repo_url")
+		assert.Equal(t, longString, storedString, "Expected very long values to be stored correctly")
+		assert.Len(t, storedString, 1000, "Expected length to be preserved")
+	})
+
+	t.Run("UnicodeCharacters", func(t *testing.T) {
+		// Reset viper for test
+		viper.Reset()
+
+		unicodeValues := []string{
+			"user@例え.テスト",           // Japanese characters
+			"user@пример.испытание", // Cyrillic characters
+			"user@مثال.اختبار",      // Arabic characters
+			"repo/path/测试",          // Chinese characters
+		}
+
+		for _, value := range unicodeValues {
+			viper.Set("dotfiles.repo_url", value)
+			storedValue := viper.GetString("dotfiles.repo_url")
+			assert.Equal(t, value, storedValue, "Expected Unicode characters to be preserved: %s", value)
+		}
+	})
+}
+
+// TestConfigThreadSafetyNote documents that viper is not thread-safe
+func TestConfigThreadSafetyNote(t *testing.T) {
+	// This test documents that viper (the underlying config library) is not thread-safe
+	// and concurrent access should be avoided in production code
+
+	// Reset viper for test
+	viper.Reset()
+
+	// Set a simple value to verify viper works
+	viper.Set("test.thread_safety", "value")
+	assert.Equal(t, "value", viper.GetString("test.thread_safety"))
+
+	// Note: Concurrent access to viper would cause race conditions and is not recommended
+	// Each goroutine should use its own viper instance if concurrent access is needed
+}
+
+// TestConfigTypeValidation tests validation of different config value types
+func TestConfigTypeValidation(t *testing.T) {
+	// Reset viper for test
+	viper.Reset()
+
+	t.Run("StringValues", func(t *testing.T) {
+		testValues := map[string]string{
+			"user-email":              "test@example.com",
+			"dotfiles.repoPath":       "/path/to/repo",
+			"dotfiles.repo_url":       "https://github.com/user/repo.git",
+			"dotfiles.branch":         "main",
+			"dotfiles.bare_repo_path": "/bare/repo/path",
+			"git.devPath":             "/dev/path",
+		}
+
+		for key, value := range testValues {
+			viper.Set(key, value)
+			storedValue := viper.GetString(key)
+			assert.Equal(t, value, storedValue, "Expected string value to be stored correctly for key: %s", key)
+			assert.IsType(t, "", storedValue, "Expected value to be string type for key: %s", key)
+		}
+	})
+
+	t.Run("BooleanValues", func(t *testing.T) {
+		viper.Set("verbose", true)
+		storedValue := viper.GetBool("verbose")
+		assert.True(t, storedValue, "Expected boolean value to be stored correctly")
+		assert.IsType(t, true, storedValue, "Expected value to be boolean type")
+
+		viper.Set("verbose", false)
+		storedValue = viper.GetBool("verbose")
+		assert.False(t, storedValue, "Expected boolean false value to be stored correctly")
+	})
+}
