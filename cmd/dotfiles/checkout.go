@@ -1,13 +1,10 @@
 package dotfiles
 
 import (
-	"os"
-
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // CheckoutCmd defines the cobra command for checking out files in the dotfiles repository.
@@ -23,21 +20,13 @@ var CheckoutCmd = &cobra.Command{
 		all, _ := cmd.Flags().GetBool("all")
 		force, _ := cmd.Flags().GetBool("force")
 
-		repoPath := viper.GetString("dotfiles.repoPath")
-		repoPath = os.ExpandEnv(repoPath) // Expand environment variables
-		if repoPath == "" {
-			log.Error("dotfiles.repoPath is not set or resolves to an empty string in the configuration file")
+		repoPath, worktreePath, err := getDotfilesConfig()
+		if err != nil || repoPath == "" {
+			log.Error("Dotfiles repository path is not set in configuration")
 			return
 		}
-		log.Verbose(isVerbose, "dotfiles.repoPath: %s", repoPath)
-
-		worktreePath := viper.GetString("dotfiles.worktree")
-		worktreePath = os.ExpandEnv(worktreePath) // Expand environment variables
-		if worktreePath == "" {
-			log.Error("dotfiles.worktree is not set in the configuration file")
-			return
-		}
-		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
+		log.Verbose(isVerbose, "Repository path: %s", repoPath)
+		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
 		// Log what operation is being performed
 		operation := "Checking out"
@@ -52,7 +41,7 @@ var CheckoutCmd = &cobra.Command{
 		log.Info(operation)
 
 		// Use injectable function so tests can override and avoid executing git.
-		err := checkoutRepo(repoPath, worktreePath, force, all)
+		err = checkoutRepo(repoPath, worktreePath, force, all)
 		if err != nil {
 			log.Error("Failed to checkout dotfiles: %s", err)
 			return

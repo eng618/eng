@@ -1,13 +1,11 @@
 package dotfiles
 
 import (
-	"os"
 	"os/exec"
 
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // StatusCmd defines the cobra command for checking the status of the dotfiles repository.
@@ -21,24 +19,16 @@ var StatusCmd = &cobra.Command{
 
 		isVerbose := utils.IsVerbose(cmd)
 
-		repoPath := viper.GetString("dotfiles.repoPath")
-		repoPath = os.ExpandEnv(repoPath) // Expand environment variables
-		if repoPath == "" {
-			log.Error("dotfiles.repoPath is not set or resolves to an empty string in the configuration file")
+		repoPath, worktreePath, err := getDotfilesConfig()
+		if err != nil || repoPath == "" {
+			log.Error("Dotfiles repository path is not set in configuration")
 			return
 		}
-		log.Verbose(isVerbose, "dotfiles.repoPath: %s", repoPath)
-
-		worktreePath := viper.GetString("dotfiles.worktree")
-		worktreePath = os.ExpandEnv(worktreePath) // Expand environment variables
-		if worktreePath == "" {
-			log.Error("dotfiles.worktree is not set in the configuration file")
-			return
-		}
-		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
+		log.Verbose(isVerbose, "Repository path: %s", repoPath)
+		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
 		// Use injectable function so tests can override and avoid executing git.
-		err := checkStatus(repoPath, worktreePath)
+		err = checkStatus(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to check status: %s", err)
 			return

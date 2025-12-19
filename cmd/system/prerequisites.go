@@ -13,37 +13,37 @@ import (
 
 // EnsurePrerequisites checks and installs all prerequisites needed for dotfiles installation.
 // Returns an error if any critical prerequisite cannot be satisfied.
-func EnsurePrerequisites() error {
-	log.Start("Checking prerequisites for dotfiles installation")
+func EnsurePrerequisites(verbose bool) error {
+	log.Verbose(verbose, "Checking prerequisites for dotfiles installation")
 
 	// Sequential checks with progress logging
-	if err := ensureHomebrew(); err != nil {
+	if err := ensureHomebrew(verbose); err != nil {
 		return err
 	}
 
-	if err := ensureGit(); err != nil {
+	if err := ensureGit(verbose); err != nil {
 		return err
 	}
 
-	if err := ensureBash(); err != nil {
+	if err := ensureBash(verbose); err != nil {
 		return err
 	}
 
-	if err := ensureGitHubSSH(); err != nil {
+	if err := ensureGitHubSSH(verbose); err != nil {
 		return err
 	}
 
-	log.Success("All prerequisites satisfied")
+	log.Verbose(verbose, "All prerequisites satisfied")
 	return nil
 }
 
 // ensureHomebrew checks if Homebrew is installed, and if not, prompts to install it.
-func ensureHomebrew() error {
-	log.Start("Checking for Homebrew")
+func ensureHomebrew(verbose bool) error {
+	log.Verbose(verbose, "Checking for Homebrew")
 
 	_, err := exec.LookPath("brew")
 	if err == nil {
-		log.Success("Homebrew is installed")
+		log.Verbose(verbose, "Homebrew is installed")
 		return nil
 	}
 
@@ -106,12 +106,12 @@ func ensureHomebrew() error {
 }
 
 // ensureGit checks if Git is installed, and if not, installs it via Homebrew.
-func ensureGit() error {
-	log.Start("Checking for Git")
+func ensureGit(verbose bool) error {
+	log.Verbose(verbose, "Checking for Git")
 
 	_, err := exec.LookPath("git")
 	if err == nil {
-		log.Success("Git is installed")
+		log.Verbose(verbose, "Git is installed")
 		return nil
 	}
 
@@ -132,12 +132,12 @@ func ensureGit() error {
 }
 
 // ensureBash checks if Bash is installed, and if not, installs it via Homebrew.
-func ensureBash() error {
-	log.Start("Checking for Bash")
+func ensureBash(verbose bool) error {
+	log.Verbose(verbose, "Checking for Bash")
 
 	_, err := exec.LookPath("bash")
 	if err == nil {
-		log.Success("Bash is installed")
+		log.Verbose(verbose, "Bash is installed")
 		return nil
 	}
 
@@ -159,8 +159,8 @@ func ensureBash() error {
 
 // ensureGitHubSSH checks if a valid SSH key for GitHub exists at ~/.ssh/github.
 // If not found, it provides instructions and exits.
-func ensureGitHubSSH() error {
-	log.Start("Checking for GitHub SSH key")
+func ensureGitHubSSH(verbose bool) error {
+	log.Verbose(verbose, "Checking for GitHub SSH key")
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -170,7 +170,7 @@ func ensureGitHubSSH() error {
 	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
 
 	if _, err := os.Stat(sshKeyPath); err == nil {
-		log.Success("GitHub SSH key found at ~/.ssh/github")
+		log.Verbose(verbose, "GitHub SSH key found at ~/.ssh/github")
 		return nil
 	}
 

@@ -26,19 +26,13 @@ var CopyChangesCmd = &cobra.Command{
 
 		isVerbose := utils.IsVerbose(cmd)
 
-		repoPath := os.ExpandEnv(viper.GetString("dotfiles.repoPath"))
-		if repoPath == "" {
-			log.Error("dotfiles.repoPath is not set or resolves to an empty string in the configuration file")
+		repoPath, worktreePath, err := getDotfilesConfig()
+		if err != nil || repoPath == "" {
+			log.Error("Dotfiles repository path is not set in configuration")
 			return
 		}
-		log.Verbose(isVerbose, "dotfiles.repoPath: %s", repoPath)
-
-		worktreePath := os.ExpandEnv(viper.GetString("dotfiles.worktree"))
-		if worktreePath == "" {
-			log.Error("dotfiles.worktree is not set or resolves to an empty string in the configuration file")
-			return
-		}
-		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
+		log.Verbose(isVerbose, "Repository path: %s", repoPath)
+		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
 		devPath := os.ExpandEnv(viper.GetString("git.devPath"))
 		if devPath == "" {

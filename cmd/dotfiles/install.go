@@ -15,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 
 	"github.com/eng618/eng/cmd/system"
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
 	"github.com/spf13/cobra"
@@ -31,31 +32,23 @@ var InstallCmd = &cobra.Command{
   - Initialize git submodules
   - Configure git to hide untracked files`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := installDotfiles(); err != nil {
+		if err := installDotfiles(utils.IsVerbose(cmd)); err != nil {
 			log.Fatal("Dotfiles installation failed: %v", err)
 		}
 	},
 }
 
 // installDotfiles orchestrates the complete dotfiles installation workflow.
-func installDotfiles() error {
+func installDotfiles(verbose bool) error {
 	log.Start("Starting dotfiles installation")
 
 	// Step 1: Check prerequisites
-	if err := system.EnsurePrerequisites(); err != nil {
+	if err := system.EnsurePrerequisites(verbose); err != nil {
 		return err
 	}
 
 	// Step 2: Get configuration values
-	repoURL := config.RepoURL()
-	branch := config.Branch()
-	bareRepoPath := config.BareRepoPath()
-	bareRepoPath = os.ExpandEnv(bareRepoPath)
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("could not determine home directory: %w", err)
-	}
+	repoURL, branch, bareRepoPath, worktreePath := config.VerifyDotfilesConfig()
 
 	// Step 3: Handle existing bare repository
 	if _, err := os.Stat(bareRepoPath); err == nil {
@@ -69,7 +62,7 @@ func installDotfiles() error {
 			log.Message("Skipping repository clone, using existing repository")
 			return nil
 		case "update":
-			if err := updateBareRepoWorktree(bareRepoPath, homeDir); err != nil {
+			if err := updateBareRepoWorktree(bareRepoPath, worktreePath, verbose); err != nil {
 				return err
 			}
 			return nil
@@ -87,13 +80,13 @@ func installDotfiles() error {
 	}
 
 	// Step 5: Backup conflicting files
-	backupPath, hasConflicts, err := backupConflicts(bareRepoPath, homeDir)
+	backupPath, hasConflicts, err := backupConflicts(bareRepoPath, worktreePath)
 	if err != nil {
 		return err
 	}
 
 	// Step 6: Checkout files
-	if err := checkoutFiles(bareRepoPath, homeDir); err != nil {
+	if err := checkoutFiles(bareRepoPath, worktreePath); err != nil {
 		if hasConflicts {
 			log.Error("Checkout failed. Conflicting files have been backed up to: %s", backupPath)
 			log.Message("You can restore files from the backup if needed")
@@ -102,13 +95,13 @@ func installDotfiles() error {
 	}
 
 	// Step 7: Initialize submodules
-	if err := initSubmodules(bareRepoPath, homeDir); err != nil {
+	if err := initSubmodules(bareRepoPath, worktreePath); err != nil {
 		log.Warn("Failed to initialize submodules: %v", err)
-		log.Message("You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive", bareRepoPath, homeDir)
+		log.Message("You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive", bareRepoPath, worktreePath)
 	}
 
 	// Step 8: Configure git
-	if err := configureGit(bareRepoPath, homeDir); err != nil {
+	if err := configureGit(bareRepoPath, worktreePath); err != nil {
 		log.Warn("Failed to configure git: %v", err)
 	}
 
@@ -149,17 +142,11 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 
 // updateBareRepoWorktree fetches and pulls the latest changes in the bare repository to the worktree.
 // It uses the git command line tool because go-git has some limitations with bare repo worktrees.
-func updateBareRepoWorktree(bareRepoPath, homeDir string) error {
+func updateBareRepoWorktree(bareRepoPath, homeDir string, isVerbose bool) error {
 	log.Start("Updating existing repository and worktree")
 
-	// We use git command here to perform a pull, which handles fetch + merge/checkout
-	// safely regarding existing files (git will complain if there are conflicts, which is desirable behavior for update vs overwrite)
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "pull")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to update repository: %w", err)
+	if err := SyncRepo(bareRepoPath, homeDir, isVerbose); err != nil {
+		return fmt.Errorf("failed to sync repository: %w", err)
 	}
 
 	log.Success("Repository and worktree updated successfully")

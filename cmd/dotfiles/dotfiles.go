@@ -24,18 +24,17 @@ var DotfilesCmd = &cobra.Command{
 
 		if showInfo {
 			log.Info("Current dotfiles configuration:")
-			repoPath := os.ExpandEnv(viper.GetString("dotfiles.repoPath"))
-			worktreePath := os.ExpandEnv(viper.GetString("dotfiles.worktree"))
+			repoPath, worktreePath, _ := getDotfilesConfig()
 
 			if repoPath == "" {
-				log.Warn("  Repository Path (dotfiles.repoPath): Not Set")
+				log.Warn("  Repository Path: Not Set")
 			} else {
-				log.Info("  Repository Path (dotfiles.repoPath): %s", repoPath)
+				log.Info("  Repository Path: %s", repoPath)
 			}
 			if worktreePath == "" {
-				log.Warn("  Worktree Path (dotfiles.worktree): Not Set")
+				log.Warn("  Worktree Path:   Not Set")
 			} else {
-				log.Info("  Worktree Path (dotfiles.worktree): %s", worktreePath)
+				log.Info("  Worktree Path:   %s", worktreePath)
 			}
 			return // Don't show help if info flag is used
 		}
@@ -60,4 +59,24 @@ func init() {
 	DotfilesCmd.AddCommand(StatusCmd)
 	DotfilesCmd.AddCommand(CopyChangesCmd)
 	DotfilesCmd.AddCommand(CheckoutCmd)
+}
+
+// getDotfilesConfig retrieves the repository and worktree paths from configuration.
+func getDotfilesConfig() (string, string, error) {
+	repoPath := viper.GetString("dotfiles.bare_repo_path")
+	if repoPath == "" {
+		repoPath = viper.GetString("dotfiles.repoPath")
+	}
+	repoPath = os.ExpandEnv(repoPath)
+
+	worktreePath := viper.GetString("dotfiles.workTree")
+	if worktreePath == "" {
+		worktreePath = viper.GetString("dotfiles.worktree")
+	}
+	if worktreePath == "" {
+		worktreePath = os.Getenv("HOME")
+	}
+	worktreePath = os.ExpandEnv(worktreePath)
+
+	return repoPath, worktreePath, nil
 }

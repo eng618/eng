@@ -1,13 +1,10 @@
 package dotfiles
 
 import (
-	"os"
-
 	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 	"github.com/eng618/eng/utils/repo"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // SyncCmd defines the cobra command for syncing the dotfiles repository.
@@ -21,35 +18,16 @@ var SyncCmd = &cobra.Command{
 
 		isVerbose := utils.IsVerbose(cmd)
 
-		repoPath := viper.GetString("dotfiles.repoPath")
-		repoPath = os.ExpandEnv(repoPath) // Expand environment variables
-		if repoPath == "" {
-			log.Error("dotfiles.repoPath is not set or resolves to an empty string in the configuration file")
+		repoPath, worktreePath, err := getDotfilesConfig()
+		if err != nil || repoPath == "" {
+			log.Error("Dotfiles repository path is not set in configuration")
 			return
 		}
-		log.Verbose(isVerbose, "dotfiles.repoPath: %s", repoPath)
+		log.Verbose(isVerbose, "Repository path: %s", repoPath)
+		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		worktreePath := viper.GetString("dotfiles.worktree")
-		worktreePath = os.ExpandEnv(worktreePath) // Expand environment variables
-		if worktreePath == "" {
-			log.Error("dotfiles.worktree is not set in the configuration file")
-			return
-		}
-		log.Verbose(isVerbose, "dotfiles.worktree: %s", worktreePath)
-
-		log.Info("Fetching dotfiles")
-		// Use injectable function so tests can override and avoid executing git.
-		err := fetchRepo(repoPath, worktreePath)
-		if err != nil {
-			log.Error("Failed to fetch dotfiles: %s", err)
-			return
-		}
-
-		// Then pull with rebase
-		log.Info("Pulling dotfiles with rebase")
-		err = pullRebaseRepo(repoPath, worktreePath)
-		if err != nil {
-			log.Error("Failed to pull and rebase dotfiles: %s", err)
+		if err = SyncRepo(repoPath, worktreePath, isVerbose); err != nil {
+			log.Error("Sync failed: %v", err)
 			return
 		}
 
@@ -57,7 +35,24 @@ var SyncCmd = &cobra.Command{
 	},
 }
 
-// pullRebaseRepo is injectable for tests to avoid executing git.
+// SyncRepo performs the fetch and pull-rebase operations for a bare repository.
+func SyncRepo(repoPath, worktreePath string, isVerbose bool) error {
+	log.Verbose(isVerbose, "Syncing repository at %s with worktree %s", repoPath, worktreePath)
+
+	log.Info("Fetching dotfiles")
+	if err := repo.FetchBareRepo(repoPath, worktreePath); err != nil {
+		return err
+	}
+
+	log.Info("Pulling dotfiles with rebase")
+	if err := repo.PullRebaseBareRepo(repoPath, worktreePath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// pullRebaseRepo is a package-level variable used for testing.
 var pullRebaseRepo = func(repoPath, worktreePath string) error {
 	return repo.PullRebaseBareRepo(repoPath, worktreePath)
 }
