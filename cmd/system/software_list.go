@@ -253,5 +253,19 @@ func getSoftwareList() []Software {
 			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://antigravity.google/download") },
 		},
+		{
+			Name:        "Spotify",
+			Description: "Music Streaming",
+			Optional:    true,
+			URL:         "https://open.spotify.com/download",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.spotify.client'").Run() == nil
+				}
+				_, err := lookPath("spotify")
+				return err == nil
+			},
+			Install: func() error { return openURL("https://open.spotify.com/download") },
+		},
 	}
 }
