@@ -245,5 +245,13 @@ func getSoftwareList() []Software {
 			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://nextdns.io/") },
 		},
+		{
+			Name:        "Antigravity",
+			Description: "Antigravity Tool",
+			Optional:    false,
+			URL:         "https://antigravity.google/download",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://antigravity.google/download") },
+		},
 	}
 }
