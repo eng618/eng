@@ -267,5 +267,21 @@ func getSoftwareList() []Software {
 			},
 			Install: func() error { return openURL("https://open.spotify.com/download") },
 		},
+		{
+			Name:        "Bitwarden CLI",
+			Description: "Password Manager CLI",
+			Optional:    false,
+			Check: func() bool {
+				_, err := lookPath("bw")
+				return err == nil
+			},
+			Install: func() error {
+				log.Info("Installing bitwarden-cli via brew...")
+				cmd := execCommand("brew", "install", "bitwarden-cli")
+				cmd.Stdout = log.Writer()
+				cmd.Stderr = log.ErrorWriter()
+				return cmd.Run()
+			},
+		},
 	}
 }
