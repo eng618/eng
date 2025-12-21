@@ -44,12 +44,12 @@ func getSoftwareList() []Software {
 			Name:        "VS Code",
 			Description: "Code Editor",
 			Optional:    true,
-			URL:         "https://code.visualstudio.com/",
+			URL:         "https://code.visualstudio.com/Download",
 			Check: func() bool {
 				_, err := lookPath("code")
 				return err == nil
 			},
-			Install: func() error { return openURL("https://code.visualstudio.com/") },
+			Install: func() error { return openURL("https://code.visualstudio.com/Download") },
 		},
 		{
 			Name:        "Brew Bundle",
