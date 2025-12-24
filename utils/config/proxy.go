@@ -3,7 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -124,6 +127,16 @@ func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {
 	if index < 0 || index >= len(proxies) {
 		return proxies, errors.New("proxy index out of range")
 	}
+
+	// Validate proxy URL before enabling
+	// Normalize scheme-less values (default to http)
+	normalized := NormalizeProxyURLString(proxies[index].Value)
+	if err := ValidateProxyURLString(normalized); err != nil {
+		return proxies, fmt.Errorf("invalid proxy URL '%s': %w", proxies[index].Value, err)
+	}
+
+	// Persist normalized value
+	proxies[index].Value = normalized
 
 	// Disable all proxies first
 	for i := range proxies {
@@ -259,14 +272,14 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	prompt := &survey.Input{
 		Message: "Enter a title for this proxy configuration:",
 	}
-	err := survey.AskOne(prompt, &title)
+	err := survey.AskOne(prompt, &title, survey.WithValidator(validateTitle))
 	cobra.CheckErr(err)
 
 	var value string
 	prompt2 := &survey.Input{
 		Message: "Enter the proxy address (e.g., http://proxy:port):",
 	}
-	err = survey.AskOne(prompt2, &value)
+	err = survey.AskOne(prompt2, &value, survey.WithValidator(validateProxyURL))
 	cobra.CheckErr(err)
 
 	var noProxy string
@@ -276,6 +289,10 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	}
 	err = survey.AskOne(prompt3, &noProxy)
 	cobra.CheckErr(err)
+
+	// Normalize proxy value and no_proxy list
+	value = NormalizeProxyURLString(value)
+	noProxy = normalizeNoProxyList(noProxy)
 
 	// Check if we're updating an existing proxy
 	index := -1
@@ -319,11 +336,7 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 
 	var options []string
 	for _, proxy := range proxies {
-		status := " "
-		if proxy.Enabled {
-			status = "*"
-		}
-		options = append(options, fmt.Sprintf("[%s] %s (%s)", status, proxy.Title, proxy.Value))
+		options = append(options, FormatProxyOption(proxy))
 	}
 
 	var selectedIndex int
@@ -338,4 +351,177 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 	}
 
 	return selectedIndex, nil
+}
+
+// FormatProxyOption renders a single proxy as a stylized radio option string.
+// Example: "● Corp Proxy (http://proxy:8080)" with colored markers and dimmed value.
+func FormatProxyOption(proxy ProxyConfig) string {
+	// Marker and label with stronger contrast: ★ ACTIVE vs • inactive
+	marker := color.New(color.FgHiBlack).Sprint("•")
+	label := color.New(color.FgHiBlack).Sprint("[inactive]")
+	title := proxy.Title
+
+	if proxy.Enabled {
+		marker = color.New(color.FgHiGreen, color.Bold).Sprint("★")
+		label = color.New(color.FgHiGreen).Sprint("[ACTIVE]")
+		title = color.New(color.Bold).Sprint(proxy.Title)
+	}
+
+	// Value in dim gray
+	value := color.New(color.FgHiBlack).Sprintf("(%s)", proxy.Value)
+
+	return fmt.Sprintf("%s %s %s %s", marker, title, value, label)
+}
+
+// --- Validation helpers ---
+
+var allowedSchemes = map[string]bool{
+	"http":   true,
+	"https":  true,
+	"socks5": true,
+	"socks5h": true,
+}
+
+// --- Programmatic helpers ---
+
+// FindProxyIndexByTitle returns the index of the proxy matching the title (case-insensitive), or -1.
+func FindProxyIndexByTitle(proxies []ProxyConfig, title string) int {
+	t := strings.TrimSpace(title)
+	if t == "" {
+		return -1
+	}
+	tLower := strings.ToLower(t)
+	for i, p := range proxies {
+		if strings.ToLower(p.Title) == tLower {
+			return i
+		}
+	}
+	return -1
+}
+
+// AddOrUpdateProxyWithValues adds or updates a proxy using provided values (non-interactive).
+// Returns updated proxies, the affected index, or an error.
+func AddOrUpdateProxyWithValues(title, value, noProxy string) ([]ProxyConfig, int, error) {
+	proxies, _ := GetProxyConfigs()
+
+	if err := validateTitle(title); err != nil {
+		return proxies, -1, err
+	}
+	if err := ValidateProxyURLString(value); err != nil {
+		return proxies, -1, err
+	}
+	noProxy = normalizeNoProxyList(noProxy)
+
+	index := FindProxyIndexByTitle(proxies, title)
+	if index >= 0 {
+		// Update existing
+		proxies[index].Value = value
+		proxies[index].NoProxy = noProxy
+	} else {
+		// Add new
+		newProxy := ProxyConfig{
+			Title:   strings.TrimSpace(title),
+			Value:   strings.TrimSpace(value),
+			NoProxy: noProxy,
+			Enabled: false,
+		}
+		proxies = append(proxies, newProxy)
+		index = len(proxies) - 1
+	}
+
+	// Save configurations
+	if err := SaveProxyConfigs(proxies); err != nil {
+		return proxies, -1, err
+	}
+	return proxies, index, nil
+}
+
+// validateTitle ensures the title is non-empty after trimming.
+func validateTitle(val interface{}) error {
+	s, ok := val.(string)
+	if !ok {
+		return errors.New("invalid title input")
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return errors.New("title is required")
+	}
+	return nil
+}
+
+// validateProxyURL is a survey validator wrapper around ValidateProxyURLString.
+func validateProxyURL(val interface{}) error {
+	s, ok := val.(string)
+	if !ok {
+		return errors.New("invalid proxy input")
+	}
+	return ValidateProxyURLString(s)
+}
+
+// ValidateProxyURLString validates the proxy URL string for scheme and host:port.
+func ValidateProxyURLString(value string) error {
+	s := strings.TrimSpace(value)
+	if s == "" {
+		return errors.New("proxy address is required")
+	}
+
+	// Normalize scheme-less values to default http for validation consistency
+	s = NormalizeProxyURLString(s)
+
+	u, err := url.Parse(s)
+	if err != nil {
+		return fmt.Errorf("parse error: %w", err)
+	}
+	if !allowedSchemes[u.Scheme] {
+		return fmt.Errorf("unsupported scheme '%s' (allowed: http, https, socks5, socks5h)", u.Scheme)
+	}
+	if u.Host == "" {
+		return errors.New("missing host:port in proxy address")
+	}
+	// Require port
+	_, _, err = net.SplitHostPort(u.Host)
+	if err != nil {
+		return errors.New("proxy address must include host:port")
+	}
+	return nil
+}
+
+// normalizeNoProxyList trims whitespace, removes empty entries, and de-duplicates.
+func normalizeNoProxyList(list string) string {
+	if strings.TrimSpace(list) == "" {
+		return ""
+	}
+	parts := strings.Split(list, ",")
+	seen := make(map[string]struct{})
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		t := strings.TrimSpace(p)
+		if t == "" {
+			continue
+		}
+		if _, ok := seen[t]; ok {
+			continue
+		}
+		seen[t] = struct{}{}
+		out = append(out, t)
+	}
+	return strings.Join(out, ",")
+}
+
+// NormalizeProxyURLString adds a default http scheme when missing.
+func NormalizeProxyURLString(value string) string {
+	s := strings.TrimSpace(value)
+	if s == "" {
+		return s
+	}
+	if strings.Contains(s, "://") {
+		return s
+	}
+	// If looks like host:port, prepend http://
+	if strings.Contains(s, ":") {
+		// Best effort: assume http if no scheme provided
+		return "http://" + s
+	}
+	// No port provided; leave as-is (validator will catch missing port)
+	return s
 }

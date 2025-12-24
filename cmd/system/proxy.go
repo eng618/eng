@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/utils/config"
 	"github.com/eng618/eng/utils/log"
+)
+
+const (
+	msgUpdatedProxyConfigurations = "Updated proxy configurations:"
+	msgFailedEnableProxyFmt       = "Failed to enable proxy: %v"
 )
 
 var ProxyCmd = &cobra.Command{
@@ -23,18 +29,15 @@ var ProxyCmd = &cobra.Command{
 func listProxyConfigurations() {
 	proxies, activeIndex := config.GetProxyConfigs()
 
-	fmt.Println("Proxy Configurations:")
+	fmt.Println("Proxy Configurations (★ active, • inactive):")
 	fmt.Println("-------------------------------------------------")
 
 	if len(proxies) == 0 {
 		fmt.Println("No proxy configurations found.")
 	} else {
 		for i, p := range proxies {
-			status := " "
-			if p.Enabled {
-				status = "*"
-			}
-			fmt.Printf("[%s] %d. %s - %s\n", status, i+1, p.Title, p.Value)
+			// Render stylized radio option with index
+			fmt.Printf("%d. %s\n", i+1, config.FormatProxyOption(p))
 		}
 	}
 
@@ -53,7 +56,7 @@ func listProxyConfigurations() {
 	fmt.Println("-------------------------------------------------")
 
 	if activeIndex >= 0 && activeIndex < len(proxies) {
-		fmt.Printf("\nActive proxy: %s (%s)\n", proxies[activeIndex].Title, proxies[activeIndex].Value)
+		fmt.Printf("\nActive proxy: %s\n", config.FormatProxyOption(proxies[activeIndex]))
 	} else {
 		fmt.Println("\nNo active proxy configured.")
 	}
@@ -70,7 +73,7 @@ var addCmd = &cobra.Command{
 	Long:  `Add a new proxy configuration with a title and address.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.AddOrUpdateProxy()
-		fmt.Println("Updated proxy configurations:")
+		fmt.Println(msgUpdatedProxyConfigurations)
 		listProxyConfigurations()
 	},
 }
@@ -82,26 +85,44 @@ var enableCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proxies, _ := config.GetProxyConfigs()
 
+		idxFlag, _ := cmd.Flags().GetInt("index")
+		titleFlag, _ := cmd.Flags().GetString("title")
+		quietFlag, _ := cmd.Flags().GetBool("quiet")
+
+		// If no proxies, add one first interactively
 		if len(proxies) == 0 {
-			// If no proxies, add one first
 			log.Info("No proxy configurations found. Adding a new one...")
 			proxies, _ = config.AddOrUpdateProxy()
 		}
 
-		selectedIndex, err := config.SelectProxy(proxies)
-		if err != nil {
-			log.Error("Failed to select proxy: %v", err)
-			return
+		selectedIndex := -1
+		if idxFlag >= 0 && idxFlag < len(proxies) {
+			selectedIndex = idxFlag
+		} else if titleFlag != "" {
+			selectedIndex = config.FindProxyIndexByTitle(proxies, titleFlag)
+			if selectedIndex < 0 {
+				log.Error("No proxy found with title '%s'", titleFlag)
+				return
+			}
+		} else {
+			// Fall back to interactive selection
+			var err error
+			selectedIndex, err = config.SelectProxy(proxies)
+			if err != nil {
+				log.Error("Failed to select proxy: %v", err)
+				return
+			}
 		}
 
-		_, err = config.EnableProxy(selectedIndex, proxies)
-		if err != nil {
-			log.Error("Failed to enable proxy: %v", err)
+		if _, err := config.EnableProxy(selectedIndex, proxies); err != nil {
+			log.Error(msgFailedEnableProxyFmt, err)
 			return
 		}
 
 		log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
-		listProxyConfigurations()
+		if !quietFlag {
+			listProxyConfigurations()
+		}
 	},
 }
 
@@ -158,10 +179,168 @@ var exportCmd = &cobra.Command{
 	},
 }
 
+var toggleCmd = &cobra.Command{
+	Use:   "toggle",
+	Short: "Toggle proxies on or off",
+	Long:  `Toggles proxies on or off. When toggling on, select an existing proxy or create a new one.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		onFlag, _ := cmd.Flags().GetBool("on")
+		offFlag, _ := cmd.Flags().GetBool("off")
+		quietFlag, _ := cmd.Flags().GetBool("quiet")
+		idxFlag, _ := cmd.Flags().GetInt("index")
+		titleFlag, _ := cmd.Flags().GetString("title")
+
+		proxies, activeIndex := config.GetProxyConfigs()
+
+		// Decide action: explicit flags win; otherwise toggle based on current state
+		doOff := offFlag || (!onFlag && activeIndex >= 0)
+		doOn := onFlag || (!offFlag && activeIndex < 0)
+
+		if doOff {
+			if err := config.DisableAllProxies(); err != nil {
+				log.Error("Failed to disable proxies: %v", err)
+				return
+			}
+			log.Success("All proxies disabled")
+			if !quietFlag {
+				listProxyConfigurations()
+			}
+			// If explicitly off, and not also asked to turn on, return.
+			if offFlag && !onFlag {
+				return
+			}
+		}
+
+		if doOn {
+			// Determine selection path
+			selectedIndex := -1
+
+			if idxFlag >= 0 && idxFlag < len(proxies) {
+				selectedIndex = idxFlag
+			} else if titleFlag != "" {
+				selectedIndex = config.FindProxyIndexByTitle(proxies, titleFlag)
+				if selectedIndex < 0 {
+					log.Error("No proxy found with title '%s'", titleFlag)
+					return
+				}
+			} else {
+				// Interactive: existing list plus "Create new…"
+				if len(proxies) == 0 {
+					// No proxies yet: create new interactively
+					var idx int
+					proxies, idx = config.AddOrUpdateProxy()
+					selectedIndex = idx
+				} else {
+					// Build options: existing proxies + create new
+					options := make([]string, 0, len(proxies)+1)
+					for _, p := range proxies {
+						options = append(options, config.FormatProxyOption(p))
+					}
+					options = append(options, "Create new…")
+
+					var sel int
+					prompt := &survey.Select{
+						Message: "Select a proxy to enable or create new:",
+						Options: options,
+						Help:    "Use arrow keys to navigate, and Enter to select.",
+					}
+					if err := survey.AskOne(prompt, &sel); err != nil {
+						log.Error("Selection cancelled: %v", err)
+						return
+					}
+					if sel == len(options)-1 {
+						var idx int
+						proxies, idx = config.AddOrUpdateProxy()
+						selectedIndex = idx
+					} else {
+						selectedIndex = sel
+					}
+				}
+			}
+
+			if _, err := config.EnableProxy(selectedIndex, proxies); err != nil {
+				log.Error(msgFailedEnableProxyFmt, err)
+				return
+			}
+			log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
+			if !quietFlag {
+				listProxyConfigurations()
+			}
+		}
+	},
+}
+
+var setCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Add or update a proxy configuration",
+	Long:  `Add or update a proxy configuration via flags; optionally enable it. Use --interactive to prompt for missing values.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		title, _ := cmd.Flags().GetString("title")
+		value, _ := cmd.Flags().GetString("value")
+		noProxy, _ := cmd.Flags().GetString("no-proxy")
+		enableAfter, _ := cmd.Flags().GetBool("enable")
+		interactive, _ := cmd.Flags().GetBool("interactive")
+
+		if interactive || title == "" || value == "" {
+			// Fall back to interactive add/update
+			proxies, idx := config.AddOrUpdateProxy()
+			if enableAfter {
+				if _, err := config.EnableProxy(idx, proxies); err != nil {
+					log.Error(msgFailedEnableProxyFmt, err)
+					return
+				}
+				log.Success("Proxy '%s' enabled", proxies[idx].Title)
+			}
+			fmt.Println(msgUpdatedProxyConfigurations)
+			listProxyConfigurations()
+			return
+		}
+
+		proxies, idx, err := config.AddOrUpdateProxyWithValues(title, value, noProxy)
+		if err != nil {
+			log.Error("Failed to set proxy: %v", err)
+			return
+		}
+		log.Success("Proxy '%s' added/updated", title)
+
+		if enableAfter {
+			if _, err := config.EnableProxy(idx, proxies); err != nil {
+				log.Error(msgFailedEnableProxyFmt, err)
+				return
+			}
+			log.Success("Proxy '%s' enabled", proxies[idx].Title)
+		}
+
+		fmt.Println(msgUpdatedProxyConfigurations)
+		listProxyConfigurations()
+	},
+}
+
 func init() {
 	// Add subcommands to the proxy command
 	ProxyCmd.AddCommand(addCmd)
 	ProxyCmd.AddCommand(enableCmd)
 	ProxyCmd.AddCommand(disableCmd)
 	ProxyCmd.AddCommand(exportCmd)
+	ProxyCmd.AddCommand(toggleCmd)
+	ProxyCmd.AddCommand(setCmd)
+
+	// Flags for set command
+	setCmd.Flags().String("title", "", "Proxy configuration title")
+	setCmd.Flags().String("value", "", "Proxy address (e.g., http://host:port)")
+	setCmd.Flags().String("no-proxy", "", "Additional no_proxy values (comma-separated)")
+	setCmd.Flags().Bool("enable", false, "Enable this proxy after setting")
+	setCmd.Flags().Bool("interactive", false, "Use interactive prompts when missing values")
+
+	// Flags for toggle command
+	toggleCmd.Flags().Bool("on", false, "Toggle on (enable a proxy)")
+	toggleCmd.Flags().Bool("off", false, "Toggle off (disable all proxies)")
+	toggleCmd.Flags().Bool("quiet", false, "Suppress status output after toggling")
+	toggleCmd.Flags().Int("index", -1, "Enable proxy by index (non-interactive)")
+	toggleCmd.Flags().String("title", "", "Enable proxy by title (non-interactive)")
+
+	// Flags for enable command
+	enableCmd.Flags().Int("index", -1, "Enable proxy by index (non-interactive)")
+	enableCmd.Flags().String("title", "", "Enable proxy by title (non-interactive)")
+	enableCmd.Flags().Bool("quiet", false, "Suppress status output after enabling")
 }
