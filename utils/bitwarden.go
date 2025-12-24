@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -60,6 +61,129 @@ func UnlockBitwardenVault() error {
 	log.Message("")
 
 	return fmt.Errorf("Bitwarden vault is locked - please unlock and try again")
+}
+
+// EnsureBitwardenSession ensures the Bitwarden vault is unlocked and returns a session key.
+// It first checks BW_SESSION and status; if locked, it prompts for the master password using
+// `bw unlock --raw` and returns the session token. If unauthenticated, it attempts `bw login`.
+func EnsureBitwardenSession() (string, error) {
+	// If BW_SESSION already set and status is unlocked, reuse it
+	if os.Getenv("BW_SESSION") != "" {
+		unlocked, _ := CheckBitwardenLoginStatus()
+		if unlocked {
+			return os.Getenv("BW_SESSION"), nil
+		}
+	}
+	// Check current status
+	cmd := exec.Command("bw", "status")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("bitwarden status failed: %w", err)
+	}
+	var status struct {
+		Status string `json:"status"`
+	}
+	if err := json.Unmarshal(out, &status); err != nil {
+		return "", fmt.Errorf("parse bitwarden status failed: %w", err)
+	}
+	switch status.Status {
+	case "unauthenticated":
+		log.Info("Logging into Bitwarden (you may be prompted)")
+		login := exec.Command("bw", "login")
+		login.Stdin = os.Stdin
+		login.Stdout = log.Writer()
+		login.Stderr = log.ErrorWriter()
+		if err := login.Run(); err != nil {
+			return "", fmt.Errorf("bitwarden login failed: %w", err)
+		}
+		// fallthrough to unlock
+		fallthrough
+	case "locked":
+		log.Info("Unlocking Bitwarden vault (enter master password)")
+		unlock := exec.Command("bw", "unlock", "--raw")
+		unlock.Stdin = os.Stdin
+		tokenBytes, err := unlock.Output()
+		if err != nil {
+			return "", fmt.Errorf("bitwarden unlock failed: %w", err)
+		}
+		token := strings.TrimSpace(string(tokenBytes))
+		if token == "" {
+			return "", fmt.Errorf("empty BW_SESSION returned from unlock")
+		}
+		return token, nil
+	case "unlocked":
+		return os.Getenv("BW_SESSION"), nil
+	default:
+		return "", fmt.Errorf("unknown bitwarden status: %s", status.Status)
+	}
+}
+
+// SaveOrUpdateBitwardenSecret saves a secret value into Bitwarden under the given item name.
+// If the item exists, it will be updated; otherwise it is created. A custom field named
+// "eng-cli" with value "true" is added to tag usage by this CLI.
+func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
+	// Build item JSON
+	item := map[string]any{
+		"type":  1, // login
+		"name":  name,
+		"notes": notes,
+		"login": map[string]any{
+			"password": secret,
+		},
+		"fields": []map[string]any{
+			{"name": "eng-cli", "value": "true", "type": 0},
+		},
+	}
+	b, err := json.Marshal(item)
+	if err != nil {
+		return "", err
+	}
+	// Ensure session
+	sess, err := EnsureBitwardenSession()
+	if err != nil {
+		return "", err
+	}
+	env := append(os.Environ(), "BW_SESSION="+sess)
+
+	// Try to find existing item
+	find := exec.Command("bw", "list", "items", "--search", name)
+	find.Env = env
+	fb, err := find.Output()
+	if err != nil {
+		return "", fmt.Errorf("bitwarden list items failed: %w", err)
+	}
+	var existing []BitwardenItem
+	_ = json.Unmarshal(fb, &existing)
+
+	// Encode JSON for bw create/edit
+	enc := exec.Command("bw", "encode")
+	enc.Env = env
+	enc.Stdin = strings.NewReader(string(b))
+	encoded, err := enc.Output()
+	if err != nil {
+		return "", fmt.Errorf("bitwarden encode failed: %w", err)
+	}
+
+	if len(existing) > 0 {
+		id := existing[0].ID
+		edit := exec.Command("bw", "edit", "item", id, string(encoded))
+		edit.Env = env
+		if _, err := edit.Output(); err != nil {
+			return "", fmt.Errorf("bitwarden edit item failed: %w", err)
+		}
+		return id, nil
+	}
+	create := exec.Command("bw", "create", "item", string(encoded))
+	create.Env = env
+	out, err := create.Output()
+	if err != nil {
+		return "", fmt.Errorf("bitwarden create item failed: %w", err)
+	}
+	var created BitwardenItem
+	if err := json.Unmarshal(out, &created); err != nil {
+		return "", err
+	}
+	return created.ID, nil
 }
 
 // GetBitwardenItem retrieves an item from Bitwarden vault by name
