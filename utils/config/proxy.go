@@ -191,7 +191,7 @@ func UnsetProxyEnvVars() {
 		if err := os.Unsetenv(v); err != nil {
 			log.Warn("Failed to unset environment variable %s: %v", v, err)
 		} else {
-			log.Info("Unset environment variable: %s", v)
+			log.Verbose(viper.GetBool("verbose"), "Unset environment variable: %s", v)
 		}
 	}
 
@@ -223,7 +223,7 @@ func SetProxyEnvVars(proxyValue string) {
 		if err := os.Setenv(v, proxyValue); err != nil {
 			log.Warn("Failed to set environment variable %s=%s: %v", v, proxyValue, err)
 		} else {
-			log.Info("Set environment variable: %s=%s", v, proxyValue)
+			log.Verbose(viper.GetBool("verbose"), "Set environment variable: %s=%s", v, proxyValue)
 		}
 	}
 
@@ -231,13 +231,13 @@ func SetProxyEnvVars(proxyValue string) {
 	if err := os.Setenv("http_proxy", proxyValue); err != nil {
 		log.Warn("Failed to set environment variable http_proxy=%s: %v", proxyValue, err)
 	} else {
-		log.Info("Set environment variable: http_proxy=%s", proxyValue)
+		log.Verbose(viper.GetBool("verbose"), "Set environment variable: http_proxy=%s", proxyValue)
 	}
 
 	if err := os.Setenv("https_proxy", proxyValue); err != nil {
 		log.Warn("Failed to set environment variable https_proxy=%s: %v", proxyValue, err)
 	} else {
-		log.Info("Set environment variable: https_proxy=%s", proxyValue)
+		log.Verbose(viper.GetBool("verbose"), "Set environment variable: https_proxy=%s", proxyValue)
 	}
 
 	// Set the NO_PROXY variable with default values and any custom values
@@ -246,19 +246,19 @@ func SetProxyEnvVars(proxyValue string) {
 	// Add custom no_proxy settings if available for the active proxy
 	if activeIndex >= 0 && activeIndex < len(proxies) && proxies[activeIndex].NoProxy != "" {
 		noProxyValue = noProxyValue + "," + proxies[activeIndex].NoProxy
-		log.Info("Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
+		log.Verbose(viper.GetBool("verbose"), "Adding custom no_proxy values: %s", proxies[activeIndex].NoProxy)
 	}
 
 	if err := os.Setenv("NO_PROXY", noProxyValue); err != nil {
 		log.Warn("Failed to set environment variable NO_PROXY=%s: %v", noProxyValue, err)
 	} else {
-		log.Info("Set environment variable: NO_PROXY=%s", noProxyValue)
+		log.Verbose(viper.GetBool("verbose"), "Set environment variable: NO_PROXY=%s", noProxyValue)
 	}
 
 	if err := os.Setenv("no_proxy", noProxyValue); err != nil {
 		log.Warn("Failed to set environment variable no_proxy=%s: %v", noProxyValue, err)
 	} else {
-		log.Info("Set environment variable: no_proxy=%s", noProxyValue)
+		log.Verbose(viper.GetBool("verbose"), "Set environment variable: no_proxy=%s", noProxyValue)
 	}
 
 	log.Success("All proxy environment variables have been set")

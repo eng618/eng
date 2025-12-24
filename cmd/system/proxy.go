@@ -21,46 +21,104 @@ var ProxyCmd = &cobra.Command{
 	Short: "Show or configure system proxies",
 	Long:  `This command displays and manages multiple proxy configurations and allows enabling, disabling, or setting them via subcommands.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listProxyConfigurations()
+		listProxyConfigurations(cmd)
 	},
 }
 
 // Common function to list proxy configurations.
-func listProxyConfigurations() {
+func listProxyConfigurations(cmd *cobra.Command) {
+	compact, _ := cmd.Flags().GetBool("compact")
+	showEnv, _ := cmd.Flags().GetBool("env")
+	showLowercaseEnv, _ := cmd.Flags().GetBool("lowercase-env")
 	proxies, activeIndex := config.GetProxyConfigs()
 
+	renderProxyList(compact, proxies)
+	if showEnv {
+		renderEnv(compact, showLowercaseEnv)
+	}
+	renderActive(compact, proxies, activeIndex)
+	renderNote(compact)
+}
+
+func renderProxyList(compact bool, proxies []config.ProxyConfig) {
+	if compact {
+		fmt.Println("Proxies (★ active, • inactive):")
+		if len(proxies) == 0 {
+			fmt.Println("- none configured")
+			return
+		}
+		for _, p := range proxies {
+			fmt.Printf("- %s\n", config.FormatProxyOption(p))
+		}
+		return
+	}
 	fmt.Println("Proxy Configurations (★ active, • inactive):")
 	fmt.Println("-------------------------------------------------")
-
 	if len(proxies) == 0 {
 		fmt.Println("No proxy configurations found.")
 	} else {
 		for i, p := range proxies {
-			// Render stylized radio option with index
 			fmt.Printf("%d. %s\n", i+1, config.FormatProxyOption(p))
 		}
 	}
+	fmt.Println("-------------------------------------------------")
+}
 
-	fmt.Println("-------------------------------------------------")
-	fmt.Println("System environment variables:")
-	fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
-	fmt.Println("HTTP_PROXY:", os.Getenv("HTTP_PROXY"))
-	fmt.Println("HTTPS_PROXY:", os.Getenv("HTTPS_PROXY"))
-	fmt.Println("GLOBAL_AGENT_HTTP_PROXY:", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
-	fmt.Println("NO_PROXY:", os.Getenv("NO_PROXY"))
-	fmt.Println("-------------------------------------------------")
-	fmt.Println("Lowercase environment variables:")
-	fmt.Println("http_proxy:", os.Getenv("http_proxy"))
-	fmt.Println("https_proxy:", os.Getenv("https_proxy"))
-	fmt.Println("no_proxy:", os.Getenv("no_proxy"))
-	fmt.Println("-------------------------------------------------")
+func renderEnv(compact bool, showLowercase bool) {
+	if !compact {
+		fmt.Println("System environment variables:")
+		fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
+		fmt.Println("HTTP_PROXY:", os.Getenv("HTTP_PROXY"))
+		fmt.Println("HTTPS_PROXY:", os.Getenv("HTTPS_PROXY"))
+		fmt.Println("GLOBAL_AGENT_HTTP_PROXY:", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
+		fmt.Println("NO_PROXY:", os.Getenv("NO_PROXY"))
+		fmt.Println("-------------------------------------------------")
+		fmt.Println("Lowercase environment variables:")
+		fmt.Println("http_proxy:", os.Getenv("http_proxy"))
+		fmt.Println("https_proxy:", os.Getenv("https_proxy"))
+		fmt.Println("no_proxy:", os.Getenv("no_proxy"))
+		fmt.Println("-------------------------------------------------")
+		return
+	}
+	all := os.Getenv("ALL_PROXY")
+	http := os.Getenv("HTTP_PROXY")
+	https := os.Getenv("HTTPS_PROXY")
+	global := os.Getenv("GLOBAL_AGENT_HTTP_PROXY")
+	noProxy := os.Getenv("NO_PROXY")
+	same := all == http && http == https && https == global
+	if same {
+		fmt.Printf("Env: ALL/HTTP/HTTPS/GLOBAL=%s, NO_PROXY=%s\n", all, noProxy)
+	} else {
+		fmt.Printf("Env: ALL=%s HTTP=%s HTTPS=%s GLOBAL=%s NO_PROXY=%s\n", all, http, https, global, noProxy)
+	}
+	if showLowercase {
+		lhttp := os.Getenv("http_proxy")
+		lhttps := os.Getenv("https_proxy")
+		lno := os.Getenv("no_proxy")
+		fmt.Printf("Env (lowercase): http=%s https=%s no=%s\n", lhttp, lhttps, lno)
+	}
+}
 
+func renderActive(compact bool, proxies []config.ProxyConfig, activeIndex int) {
 	if activeIndex >= 0 && activeIndex < len(proxies) {
-		fmt.Printf("\nActive proxy: %s\n", config.FormatProxyOption(proxies[activeIndex]))
+		if compact {
+			fmt.Printf("Active: %s\n", config.FormatProxyOption(proxies[activeIndex]))
+		} else {
+			fmt.Printf("\nActive proxy: %s\n", config.FormatProxyOption(proxies[activeIndex]))
+		}
+		return
+	}
+	if compact {
+		fmt.Println("Active: none")
 	} else {
 		fmt.Println("\nNo active proxy configured.")
 	}
+}
 
+func renderNote(compact bool) {
+	if compact {
+		return
+	}
 	fmt.Println("\nNote: Environment variable changes only affect the current process.")
 	fmt.Println("For system-wide changes, you may need to restart your terminal or source your profile.")
 	fmt.Println("To apply in your current shell, you can run:")
@@ -74,7 +132,7 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.AddOrUpdateProxy()
 		fmt.Println(msgUpdatedProxyConfigurations)
-		listProxyConfigurations()
+		listProxyConfigurations(cmd)
 	},
 }
 
@@ -121,7 +179,7 @@ var enableCmd = &cobra.Command{
 
 		log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
 		if !quietFlag {
-			listProxyConfigurations()
+			listProxyConfigurations(cmd)
 		}
 	},
 }
@@ -136,7 +194,7 @@ var disableCmd = &cobra.Command{
 			return
 		}
 		log.Success("All proxies disabled")
-		listProxyConfigurations()
+		listProxyConfigurations(cmd)
 	},
 }
 
@@ -203,7 +261,7 @@ var toggleCmd = &cobra.Command{
 			}
 			log.Success("All proxies disabled")
 			if !quietFlag {
-				listProxyConfigurations()
+				listProxyConfigurations(cmd)
 			}
 			// If explicitly off, and not also asked to turn on, return.
 			if offFlag && !onFlag {
@@ -264,7 +322,7 @@ var toggleCmd = &cobra.Command{
 			}
 			log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
 			if !quietFlag {
-				listProxyConfigurations()
+				listProxyConfigurations(cmd)
 			}
 		}
 	},
@@ -292,7 +350,7 @@ var setCmd = &cobra.Command{
 				log.Success("Proxy '%s' enabled", proxies[idx].Title)
 			}
 			fmt.Println(msgUpdatedProxyConfigurations)
-			listProxyConfigurations()
+			listProxyConfigurations(cmd)
 			return
 		}
 
@@ -312,7 +370,7 @@ var setCmd = &cobra.Command{
 		}
 
 		fmt.Println(msgUpdatedProxyConfigurations)
-		listProxyConfigurations()
+		listProxyConfigurations(cmd)
 	},
 }
 
@@ -324,6 +382,11 @@ func init() {
 	ProxyCmd.AddCommand(exportCmd)
 	ProxyCmd.AddCommand(toggleCmd)
 	ProxyCmd.AddCommand(setCmd)
+
+	// Persistent flags to control listing style
+	ProxyCmd.PersistentFlags().Bool("compact", true, "Show compact status output")
+	ProxyCmd.PersistentFlags().Bool("env", false, "Include environment variables in status output")
+	ProxyCmd.PersistentFlags().Bool("lowercase-env", false, "Include lowercase environment vars in compact mode")
 
 	// Flags for set command
 	setCmd.Flags().String("title", "", "Proxy configuration title")
