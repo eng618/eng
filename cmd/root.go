@@ -34,6 +34,7 @@ import (
 	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/gitlab"
+	"github.com/eng618/eng/cmd/parable_bloom"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
@@ -100,6 +101,7 @@ func init() {
 	rootCmd.AddCommand(files.FilesCmd)
 	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
+	rootCmd.AddCommand(parable_bloom.ParableBloomCmd)
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
 	rootCmd.AddCommand(version.VersionCmd)
