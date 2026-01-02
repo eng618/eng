@@ -24,7 +24,7 @@ This command creates solvable levels with the required structure and metadata.`,
 		log.Start("Generating game levels")
 
 		name, _ := cmd.Flags().GetString("name")
-		module, _ := cmd.Flags().GetString("module")
+		moduleID, _ := cmd.Flags().GetInt("module")
 		width, _ := cmd.Flags().GetInt("grid-width")
 		height, _ := cmd.Flags().GetInt("grid-height")
 		output, _ := cmd.Flags().GetString("output")
@@ -45,10 +45,10 @@ This command creates solvable levels with the required structure and metadata.`,
 
 		if count > 1 {
 			// Batch generation by module
-			generateBatch(modules, module, count, output, overwrite, isVerbose)
+			generateBatch(modules, moduleID, count, output, overwrite, isVerbose)
 		} else {
 			// Single level generation
-			generateSingle(name, module, width, height, output, stdout, overwrite, modules, isVerbose)
+			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose)
 		}
 	},
 }
@@ -56,7 +56,7 @@ This command creates solvable levels with the required structure and metadata.`,
 func init() {
 	// Add flags for level generation
 	LevelGenerateCmd.Flags().StringP("name", "n", "", "Name of the new level")
-	LevelGenerateCmd.Flags().StringP("module", "m", "", "Module/parable (or level ID for single)")
+	LevelGenerateCmd.Flags().IntP("module", "m", 0, "Module ID for batch generation (1-8)")
 	LevelGenerateCmd.Flags().IntP("grid-width", "w", 0, "Width of the game grid (0 = auto)")
 	LevelGenerateCmd.Flags().IntP("grid-height", "H", 0, "Height of the game grid (0 = auto)")
 	LevelGenerateCmd.Flags().StringP("output", "o", "", "Output directory for level files (default: assets/levels)")
@@ -66,7 +66,7 @@ func init() {
 	LevelGenerateCmd.Flags().BoolP("dry-run", "", false, "Generate without writing to disk")
 }
 
-func generateSingle(name, module string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool) {
+func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool) {
 	log.Verbose(verbose, "Generating single level")
 
 	// If name is numeric, treat it as level ID
@@ -84,12 +84,8 @@ func generateSingle(name, module string, width, height int, output string, stdou
 		levelID = GenerateLevelID(output, 1)
 	}
 
-	// Determine difficulty
-	if module != "" {
-		difficulty = module
-	} else {
-		difficulty = DifficultyForLevel(levelID, modules)
-	}
+	// Determine difficulty based on level ID
+	difficulty = DifficultyForLevel(levelID, modules)
 
 	log.Verbose(verbose, "Level ID: %d, Difficulty: %s", levelID, difficulty)
 
@@ -124,30 +120,16 @@ func generateSingle(name, module string, width, height int, output string, stdou
 	}
 }
 
-func generateBatch(modules []ModuleRange, moduleName string, count int, output string, overwrite bool, verbose bool) {
-	log.Verbose(verbose, "Generating batch of %d levels for module: %s", count, moduleName)
+func generateBatch(modules []ModuleRange, moduleID int, count int, output string, overwrite bool, verbose bool) {
+	log.Verbose(verbose, "Generating batch of %d levels for module ID: %d", count, moduleID)
 
-	// Find module range
-	var moduleRange *ModuleRange
-	if moduleName != "" {
-		moduleRange = GetModuleRange(moduleName, modules)
-		if moduleRange == nil {
-			// Try as module ID
-			var modID int
-			fmt.Sscanf(moduleName, "%d", &modID)
-			for i := range modules {
-				if modules[i].ID == modID {
-					moduleRange = &modules[i]
-					break
-				}
-			}
-		}
-	}
-
-	if moduleRange == nil {
-		log.Error("Module not found: %s", moduleName)
+	// Find module range by ID (1-indexed)
+	if moduleID < 1 || moduleID > len(modules) {
+		log.Error("Invalid module ID: %d (must be 1-%d)", moduleID, len(modules))
 		os.Exit(1)
 	}
+
+	moduleRange := &modules[moduleID-1]
 
 	startID := moduleRange.Start
 	endID := startID + count - 1

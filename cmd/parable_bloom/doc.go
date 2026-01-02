@@ -90,9 +90,23 @@ Generate a single level with default parameters:
 
 eng parable-bloom level-generate --name "My Level" --stdout
 
-Generate 10 levels for the Seedling module:
+Generate 15 levels for Module 2 (The Mustard Seed, Seedling tier):
 
-eng pb level-generate --module "The Mustard Seed" --count 10 --output assets/levels
+eng pb level-generate --module 2 --count 15 --output assets/levels
+
+Generate levels for all modules 2-8 (95 levels total):
+
+eng pb level-generate --module 2 --count 15 --output assets/levels  # Mustard Seed (6-20)
+eng pb level-generate --module 3 --count 15 --output assets/levels  # Sower (21-35)
+eng pb level-generate --module 4 --count 15 --output assets/levels  # Wheat and Weeds (36-50)
+eng pb level-generate --module 5 --count 15 --output assets/levels  # Lost Sheep (51-65)
+eng pb level-generate --module 6 --count 15 --output assets/levels  # Prodigal Son (66-80)
+eng pb level-generate --module 7 --count 10 --output assets/levels  # Hidden Treasure (81-90)
+eng pb level-generate --module 8 --count 10 --output assets/levels  # Pearl (91-100)
+
+Generate levels for all modules 2-8 (95 levels):
+
+for id in {2..8}; do eng pb level-generate --module $id --count 15 --output assets/levels; done
 
 # Error Handling
 
