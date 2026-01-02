@@ -28,15 +28,16 @@ This command uses the Parable Bloom level solver to verify that levels can be co
 		checkSolvability, _ := cmd.Flags().GetBool("check-solvability")
 		strict, _ := cmd.Flags().GetBool("strict")
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		showWarnings, _ := cmd.Flags().GetBool("warnings")
 
 		if file == "" && directory == "" {
 			directory = "assets/levels"
 		}
 
 		if file != "" {
-			validateSingleFile(file, checkSolvability, strict, dryRun, isVerbose)
+			validateSingleFile(file, checkSolvability, strict, dryRun, showWarnings, isVerbose)
 		} else {
-			validateDirectory(directory, checkSolvability, strict, dryRun, isVerbose)
+			validateDirectory(directory, checkSolvability, strict, dryRun, showWarnings, isVerbose)
 		}
 	},
 }
@@ -48,9 +49,10 @@ func init() {
 	LevelValidateCmd.Flags().BoolP("check-solvability", "s", true, "Check if levels are solvable (default: true)")
 	LevelValidateCmd.Flags().BoolP("strict", "S", false, "Enable strict validation mode (BFS solver)")
 	LevelValidateCmd.Flags().BoolP("dry-run", "", false, "Validate without persisting changes")
+	LevelValidateCmd.Flags().BoolP("warnings", "w", false, "Show warnings in addition to violations (default: violations only)")
 }
 
-func validateSingleFile(filePath string, checkSolvability, strict, dryRun, verbose bool) {
+func validateSingleFile(filePath string, checkSolvability, strict, dryRun, showWarnings, verbose bool) {
 	log.Verbose(verbose, "Validating single file: %s", filePath)
 
 	level, err := ReadLevel(filePath)
@@ -60,14 +62,14 @@ func validateSingleFile(filePath string, checkSolvability, strict, dryRun, verbo
 	}
 
 	result := validateLevel(level, checkSolvability, strict, verbose)
-	printValidationResult(result, verbose)
+	printValidationResult(result, showWarnings, verbose)
 
 	if !result.Valid {
 		os.Exit(1)
 	}
 }
 
-func validateDirectory(dirPath string, checkSolvability, strict, dryRun, verbose bool) {
+func validateDirectory(dirPath string, checkSolvability, strict, dryRun, showWarnings, verbose bool) {
 	log.Verbose(verbose, "Validating directory: %s", dirPath)
 
 	levels, err := ReadLevelsFromDir(dirPath)
@@ -106,7 +108,7 @@ func validateDirectory(dirPath string, checkSolvability, strict, dryRun, verbose
 	var totalWarnings int
 
 	for result := range results {
-		printValidationResult(result, verbose)
+		printValidationResult(result, showWarnings, verbose)
 		if result.Valid {
 			validCount++
 		}
@@ -155,7 +157,7 @@ func validateLevel(level *Level, checkSolvability, strict, verbose bool) Validat
 	return result
 }
 
-func printValidationResult(result ValidationResult, verbose bool) {
+func printValidationResult(result ValidationResult, showWarnings, verbose bool) {
 	if result.Valid {
 		fmt.Printf("✓ %s\n", result.Filename)
 		return
@@ -175,7 +177,7 @@ func printValidationResult(result ValidationResult, verbose bool) {
 		}
 	}
 
-	if len(result.Warnings) > 0 {
+	if showWarnings && len(result.Warnings) > 0 {
 		fmt.Printf("  WARNINGS (advisories):\n")
 		for _, w := range result.Warnings {
 			fmt.Printf("    - %s\n", w)

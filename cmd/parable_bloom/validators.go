@@ -114,10 +114,10 @@ func (v *Validator) validateGridOccupancy() {
 	occupancy := float64(occupiedCells) / float64(totalCells)
 	v.level.OccupancyPercent = occupancy * 100
 
-	// Occupancy is informational only - no hard requirement
+	// Grid occupancy is a requirement
 	spec := DifficultySpecs[v.level.Difficulty]
 	if occupancy < spec.MinGridOccupancy {
-		v.addWarning(fmt.Sprintf("grid occupancy low: %.1f%% (recommended %.0f%%), %d/%d cells",
+		v.addViolation(fmt.Sprintf("grid occupancy too low: %.1f%% (need %.0f%%), %d/%d cells",
 			occupancy*100, spec.MinGridOccupancy*100, occupiedCells, totalCells))
 	}
 }
@@ -319,16 +319,16 @@ func (v *Validator) validateDifficultyCompliance() {
 	spec := DifficultySpecs[v.level.Difficulty]
 	vineCount := len(v.level.Vines)
 
+	// Grace is a requirement based on difficulty
+	if v.level.Grace != spec.DefaultGrace {
+		v.addViolation(fmt.Sprintf("grace must be %d for %s difficulty (got %d)",
+			spec.DefaultGrace, v.level.Difficulty, v.level.Grace))
+	}
+
 	// Vine count is a design guideline, not a hard requirement
 	if vineCount < spec.VineCountRange[0] || vineCount > spec.VineCountRange[1] {
 		v.addWarning(fmt.Sprintf("vine count %d outside recommended range %v for %s",
 			vineCount, spec.VineCountRange, v.level.Difficulty))
-	}
-
-	// Grace matching is a guideline
-	if v.level.Grace != spec.DefaultGrace {
-		v.addWarning(fmt.Sprintf("grace %d differs from suggested %d for %s",
-			v.level.Grace, spec.DefaultGrace, v.level.Difficulty))
 	}
 }
 

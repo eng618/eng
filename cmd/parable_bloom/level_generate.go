@@ -211,96 +211,229 @@ func generateVines(gridSize [2]int, difficulty string, levelID int) []Vine {
 	spec := DifficultySpecs[difficulty]
 	rng := rand.New(rand.NewSource(int64(levelID)))
 
-	// Target occupancy
 	totalCells := gridSize[0] * gridSize[1]
 	targetOccupancy := totalCells * 95 / 100
+	if difficulty == "Tutorial" {
+		targetOccupancy = totalCells * 50 / 100
+	}
 
 	var vines []Vine
 	occupied := make(map[string]bool)
-
-	// Use a limited palette of colors
 	colors := []string{"moss_green", "sunset_orange", "golden_yellow", "royal_purple", "sky_blue"}
-	colorIdx := 0
+	directions := []string{"up", "down", "left", "right"}
 
-	// Determine target vine length from difficulty spec
-	minLen := spec.AvgLengthRange[0]
-	maxLen := spec.AvgLengthRange[1]
-
-	// Generate vines with proper lengths until occupancy is reached
 	occupiedCount := 0
-	vinesCreated := 0
 	maxVines := spec.VineCountRange[1]
-	consecutiveFailures := 0
+	minVines := spec.VineCountRange[0]
 
-	for occupiedCount < targetOccupancy && vinesCreated < maxVines && consecutiveFailures < 10 {
-		// Target length varies within the spec range
-		targetLength := minLen + rng.Intn(maxLen-minLen+1)
+	// Phase 1: Random placement with longer vines
+	maxAttempts := totalCells * 5
+	attempts := 0
+	
+	for occupiedCount < targetOccupancy && len(vines) < maxVines && attempts < maxAttempts {
+		attempts++
 
-		vine := generateVineWithLength(vinesCreated, gridSize, occupied, rng, targetLength)
-		if vine == nil {
-			// Try one shorter attempt
-			vine = generateVineWithLength(vinesCreated, gridSize, occupied, rng, 3)
-			consecutiveFailures++
-		} else {
-			consecutiveFailures = 0
+		// Pick a random empty cell
+		x := rng.Intn(gridSize[0])
+		y := rng.Intn(gridSize[1])
+		key := fmt.Sprintf("%d,%d", x, y)
+
+		if occupied[key] {
+			continue
 		}
 
-		if vine != nil {
-			// Assign color from limited palette
-			vine.VineColor = colors[colorIdx%len(colors)]
-			colorIdx++
+		// Pick a random direction
+		dir := directions[rng.Intn(len(directions))]
+		delta := HeadDirections[dir]
 
-			// Add vine cells to occupied
-			for _, pt := range vine.OrderedPath {
-				occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
-				occupiedCount++
-			}
+		// Build a path from this cell - extend as far as possible (up to 30 cells for thorough filling)
+		path := []Point{{X: x, Y: y}}
+		curX, curY := x, y
 
-			vines = append(vines, *vine)
-			vinesCreated++
-		}
-	}
+		for len(path) < 30 {
+			nextX := curX - delta[0]
+			nextY := curY - delta[1]
 
-	// Fill remaining space with simple paths if needed
-	if occupiedCount < targetOccupancy {
-		for occupiedCount < targetOccupancy && len(vines) < maxVines {
-			path := generateSimplePath(len(vines), gridSize, occupied, rng)
-			if len(path) == 0 {
+			// Check bounds
+			if nextX < 0 || nextX >= gridSize[0] || nextY < 0 || nextY >= gridSize[1] {
 				break
 			}
 
-			vine := &Vine{
-				ID:            fmt.Sprintf("vine_%d", len(vines)),
-				HeadDirection: "right",
-				OrderedPath:   path,
-				VineColor:     colors[len(vines)%len(colors)],
-				Blocks:        []string{},
+			// Check occupancy
+			if occupied[fmt.Sprintf("%d,%d", nextX, nextY)] {
+				break
 			}
 
-			// Add to occupied
-			for _, pt := range path {
-				occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
-				occupiedCount++
-			}
-
-			vines = append(vines, *vine)
+			path = append(path, Point{X: nextX, Y: nextY})
+			curX, curY = nextX, nextY
 		}
-	}
 
-	// Ensure at least minimum vine count
-	minVines := spec.VineCountRange[0]
-	for len(vines) < minVines && len(vines) < maxVines {
-		vine := &Vine{
+		// Only accept paths with 2+ cells
+		if len(path) < 2 {
+			continue
+		}
+
+		// Calculate head direction from path
+		head := path[0]
+		neck := path[1]
+		headDir := "right"
+		if neck.X < head.X {
+			headDir = "right"
+		} else if neck.X > head.X {
+			headDir = "left"
+		} else if neck.Y < head.Y {
+			headDir = "up"
+		} else if neck.Y > head.Y {
+			headDir = "down"
+		}
+
+		// Create vine
+		vine := Vine{
 			ID:            fmt.Sprintf("vine_%d", len(vines)),
-			HeadDirection: "right",
-			OrderedPath:   generateSimplePath(len(vines), gridSize, occupied, rng),
+			HeadDirection: headDir,
+			OrderedPath:   path,
 			VineColor:     colors[len(vines)%len(colors)],
 			Blocks:        []string{},
 		}
-		vines = append(vines, *vine)
+
+		// Mark cells as occupied
+		for _, pt := range path {
+			occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
+			occupiedCount++
+		}
+
+		vines = append(vines, vine)
 	}
 
-	// Ensure at least one vine
+	// Phase 2: Deterministic grid-based filling of remaining gaps
+	if occupiedCount < targetOccupancy && len(vines) < maxVines {
+		// Scan grid row by row, fill any remaining empty cells
+		for y := 0; y < gridSize[1] && occupiedCount < targetOccupancy && len(vines) < maxVines; y++ {
+			for x := 0; x < gridSize[0] && occupiedCount < targetOccupancy && len(vines) < maxVines; x++ {
+				if occupied[fmt.Sprintf("%d,%d", x, y)] {
+					continue
+				}
+
+				// Found empty cell - try to extend it in 4 directions in order
+				directions4 := []string{"right", "down", "left", "up"}
+				filledCell := false
+
+				for _, dir := range directions4 {
+					if occupiedCount >= targetOccupancy || len(vines) >= maxVines {
+						break
+					}
+
+					delta := HeadDirections[dir]
+					path := []Point{{X: x, Y: y}}
+					curX, curY := x, y
+
+					// Greedily extend as far as possible
+					for {
+						nextX := curX - delta[0]
+						nextY := curY - delta[1]
+
+						// Check bounds
+						if nextX < 0 || nextX >= gridSize[0] || nextY < 0 || nextY >= gridSize[1] {
+							break
+						}
+
+						// Check occupancy
+						if occupied[fmt.Sprintf("%d,%d", nextX, nextY)] {
+							break
+						}
+
+						path = append(path, Point{X: nextX, Y: nextY})
+						curX, curY = nextX, nextY
+
+						// Don't make vines too long in filling phase
+						if len(path) >= 8 {
+							break
+						}
+					}
+
+					if len(path) >= 2 {
+						// Calculate head direction
+						head := path[0]
+						neck := path[1]
+						headDir := "right"
+						if neck.X < head.X {
+							headDir = "right"
+						} else if neck.X > head.X {
+							headDir = "left"
+						} else if neck.Y < head.Y {
+							headDir = "up"
+						} else if neck.Y > head.Y {
+							headDir = "down"
+						}
+
+						vine := Vine{
+							ID:            fmt.Sprintf("vine_%d", len(vines)),
+							HeadDirection: headDir,
+							OrderedPath:   path,
+							VineColor:     colors[len(vines)%len(colors)],
+							Blocks:        []string{},
+						}
+
+						for _, pt := range path {
+							occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
+							occupiedCount++
+						}
+
+						vines = append(vines, vine)
+						filledCell = true
+						break
+					}
+				}
+
+				// If we still couldn't fill this cell, at least create a 2-cell vine
+				if !filledCell && occupiedCount < targetOccupancy && len(vines) < maxVines {
+					// Try to find a neighbor for a 2-cell vine
+					for _, dir := range directions4 {
+						delta := HeadDirections[dir]
+						nextX := x - delta[0]
+						nextY := y - delta[1]
+
+						if nextX >= 0 && nextX < gridSize[0] && nextY >= 0 && nextY < gridSize[1] {
+							if !occupied[fmt.Sprintf("%d,%d", nextX, nextY)] {
+								path := []Point{{X: x, Y: y}, {X: nextX, Y: nextY}}
+								headDir := dir
+
+								vine := Vine{
+									ID:            fmt.Sprintf("vine_%d", len(vines)),
+									HeadDirection: headDir,
+									OrderedPath:   path,
+									VineColor:     colors[len(vines)%len(colors)],
+									Blocks:        []string{},
+								}
+
+								for _, pt := range path {
+									occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
+									occupiedCount++
+								}
+
+								vines = append(vines, vine)
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Ensure minimum vine count if needed
+	for len(vines) < minVines {
+		vine := Vine{
+			ID:            fmt.Sprintf("vine_%d", len(vines)),
+			HeadDirection: "right",
+			OrderedPath:   []Point{{X: rng.Intn(gridSize[0]), Y: rng.Intn(gridSize[1])}, {X: (rng.Intn(gridSize[0]) + 1) % gridSize[0], Y: rng.Intn(gridSize[1])}},
+			VineColor:     colors[len(vines)%len(colors)],
+			Blocks:        []string{},
+		}
+		vines = append(vines, vine)
+	}
+
+	// Fallback: ensure at least one vine
 	if len(vines) == 0 {
 		vine := generateDefaultVine(0, gridSize)
 		vine.VineColor = colors[0]
