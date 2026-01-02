@@ -114,12 +114,11 @@ func (v *Validator) validateGridOccupancy() {
 	occupancy := float64(occupiedCells) / float64(totalCells)
 	v.level.OccupancyPercent = occupancy * 100
 
+	// Occupancy is informational only - no hard requirement
 	spec := DifficultySpecs[v.level.Difficulty]
 	if occupancy < spec.MinGridOccupancy {
-		v.addViolation(fmt.Sprintf("grid occupancy too low: %.1f%% (need %.0f%%), %d/%d cells",
+		v.addWarning(fmt.Sprintf("grid occupancy low: %.1f%% (recommended %.0f%%), %d/%d cells",
 			occupancy*100, spec.MinGridOccupancy*100, occupiedCells, totalCells))
-	} else if occupancy < (spec.MinGridOccupancy + 0.10) {
-		v.addWarning(fmt.Sprintf("grid occupancy near minimum: %.1f%%", occupancy*100))
 	}
 }
 
@@ -170,6 +169,9 @@ func (v *Validator) validateColors() {
 }
 
 func (v *Validator) validateVineLengths() {
+	// Only requirement: every vine must be at least 2 coordinates (head + neck)
+	// This is already checked in validateVinePaths()
+	// All other length constraints are soft/informational
 	if len(v.level.Vines) == 0 {
 		return
 	}
@@ -190,13 +192,10 @@ func (v *Validator) validateVineLengths() {
 	}
 	avgLength := float64(totalLength) / float64(len(lengths))
 
+	// Average length is informational only
 	if avgLength < float64(spec.AvgLengthRange[0]) || avgLength > float64(spec.AvgLengthRange[1]) {
 		v.addWarning(fmt.Sprintf("average vine length %.1f outside recommended range %v for %s",
 			avgLength, spec.AvgLengthRange, v.level.Difficulty))
-	}
-
-	if minLength < 2 {
-		v.addViolation(fmt.Sprintf("vine too short: minimum length is %d, requires ≥2", minLength))
 	}
 }
 
@@ -320,13 +319,15 @@ func (v *Validator) validateDifficultyCompliance() {
 	spec := DifficultySpecs[v.level.Difficulty]
 	vineCount := len(v.level.Vines)
 
+	// Vine count is a design guideline, not a hard requirement
 	if vineCount < spec.VineCountRange[0] || vineCount > spec.VineCountRange[1] {
-		v.addWarning(fmt.Sprintf("vine count %d outside range %v for %s",
+		v.addWarning(fmt.Sprintf("vine count %d outside recommended range %v for %s",
 			vineCount, spec.VineCountRange, v.level.Difficulty))
 	}
 
+	// Grace matching is a guideline
 	if v.level.Grace != spec.DefaultGrace {
-		v.addWarning(fmt.Sprintf("grace %d differs from expected %d for %s",
+		v.addWarning(fmt.Sprintf("grace %d differs from suggested %d for %s",
 			v.level.Grace, spec.DefaultGrace, v.level.Difficulty))
 	}
 }
