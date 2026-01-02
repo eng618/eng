@@ -175,7 +175,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 		AvgLengthRange:   [2]int{6, 8},
 		MaxBlockingDepth: 1,
 		ColorCountRange:  [2]int{1, 5},
-		MinGridOccupancy: 0.95,
+		MinGridOccupancy: 0.93,
 		DefaultGrace:     3,
 	},
 	"Sprout": {
@@ -183,7 +183,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 		AvgLengthRange:   [2]int{3, 8},
 		MaxBlockingDepth: 2,
 		ColorCountRange:  [2]int{1, 5},
-		MinGridOccupancy: 0.95,
+		MinGridOccupancy: 0.93,
 		DefaultGrace:     3,
 	},
 	"Nurturing": {
@@ -191,7 +191,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 		AvgLengthRange:   [2]int{3, 8},
 		MaxBlockingDepth: 3,
 		ColorCountRange:  [2]int{1, 6},
-		MinGridOccupancy: 0.95,
+		MinGridOccupancy: 0.93,
 		DefaultGrace:     3,
 	},
 	"Flourishing": {
@@ -199,7 +199,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 		AvgLengthRange:   [2]int{2, 6},
 		MaxBlockingDepth: 4,
 		ColorCountRange:  [2]int{1, 6},
-		MinGridOccupancy: 0.95,
+		MinGridOccupancy: 0.93,
 		DefaultGrace:     3,
 	},
 	"Transcendent": {
@@ -207,7 +207,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 		AvgLengthRange:   [2]int{2, 6},
 		MaxBlockingDepth: 4,
 		ColorCountRange:  [2]int{1, 6},
-		MinGridOccupancy: 0.95,
+		MinGridOccupancy: 0.93,
 		DefaultGrace:     4,
 	},
 }
