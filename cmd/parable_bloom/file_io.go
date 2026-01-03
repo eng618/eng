@@ -1,10 +1,12 @@
 package parable_bloom
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // ReadLevel reads a single level from a JSON file.
@@ -15,10 +17,10 @@ func ReadLevel(filePath string) (*Level, error) {
 	}
 
 	var level Level
-	decoder := json.NewDecoder(nil)
+	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
-	err = json.Unmarshal(data, &level)
+	err = decoder.Decode(&level)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse level file %s: %w", filePath, err)
 	}
@@ -43,14 +45,47 @@ func WriteLevel(filePath string, level *Level, overwrite bool) error {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
-	// Marshal level to JSON with indentation
-	data, err := json.MarshalIndent(level, "", "  ")
+	// Prepare a sanitized level for persistence (exclude runtime-only fields)
+	type persistLevel struct {
+		ID         int    `json:"id"`
+		Name       string `json:"name"`
+		Difficulty string `json:"difficulty"`
+		GridSize   [2]int `json:"grid_size"`
+		Mask       *Mask  `json:"mask"`
+		Vines      []Vine `json:"vines"`
+		MaxMoves   int    `json:"max_moves"`
+		MinMoves   int    `json:"min_moves"`
+		Complexity string `json:"complexity"`
+		Grace      int    `json:"grace"`
+	}
+
+	pLevel := persistLevel{
+		ID:         level.ID,
+		Name:       level.Name,
+		Difficulty: level.Difficulty,
+		GridSize:   level.GridSize,
+		Mask:       level.Mask,
+		Vines:      level.Vines,
+		MaxMoves:   level.MaxMoves,
+		MinMoves:   level.MinMoves,
+		Complexity: level.Complexity,
+		Grace:      level.Grace,
+	}
+
+	// Marshal sanitized level
+	data, err := json.MarshalIndent(pLevel, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal level to JSON: %w", err)
 	}
 
-	// Write to file
-	if err := os.WriteFile(filePath, data, 0o644); err != nil {
+	// Sanity check: ensure marshaled bytes decode correctly
+	var tmp interface{}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return fmt.Errorf("sanity check failed: marshaled JSON invalid: %w", err)
+	}
+
+	// Write atomically
+	if err := atomicWriteFile(filePath, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write level file %s: %w", filePath, err)
 	}
 
@@ -90,8 +125,11 @@ func ReadLevelsFromDir(dirPath string) ([]*Level, error) {
 
 // isLevelFile checks if a filename is a level file.
 func isLevelFile(name string) bool {
-	return filepath.Ext(name) == ".json" &&
-		(filepath.Base(name)[:5] == "level" || filepath.Base(name)[:5] == "test_")
+	base := filepath.Base(name)
+	if filepath.Ext(name) != ".json" {
+		return false
+	}
+	return strings.HasPrefix(base, "level") || strings.HasPrefix(base, "test_")
 }
 
 // FileExists checks if a file exists.
@@ -108,6 +146,42 @@ func EnsureDir(dirPath string) error {
 // GetLevelFilePath returns the expected file path for a level.
 func GetLevelFilePath(levelID int, baseDir string) string {
 	return filepath.Join(baseDir, fmt.Sprintf("level_%d.json", levelID))
+}
+
+// atomicWriteFile writes data to a temporary file and renames it into place to ensure atomicity.
+func atomicWriteFile(filePath string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(filePath)
+	tmpFile, err := os.CreateTemp(dir, "tmplevel-*.json")
+	if err != nil {
+		return err
+	}
+	tmpName := tmpFile.Name()
+	// Ensure tmp file cleanup on any failure
+	defer func() {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpName)
+	}()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		return err
+	}
+	if err := tmpFile.Sync(); err != nil {
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(tmpName, perm); err != nil {
+		return err
+	}
+
+	// Rename is atomic on POSIX filesystems
+	if err := os.Rename(tmpName, filePath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // marshalJSON marshals a value to indented JSON.

@@ -52,7 +52,7 @@ func init() {
 	LevelValidateCmd.Flags().BoolP("warnings", "w", false, "Show warnings in addition to violations (default: violations only)")
 }
 
-func validateSingleFile(filePath string, checkSolvability, strict, dryRun, showWarnings, verbose bool) {
+func validateSingleFile(filePath string, checkSolvability, strict, _dryRun, showWarnings, verbose bool) {
 	log.Verbose(verbose, "Validating single file: %s", filePath)
 
 	level, err := ReadLevel(filePath)
@@ -69,7 +69,7 @@ func validateSingleFile(filePath string, checkSolvability, strict, dryRun, showW
 	}
 }
 
-func validateDirectory(dirPath string, checkSolvability, strict, dryRun, showWarnings, verbose bool) {
+func validateDirectory(dirPath string, checkSolvability, strict, _dryRun, showWarnings, verbose bool) {
 	log.Verbose(verbose, "Validating directory: %s", dirPath)
 
 	levels, err := ReadLevelsFromDir(dirPath)
@@ -157,7 +157,7 @@ func validateLevel(level *Level, checkSolvability, strict, verbose bool) Validat
 	return result
 }
 
-func printValidationResult(result ValidationResult, showWarnings, verbose bool) {
+func printValidationResult(result ValidationResult, showWarnings, _verbose bool) {
 	if result.Valid {
 		fmt.Printf("✓ %s\n", result.Filename)
 		return

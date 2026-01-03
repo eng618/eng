@@ -36,9 +36,7 @@ func DetectCircularBlocking(vines []Vine) bool {
 
 	for _, vine := range vines {
 		vineIDSet[vine.ID] = true
-		for _, blocked := range vine.Blocks {
-			graph[vine.ID] = append(graph[vine.ID], blocked)
-		}
+		graph[vine.ID] = append(graph[vine.ID], vine.Blocks...)
 	}
 
 	// DFS to detect cycle
@@ -218,6 +216,11 @@ func PointKey(pt Point) string {
 
 // ParsePointKey parses a point key back to coordinates.
 func ParsePointKey(key string) (x, y int) {
-	fmt.Sscanf(key, "%d,%d", &x, &y)
-	return
+	var n int
+	n, _ = fmt.Sscanf(key, "%d,%d", &x, &y)
+	if n != 2 {
+		// return zeros if parsing failed
+		return 0, 0
+	}
+	return x, y
 }

@@ -72,6 +72,7 @@ func defaultModuleRanges() []ModuleRange {
 }
 
 // DifficultyForLevel determines the difficulty tier for a level ID given modules.
+// Each module should have a progression: Seedling → Sprout → Nurturing → Flourishing → Transcendent (final level)
 func DifficultyForLevel(levelID int, modules []ModuleRange) string {
 	// Tutorial module is special
 	for _, m := range modules {
@@ -80,40 +81,42 @@ func DifficultyForLevel(levelID int, modules []ModuleRange) string {
 		}
 	}
 
-	// Map other modules to difficulty tiers by module position
-	var nonTutorial []ModuleRange
-	for _, m := range modules {
-		if m.Name != "Tutorial" {
-			nonTutorial = append(nonTutorial, m)
-		}
-	}
-
-	if len(nonTutorial) == 0 {
-		return "Seedling" // Fallback
-	}
-
-	// Get module position for this level
-	var modulePos int
-	for i, m := range nonTutorial {
-		if levelID >= m.Start && levelID <= m.End {
-			modulePos = i
+	// Find which module this level belongs to
+	var currentModule *ModuleRange
+	for i := range modules {
+		if levelID >= modules[i].Start && levelID <= modules[i].End {
+			currentModule = &modules[i]
 			break
 		}
 	}
 
-	totalModules := len(nonTutorial)
-	firstThirdCount := (totalModules + 2) / 3
-	secondThirdCount := (totalModules*2 + 2) / 3
+	if currentModule == nil {
+		return "Seedling" // Fallback
+	}
+
+	// Position within the module (0-based)
+	positionInModule := levelID - currentModule.Start
+	totalLevelsInModule := currentModule.End - currentModule.Start + 1
+
+	// Last level in module is always Transcendent
+	if positionInModule == totalLevelsInModule-1 {
+		return "Transcendent"
+	}
+
+	// Distribute remaining levels across difficulty progression
+	// Seedling → Sprout → Nurturing → Flourishing
+	remainingLevels := totalLevelsInModule - 1 // Exclude the final Transcendent
+	progressRatio := float64(positionInModule) / float64(remainingLevels)
 
 	switch {
-	case modulePos < firstThirdCount:
+	case progressRatio < 0.25:
 		return "Seedling"
-	case modulePos < secondThirdCount:
+	case progressRatio < 0.50:
+		return "Sprout"
+	case progressRatio < 0.75:
 		return "Nurturing"
-	case modulePos < totalModules-1:
-		return "Flourishing"
 	default:
-		return "Transcendent"
+		return "Flourishing"
 	}
 }
 
