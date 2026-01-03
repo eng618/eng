@@ -10,7 +10,7 @@ import (
 	"github.com/eng618/eng/utils/log"
 )
 
-// BitwardenItem represents a Bitwarden vault item
+// BitwardenItem represents a Bitwarden vault item.
 type BitwardenItem struct {
 	ID     string           `json:"id"`
 	Name   string           `json:"name"`
@@ -19,20 +19,20 @@ type BitwardenItem struct {
 	Notes  string           `json:"notes,omitempty"`
 }
 
-// BitwardenField represents a custom field in a Bitwarden item
+// BitwardenField represents a custom field in a Bitwarden item.
 type BitwardenField struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 	Type  int    `json:"type"`
 }
 
-// BitwardenLogin represents login credentials
+// BitwardenLogin represents login credentials.
 type BitwardenLogin struct {
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
 }
 
-// CheckBitwardenLoginStatus checks if the user is logged into Bitwarden
+// CheckBitwardenLoginStatus checks if the user is logged into Bitwarden.
 func CheckBitwardenLoginStatus() (bool, error) {
 	cmd := exec.Command("bw", "status")
 	output, err := cmd.Output()
@@ -50,7 +50,7 @@ func CheckBitwardenLoginStatus() (bool, error) {
 	return status.Status == "unlocked", nil
 }
 
-// UnlockBitwardenVault prompts the user to unlock their Bitwarden vault
+// UnlockBitwardenVault prompts the user to unlock their Bitwarden vault.
 func UnlockBitwardenVault() error {
 	log.Message("Bitwarden vault is locked. Please unlock it to retrieve SSH keys.")
 	log.Message("Run: bw unlock")
@@ -60,7 +60,7 @@ func UnlockBitwardenVault() error {
 	log.Message("bw login")
 	log.Message("")
 
-	return fmt.Errorf("Bitwarden vault is locked - please unlock and try again")
+	return fmt.Errorf("bitwarden vault is locked - please unlock and try again")
 }
 
 // EnsureBitwardenSession ensures the Bitwarden vault is unlocked and returns a session key.
@@ -186,7 +186,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	return created.ID, nil
 }
 
-// GetBitwardenItem retrieves an item from Bitwarden vault by name
+// GetBitwardenItem retrieves an item from Bitwarden vault by name.
 func GetBitwardenItem(name string) (*BitwardenItem, error) {
 	cmd := exec.Command("bw", "get", "item", name)
 	output, err := cmd.Output()
@@ -202,7 +202,7 @@ func GetBitwardenItem(name string) (*BitwardenItem, error) {
 	return &item, nil
 }
 
-// ListBitwardenItems returns all items in the vault (filtered by type if specified)
+// ListBitwardenItems returns all items in the vault (filtered by type if specified).
 func ListBitwardenItems() ([]BitwardenItem, error) {
 	cmd := exec.Command("bw", "list", "items")
 	output, err := cmd.Output()
@@ -218,7 +218,7 @@ func ListBitwardenItems() ([]BitwardenItem, error) {
 	return items, nil
 }
 
-// FindSSHKeysInVault searches for SSH key items in the Bitwarden vault
+// FindSSHKeysInVault searches for SSH key items in the Bitwarden vault.
 func FindSSHKeysInVault() ([]BitwardenItem, error) {
 	items, err := ListBitwardenItems()
 	if err != nil {
@@ -239,7 +239,7 @@ func FindSSHKeysInVault() ([]BitwardenItem, error) {
 	return sshKeys, nil
 }
 
-// hasSSHKeyData checks if a Bitwarden item contains SSH key data
+// hasSSHKeyData checks if a Bitwarden item contains SSH key data.
 func hasSSHKeyData(item *BitwardenItem) bool {
 	// Check notes for SSH key format
 	if strings.Contains(item.Notes, "-----BEGIN") && strings.Contains(item.Notes, "-----END") {
@@ -266,7 +266,7 @@ func hasSSHKeyData(item *BitwardenItem) bool {
 	return false
 }
 
-// ExtractSSHKeyFromItem extracts SSH private key from a Bitwarden item
+// ExtractSSHKeyFromItem extracts SSH private key from a Bitwarden item.
 func ExtractSSHKeyFromItem(item *BitwardenItem) (string, error) {
 	// First check notes
 	if strings.Contains(item.Notes, "-----BEGIN") && strings.Contains(item.Notes, "-----END") {

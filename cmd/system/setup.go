@@ -269,7 +269,7 @@ func setupSoftware(verbose bool) {
 	}
 }
 
-// setupSSH handles SSH key setup for GitHub access
+// setupSSH handles SSH key setup for GitHub access.
 func setupSSH(verbose bool) error {
 	log.Start("Setting up SSH keys for GitHub access")
 
@@ -318,7 +318,7 @@ func setupSSH(verbose bool) error {
 	return ensureSSHConfig(sshKeyPath)
 }
 
-// generateSSHKey generates a new SSH key pair
+// generateSSHKey generates a new SSH key pair.
 func generateSSHKey(sshKeyPath string, verbose bool) error {
 	log.Start("Generating new SSH key pair...")
 
@@ -333,6 +333,7 @@ func generateSSHKey(sshKeyPath string, verbose bool) error {
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 
+	log.Verbose(verbose, "Running command: %s", strings.Join(cmd.Args, " "))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate SSH key: %w", err)
 	}
@@ -341,12 +342,14 @@ func generateSSHKey(sshKeyPath string, verbose bool) error {
 	return nil
 }
 
-// storeSSHKeyInBitwarden stores the SSH key in Bitwarden vault
+// storeSSHKeyInBitwarden stores the SSH key in Bitwarden vault.
 func storeSSHKeyInBitwarden(sshKeyPath string, verbose bool) error {
 	// Check if Bitwarden is available
 	if _, err := utils.CheckBitwardenLoginStatus(); err != nil {
-		return fmt.Errorf("Bitwarden not available: %w", err)
+		return fmt.Errorf("bitwarden not available: %w", err)
 	}
+
+	log.Verbose(verbose, "Storing SSH key in Bitwarden...")
 
 	// Read the private key
 	privateKey, err := os.ReadFile(sshKeyPath)
@@ -381,7 +384,7 @@ func storeSSHKeyInBitwarden(sshKeyPath string, verbose bool) error {
 	return nil
 }
 
-// ensureSSHConfig ensures SSH config is set up for GitHub
+// ensureSSHConfig ensures SSH config is set up for GitHub.
 func ensureSSHConfig(sshKeyPath string) error {
 	sshDir := filepath.Dir(sshKeyPath)
 	sshConfigPath := filepath.Join(sshDir, "config")
