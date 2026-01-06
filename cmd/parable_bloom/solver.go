@@ -2,6 +2,7 @@ package parable_bloom
 
 import (
 	"fmt"
+	"sort"
 )
 
 // Solver provides solvability checking for levels.
@@ -175,10 +176,15 @@ func (s *Solver) getVinesForIDs(ids map[string]bool) []Vine {
 	return result
 }
 
-// stateKey creates a unique key for a state (set of vine IDs).
+// stateKey creates a unique, deterministic key for a state (set of vine IDs).
 func stateKey(state map[string]bool) string {
-	key := ""
+	ids := make([]string, 0, len(state))
 	for id := range state {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	key := ""
+	for _, id := range ids {
 		key += id + ","
 	}
 	return key
