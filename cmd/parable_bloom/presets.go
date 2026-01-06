@@ -36,3 +36,23 @@ func GetPresetProfile(difficulty string) VarietyProfile {
 		DirBalance: dirBalance,
 	}
 }
+
+// GetGeneratorConfigForDifficulty returns tuned generator parameters for a difficulty tier.
+func GetGeneratorConfigForDifficulty(difficulty string) GeneratorConfig {
+	switch difficulty {
+	case "Tutorial":
+		return GeneratorConfig{MaxSeedRetries: 8, LocalRepairRadius: 1, RepairRetries: 1}
+	case "Seedling":
+		return GeneratorConfig{MaxSeedRetries: 12, LocalRepairRadius: 1, RepairRetries: 2}
+	case "Sprout":
+		return GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+	case "Nurturing":
+		return GeneratorConfig{MaxSeedRetries: 40, LocalRepairRadius: 3, RepairRetries: 4}
+	case "Flourishing":
+		return GeneratorConfig{MaxSeedRetries: 60, LocalRepairRadius: 4, RepairRetries: 6}
+	case "Transcendent":
+		return GeneratorConfig{MaxSeedRetries: 120, LocalRepairRadius: 5, RepairRetries: 8}
+	default:
+		return GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+	}
+}

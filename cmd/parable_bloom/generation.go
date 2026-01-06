@@ -2,6 +2,7 @@ package parable_bloom
 
 import (
 	"math/rand"
+	"time"
 )
 
 // GenerationResult contains metadata about a generation attempt.
@@ -12,6 +13,8 @@ type GenerationResult struct {
 	GreedySolvable   bool
 	BFSSolvable      bool
 	Attempts         int
+	SeedUsed         int64 // seed used for the successful variant
+	ElapsedMS        int64 // generation time in milliseconds
 }
 
 // FastScoreBlocking computes a simple blocking score and maximum blocking depth
@@ -34,17 +37,25 @@ func FastScoreBlocking(vines []Vine, gridSize [2]int) (float64, int) {
 func GenerateWithProfile(gridSize [2]int, constraints DifficultySpec, profile VarietyProfile, cfg GeneratorConfig, seed int64, strictMode bool, rng *rand.Rand) GenerationResult {
 	result := GenerationResult{Attempts: 0}
 	// Try a few tiled variants with different RNG states
+	var lastSeed int64 = seed
+	var lastElapsed int64 = 0
 	for attempt := 0; attempt < 8; attempt++ {
 		result.Attempts++
+		start := time.Now()
 		// Use the provided rng but also vary seed with attempt to increase diversity
+		var localSeed int64
 		var localRng *rand.Rand
 		if rng != nil {
-			localRng = rand.New(rand.NewSource(rng.Int63() + int64(attempt*1000)))
+			localSeed = rng.Int63() + int64(attempt*1000)
+			localRng = rand.New(rand.NewSource(localSeed))
 		} else {
-			localRng = rand.New(rand.NewSource(seed + int64(attempt*1000)))
+			localSeed = seed + int64(attempt*1000)
+			localRng = rand.New(rand.NewSource(localSeed))
 		}
 
 		vines, err := TileGridIntoVines(gridSize, constraints, profile, cfg, localRng)
+		lastSeed = localSeed
+		lastElapsed = int64(time.Since(start).Milliseconds())
 		if err != nil {
 			continue
 		}
@@ -78,8 +89,17 @@ func GenerateWithProfile(gridSize [2]int, constraints DifficultySpec, profile Va
 			}
 		}
 
-		// Success
+		// Success: record telemetry
+		result.SeedUsed = localSeed
+		result.ElapsedMS = time.Since(start).Milliseconds()
+
 		return result
+	}
+
+	// Fallback telemetry: if tile produced vines but we didn't record seed (edge cases), set last seen values
+	if len(result.Vines) > 0 && result.SeedUsed == 0 {
+		result.SeedUsed = lastSeed
+		result.ElapsedMS = int64(lastElapsed)
 	}
 
 	return result

@@ -22,3 +22,11 @@ func TestGetPresetProfile_DirBalanceExists(t *testing.T) {
 		t.Fatalf("expected dir balance to sum > 0, got %f", sum)
 	}
 }
+
+func TestGetGeneratorConfigForDifficulty(t *testing.T) {
+	cSeed := GetGeneratorConfigForDifficulty("Seedling")
+	cTrans := GetGeneratorConfigForDifficulty("Transcendent")
+	if cSeed.MaxSeedRetries >= cTrans.MaxSeedRetries {
+		t.Fatalf("expected Transcendent to have higher MaxSeedRetries than Seedling: %d >= %d", cSeed.MaxSeedRetries, cTrans.MaxSeedRetries)
+	}
+}

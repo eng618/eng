@@ -35,3 +35,23 @@ func TestGenerateWithProfile_Tiling(t *testing.T) {
 		t.Fatalf("fast validation failed: %v", err)
 	}
 }
+
+func TestGenerateWithProfile_Telemetry(t *testing.T) {
+	gridSize := [2]int{6, 6}
+	spec := DifficultySpecs["Seedling"]
+	cfg := GetGeneratorConfigForDifficulty("Seedling")
+	rng := rand.New(rand.NewSource(42))
+	res := GenerateWithProfile(gridSize, spec, GetPresetProfile("Seedling"), cfg, 42, false, rng)
+	if len(res.Vines) == 0 {
+		t.Fatalf("expected generation to succeed, got empty result: %+v", res)
+	}
+	if res.Attempts <= 0 {
+		t.Fatalf("expected Attempts>0, got %d", res.Attempts)
+	}
+	if res.SeedUsed == 0 {
+		t.Fatalf("expected SeedUsed to be set, got 0")
+	}
+	if res.ElapsedMS < 0 {
+		t.Fatalf("expected ElapsedMS>=0, got %d", res.ElapsedMS)
+	}
+}
