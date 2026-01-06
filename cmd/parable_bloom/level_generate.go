@@ -228,6 +228,17 @@ func generateVines(gridSize [2]int, difficulty string, levelID int) []Vine {
 	seedStep := 1000
 	var vines []Vine
 
+	// Try tiling-first approach for a limited number of attempts
+	spec := DifficultySpecs[difficulty]
+	cfg := GeneratorConfig{MaxSeedRetries: 25, LocalRepairRadius: 2, RepairRetries: 3}
+	rng := rand.New(rand.NewSource(int64(levelID)))
+	profile := GetPresetProfile(difficulty)
+	result := GenerateWithProfile(gridSize, spec, profile, cfg, int64(levelID), false, rng)
+	if len(result.Vines) > 0 && result.GreedySolvable {
+		return result.Vines
+	}
+
+	// Fallback to the legacy generator loop if tiling-first didn't find a solvable config
 	// Create temp level for solver validation
 	tempLevel := &Level{
 		ID:       levelID,
