@@ -376,9 +376,9 @@ func FormatProxyOption(proxy ProxyConfig) string {
 // --- Validation helpers ---
 
 var allowedSchemes = map[string]bool{
-	"http":   true,
-	"https":  true,
-	"socks5": true,
+	"http":    true,
+	"https":   true,
+	"socks5":  true,
 	"socks5h": true,
 }
 

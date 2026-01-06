@@ -26,7 +26,7 @@ func TestListProxyConfigurations(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	listProxyConfigurations()
+	listProxyConfigurations(nil)
 
 	w.Close()
 	os.Stdout = old

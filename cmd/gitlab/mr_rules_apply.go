@@ -26,7 +26,7 @@ var (
 	tokenItemOpt string
 )
 
-// mrRulesApplyCmd applies MR rules to a GitLab project using glab api
+// mrRulesApplyCmd applies MR rules to a GitLab project using glab api.
 var mrRulesApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply merge request rules from a JSON file",

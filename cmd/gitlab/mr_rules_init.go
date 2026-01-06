@@ -20,7 +20,7 @@ var (
 	initYes        bool
 )
 
-// mrRulesInitCmd interactively creates a MR rules JSON file
+// mrRulesInitCmd interactively creates a MR rules JSON file.
 var mrRulesInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Interactively generate a MR rules JSON file",

@@ -64,7 +64,7 @@ func renderProxyList(compact bool, proxies []config.ProxyConfig) {
 	fmt.Println("-------------------------------------------------")
 }
 
-func renderEnv(compact bool, showLowercase bool) {
+func renderEnv(compact, showLowercase bool) {
 	if !compact {
 		fmt.Println("System environment variables:")
 		fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
@@ -153,7 +153,7 @@ var enableCmd = &cobra.Command{
 			proxies, _ = config.AddOrUpdateProxy()
 		}
 
-		selectedIndex := -1
+		var selectedIndex int
 		if idxFlag >= 0 && idxFlag < len(proxies) {
 			selectedIndex = idxFlag
 		} else if titleFlag != "" {
@@ -271,8 +271,7 @@ var toggleCmd = &cobra.Command{
 
 		if doOn {
 			// Determine selection path
-			selectedIndex := -1
-
+			var selectedIndex int
 			if idxFlag >= 0 && idxFlag < len(proxies) {
 				selectedIndex = idxFlag
 			} else if titleFlag != "" {
@@ -303,7 +302,7 @@ var toggleCmd = &cobra.Command{
 						Help:    "Use arrow keys to navigate, and Enter to select.",
 					}
 					if err := survey.AskOne(prompt, &sel); err != nil {
-						log.Error("Selection cancelled: %v", err)
+						log.Error("Selection canceled: %v", err)
 						return
 					}
 					if sel == len(options)-1 {

@@ -32,7 +32,7 @@ func (m *MRRules) Validate() error {
 	return nil
 }
 
-// ToAPIFields maps rules to GitLab project API fields
+// ToAPIFields maps rules to GitLab project API fields.
 func (m *MRRules) ToAPIFields() map[string]any {
 	fields := map[string]any{
 		"merge_method": m.MergeMethod,
