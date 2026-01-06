@@ -5,7 +5,7 @@ import (
 )
 
 // BenchmarkGenerateVines_Seedling benchmarks fast easy level generation.
-// Target: < 10ms
+// Target: < 10ms.
 func BenchmarkGenerateVines_Seedling(b *testing.B) {
 	gridSize := GridSizeForLevel(7, "Seedling")
 
@@ -16,7 +16,7 @@ func BenchmarkGenerateVines_Seedling(b *testing.B) {
 }
 
 // BenchmarkGenerateVines_Sprout benchmarks medium level generation.
-// Target: < 20ms
+// Target: < 20ms.
 func BenchmarkGenerateVines_Sprout(b *testing.B) {
 	gridSize := GridSizeForLevel(10, "Sprout")
 
@@ -27,7 +27,7 @@ func BenchmarkGenerateVines_Sprout(b *testing.B) {
 }
 
 // BenchmarkGenerateVines_Nurturing benchmarks harder level generation with solver-aware placement.
-// Target: < 50ms
+// Target: < 50ms.
 func BenchmarkGenerateVines_Nurturing(b *testing.B) {
 	gridSize := GridSizeForLevel(15, "Nurturing")
 
@@ -38,7 +38,7 @@ func BenchmarkGenerateVines_Nurturing(b *testing.B) {
 }
 
 // BenchmarkGenerateVines_Flourishing benchmarks hard level generation.
-// Target: < 100ms
+// Target: < 100ms.
 func BenchmarkGenerateVines_Flourishing(b *testing.B) {
 	gridSize := GridSizeForLevel(18, "Flourishing")
 
@@ -49,7 +49,7 @@ func BenchmarkGenerateVines_Flourishing(b *testing.B) {
 }
 
 // BenchmarkGenerateVines_Transcendent benchmarks hardest level generation.
-// Target: < 500ms (may require many retries)
+// Target: < 500ms (may require many retries).
 func BenchmarkGenerateVines_Transcendent(b *testing.B) {
 	gridSize := GridSizeForLevel(20, "Transcendent")
 
@@ -60,7 +60,7 @@ func BenchmarkGenerateVines_Transcendent(b *testing.B) {
 }
 
 // BenchmarkGenerateLevel_FullPipeline benchmarks end-to-end level generation including all validation.
-// Target: < 100ms per level
+// Target: < 100ms per level.
 func BenchmarkGenerateLevel_FullPipeline(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -70,7 +70,7 @@ func BenchmarkGenerateLevel_FullPipeline(b *testing.B) {
 }
 
 // BenchmarkSolver_IsSolvableGreedy benchmarks the greedy solvability checker.
-// Target: < 5ms per level (used frequently during generation)
+// Target: < 5ms per level (used frequently during generation).
 func BenchmarkSolver_IsSolvableGreedy(b *testing.B) {
 	level := generateLevel(42, "Bench", "Nurturing", 0, 0, false)
 	solver := NewSolver(level)
@@ -82,7 +82,7 @@ func BenchmarkSolver_IsSolvableGreedy(b *testing.B) {
 }
 
 // BenchmarkSolver_IsSolvableBFS benchmarks the thorough BFS solvability checker.
-// Target: < 50ms per level (used for validation, not generation)
+// Target: < 50ms per level (used for validation, not generation).
 func BenchmarkSolver_IsSolvableBFS(b *testing.B) {
 	level := generateLevel(42, "Bench", "Nurturing", 0, 0, false)
 	solver := NewSolver(level)
@@ -94,7 +94,7 @@ func BenchmarkSolver_IsSolvableBFS(b *testing.B) {
 }
 
 // BenchmarkCalculateBlocking benchmarks the blocking relationship calculation.
-// Target: < 2ms per level
+// Target: < 2ms per level.
 func BenchmarkCalculateBlocking(b *testing.B) {
 	gridSize := GridSizeForLevel(15, "Nurturing")
 	vines := generateVines(gridSize, "Nurturing", 12345)
@@ -106,7 +106,7 @@ func BenchmarkCalculateBlocking(b *testing.B) {
 }
 
 // BenchmarkBuildVines_Fast benchmarks the fast vine building algorithm (Seedling/Sprout).
-// Target: < 5ms
+// Target: < 5ms.
 func BenchmarkBuildVines_Fast(b *testing.B) {
 	gridSize := [2]int{8, 10}
 
@@ -117,7 +117,7 @@ func BenchmarkBuildVines_Fast(b *testing.B) {
 }
 
 // BenchmarkBuildVines_SolverAware benchmarks the solver-aware vine building (Nurturing+).
-// Target: < 50ms (includes solver validation)
+// Target: < 50ms (includes solver validation).
 func BenchmarkBuildVines_SolverAware(b *testing.B) {
 	gridSize := [2]int{12, 16}
 
@@ -128,7 +128,7 @@ func BenchmarkBuildVines_SolverAware(b *testing.B) {
 }
 
 // BenchmarkDifficultyForLevel benchmarks difficulty determination.
-// Target: < 1μs (very fast, called frequently)
+// Target: < 1μs (very fast, called frequently).
 func BenchmarkDifficultyForLevel(b *testing.B) {
 	modules := defaultModuleRanges()
 
@@ -140,7 +140,7 @@ func BenchmarkDifficultyForLevel(b *testing.B) {
 }
 
 // BenchmarkGridSizeForLevel benchmarks grid size determination.
-// Target: < 5μs (very fast, called once per level)
+// Target: < 5μs (very fast, called once per level).
 func BenchmarkGridSizeForLevel(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -150,7 +150,7 @@ func BenchmarkGridSizeForLevel(b *testing.B) {
 }
 
 // BenchmarkValidateLevel benchmarks the full validation pipeline.
-// Target: < 10ms per level
+// Target: < 10ms per level.
 func BenchmarkValidateLevel(b *testing.B) {
 	level := generateLevel(42, "Bench", "Nurturing", 0, 0, false)
 
@@ -161,7 +161,7 @@ func BenchmarkValidateLevel(b *testing.B) {
 }
 
 // BenchmarkCompleteModule simulates generating an entire module (15 levels).
-// Target: < 2 seconds for Seedling module, < 30 seconds for Transcendent
+// Target: < 2 seconds for Seedling module, < 30 seconds for Transcendent.
 func BenchmarkCompleteModule(b *testing.B) {
 	modules := defaultModuleRanges()
 

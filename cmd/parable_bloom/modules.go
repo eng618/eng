@@ -72,7 +72,7 @@ func defaultModuleRanges() []ModuleRange {
 }
 
 // DifficultyForLevel determines the difficulty tier for a level ID given modules.
-// Each module should have a progression: Seedling → Sprout → Nurturing → Flourishing → Transcendent (final level)
+// Each module should have a progression: Seedling → Sprout → Nurturing → Flourishing → Transcendent (final level).
 func DifficultyForLevel(levelID int, modules []ModuleRange) string {
 	// Tutorial module is special
 	for _, m := range modules {

@@ -24,7 +24,7 @@ Levels are defined in JSON format with the following structure:
 The validator performs 8 comprehensive checks:
  1. Basic structure: Required fields, valid types, positive IDs/counts
  2. Vine paths: Contiguity, Manhattan distance validation, directional consistency
- 3. Grid occupancy: Minimum 95% for most difficulties (30% for Tutorial)
+ 3. Grid occupancy: Require full coverage (100% of visible cells; 99% allowed when mask hides cells) (30% for Tutorial only during early tutorial adjustments)
  4. Colors: Valid color names, count ranges, max 35% per color
  5. Vine lengths: Within difficulty-specific ranges (e.g., 6-8 segments for Seedling)
  6. Blocking relationships: Acyclic, at least one clearable vine

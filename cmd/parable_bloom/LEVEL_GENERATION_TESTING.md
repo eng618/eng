@@ -135,7 +135,7 @@ go tool cover -html=coverage.out
 ### Generation Quality
 
 - **Solvability Rate**: 100% (all generated levels must be solvable)
-- **Occupancy Accuracy**: Within ±5% of target
+- **Occupancy Accuracy**: Full coverage of visible cells (100% required; 99% allowed with mask)
 - **Difficulty Distribution**: Correct progression per module
 - **Color Variation**: 3-5 distinct colors per level
 
@@ -194,6 +194,55 @@ For **Nurturing, Flourishing, and Transcendent** difficulties:
 4. Retry with different seed if unsolvable
 
 This guarantees all generated vines create solvable levels.
+
+## Tiling-first Generator (Tile the grid, then solver-gate)
+
+The generator uses a "tiling-first, solvability-second" approach: create a complete tiling of the visible grid into self-avoiding vines, then pass the result to the solver/validator as a gating step. This keeps generator complexity low while producing varied, solvable configurations.
+
+High-level pseudocode (see documentation for details):
+
+```pseudo
+function GenerateLevel(tier, seed):
+  rng <- RNG(seed)
+
+  for attempt in 1..MAX_ATTEMPTS:
+    (w,h) <- pickGridSize(tier, rng)
+    profile <- pickVarietyProfile(tier, rng) # lengthMix, turnMix, regionBias, dirBalance
+
+    (grid, vines) <- TileGridIntoVines(w, h, tier.vineCountRange, profile, rng)
+    if FAIL: continue
+
+    if not GeometryValid(vines, w, h): continue
+    if not FullCoverageNoOverlap(grid): continue
+
+    if not MeetsVariety(vines, profile): continue
+
+    result <- SolveAndValidate(w, h, vines, tier.maxMoves)
+    if result.UNSOLVABLE: continue
+
+    return BuildLevelJson(w,h,vines,result)
+
+  return FAIL
+```
+
+### Variation & Quality Guidelines
+
+- Avg Length Targets (GDD): Seedling 6–8, Sprout 5–7, Nurturing 4–6, Flourishing 3–5, Transcendent 2–4.
+- Length mix: enforce that each level contains at least 3 buckets (short/medium/long) to avoid monotony.
+- Turniness: track `turnDensity = turns / (len-1)` and ensure a mix (some near-straight, some bendy).
+- Coverage distribution: vary levels between Edge-heavy, Center-heavy, and Balanced profiles.
+- Directional balance: cap any head direction to <= 40% of vines.
+
+### Anti-Repeat (Rolling Window)
+
+Maintain a rolling window of the last N generated levels and reject (or re-roll) if a candidate is too similar by comparing:
+
+- Length histogram
+- TurnDensity histogram
+- Head-direction histogram
+- Coarse 3×3 region heatmap of vine length placement
+
+This reduces perceived repetition across level batches and keeps modules feeling fresh.
 
 ## Retry Statistics
 

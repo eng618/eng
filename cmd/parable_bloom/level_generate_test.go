@@ -298,7 +298,7 @@ func TestVineBlocking_CalculateBlocking(t *testing.T) {
 	}
 }
 
-// Helper: compute Manhattan distance between two points
+// Helper: compute Manhattan distance between two points.
 func manhattanDist(p1, p2 Point) int {
 	dx := p1.X - p2.X
 	dy := p1.Y - p2.Y
@@ -311,7 +311,7 @@ func manhattanDist(p1, p2 Point) int {
 	return dx + dy
 }
 
-// Helper: determine direction from head to neck
+// Helper: determine direction from head to neck.
 func directionFromPoints(head, neck Point) string {
 	if neck.X < head.X {
 		return "right"
