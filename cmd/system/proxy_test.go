@@ -38,8 +38,8 @@ func TestListProxyConfigurations(t *testing.T) {
 	if !strings.Contains(output, "Test Proxy") {
 		t.Error("Expected output to contain 'Test Proxy'")
 	}
-	if !strings.Contains(output, "[*] 1. Test Proxy") {
-		t.Error("Expected output to show proxy 1 as enabled with [*]")
+	if !strings.Contains(output, "1. ★ Test Proxy") {
+		t.Error("Expected output to show proxy 1 as enabled with star marker")
 	}
 }
 

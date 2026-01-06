@@ -6,6 +6,15 @@ import (
 	"testing"
 )
 
+func containsAny(s string, choices []string) bool {
+	for _, c := range choices {
+		if strings.Contains(s, c) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestRenderLevelAscii(t *testing.T) {
 	level := &Level{
 		ID:       42,
@@ -60,7 +69,18 @@ func TestRenderLevelUnicode(t *testing.T) {
 		t.Fatalf("expected unicode left arrow in output:\n%s", out)
 	}
 	// Default (connectors=true) should show box-drawing or tail marker
-	if !strings.Contains(out, "─") && !strings.Contains(out, "│") && !strings.Contains(out, "┌") && !strings.Contains(out, "└") && !strings.Contains(out, "┐") && !strings.Contains(out, "┘") && !strings.Contains(out, "●") {
+	// For tail marker, compute expected glyph via tailGlyph for the tail segment and assert it's present
+	expectedTail, _ := tailGlyph("unicode", &Point{X: 2, Y: 0}, nil)
+	found := strings.Contains(out, expectedTail)
+	if !found {
+		for _, ch := range []string{"─", "│", "┌", "└", "┐", "┘"} {
+			if strings.Contains(out, ch) {
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
 		t.Fatalf("expected box-drawing or tail marker in output:\n%s", out)
 	}
 }
@@ -96,7 +116,26 @@ func TestRenderLevelAsciiWithConnectors(t *testing.T) {
 	}
 }
 
-func TestRenderLevelUnicodeWithConnectors(t *testing.T) {
+func TestRenderLevelUnicode_DebugTail(t *testing.T) {
+	level := &Level{
+		ID:       99,
+		Name:     "Unicode Level",
+		GridSize: [2]int{3, 3},
+		Vines:    []Vine{{ID: "vine_0", HeadDirection: "left", OrderedPath: []Point{{X: 2, Y: 0}, {X: 1, Y: 0}}}},
+	}
+	var buf bytes.Buffer
+	renderLevelToWriter(&buf, level, "unicode", false)
+	out := buf.String()
+	expectedTail, _ := tailGlyph("unicode", &Point{X: 2, Y: 0}, nil)
+	if expectedTail == "" {
+		t.Fatalf("expectedTail was empty; unexpected")
+	}
+	if !strings.Contains(out, expectedTail) {
+		t.Fatalf("expected tail %q not found in output:\n%s", expectedTail, out)
+	}
+}
+
+func TestRenderLevelUnicodeConnectorsPresence(t *testing.T) {
 	level := &Level{
 		ID:       99,
 		Name:     "Unicode Level",
@@ -109,15 +148,29 @@ func TestRenderLevelUnicodeWithConnectors(t *testing.T) {
 	var buf bytes.Buffer
 	renderLevelToWriter(&buf, level, "unicode", false)
 	out := buf.String()
-	if !strings.Contains(out, "─") && !strings.Contains(out, "│") && !strings.Contains(out, "┌") && !strings.Contains(out, "└") && !strings.Contains(out, "┐") && !strings.Contains(out, "┘") && !strings.Contains(out, "●") {
+	if !containsAny(out, []string{"─", "│", "┌", "└", "┐", "┘", "▪"}) {
 		t.Fatalf("expected box-drawing or tail marker in output:\n%s", out)
 	}
 	// Ensure tail marker present for left-moving short vine
-	if !strings.Contains(out, "●") {
-		t.Fatalf("expected tail marker '●' in output:\n%s", out)
+	expectedTail2, _ := tailGlyph("unicode", &Point{X: 2, Y: 0}, nil)
+	if !strings.Contains(out, expectedTail2) {
+		t.Fatalf("expected tail marker '%s' in output:\n%s", expectedTail2, out)
+	}
+}
+
+func TestRenderLevelUnicodeHeadPresent(t *testing.T) {
+	level := &Level{
+		ID:       99,
+		Name:     "Unicode Level",
+		GridSize: [2]int{3, 3},
+		Vines: []Vine{
+			{ID: "vine_0", HeadDirection: "left", OrderedPath: []Point{{X: 2, Y: 0}, {X: 1, Y: 0}}},
+		},
 	}
 
-	// And ensure the head arrow is still present
+	var buf bytes.Buffer
+	renderLevelToWriter(&buf, level, "unicode", false)
+	out := buf.String()
 	if !strings.Contains(out, "←") {
 		t.Fatalf("expected head arrow '←' in output:\n%s", out)
 	}

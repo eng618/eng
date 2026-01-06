@@ -27,9 +27,19 @@ var ProxyCmd = &cobra.Command{
 
 // Common function to list proxy configurations.
 func listProxyConfigurations(cmd *cobra.Command) {
-	compact, _ := cmd.Flags().GetBool("compact")
-	showEnv, _ := cmd.Flags().GetBool("env")
-	showLowercaseEnv, _ := cmd.Flags().GetBool("lowercase-env")
+	var compact bool
+	var showEnv bool
+	var showLowercaseEnv bool
+	if cmd != nil {
+		compact, _ = cmd.Flags().GetBool("compact")
+		showEnv, _ = cmd.Flags().GetBool("env")
+		showLowercaseEnv, _ = cmd.Flags().GetBool("lowercase-env")
+	} else {
+		// default behavior when called programmatically (e.g., tests)
+		compact = false
+		showEnv = false
+		showLowercaseEnv = false
+	}
 	proxies, activeIndex := config.GetProxyConfigs()
 
 	renderProxyList(compact, proxies)

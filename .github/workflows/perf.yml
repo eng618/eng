@@ -1,0 +1,45 @@
+name: perf-checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  perf-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ${{ env.GOMODCACHE }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run unit tests (fast)
+        run: go test ./... -count=1
+
+      - name: Run perf quick checks (parable_bloom)
+        run: go test ./cmd/parable_bloom -run TestPerf_Tiling_Seedling -run TestPerf_Tiling_Nurturing -v -count=1
+
+      - name: Upload perf artifacts (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-logs
+          path: |
+            ./cmd/parable_bloom/*.log
+            ./cmd/parable_bloom/*.txt
