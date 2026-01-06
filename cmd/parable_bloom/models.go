@@ -243,3 +243,18 @@ var GridSizeRanges = map[string]struct {
 	"Flourishing":  {MinW: 12, MinH: 20, MaxW: 16, MaxH: 24},
 	"Transcendent": {MinW: 16, MinH: 28, MaxW: 24, MaxH: 40},
 }
+
+// VarietyProfile controls shape and distribution characteristics for generated levels.
+type VarietyProfile struct {
+	LengthMix  map[string]float64 // keys: "short","medium","long" => relative weights
+	TurnMix    float64            // 0..1 proportion of turns (bendiness)
+	RegionBias string             // "edge","center","balanced"
+	DirBalance map[string]float64 // desired head dir distribution (right,left,up,down)
+}
+
+// GeneratorConfig holds generation algorithm tuning parameters and safety caps.
+type GeneratorConfig struct {
+	MaxSeedRetries    int // retries to find a seed that can grow
+	LocalRepairRadius int // radius for local repair tiles
+	RepairRetries     int // number of local repair attempts per stuck region
+}
