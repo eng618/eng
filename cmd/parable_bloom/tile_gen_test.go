@@ -10,7 +10,7 @@ func TestGrowFromSeed_SimpleGrow(t *testing.T) {
 	rng := rand.New(rand.NewSource(42))
 	occupied := make(map[string]bool)
 	seed := Point{X: 0, Y: 0}
-	v, occ, err := GrowFromSeed(seed, occupied, [2]int{3, 3}, 4, rng)
+	v, occ, err := GrowFromSeed(seed, occupied, [2]int{3, 3}, 4, VarietyProfile{}, GeneratorConfig{MaxSeedRetries: 5}, rng)
 	if err != nil {
 		t.Fatalf("expected successful grow, got error: %v", err)
 	}

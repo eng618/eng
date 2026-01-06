@@ -1,6 +1,7 @@
 package parable_bloom
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -116,6 +117,25 @@ func BenchmarkBuildVines_Fast(b *testing.B) {
 	}
 }
 
+// BenchmarkTileGridIntoVines_Seedling compares tiling-first generator vs legacy fast generator.
+func BenchmarkTileGridVsLegacy_Seedling(b *testing.B) {
+	gridSize := GridSizeForLevel(7, "Seedling")
+	spec := DifficultySpecs["Seedling"]
+	cfg := GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+
+	b.Run("tiling", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rng := rand.New(rand.NewSource(int64(i)))
+			_, _ = TileGridIntoVines(gridSize, spec, GetPresetProfile("Seedling"), cfg, rng)
+		}
+	})
+	b.Run("legacy", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = buildVinesFast(gridSize, "Seedling", int64(i))
+		}
+	})
+}
+
 // BenchmarkBuildVines_SolverAware benchmarks the solver-aware vine building (Nurturing+).
 // Target: < 50ms (includes solver validation).
 func BenchmarkBuildVines_SolverAware(b *testing.B) {
@@ -125,6 +145,25 @@ func BenchmarkBuildVines_SolverAware(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		buildVinesSolverAware(gridSize, "Nurturing", int64(i))
 	}
+}
+
+// BenchmarkTileGridVsLegacy_Nurturing compares tiling-first vs solver-aware legacy generator.
+func BenchmarkTileGridVsLegacy_Nurturing(b *testing.B) {
+	gridSize := GridSizeForLevel(15, "Nurturing")
+	spec := DifficultySpecs["Nurturing"]
+	cfg := GeneratorConfig{MaxSeedRetries: 30, LocalRepairRadius: 3, RepairRetries: 4}
+
+	b.Run("tiling", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rng := rand.New(rand.NewSource(int64(i)))
+			_, _ = TileGridIntoVines(gridSize, spec, GetPresetProfile("Nurturing"), cfg, rng)
+		}
+	})
+	b.Run("legacy", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = buildVinesSolverAware(gridSize, "Nurturing", int64(i))
+		}
+	})
 }
 
 // BenchmarkDifficultyForLevel benchmarks difficulty determination.
