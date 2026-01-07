@@ -4,8 +4,12 @@ package parable_bloom
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/cmd/parable_bloom/generate"
+	"github.com/eng618/eng/cmd/parable_bloom/render"
+	"github.com/eng618/eng/cmd/parable_bloom/repair"
+	"github.com/eng618/eng/cmd/parable_bloom/validate"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // ParableBloomCmd serves as the base command for all Parable Bloom project operations.
@@ -30,6 +34,8 @@ var ParableBloomCmd = &cobra.Command{
 }
 
 func init() {
-	ParableBloomCmd.AddCommand(LevelGenerateCmd)
-	ParableBloomCmd.AddCommand(LevelValidateCmd)
+	ParableBloomCmd.AddCommand(generate.LevelGenerateCmd)
+	ParableBloomCmd.AddCommand(validate.LevelValidateCmd)
+	ParableBloomCmd.AddCommand(render.LevelRenderCmd)
+	ParableBloomCmd.AddCommand(repair.LevelRepairCmd)
 }

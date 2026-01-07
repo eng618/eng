@@ -38,9 +38,9 @@ import (
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
-	"github.com/eng618/eng/utils"
-	configUtils "github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	configUtils "github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 var cfgFile string

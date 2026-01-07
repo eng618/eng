@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils"
-	gitlabcfg "github.com/eng618/eng/utils/config/gitlab"
-	"github.com/eng618/eng/utils/log"
-	gitrepo "github.com/eng618/eng/utils/repo"
+	"github.com/eng618/eng/internal/utils"
+	gitlabcfg "github.com/eng618/eng/internal/utils/config/gitlab"
+	"github.com/eng618/eng/internal/utils/log"
+	gitrepo "github.com/eng618/eng/internal/utils/repo"
 )
 
 var (

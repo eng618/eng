@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // CopilotSetupCmd creates a base custom Copilot instructions file in .github/copilot-instructions.md.

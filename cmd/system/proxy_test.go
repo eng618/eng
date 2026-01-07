@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils/config"
+	"github.com/eng618/eng/internal/utils/config"
 )
 
 func TestListProxyConfigurations(t *testing.T) {

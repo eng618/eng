@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/eng618/eng/cmd/parable_bloom"
+	"github.com/eng618/eng/cmd/parable_bloom/generate"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	iters := flag.Int("iters", 10, "iterations per param set")
 	flag.Parse()
 
-	bestScore, bestCfg, bestProf, bestTime := parable_bloom.SweepParams(*difficulty, *iters)
+	bestScore, bestCfg, bestProf, bestTime := generate.SweepParams(*difficulty, *iters)
 	fmt.Printf("Sweep result for %s:\n", *difficulty)
 	fmt.Printf("  Best score: %.2f\n", bestScore)
 	fmt.Printf("  Best config: %+v\n", bestCfg)

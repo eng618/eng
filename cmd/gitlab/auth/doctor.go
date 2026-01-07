@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
-	gitrepo "github.com/eng618/eng/utils/repo"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	gitrepo "github.com/eng618/eng/internal/utils/repo"
 )
 
 // doctorCmd validates glab availability, token validity, and project access.

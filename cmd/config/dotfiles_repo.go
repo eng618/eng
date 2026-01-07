@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // DotfilesRepoCmd defines the command for setting the local dotfiles repository path.

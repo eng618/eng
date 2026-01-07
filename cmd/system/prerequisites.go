@@ -9,8 +9,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // EnsurePrerequisites checks and installs all prerequisites needed for dotfiles installation.

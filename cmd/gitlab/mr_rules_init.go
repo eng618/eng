@@ -10,8 +10,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	gitlabcfg "github.com/eng618/eng/utils/config/gitlab"
-	"github.com/eng618/eng/utils/log"
+	gitlabcfg "github.com/eng618/eng/internal/utils/config/gitlab"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 var (

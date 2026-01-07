@@ -7,8 +7,8 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 const (
@@ -163,7 +163,7 @@ var enableCmd = &cobra.Command{
 			proxies, _ = config.AddOrUpdateProxy()
 		}
 
-		selectedIndex := -1
+		var selectedIndex int
 		if idxFlag >= 0 && idxFlag < len(proxies) {
 			selectedIndex = idxFlag
 		} else if titleFlag != "" {
@@ -281,7 +281,7 @@ var toggleCmd = &cobra.Command{
 
 		if doOn {
 			// Determine selection path
-			selectedIndex := -1
+			var selectedIndex int
 			if idxFlag >= 0 && idxFlag < len(proxies) {
 				selectedIndex = idxFlag
 			} else if titleFlag != "" {
