@@ -163,7 +163,7 @@ var enableCmd = &cobra.Command{
 			proxies, _ = config.AddOrUpdateProxy()
 		}
 
-		var selectedIndex int
+		selectedIndex := -1
 		if idxFlag >= 0 && idxFlag < len(proxies) {
 			selectedIndex = idxFlag
 		} else if titleFlag != "" {
@@ -281,7 +281,7 @@ var toggleCmd = &cobra.Command{
 
 		if doOn {
 			// Determine selection path
-			var selectedIndex int
+			selectedIndex := -1
 			if idxFlag >= 0 && idxFlag < len(proxies) {
 				selectedIndex = idxFlag
 			} else if titleFlag != "" {
