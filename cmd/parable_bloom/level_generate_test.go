@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/eng618/eng/utils/log"
 )
 
 // TestDifficultyForLevel_Progression verifies that difficulty increases correctly through a module.
@@ -340,6 +342,24 @@ func TestRandomize_PersistsSeedAndRepro(t *testing.T) {
 		if cb != cc {
 			t.Fatalf("Vine signature %s count mismatch for reproduced seed: %d vs %d", k, cb, cc)
 		}
+	}
+}
+
+// TestGenerateSingle_RendersAfterCreation ensures CLI render option displays a quick render right after generation.
+func TestGenerateSingle_RendersAfterCreation(t *testing.T) {
+	// Capture log output
+	var buf strings.Builder
+	log.SetWriters(&buf, nil)
+	defer log.ResetWriters()
+
+	// Use a temp output dir
+	tmpDir := t.TempDir()
+	// Generate single level with render enabled
+	generateSingle("", 8, 8, tmpDir, false, true, nil, false, 0, false, true, "ascii", true)
+
+	out := buf.String()
+	if !strings.Contains(out, "Level") {
+		t.Fatalf("Expected rendered output to contain header 'Level', got: %s", out)
 	}
 }
 

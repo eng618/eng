@@ -35,6 +35,9 @@ This command creates solvable levels with the required structure and metadata.`,
 		count, _ := cmd.Flags().GetInt("count")
 		seed, _ := cmd.Flags().GetInt64("seed")
 		randomize, _ := cmd.Flags().GetBool("randomize")
+		render, _ := cmd.Flags().GetBool("render")
+		renderStyle, _ := cmd.Flags().GetString("render-style")
+		renderCoords, _ := cmd.Flags().GetBool("render-coords")
 
 		if output == "" {
 			output = "assets/levels"
@@ -49,10 +52,10 @@ This command creates solvable levels with the required structure and metadata.`,
 
 		if count > 1 {
 			// Batch generation by module
-			generateBatch(modules, moduleID, count, output, overwrite, isVerbose, seed, randomize)
+			generateBatch(modules, moduleID, count, output, overwrite, isVerbose, seed, randomize, render, renderStyle, renderCoords)
 		} else {
 			// Single level generation
-			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose, seed, randomize)
+			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose, seed, randomize, render, renderStyle, renderCoords)
 		}
 	},
 }
@@ -70,9 +73,12 @@ func init() {
 	LevelGenerateCmd.Flags().BoolP("dry-run", "", false, "Generate without writing to disk")
 	LevelGenerateCmd.Flags().Int64("seed", 0, "Optional base seed for generation (per-level seeds derived for batch runs)")
 	LevelGenerateCmd.Flags().Bool("randomize", false, "Use a time-based random seed and record it in level JSON")
+	LevelGenerateCmd.Flags().Bool("render", false, "Render each level to the terminal after creation for quick sanity checks")
+	LevelGenerateCmd.Flags().String("render-style", "unicode", "Render style when using --render: ascii or unicode")
+	LevelGenerateCmd.Flags().Bool("render-coords", false, "Show axis coordinates when rendering")
 }
 
-func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool, seed int64, randomize bool) {
+func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool, seed int64, randomize bool, render bool, renderStyle string, renderCoords bool) {
 	log.Verbose(verbose, "Generating single level")
 
 	// If name is numeric, treat it as level ID
@@ -130,9 +136,17 @@ func generateSingle(name string, width, height int, output string, stdout, overw
 		}
 		log.Info("Level written to %s", filePath)
 	}
+
+	// Optional: render a visual representation for quick sanity-check
+	if render {
+		if renderStyle == "" {
+			renderStyle = "unicode"
+		}
+		renderLevelToWriter(log.Writer(), level, renderStyle, renderCoords)
+	}
 }
 
-func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize bool) {
+func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize bool, render bool, renderStyle string, renderCoords bool) {
 	log.Verbose(verbose, "Generating batch of %d levels for module ID: %d", count, moduleID)
 
 	// Find module range by ID (1-indexed)
@@ -194,13 +208,19 @@ func generateBatch(modules []ModuleRange, moduleID, count int, output string, ov
 			if err == nil {
 				log.Info("Generated level %d", id)
 				successCount++
+				// Optional render after each level generation
+				if render {
+					if renderStyle == "" {
+						renderStyle = "unicode"
+					}
+					renderLevelToWriter(log.Writer(), level, renderStyle, renderCoords)
+				}
 			} else {
 				log.Error("Failed to generate level %d: %v", id, err)
 			}
 			mu.Unlock()
 		}(levelID)
 	}
-
 	wg.Wait()
 	log.Info("Batch generation complete: %d/%d levels generated", successCount, (endID - startID + 1))
 }
