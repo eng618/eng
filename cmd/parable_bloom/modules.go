@@ -36,10 +36,10 @@ func LoadModules(path string) ([]ModuleRange, error) {
 }
 
 func parseModules(data []byte) ([]ModuleRange, error) {
-	var moduleData ModuleData
-	decoder := json.NewDecoder(nil)
-	decoder.DisallowUnknownFields()
+decoder := json.NewDecoder(bytes.NewReader(data))
+decoder.DisallowUnknownFields()
 
+err := decoder.Decode(&moduleData)
 	err := json.Unmarshal(data, &moduleData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse modules.json: %w", err)
