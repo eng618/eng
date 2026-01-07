@@ -3,6 +3,7 @@ package parable_bloom
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 )
@@ -127,12 +128,22 @@ func GridSizeForLevel(levelID int, difficulty string) [2]int {
 		ranges = GridSizeRanges["Seedling"]
 	}
 
-	// Use levelID as seed for deterministic variation
-	seed := uint32(levelID) * 2654435761 // FNV-1a offset basis
+	// Clamp levelID to the valid uint32 range before using it as a seed
+	var levelSeed uint32
+	if levelID < 0 {
+		levelSeed = 0
+	} else if levelID > int(math.MaxUint32) {
+		levelSeed = math.MaxUint32
+	} else {
+		levelSeed = uint32(levelID)
+	}
+
+	// Use levelSeed as seed for deterministic variation
+	seed := levelSeed * 2654435761 // FNV-1a offset basis
 
 	// Pseudo-random within ranges
 	widthVar := int((seed % uint32(ranges.MaxW-ranges.MinW+1)))
-	seed = seed*2654435761 ^ uint32(levelID)
+	seed = seed*2654435761 ^ levelSeed
 	heightVar := int((seed % uint32(ranges.MaxH-ranges.MinH+1)))
 
 	width := ranges.MinW + widthVar
