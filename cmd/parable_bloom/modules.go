@@ -1,6 +1,7 @@
 package parable_bloom
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -36,11 +37,11 @@ func LoadModules(path string) ([]ModuleRange, error) {
 }
 
 func parseModules(data []byte) ([]ModuleRange, error) {
-decoder := json.NewDecoder(bytes.NewReader(data))
-decoder.DisallowUnknownFields()
+	var moduleData ModuleData
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
 
-err := decoder.Decode(&moduleData)
-	err := json.Unmarshal(data, &moduleData)
+	err := decoder.Decode(&moduleData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse modules.json: %w", err)
 	}
