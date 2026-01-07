@@ -12,6 +12,9 @@ on:
         required: true
         default: '30'
 
+permissions:
+  contents: read
+
 jobs:
   run-sweep:
     runs-on: ubuntu-latest
