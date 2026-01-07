@@ -33,6 +33,7 @@ import (
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
+	"github.com/eng618/eng/cmd/gitlab"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
@@ -97,6 +98,7 @@ func init() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(files.FilesCmd)
+	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)

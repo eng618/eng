@@ -44,12 +44,12 @@ func getSoftwareList() []Software {
 			Name:        "VS Code",
 			Description: "Code Editor",
 			Optional:    true,
-			URL:         "https://code.visualstudio.com/",
+			URL:         "https://code.visualstudio.com/Download",
 			Check: func() bool {
 				_, err := lookPath("code")
 				return err == nil
 			},
-			Install: func() error { return openURL("https://code.visualstudio.com/") },
+			Install: func() error { return openURL("https://code.visualstudio.com/Download") },
 		},
 		{
 			Name:        "Brew Bundle",
@@ -266,6 +266,22 @@ func getSoftwareList() []Software {
 				return err == nil
 			},
 			Install: func() error { return openURL("https://open.spotify.com/download") },
+		},
+		{
+			Name:        "Bitwarden CLI",
+			Description: "Password Manager CLI",
+			Optional:    false,
+			Check: func() bool {
+				_, err := lookPath("bw")
+				return err == nil
+			},
+			Install: func() error {
+				log.Info("Installing bitwarden-cli via brew...")
+				cmd := execCommand("brew", "install", "bitwarden-cli")
+				cmd.Stdout = log.Writer()
+				cmd.Stderr = log.ErrorWriter()
+				return cmd.Run()
+			},
 		},
 	}
 }
