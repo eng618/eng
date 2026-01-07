@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/utils"
 	"github.com/eng618/eng/utils/log"
 )
 
@@ -158,7 +160,7 @@ func ensureBash(verbose bool) error {
 }
 
 // ensureGitHubSSH checks if a valid SSH key for GitHub exists at ~/.ssh/github.
-// If not found, it provides instructions and exits.
+// If not found, attempts to retrieve from Bitwarden vault first, then falls back to manual setup.
 func ensureGitHubSSH(verbose bool) error {
 	log.Verbose(verbose, "Checking for GitHub SSH key")
 
@@ -169,11 +171,24 @@ func ensureGitHubSSH(verbose bool) error {
 
 	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
 
+	// First check if SSH key already exists
 	if _, err := stat(sshKeyPath); err == nil {
 		log.Verbose(verbose, "GitHub SSH key found at ~/.ssh/github")
 		return nil
 	}
 
+	// Try to retrieve SSH key from Bitwarden
+	log.Verbose(verbose, "SSH key not found locally, checking Bitwarden vault...")
+	if err := setupSSHFromBitwarden(sshKeyPath, verbose); err != nil {
+		log.Warn("Could not retrieve SSH key from Bitwarden: %v", err)
+		log.Message("")
+		log.Message("Falling back to manual SSH key setup...")
+	} else {
+		log.Success("SSH key retrieved from Bitwarden and configured successfully")
+		return nil
+	}
+
+	// Manual setup instructions
 	log.Error("GitHub SSH key not found at ~/.ssh/github")
 	log.Message("")
 	log.Message("You need a valid SSH key configured for GitHub access.")
@@ -189,6 +204,114 @@ func ensureGitHubSSH(verbose bool) error {
 	log.Message("For instructions on setting up SSH keys for GitHub, visit:")
 	log.Message("https://docs.github.com/en/authentication/connecting-to-github-with-ssh")
 	log.Message("")
+	log.Message("Alternatively, you can store your SSH key in Bitwarden and this tool")
+	log.Message("will automatically retrieve and configure it for you.")
+	log.Message("")
 
 	return fmt.Errorf("GitHub SSH key not found - please set up SSH access before continuing")
+}
+
+// setupSSHFromBitwarden attempts to retrieve SSH keys from Bitwarden vault and set them up locally.
+func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
+	// Check if Bitwarden is logged in and unlocked
+	loggedIn, err := utils.CheckBitwardenLoginStatus()
+	if err != nil {
+		return fmt.Errorf("failed to check Bitwarden status: %w", err)
+	}
+
+	if !loggedIn {
+		return utils.UnlockBitwardenVault()
+	}
+
+	// Find SSH keys in vault
+	sshKeys, err := utils.FindSSHKeysInVault()
+	if err != nil {
+		return fmt.Errorf("failed to search for SSH keys in Bitwarden: %w", err)
+	}
+
+	if len(sshKeys) == 0 {
+		return fmt.Errorf("no SSH keys found in Bitwarden vault")
+	}
+
+	var selectedKey *utils.BitwardenItem
+
+	// If multiple keys found, let user choose
+	if len(sshKeys) > 1 {
+		log.Message("Multiple SSH keys found in Bitwarden vault:")
+		var options []string
+		keyMap := make(map[string]*utils.BitwardenItem)
+
+		for _, key := range sshKeys {
+			option := fmt.Sprintf("%s (ID: %s)", key.Name, key.ID)
+			options = append(options, option)
+			keyMap[option] = &key
+		}
+
+		var selected string
+		prompt := &survey.Select{
+			Message: "Select the SSH key to use for GitHub:",
+			Options: options,
+		}
+		if err := askOne(prompt, &selected); err != nil {
+			return fmt.Errorf("key selection canceled: %w", err)
+		}
+
+		selectedKey = keyMap[selected]
+	} else {
+		selectedKey = &sshKeys[0]
+		log.Verbose(verbose, "Found SSH key: %s", selectedKey.Name)
+	}
+
+	// Extract the SSH key
+	sshKey, err := utils.ExtractSSHKeyFromItem(selectedKey)
+	if err != nil {
+		return fmt.Errorf("failed to extract SSH key: %w", err)
+	}
+
+	// Create .ssh directory if it doesn't exist
+	sshDir := filepath.Dir(sshKeyPath)
+	if err := os.MkdirAll(sshDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create SSH directory: %w", err)
+	}
+
+	// Write SSH key to file
+	if err := os.WriteFile(sshKeyPath, []byte(sshKey), 0o600); err != nil {
+		return fmt.Errorf("failed to write SSH key: %w", err)
+	}
+
+	// Ensure proper permissions
+	if err := os.Chmod(sshKeyPath, 0o600); err != nil {
+		return fmt.Errorf("failed to set SSH key permissions: %w", err)
+	}
+
+	// Create or update SSH config
+	sshConfigPath := filepath.Join(sshDir, "config")
+	configContent := fmt.Sprintf("Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n", sshKeyPath)
+
+	// Check if config exists and append or create
+	if _, err := os.Stat(sshConfigPath); err == nil {
+		// Config exists, check if GitHub entry already exists
+		existingConfig, err := os.ReadFile(sshConfigPath)
+		if err != nil {
+			log.Warn("Could not read existing SSH config: %v", err)
+		} else {
+			configStr := string(existingConfig)
+			if !strings.Contains(configStr, "Host github.com") {
+				// Append to existing config
+				configContent = configStr + "\n" + configContent
+			} else {
+				// GitHub entry exists, don't modify
+				log.Verbose(verbose, "GitHub SSH config entry already exists")
+				return nil
+			}
+		}
+	}
+
+	// Write SSH config
+	if err := os.WriteFile(sshConfigPath, []byte(configContent), 0o600); err != nil {
+		return fmt.Errorf("failed to write SSH config: %w", err)
+	}
+
+	log.Verbose(verbose, "SSH key and config configured successfully")
+	return nil
 }

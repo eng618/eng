@@ -73,10 +73,26 @@ var SetupOhMyZshCmd = &cobra.Command{
 	},
 }
 
+var SetupSSHCmd = &cobra.Command{
+	Use:   "ssh",
+	Short: "Setup SSH keys for GitHub access",
+	Long: `Setup SSH keys for GitHub access. This command will:
+  - Check for existing SSH keys
+  - Attempt to retrieve SSH keys from Bitwarden vault
+  - Generate new SSH keys if none found
+  - Configure SSH config for GitHub`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := setupSSH(utils.IsVerbose(cmd)); err != nil {
+			log.Fatal("SSH setup failed: %v", err)
+		}
+	},
+}
+
 func init() {
 	SetupCmd.AddCommand(SetupASDFCmd)
 	SetupCmd.AddCommand(SetupDotfilesCmd)
 	SetupCmd.AddCommand(SetupOhMyZshCmd)
+	SetupCmd.AddCommand(SetupSSHCmd)
 }
 
 func setupASDF(verbose bool) {
@@ -251,4 +267,149 @@ func setupSoftware(verbose bool) {
 			}
 		}
 	}
+}
+
+// setupSSH handles SSH key setup for GitHub access
+func setupSSH(verbose bool) error {
+	log.Start("Setting up SSH keys for GitHub access")
+
+	homeDir, err := userHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not determine home directory: %w", err)
+	}
+
+	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
+
+	// Check if SSH key already exists
+	if _, err := stat(sshKeyPath); err == nil {
+		log.Success("SSH key already exists at ~/.ssh/github")
+		return ensureSSHConfig(sshKeyPath)
+	}
+
+	// Try to setup from Bitwarden first
+	log.Verbose(verbose, "Attempting to retrieve SSH key from Bitwarden...")
+	if err := setupSSHFromBitwarden(sshKeyPath, verbose); err != nil {
+		log.Warn("Could not retrieve SSH key from Bitwarden: %v", err)
+		log.Message("Generating new SSH key...")
+
+		// Generate new SSH key
+		if err := generateSSHKey(sshKeyPath, verbose); err != nil {
+			return fmt.Errorf("failed to generate SSH key: %w", err)
+		}
+
+		// Optionally store in Bitwarden
+		var storeInBitwarden bool
+		prompt := &survey.Confirm{
+			Message: "Would you like to store the new SSH key in Bitwarden for future use?",
+			Default: true,
+		}
+		if err := askOne(prompt, &storeInBitwarden); err != nil {
+			log.Warn("Could not prompt for Bitwarden storage: %v", err)
+		} else if storeInBitwarden {
+			if err := storeSSHKeyInBitwarden(sshKeyPath, verbose); err != nil {
+				log.Warn("Failed to store SSH key in Bitwarden: %v", err)
+			} else {
+				log.Success("SSH key stored in Bitwarden")
+			}
+		}
+	}
+
+	// Ensure SSH config is set up
+	return ensureSSHConfig(sshKeyPath)
+}
+
+// generateSSHKey generates a new SSH key pair
+func generateSSHKey(sshKeyPath string, verbose bool) error {
+	log.Start("Generating new SSH key pair...")
+
+	// Ensure .ssh directory exists
+	sshDir := filepath.Dir(sshKeyPath)
+	if err := os.MkdirAll(sshDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create SSH directory: %w", err)
+	}
+
+	// Generate SSH key
+	cmd := execCommand("ssh-keygen", "-t", "ed25519", "-f", sshKeyPath, "-N", "", "-C", "github")
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate SSH key: %w", err)
+	}
+
+	log.Success("SSH key pair generated successfully")
+	return nil
+}
+
+// storeSSHKeyInBitwarden stores the SSH key in Bitwarden vault
+func storeSSHKeyInBitwarden(sshKeyPath string, verbose bool) error {
+	// Check if Bitwarden is available
+	if _, err := utils.CheckBitwardenLoginStatus(); err != nil {
+		return fmt.Errorf("Bitwarden not available: %w", err)
+	}
+
+	// Read the private key
+	privateKey, err := os.ReadFile(sshKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read SSH private key: %w", err)
+	}
+
+	// Read the public key
+	publicKeyPath := sshKeyPath + ".pub"
+	publicKey, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read SSH public key: %w", err)
+	}
+
+	log.Start("Storing SSH key in Bitwarden...")
+
+	// Create Bitwarden item
+	itemName := "SSH Key - GitHub"
+	itemNotes := fmt.Sprintf("Private Key:\n%s\n\nPublic Key:\n%s", string(privateKey), string(publicKey))
+
+	// Use bw create to add the item
+	cmd := execCommand("bw", "create", "item", itemName,
+		"--notes", itemNotes,
+		"--organizationid", "", // Personal vault
+	)
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create Bitwarden item: %w", err)
+	}
+
+	log.Success("SSH key stored in Bitwarden")
+	return nil
+}
+
+// ensureSSHConfig ensures SSH config is set up for GitHub
+func ensureSSHConfig(sshKeyPath string) error {
+	sshDir := filepath.Dir(sshKeyPath)
+	sshConfigPath := filepath.Join(sshDir, "config")
+
+	configContent := fmt.Sprintf("Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n", sshKeyPath)
+
+	// Check if config exists and append or create
+	if _, err := os.Stat(sshConfigPath); err == nil {
+		// Config exists, check if GitHub entry already exists
+		existingConfig, err := os.ReadFile(sshConfigPath)
+		if err != nil {
+			log.Warn("Could not read existing SSH config: %v", err)
+		} else {
+			configStr := string(existingConfig)
+			if strings.Contains(configStr, "Host github.com") {
+				log.Verbose(true, "GitHub SSH config entry already exists")
+				return nil
+			}
+			// Append to existing config
+			configContent = configStr + "\n" + configContent
+		}
+	}
+
+	// Write SSH config
+	if err := os.WriteFile(sshConfigPath, []byte(configContent), 0o600); err != nil {
+		return fmt.Errorf("failed to write SSH config: %w", err)
+	}
+
+	log.Success("SSH config updated for GitHub access")
+	return nil
 }

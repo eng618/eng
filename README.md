@@ -75,6 +75,7 @@ graph LR
     C4 --> G2[ts up/down]
     C4 --> G3[version]
     C4 --> G4[config]
+    C4 --> G5[gitlab]
     
     B --> C5[Utils]
     C5 --> H1[log]
@@ -258,6 +259,79 @@ Project automation and setup helpers for various development environments.
 - `eng config git-dev-path` — Set development folder path for git commands
 
 ---
+
+### GitLab
+
+Apply Merge Request rules to a project using your JSON rules file and the `glab` CLI:
+
+```sh
+# Example rules.json (see also docs/gitlab-rules.example.json)
+cat > rules.json <<'JSON'
+{
+  "schemaVersion": "1",
+  "mergeMethod": "ff",
+  "deleteSourceBranch": true,
+  "requireSquash": true,
+  "pipelinesMustSucceed": true,
+  "allowSkippedAsSuccess": true,
+  "allThreadsMustResolve": true
+}
+JSON
+
+# Apply to current repo's GitLab project (auto-detect host/project)
+eng gitlab mr-rules apply --rules rules.json
+
+# Explicit host/project
+eng gitlab mr-rules apply --rules rules.json --host gitlab.com --project group/sub/repo
+
+# Dry run
+eng gitlab mr-rules apply --rules rules.json --dry-run
+```
+
+Generate rules interactively:
+
+```sh
+# Prompt for each option and write to a file
+eng gitlab mr-rules init --output gitlab-rules.json
+
+# Use defaults without prompting
+eng gitlab mr-rules init --yes --output gitlab-rules.json
+```
+
+Authentication options:
+
+- Set `GITLAB_TOKEN` in your environment; or
+- Store a token in Bitwarden and reference it via config `gitlab.tokenItem` or `--token-item <itemName>`.
+  The CLI will unlock Bitwarden (prompting if needed), read the token from the item's password or a field named `token`, and export it for the `glab` call.
+
+Config keys (optional):
+
+- `gitlab.host` — default host (e.g., `gitlab.com`)
+- `gitlab.project` — default project path (e.g., `group/sub/repo`)
+- `gitlab.tokenItem` — Bitwarden item name holding token
+
+Authenticate and set defaults via eng:
+
+```sh
+# Save a token into Bitwarden and set defaults
+printf "%s" "$GITLAB_TOKEN" | eng gitlab auth set \
+  --stdin \
+  --token-item "eng/gitlab-token" \
+  --host gitlab.com \
+  --project group/sub/repo
+
+# Or later, just set the defaults without re-saving a token
+eng gitlab auth set --host gitlab.com --project group/sub/repo --token-item "eng/gitlab-token"
+
+# Show effective defaults and token source (no secrets)
+eng gitlab auth show
+
+# Validate token and project access (no writes)
+eng gitlab auth doctor
+
+# Force-check a specific host/project and run quietly
+eng gitlab auth doctor --host gitlab.example.com --project group/sub/repo --quiet
+```
 
 ## Development Workflow
 

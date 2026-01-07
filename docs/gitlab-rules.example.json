@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1",
+  "mergeMethod": "ff",
+  "deleteSourceBranch": true,
+  "requireSquash": true,
+  "pipelinesMustSucceed": true,
+  "allowSkippedAsSuccess": true,
+  "allThreadsMustResolve": true
+}
