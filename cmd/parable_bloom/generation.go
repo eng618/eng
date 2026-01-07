@@ -37,7 +37,7 @@ func FastScoreBlocking(vines []Vine, gridSize [2]int) (float64, int) {
 func GenerateWithProfile(gridSize [2]int, constraints DifficultySpec, profile VarietyProfile, cfg GeneratorConfig, seed int64, strictMode bool, rng *rand.Rand) GenerationResult {
 	result := GenerationResult{Attempts: 0}
 	// Try a few tiled variants with different RNG states
-	var lastSeed int64 = seed
+	lastSeed := seed
 	var lastElapsed int64 = 0
 	for attempt := 0; attempt < 8; attempt++ {
 		result.Attempts++

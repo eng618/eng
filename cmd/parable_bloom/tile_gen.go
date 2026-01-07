@@ -127,7 +127,7 @@ func TileGridIntoVines(gridSize [2]int, constraints DifficultySpec, profile Vari
 
 // GrowFromSeed attempts to grow a vine starting from seed, avoiding occupied cells.
 // It returns the vine and the updated occupancy map on success.
-func GrowFromSeed(seed Point, occupied map[string]bool, gridSize [2]int, targetLen int, profile VarietyProfile, cfg GeneratorConfig, rng *rand.Rand) (Vine, map[string]bool, error) {
+func GrowFromSeed(seed Point, occupied map[string]bool, gridSize [2]int, targetLen int, profile VarietyProfile, _ GeneratorConfig, rng *rand.Rand) (Vine, map[string]bool, error) {
 	w := gridSize[0]
 	h := gridSize[1]
 
@@ -274,7 +274,7 @@ func pickSeedWithRegionBias(w, h int, occ map[string]bool, profile VarietyProfil
 			p := Point{X: x, Y: y}
 			empty = append(empty, p)
 			// base weight
-			wgt := 1.0
+			var wgt float64
 			switch profile.RegionBias {
 			case "edge":
 				// favor distance to nearest edge
@@ -310,13 +310,6 @@ func pickSeedWithRegionBias(w, h int, occ map[string]bool, profile VarietyProfil
 		}
 	}
 	return &empty[len(empty)-1]
-}
-
-func rndInt(n int, rng *rand.Rand) int {
-	if rng == nil {
-		return 0
-	}
-	return rng.Intn(n)
 }
 
 // chooseLengthBucket picks short/medium/long based on LengthMix weights.

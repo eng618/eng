@@ -6,9 +6,9 @@ func GetPresetProfile(difficulty string) VarietyProfile {
 	minL, maxL := spec.AvgLengthRange[0], spec.AvgLengthRange[1]
 	median := (minL + maxL) / 2
 
-	lengthMix := map[string]float64{"short": 0.33, "medium": 0.33, "long": 0.34}
-	turnMix := 0.35
-	regionBias := "balanced"
+	var lengthMix map[string]float64
+	var turnMix float64
+	var regionBias string
 	dirBalance := map[string]float64{"right": 0.25, "left": 0.25, "up": 0.25, "down": 0.25}
 
 	// Adjust length mix depending on median length

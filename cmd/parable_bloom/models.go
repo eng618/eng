@@ -73,10 +73,10 @@ type Level struct {
 	Complexity string `json:"complexity"` // "tutorial", "low", "medium", "high", "extreme"
 	Grace      int    `json:"grace"`      // 3 or 4
 	// Generation metadata persisted for reproducibility & diagnostics
-	GenerationSeed       int64   `json:"generation_seed,omitempty"`
-	GenerationAttempts   int     `json:"generation_attempts,omitempty"`
-	GenerationElapsedMS  int64   `json:"generation_elapsed_ms,omitempty"`
-	GenerationScore      float64 `json:"generation_score,omitempty"`
+	GenerationSeed      int64   `json:"generation_seed,omitempty"`
+	GenerationAttempts  int     `json:"generation_attempts,omitempty"`
+	GenerationElapsedMS int64   `json:"generation_elapsed_ms,omitempty"`
+	GenerationScore     float64 `json:"generation_score,omitempty"`
 	// These are populated during validation but not persisted
 	OccupancyPercent  float64             `json:"-"`
 	ColorDistribution map[string]float64  `json:"-"`

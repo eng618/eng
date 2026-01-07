@@ -78,7 +78,7 @@ func init() {
 	LevelGenerateCmd.Flags().Bool("render-coords", false, "Show axis coordinates when rendering")
 }
 
-func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool, seed int64, randomize bool, render bool, renderStyle string, renderCoords bool) {
+func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool, seed int64, randomize, render bool, renderStyle string, renderCoords bool) {
 	log.Verbose(verbose, "Generating single level")
 
 	// If name is numeric, treat it as level ID
@@ -146,7 +146,7 @@ func generateSingle(name string, width, height int, output string, stdout, overw
 	}
 }
 
-func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize bool, render bool, renderStyle string, renderCoords bool) {
+func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize, render bool, renderStyle string, renderCoords bool) {
 	log.Verbose(verbose, "Generating batch of %d levels for module ID: %d", count, moduleID)
 
 	// Find module range by ID (1-indexed)
@@ -828,67 +828,6 @@ func isSolvable(vines []Vine) bool {
 
 	// If we cleared all vines, no cycle exists
 	return cleared == len(vines)
-}
-
-// isBruteForceSolvable simulates actual gameplay by attempting to clear vines
-// from edges toward center. Returns true if all vines can be cleared.
-func isBruteForceSolvable(vines []Vine, gridSize [2]int) bool {
-	if len(vines) == 0 {
-		return true
-	}
-
-	// Create copy of blocking relationships to mutate during simulation
-	blockers := make(map[string][]string) // vine ID -> list of vines blocking it
-	for _, vine := range vines {
-		blockers[vine.ID] = append([]string{}, vine.Blocks...)
-	}
-
-	cleared := make(map[string]bool)
-	maxIterations := len(vines) * 2 // Prevent infinite loops
-
-	for iteration := 0; iteration < maxIterations; iteration++ {
-		foundClearable := false
-
-		// Find vines with no blockers that haven't been cleared
-		for _, vine := range vines {
-			if cleared[vine.ID] {
-				continue
-			}
-
-			// Check if this vine can be cleared (no remaining blockers)
-			if len(blockers[vine.ID]) == 0 {
-				cleared[vine.ID] = true
-				foundClearable = true
-
-				// Remove this vine from other vines' blocker lists
-				for otherID := range blockers {
-					if cleared[otherID] {
-						continue
-					}
-					newBlockers := []string{}
-					for _, blockerID := range blockers[otherID] {
-						if blockerID != vine.ID {
-							newBlockers = append(newBlockers, blockerID)
-						}
-					}
-					blockers[otherID] = newBlockers
-				}
-			}
-		}
-
-		// If no vines were cleared this iteration and we haven't cleared all, it's unsolvable
-		if !foundClearable {
-			return len(cleared) == len(vines)
-		}
-
-		// If all vines cleared, success
-		if len(cleared) == len(vines) {
-			return true
-		}
-	}
-
-	// Timeout/deadlock
-	return false
 }
 
 // scoreVineSetTopological evaluates the quality of a vine set using topological metrics.
