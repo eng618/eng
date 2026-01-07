@@ -12,7 +12,10 @@ func BenchmarkGenerateVines_Seedling(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generateVines(gridSize, "Seedling", 1000+i, 0, false)
+		_, _, err := generateVines(gridSize, "Seedling", 1000+i, 0, false)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -23,7 +26,10 @@ func BenchmarkGenerateVines_Sprout(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generateVines(gridSize, "Sprout", 2000+i, 0, false)
+		_, _, err := generateVines(gridSize, "Sprout", 2000+i, 0, false)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -34,7 +40,10 @@ func BenchmarkGenerateVines_Nurturing(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generateVines(gridSize, "Nurturing", 3000+i, 0, false)
+		_, _, err := generateVines(gridSize, "Nurturing", 3000+i, 0, false)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -45,7 +54,10 @@ func BenchmarkGenerateVines_Flourishing(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generateVines(gridSize, "Flourishing", 4000+i, 0, false)
+		_, _, err := generateVines(gridSize, "Flourishing", 4000+i, 0, false)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -56,7 +68,10 @@ func BenchmarkGenerateVines_Transcendent(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generateVines(gridSize, "Transcendent", 5000+i, 0, false)
+		_, _, err := generateVines(gridSize, "Transcendent", 5000+i, 0, false)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -98,7 +113,10 @@ func BenchmarkSolver_IsSolvableBFS(b *testing.B) {
 // Target: < 2ms per level.
 func BenchmarkCalculateBlocking(b *testing.B) {
 	gridSize := GridSizeForLevel(15, "Nurturing")
-	vines, _ := generateVines(gridSize, "Nurturing", 12345, 0, false)
+	vines, _, err := generateVines(gridSize, "Nurturing", 12345, 0, false)
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -165,7 +165,10 @@ func TestGenerateLevel_Occupancy(t *testing.T) {
 // TestGenerateVines_VinePathValidity checks that all vine paths are contiguous and valid.
 func TestGenerateVines_VinePathValidity(t *testing.T) {
 	gridSize := [2]int{12, 16}
-	vines, _ := generateVines(gridSize, "Nurturing", 12345, 0, false)
+	vines, _, err := generateVines(gridSize, "Nurturing", 12345, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, vine := range vines {
 		// Check minimum length
@@ -205,7 +208,10 @@ func TestGenerateVines_VinePathValidity(t *testing.T) {
 // TestGenerateVines_NoOverlap checks that vines don't overlap.
 func TestGenerateVines_NoOverlap(t *testing.T) {
 	gridSize := [2]int{16, 20}
-	vines, _ := generateVines(gridSize, "Flourishing", 54321, 0, false)
+	vines, _, err := generateVines(gridSize, "Flourishing", 54321, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	occupied := make(map[string]bool)
 	for _, vine := range vines {
@@ -222,7 +228,10 @@ func TestGenerateVines_NoOverlap(t *testing.T) {
 // TestGenerateVines_ColorDistribution verifies color variety.
 func TestGenerateVines_ColorDistribution(t *testing.T) {
 	gridSize := [2]int{12, 16}
-	vines, _ := generateVines(gridSize, "Nurturing", 11111, 0, false)
+	vines, _, err := generateVines(gridSize, "Nurturing", 11111, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	colorCounts := make(map[string]int)
 	for _, vine := range vines {

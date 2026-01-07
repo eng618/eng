@@ -239,7 +239,11 @@ func generateLevel(id int, name, difficulty string, width, height int, verbose b
 	log.Verbose(verbose, "Generating level %d with grid %dx%d", id, gridSize[0], gridSize[1])
 
 	// Create level with minimum required fields
-	vines, genMeta := generateVines(gridSize, difficulty, id, seed, randomize)
+	vines, genMeta, err := generateVines(gridSize, difficulty, id, seed, randomize)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
 
 	level := &Level{
 		ID:         id,
@@ -275,8 +279,9 @@ func generateLevel(id int, name, difficulty string, width, height int, verbose b
 	return level
 }
 
-func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, randomize bool) ([]Vine, GenerationResult) {
+func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, randomize bool) ([]Vine, GenerationResult, error) {
 	seedStep := 1000
+	const maxAttempts = 1000000
 	var vines []Vine
 	var genMeta GenerationResult
 
@@ -301,7 +306,7 @@ func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, 
 		log.Verbose(true, "Tiled generation success: level=%d attempts=%d seed=%d elapsed_ms=%d score=%.1f maxDepth=%d", levelID, result.Attempts, result.SeedUsed, result.ElapsedMS, result.Score, result.MaxBlockingDepth)
 		// Override SeedUsed with the base seed so runs can be reproduced by passing it back in
 		result.SeedUsed = usedSeed
-		return result.Vines, result
+		return result.Vines, result, nil
 	}
 
 	// Fallback to the legacy generator loop if tiling-first didn't find a solvable config
@@ -333,12 +338,16 @@ func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, 
 				SeedUsed: seedTry,
 				Score:    0.0,
 			}
-			return vines, genMeta
+			return vines, genMeta, nil
 		}
 
 		// Progress logging for difficult levels
 		if attempt%100 == 0 {
 			log.Verbose(true, "Level %d: %d attempts, still searching for solvable configuration...", levelID, attempt)
+		}
+
+		if attempt >= maxAttempts {
+			return nil, GenerationResult{}, fmt.Errorf("failed to generate solvable level for ID %d after %d attempts", levelID, maxAttempts)
 		}
 	}
 }
