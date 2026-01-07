@@ -47,29 +47,37 @@ func WriteLevel(filePath string, level *Level, overwrite bool) error {
 
 	// Prepare a sanitized level for persistence (exclude runtime-only fields)
 	type persistLevel struct {
-		ID         int    `json:"id"`
-		Name       string `json:"name"`
-		Difficulty string `json:"difficulty"`
-		GridSize   [2]int `json:"grid_size"`
-		Mask       *Mask  `json:"mask"`
-		Vines      []Vine `json:"vines"`
-		MaxMoves   int    `json:"max_moves"`
-		MinMoves   int    `json:"min_moves"`
-		Complexity string `json:"complexity"`
-		Grace      int    `json:"grace"`
+		ID                  int     `json:"id"`
+		Name                string  `json:"name"`
+		Difficulty          string  `json:"difficulty"`
+		GridSize            [2]int  `json:"grid_size"`
+		Mask                *Mask   `json:"mask"`
+		Vines               []Vine  `json:"vines"`
+		MaxMoves            int     `json:"max_moves"`
+		MinMoves            int     `json:"min_moves"`
+		Complexity          string  `json:"complexity"`
+		Grace               int     `json:"grace"`
+		GenerationSeed      int64   `json:"generation_seed,omitempty"`
+		GenerationAttempts  int     `json:"generation_attempts,omitempty"`
+		GenerationElapsedMS int64   `json:"generation_elapsed_ms,omitempty"`
+		GenerationScore     float64 `json:"generation_score,omitempty"`
 	}
 
 	pLevel := persistLevel{
-		ID:         level.ID,
-		Name:       level.Name,
-		Difficulty: level.Difficulty,
-		GridSize:   level.GridSize,
-		Mask:       level.Mask,
-		Vines:      level.Vines,
-		MaxMoves:   level.MaxMoves,
-		MinMoves:   level.MinMoves,
-		Complexity: level.Complexity,
-		Grace:      level.Grace,
+		ID:                  level.ID,
+		Name:                level.Name,
+		Difficulty:          level.Difficulty,
+		GridSize:            level.GridSize,
+		Mask:                level.Mask,
+		Vines:               level.Vines,
+		MaxMoves:            level.MaxMoves,
+		MinMoves:            level.MinMoves,
+		Complexity:          level.Complexity,
+		Grace:               level.Grace,
+		GenerationSeed:      level.GenerationSeed,
+		GenerationAttempts:  level.GenerationAttempts,
+		GenerationElapsedMS: level.GenerationElapsedMS,
+		GenerationScore:     level.GenerationScore,
 	}
 
 	// Marshal sanitized level

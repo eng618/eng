@@ -2,6 +2,7 @@ package parable_bloom
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -83,7 +84,7 @@ func TestGenerateVines_SolverValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.difficulty, func(t *testing.T) {
-			level := generateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false)
+			level := generateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
 
 			solver := NewSolver(level)
 			greedySolvable := solver.IsSolvableGreedy()
@@ -97,7 +98,7 @@ func TestGenerateVines_SolverValidation(t *testing.T) {
 
 // TestGenerateLevel_AllFieldsPopulated verifies all required fields are set.
 func TestGenerateLevel_AllFieldsPopulated(t *testing.T) {
-	level := generateLevel(42, "Test Level", "Nurturing", 0, 0, false)
+	level := generateLevel(42, "Test Level", "Nurturing", 0, 0, false, 0, false)
 
 	if level.ID == 0 {
 		t.Error("Level.ID not set")
@@ -146,7 +147,7 @@ func TestGenerateLevel_Occupancy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.difficulty, func(t *testing.T) {
-			level := generateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false)
+			level := generateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
 
 			occupied := level.GetOccupiedCells()
 			total := level.GetTotalCells()
@@ -162,7 +163,7 @@ func TestGenerateLevel_Occupancy(t *testing.T) {
 // TestGenerateVines_VinePathValidity checks that all vine paths are contiguous and valid.
 func TestGenerateVines_VinePathValidity(t *testing.T) {
 	gridSize := [2]int{12, 16}
-	vines := generateVines(gridSize, "Nurturing", 12345)
+	vines, _ := generateVines(gridSize, "Nurturing", 12345, 0, false)
 
 	for _, vine := range vines {
 		// Check minimum length
@@ -202,7 +203,7 @@ func TestGenerateVines_VinePathValidity(t *testing.T) {
 // TestGenerateVines_NoOverlap checks that vines don't overlap.
 func TestGenerateVines_NoOverlap(t *testing.T) {
 	gridSize := [2]int{16, 20}
-	vines := generateVines(gridSize, "Flourishing", 54321)
+	vines, _ := generateVines(gridSize, "Flourishing", 54321, 0, false)
 
 	occupied := make(map[string]bool)
 	for _, vine := range vines {
@@ -219,7 +220,7 @@ func TestGenerateVines_NoOverlap(t *testing.T) {
 // TestGenerateVines_ColorDistribution verifies color variety.
 func TestGenerateVines_ColorDistribution(t *testing.T) {
 	gridSize := [2]int{12, 16}
-	vines := generateVines(gridSize, "Nurturing", 11111)
+	vines, _ := generateVines(gridSize, "Nurturing", 11111, 0, false)
 
 	colorCounts := make(map[string]int)
 	for _, vine := range vines {
@@ -241,8 +242,8 @@ func TestGenerateVines_ColorDistribution(t *testing.T) {
 
 // TestGenerateLevel_Deterministic verifies same seed produces same level.
 func TestGenerateLevel_Deterministic(t *testing.T) {
-	level1 := generateLevel(42, "Test", "Nurturing", 0, 0, false)
-	level2 := generateLevel(42, "Test", "Nurturing", 0, 0, false)
+	level1 := generateLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
+	level2 := generateLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
 
 	if len(level1.Vines) != len(level2.Vines) {
 		t.Errorf("Different vine counts: %d vs %d", len(level1.Vines), len(level2.Vines))
@@ -275,7 +276,7 @@ func TestGridSizeForLevelIncreasesDifficulty(t *testing.T) {
 // TestVineBlocking_CalculateBlocking verifies blocking relationships are computed.
 func TestVineBlocking_CalculateBlocking(t *testing.T) {
 	// Generate a level with multiple vines
-	level := generateLevel(30, "Test", "Nurturing", 0, 0, false)
+	level := generateLevel(30, "Test", "Nurturing", 0, 0, false, 0, false)
 
 	// All vines should have Blocks field populated
 	for _, vine := range level.Vines {
@@ -295,6 +296,50 @@ func TestVineBlocking_CalculateBlocking(t *testing.T) {
 
 	if !hasBlocking {
 		t.Log("Warning: no blocking relationships detected in level")
+	}
+}
+
+// TestRandomize_PersistsSeedAndRepro ensures randomize records a seed and that seed reproduces the level when reused.
+func TestRandomize_PersistsSeedAndRepro(t *testing.T) {
+	// First generate with randomize=true (seed derived from time)
+	levelA := generateLevel(999, "RandomTest", "Nurturing", 0, 0, false, 0, true)
+	if levelA.GenerationSeed == 0 {
+		t.Fatalf("Expected non-zero GenerationSeed when randomize=true")
+	}
+	t.Logf("Randomized base seed recorded: %d (attempts=%d)\n", levelA.GenerationSeed, levelA.GenerationAttempts)
+
+	// Re-generate twice with explicit recorded seed and compare for exact reproduction
+	levelB := generateLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
+	levelC := generateLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
+	t.Logf("Reproduced using seed: %d (attempts=%d)\n", levelB.GenerationSeed, levelB.GenerationAttempts)
+
+	// Compare B vs C as unordered sets (vine order may vary due to concurrency)
+	sig := func(v Vine) string {
+		parts := []string{v.VineColor, v.HeadDirection}
+		for _, p := range v.OrderedPath {
+			parts = append(parts, fmt.Sprintf("%d,%d", p.X, p.Y))
+		}
+		return strings.Join(parts, ";")
+	}
+
+	mapB := make(map[string]int)
+	for _, v := range levelB.Vines {
+		mapB[sig(v)]++
+	}
+	mapC := make(map[string]int)
+	for _, v := range levelC.Vines {
+		mapC[sig(v)]++
+	}
+
+	if len(mapB) != len(mapC) {
+		t.Fatalf("Mismatch in unique vine signatures for reproduced seed: %d vs %d", len(mapB), len(mapC))
+	}
+
+	for k, cb := range mapB {
+		cc := mapC[k]
+		if cb != cc {
+			t.Fatalf("Vine signature %s count mismatch for reproduced seed: %d vs %d", k, cb, cc)
+		}
 	}
 }
 

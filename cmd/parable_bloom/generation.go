@@ -48,6 +48,11 @@ func GenerateWithProfile(gridSize [2]int, constraints DifficultySpec, profile Va
 		if rng != nil {
 			localSeed = rng.Int63() + int64(attempt*1000)
 			localRng = rand.New(rand.NewSource(localSeed))
+		} else if seed != 0 {
+			// If an explicit seed was provided (and no rng), derive local seeds deterministically
+			baseRng := rand.New(rand.NewSource(seed))
+			localSeed = baseRng.Int63() + int64(attempt*1000)
+			localRng = rand.New(rand.NewSource(localSeed))
 		} else {
 			localSeed = seed + int64(attempt*1000)
 			localRng = rand.New(rand.NewSource(localSeed))

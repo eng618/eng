@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -32,6 +33,8 @@ This command creates solvable levels with the required structure and metadata.`,
 		stdout, _ := cmd.Flags().GetBool("stdout")
 		overwrite, _ := cmd.Flags().GetBool("overwrite")
 		count, _ := cmd.Flags().GetInt("count")
+		seed, _ := cmd.Flags().GetInt64("seed")
+		randomize, _ := cmd.Flags().GetBool("randomize")
 
 		if output == "" {
 			output = "assets/levels"
@@ -46,10 +49,10 @@ This command creates solvable levels with the required structure and metadata.`,
 
 		if count > 1 {
 			// Batch generation by module
-			generateBatch(modules, moduleID, count, output, overwrite, isVerbose)
+			generateBatch(modules, moduleID, count, output, overwrite, isVerbose, seed, randomize)
 		} else {
 			// Single level generation
-			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose)
+			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose, seed, randomize)
 		}
 	},
 }
@@ -65,9 +68,11 @@ func init() {
 	LevelGenerateCmd.Flags().BoolP("overwrite", "", false, "Overwrite existing level files")
 	LevelGenerateCmd.Flags().IntP("count", "c", 1, "Generate multiple levels (batch mode)")
 	LevelGenerateCmd.Flags().BoolP("dry-run", "", false, "Generate without writing to disk")
+	LevelGenerateCmd.Flags().Int64("seed", 0, "Optional base seed for generation (per-level seeds derived for batch runs)")
+	LevelGenerateCmd.Flags().Bool("randomize", false, "Use a time-based random seed and record it in level JSON")
 }
 
-func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool) {
+func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []ModuleRange, verbose bool, seed int64, randomize bool) {
 	log.Verbose(verbose, "Generating single level")
 
 	// If name is numeric, treat it as level ID
@@ -90,8 +95,14 @@ func generateSingle(name string, width, height int, output string, stdout, overw
 
 	log.Verbose(verbose, "Level ID: %d, Difficulty: %s", levelID, difficulty)
 
+	// Decide seed to use
+	seedToUse := seed
+	if randomize && seedToUse == 0 {
+		seedToUse = time.Now().UnixNano()
+	}
+
 	// Generate level
-	level := generateLevel(levelID, name, difficulty, width, height, verbose)
+	level := generateLevel(levelID, name, difficulty, width, height, verbose, seedToUse, randomize)
 
 	// Validate
 	violations, warnings := level.Validate()
@@ -121,7 +132,7 @@ func generateSingle(name string, width, height int, output string, stdout, overw
 	}
 }
 
-func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool) {
+func generateBatch(modules []ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize bool) {
 	log.Verbose(verbose, "Generating batch of %d levels for module ID: %d", count, moduleID)
 
 	// Find module range by ID (1-indexed)
@@ -139,6 +150,12 @@ func generateBatch(modules []ModuleRange, moduleID, count int, output string, ov
 	}
 
 	log.Verbose(verbose, "Generating levels %d to %d", startID, endID)
+
+	// Decide on base seed for batch if needed
+	baseSeed := seed
+	if randomize && baseSeed == 0 {
+		baseSeed = time.Now().UnixNano()
+	}
 
 	// Generate in parallel with reduced concurrency for very large grids to avoid OOM
 	var wg sync.WaitGroup
@@ -161,7 +178,14 @@ func generateBatch(modules []ModuleRange, moduleID, count int, output string, ov
 			defer func() { <-semaphore }() // Release
 
 			difficulty := DifficultyForLevel(id, modules)
-			level := generateLevel(id, fmt.Sprintf("Level %d", id), difficulty, 0, 0, verbose)
+
+			// Derive per-level seed
+			seedToUse := int64(0)
+			if baseSeed != 0 {
+				seedToUse = baseSeed + int64(id)
+			}
+
+			level := generateLevel(id, fmt.Sprintf("Level %d", id), difficulty, 0, 0, verbose, seedToUse, randomize)
 
 			filePath := GetLevelFilePath(level.ID, output)
 			err := WriteLevel(filePath, level, overwrite)
@@ -181,7 +205,7 @@ func generateBatch(modules []ModuleRange, moduleID, count int, output string, ov
 	log.Info("Batch generation complete: %d/%d levels generated", successCount, (endID - startID + 1))
 }
 
-func generateLevel(id int, name, difficulty string, width, height int, verbose bool) *Level {
+func generateLevel(id int, name, difficulty string, width, height int, verbose bool, seed int64, randomize bool) *Level {
 	if name == "" {
 		name = fmt.Sprintf("Level %d", id)
 	}
@@ -195,6 +219,8 @@ func generateLevel(id int, name, difficulty string, width, height int, verbose b
 	log.Verbose(verbose, "Generating level %d with grid %dx%d", id, gridSize[0], gridSize[1])
 
 	// Create level with minimum required fields
+	vines, genMeta := generateVines(gridSize, difficulty, id, seed, randomize)
+
 	level := &Level{
 		ID:         id,
 		Name:       name,
@@ -204,11 +230,16 @@ func generateLevel(id int, name, difficulty string, width, height int, verbose b
 			Mode:   "show-all",
 			Points: []any{},
 		},
-		Vines:      generateVines(gridSize, difficulty, id),
+		Vines:      vines,
 		MaxMoves:   estimateMaxMoves(difficulty),
 		MinMoves:   estimateMinMoves(difficulty),
 		Complexity: ComplexityForDifficulty(difficulty),
 		Grace:      GraceForDifficulty(difficulty),
+		// Persist generation metadata
+		GenerationSeed:      genMeta.SeedUsed,
+		GenerationAttempts:  genMeta.Attempts,
+		GenerationElapsedMS: genMeta.ElapsedMS,
+		GenerationScore:     genMeta.Score,
 	}
 
 	// Pre-write validation: ensure level is actually solvable using the real solver
@@ -224,20 +255,33 @@ func generateLevel(id int, name, difficulty string, width, height int, verbose b
 	return level
 }
 
-func generateVines(gridSize [2]int, difficulty string, levelID int) []Vine {
+func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, randomize bool) ([]Vine, GenerationResult) {
 	seedStep := 1000
 	var vines []Vine
+	var genMeta GenerationResult
+
+	// Decide on effective seed
+	var usedSeed int64
+	if seed != 0 {
+		usedSeed = seed
+	} else if randomize {
+		usedSeed = time.Now().UnixNano()
+	} else {
+		usedSeed = int64(levelID)
+	}
 
 	// Try tiling-first approach for a limited number of attempts
 	spec := DifficultySpecs[difficulty]
 	cfg := GetGeneratorConfigForDifficulty(difficulty)
-	rng := rand.New(rand.NewSource(int64(levelID)))
+	rng := rand.New(rand.NewSource(usedSeed))
 	profile := GetPresetProfile(difficulty)
-	result := GenerateWithProfile(gridSize, spec, profile, cfg, int64(levelID), false, rng)
+	result := GenerateWithProfile(gridSize, spec, profile, cfg, usedSeed, false, rng)
 	if len(result.Vines) > 0 && result.GreedySolvable {
 		// Log generation telemetry for diagnostics
 		log.Verbose(true, "Tiled generation success: level=%d attempts=%d seed=%d elapsed_ms=%d score=%.1f maxDepth=%d", levelID, result.Attempts, result.SeedUsed, result.ElapsedMS, result.Score, result.MaxBlockingDepth)
-		return result.Vines
+		// Override SeedUsed with the base seed so runs can be reproduced by passing it back in
+		result.SeedUsed = usedSeed
+		return result.Vines, result
 	}
 
 	// Fallback to the legacy generator loop if tiling-first didn't find a solvable config
@@ -252,8 +296,8 @@ func generateVines(gridSize [2]int, difficulty string, levelID int) []Vine {
 	attempt := 0
 	for {
 		attempt++
-		seed := int64(levelID + attempt*seedStep)
-		vines = buildVines(gridSize, difficulty, seed)
+		seedTry := usedSeed + int64(attempt*seedStep)
+		vines = buildVines(gridSize, difficulty, seedTry)
 		calculateBlocking(vines, gridSize)
 
 		// Use the actual solver to check solvability (same as validator)
@@ -263,7 +307,13 @@ func generateVines(gridSize [2]int, difficulty string, levelID int) []Vine {
 			if attempt > 50 {
 				log.Verbose(true, "Found solvable configuration for level %d after %d attempts", levelID, attempt)
 			}
-			return vines
+			genMeta = GenerationResult{
+				Vines:    vines,
+				Attempts: attempt,
+				SeedUsed: seedTry,
+				Score:    0.0,
+			}
+			return vines, genMeta
 		}
 
 		// Progress logging for difficult levels

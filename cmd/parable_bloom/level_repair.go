@@ -94,7 +94,7 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun, verbose bool) (bo
 
 	log.Warn("Failed to parse %s: %v (scheduling regenerate)", path, err)
 	id, _ := strconv.Atoi(idStr)
-	level := generateLevel(id, fmt.Sprintf("Level %d", id), DifficultyForLevel(id, nil), 0, 0, verbose)
+	level := generateLevel(id, fmt.Sprintf("Level %d", id), DifficultyForLevel(id, nil), 0, 0, verbose, 0, false)
 
 	if dryRun {
 		log.Info("Would regenerate level %d -> %s", id, path)

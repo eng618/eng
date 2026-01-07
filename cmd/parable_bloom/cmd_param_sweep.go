@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+// cfgProf pairs a generator config with a variety profile for sweeps.
+type cfgProf struct {
+	cfg  GeneratorConfig
+	prof VarietyProfile
+}
+
 // Simple parameter sweep CLI. Run with `go run cmd/parable_bloom/cmd_param_sweep.go -difficulty Seedling -iters 5`.
 func main() {
 	difficulty := flag.String("difficulty", "Seedling", "difficulty tier to sweep")
@@ -60,6 +66,8 @@ func SweepParams(difficulty string, iters int) (float64, GeneratorConfig, Variet
 			fmt.Printf("New best: score=%.2f cfg=%+v prof=%+v time=%d\n", bestScore, bestCfg, bestProf.LengthMix, bestTime)
 		}
 	}
+
+	return bestScore, bestCfg, bestProf, bestTime
 }
 
 func buildCandidates(seedRetries, repairRadius, repairRetries []int, lengthPresets []VarietyProfile) []cfgProf {
@@ -89,7 +97,4 @@ func evaluateConfig(difficulty string, spec DifficultySpec, prof VarietyProfile,
 	avgScore := totalScore / float64(iters)
 	avgTime := totalTime / int64(iters)
 	return avgScore, avgTime
-}
-
-	return bestScore, bestCfg, bestProf, bestTime
 }
