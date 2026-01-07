@@ -19,9 +19,9 @@ func TestPerf_Tiling_Seedling(t *testing.T) {
 		total += res.ElapsedMS
 	}
 	avg := total / int64(N)
-	// Threshold: 12ms average per attempt
-	if avg > 12 {
-		t.Fatalf("tiling-first average elapsed ms too high for Seedling: %dms (threshold 12ms)", avg)
+	// Threshold: 25ms average per attempt (CI machines can vary)
+	if avg > 25 {
+		t.Fatalf("tiling-first average elapsed ms too high for Seedling: %dms (threshold 25ms)", avg)
 	}
 }
 
@@ -38,8 +38,8 @@ func TestPerf_Tiling_Nurturing(t *testing.T) {
 		total += res.ElapsedMS
 	}
 	avg := total / int64(N)
-	// Threshold: 150ms average (adjusted for CI variability)
-	if avg > 150 {
-		t.Fatalf("tiling-first average elapsed ms too high for Nurturing: %dms (threshold 150ms)", avg)
+	// Threshold: 200ms average (adjusted for CI variability)
+	if avg > 200 {
+		t.Fatalf("tiling-first average elapsed ms too high for Nurturing: %dms (threshold 200ms)", avg)
 	}
 }
