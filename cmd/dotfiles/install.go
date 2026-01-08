@@ -391,7 +391,7 @@ func initSubmodules(bareRepoPath, homeDir string) error {
 func initSubmodulesWithCommand(bareRepoPath, homeDir string) error {
 	// For bare repos, we need to use git command with work-tree
 	// This is one case where shelling out is necessary due to go-git limitations with bare repos
-	cmd := exec.Command(
+	cmd := exec.Command( // #nosec G204
 		"git",
 		"--git-dir="+bareRepoPath,
 		"--work-tree="+homeDir,
