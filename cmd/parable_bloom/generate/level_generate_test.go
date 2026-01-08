@@ -387,7 +387,7 @@ func TestGenerateSingle_RendersAfterCreation(t *testing.T) {
 	// Use a temp output dir
 	tmpDir := t.TempDir()
 	// Generate single level with render enabled
-	generateSingle("", 8, 8, tmpDir, false, true, nil, false, 0, false, true, "ascii", true)
+	generateSingle("", 8, 8, tmpDir, false, true, nil, false, 0, false, true, "ascii", true, "")
 
 	out := buf.String()
 	if !strings.Contains(out, "Level") {

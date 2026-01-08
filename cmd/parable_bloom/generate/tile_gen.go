@@ -147,31 +147,48 @@ func fillEmptyCells(gridSize [2]int, vines []common.Vine, occupied map[string]bo
 }
 
 // TileGridIntoVines partitions the grid into vines according to the provided
-// difficulty constraints and a variety profile. It returns a full-coverage set
-// of vines (no overlaps, each cell assigned exactly once) or an error.
+// difficulty constraints and a variety profile. It returns vines and a mask for empty cells.
 func TileGridIntoVines(
 	gridSize [2]int,
 	constraints common.DifficultySpec,
 	profile common.VarietyProfile,
 	cfg common.GeneratorConfig,
 	rng *rand.Rand,
-) ([]common.Vine, error) {
+) ([]common.Vine, *common.Mask, error) {
 	_, lengths := calculateVineLengths(gridSize, constraints, profile, rng)
 
 	vines, occupied, err := growVines(gridSize, lengths, profile, cfg, rng)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	vines = fillEmptyCells(gridSize, vines, occupied)
+	// Collect empty cells for masking
+	var emptyPoints []interface{}
+	w := gridSize[0]
+	h := gridSize[1]
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			key := fmt.Sprintf("%d,%d", x, y)
+			if !occupied[key] {
+				emptyPoints = append(emptyPoints, common.Point{X: x, Y: y})
+			}
+		}
+	}
+	var mask *common.Mask
+	if len(emptyPoints) > 0 {
+		mask = &common.Mask{Mode: "hide", Points: emptyPoints}
+	}
 
-	// Sanity: ensure coverage and no overlaps
+	// Sanity: ensure coverage and no overlaps (accounting for mask)
 	level := &common.Level{GridSize: gridSize, Vines: vines}
+	if mask != nil {
+		level.Mask = mask
+	}
 	if err := common.FastValidateLevelCoverage(level); err != nil {
-		return nil, fmt.Errorf("tiling final validation failed: %w", err)
+		return nil, nil, fmt.Errorf("tiling final validation failed: %w", err)
 	}
 
-	return vines, nil
+	return vines, mask, nil
 }
 
 // GrowFromSeed attempts to grow a vine starting from seed, avoiding occupied cells.

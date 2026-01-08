@@ -75,12 +75,12 @@ func TestVarietyProfile_LengthMixInfluence(t *testing.T) {
 	}
 
 	rng1 := rand.New(rand.NewSource(100))
-	v1, err := TileGridIntoVines(gridSize, spec, longProf, cfg, rng1)
+	v1, _, err := TileGridIntoVines(gridSize, spec, longProf, cfg, rng1)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}
 	rng2 := rand.New(rand.NewSource(101))
-	v2, err := TileGridIntoVines(gridSize, spec, shortProf, cfg, rng2)
+	v2, _, err := TileGridIntoVines(gridSize, spec, shortProf, cfg, rng2)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}
@@ -109,12 +109,12 @@ func TestVarietyProfile_TurnMixInfluence(t *testing.T) {
 	}
 
 	rng1 := rand.New(rand.NewSource(200))
-	vh, err := TileGridIntoVines(gridSize, spec, highTurn, cfg, rng1)
+	vh, _, err := TileGridIntoVines(gridSize, spec, highTurn, cfg, rng1)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}
 	rng2 := rand.New(rand.NewSource(201))
-	vl, err := TileGridIntoVines(gridSize, spec, lowTurn, cfg, rng2)
+	vl, _, err := TileGridIntoVines(gridSize, spec, lowTurn, cfg, rng2)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}
@@ -133,12 +133,12 @@ func TestVarietyProfile_RegionBias(t *testing.T) {
 	centerProf := common.VarietyProfile{RegionBias: "center"}
 
 	rng1 := rand.New(rand.NewSource(300))
-	edgeV, err := TileGridIntoVines(gridSize, spec, edgeProf, cfg, rng1)
+	edgeV, _, err := TileGridIntoVines(gridSize, spec, edgeProf, cfg, rng1)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}
 	rng2 := rand.New(rand.NewSource(301))
-	centerV, err := TileGridIntoVines(gridSize, spec, centerProf, cfg, rng2)
+	centerV, _, err := TileGridIntoVines(gridSize, spec, centerProf, cfg, rng2)
 	if err != nil {
 		t.Fatalf("tiling failed: %v", err)
 	}

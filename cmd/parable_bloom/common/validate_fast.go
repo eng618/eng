@@ -11,7 +11,7 @@ import (
 //   - no self-intersections within a vine
 //   - head direction matches the first segment (head -> neck)
 //   - all coordinates are in-bounds
-//   - every grid cell is assigned to exactly one vine (full coverage)
+//   - every grid cell is assigned to exactly one vine or masked (full coverage)
 func FastValidateLevelCoverage(level *Level) error {
 	w := level.GetGridWidth()
 	h := level.GetGridHeight()
@@ -75,8 +75,22 @@ func FastValidateLevelCoverage(level *Level) error {
 		}
 	}
 
-	if len(occupied) != total {
-		return fmt.Errorf("grid coverage mismatch: occupied %d cells, expected %d", len(occupied), total)
+	// Count masked cells
+	maskedCount := 0
+	if level.Mask != nil && level.Mask.Mode == "hide" {
+		for _, p := range level.Mask.Points {
+			if _, ok := p.(Point); ok {
+				maskedCount++
+			} else if _, ok := p.([]interface{}); ok && len(p.([]interface{})) == 2 {
+				// assume [x,y]
+				maskedCount++
+			}
+		}
+	}
+
+	expected := total - maskedCount
+	if len(occupied) != expected {
+		return fmt.Errorf("grid coverage mismatch: occupied %d cells, expected %d (total %d - masked %d)", len(occupied), expected, total, maskedCount)
 	}
 
 	// ensure no overlaps (counts > 1)

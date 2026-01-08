@@ -109,8 +109,16 @@ func RenderLevelToWriter(w io.Writer, level *common.Level, style string, showCoo
 			grid[y][x] = computeCellGlyph(level, occ, x, y, style, emptyCell, headMap)
 		}
 	}
+
 	// Print header
 	fmt.Fprintf(w, "Level %d: %s (grid %dx%d)\n", level.ID, level.Name, width, height)
+
+	// Top border
+	fmt.Fprint(w, "   +")
+	for x := 0; x < width; x++ {
+		fmt.Fprint(w, "---")
+	}
+	fmt.Fprint(w, "+\n")
 
 	// Print rows from top (height-1) to 0 — origin lower-left
 	for y := height - 1; y >= 0; y-- {
@@ -119,12 +127,20 @@ func RenderLevelToWriter(w io.Writer, level *common.Level, style string, showCoo
 		} else {
 			fmt.Fprint(w, "   ")
 		}
+		fmt.Fprint(w, "| ")
 		for x := 0; x < width; x++ {
 			cell := grid[y][x]
 			fmt.Fprintf(w, "%2s ", cell)
 		}
-		fmt.Fprint(w, "\n")
+		fmt.Fprint(w, "|\n")
 	}
+
+	// Bottom border
+	fmt.Fprint(w, "   +")
+	for x := 0; x < width; x++ {
+		fmt.Fprint(w, "---")
+	}
+	fmt.Fprint(w, "+\n")
 
 	// Optionally print X coords at the bottom
 	if showCoords {
@@ -165,6 +181,9 @@ func computeCellGlyph(
 	style, emptyCell string,
 	headMap map[string]string,
 ) string {
+	if level.Mask != nil && level.Mask.IsMasked(x, y) {
+		return emptyCell
+	}
 	key := fmt.Sprintf("%d,%d", x, y)
 	entries := occ[key]
 	if len(entries) == 0 {

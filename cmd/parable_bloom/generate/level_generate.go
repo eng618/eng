@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -41,6 +42,23 @@ This command creates solvable levels with the required structure and metadata.`,
 		render, _ := cmd.Flags().GetBool("render")
 		renderStyle, _ := cmd.Flags().GetString("render-style")
 		renderCoords, _ := cmd.Flags().GetBool("render-coords")
+		difficultyFlag, _ := cmd.Flags().GetString("difficulty")
+
+		// Validate difficulty flag
+		if difficultyFlag != "" {
+			validDifficulties := []string{"Tutorial", "Seedling", "Sprout", "Nurturing", "Flourishing", "Transcendent"}
+			found := false
+			for _, d := range validDifficulties {
+				if d == difficultyFlag {
+					found = true
+					break
+				}
+			}
+			if !found {
+				log.Error("Invalid difficulty '%s'. Valid options: %s", difficultyFlag, strings.Join(validDifficulties, ", "))
+				os.Exit(1)
+			}
+		}
 
 		if output == "" {
 			output = "assets/levels"
@@ -51,6 +69,18 @@ This command creates solvable levels with the required structure and metadata.`,
 		if err != nil {
 			log.Error("Failed to load modules: %v", err)
 			os.Exit(1)
+		}
+
+		// If module is specified but count is 1, set count to module size for batch generation
+		if moduleID > 0 && count == 1 {
+			if moduleID <= len(modules) {
+				moduleRange := modules[moduleID-1]
+				count = moduleRange.End - moduleRange.Start + 1
+				log.Verbose(isVerbose, "Module %d specified, setting count to %d levels (%d-%d)", moduleID, count, moduleRange.Start, moduleRange.End)
+			} else {
+				log.Error("Invalid module ID: %d (must be 1-%d)", moduleID, len(modules))
+				os.Exit(1)
+			}
 		}
 
 		if count > 1 {
@@ -84,6 +114,7 @@ This command creates solvable levels with the required structure and metadata.`,
 				render,
 				renderStyle,
 				renderCoords,
+				difficultyFlag,
 			)
 		}
 	},
@@ -107,6 +138,7 @@ func init() {
 		Bool("render", false, "Render each level to the terminal after creation for quick sanity checks")
 	LevelGenerateCmd.Flags().String("render-style", "unicode", "Render style when using --render: ascii or unicode")
 	LevelGenerateCmd.Flags().Bool("render-coords", false, "Show axis coordinates when rendering")
+	LevelGenerateCmd.Flags().String("difficulty", "", "Difficulty for one-off level generation (overrides auto-determination). Valid options: Tutorial, Seedling, Sprout, Nurturing, Flourishing, Transcendent")
 }
 
 func generateSingle(
@@ -120,6 +152,7 @@ func generateSingle(
 	randomize, render bool,
 	renderStyle string,
 	renderCoords bool,
+	difficultyFlag string,
 ) {
 	log.Verbose(verbose, "Generating single level")
 
@@ -138,8 +171,11 @@ func generateSingle(
 		levelID = common.GenerateLevelID(output, 1)
 	}
 
-	// Determine difficulty based on level ID
+	// Determine difficulty based on level ID or flag
 	difficulty = common.DifficultyForLevel(levelID, modules)
+	if difficultyFlag != "" {
+		difficulty = difficultyFlag
+	}
 
 	log.Verbose(verbose, "Level ID: %d, Difficulty: %s", levelID, difficulty)
 
@@ -308,10 +344,15 @@ func CreateGameLevel(
 		Name:       name,
 		Difficulty: difficulty,
 		GridSize:   gridSize,
-		Mask: &common.Mask{
-			Mode:   "show-all",
-			Points: []any{},
-		},
+		Mask: func() *common.Mask {
+			if genMeta.Mask != nil {
+				return genMeta.Mask
+			}
+			return &common.Mask{
+				Mode:   "show-all",
+				Points: []any{},
+			}
+		}(),
 		Vines:      vines,
 		MaxMoves:   estimateMaxMoves(difficulty),
 		MinMoves:   estimateMinMoves(difficulty),

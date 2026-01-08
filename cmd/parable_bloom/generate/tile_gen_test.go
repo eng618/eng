@@ -40,11 +40,11 @@ func TestTileGridIntoVines_FullCoverage(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	cfg := common.GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
 	constraints := common.DifficultySpecs["Seedling"]
-	vines, err := TileGridIntoVines([2]int{5, 4}, constraints, common.VarietyProfile{}, cfg, rng)
+	vines, _, err := TileGridIntoVines([2]int{5, 4}, constraints, common.VarietyProfile{}, cfg, rng)
 	if err != nil {
 		t.Fatalf("tile generation failed: %v", err)
 	}
-	level := &common.Level{GridSize: [2]int{5, 4}, Vines: vines}
+	level := &common.Level{GridSize: [2]int{5, 4}, Vines: vines, Mask: &common.Mask{Mode: "show-all", Points: []any{}}}
 	if err := common.FastValidateLevelCoverage(level); err != nil {
 		t.Fatalf("final validation failed: %v", err)
 	}
@@ -55,7 +55,7 @@ func BenchmarkTileGridIntoVines(b *testing.B) {
 	constraints := common.DifficultySpecs["Seedling"]
 	for i := 0; i < b.N; i++ {
 		rng := rand.New(rand.NewSource(int64(i)))
-		_, err := TileGridIntoVines([2]int{12, 8}, constraints, common.VarietyProfile{}, cfg, rng)
+		_, _, err := TileGridIntoVines([2]int{12, 8}, constraints, common.VarietyProfile{}, cfg, rng)
 		if err != nil {
 			b.Fatalf("tile generation failed: %v", err)
 		}

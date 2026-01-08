@@ -17,6 +17,7 @@ type GenerationResult struct {
 	Attempts         int
 	SeedUsed         int64 // seed used for the successful variant
 	ElapsedMS        int64 // generation time in milliseconds
+	Mask             *common.Mask
 }
 
 // FastScoreBlocking computes a simple blocking score and maximum blocking depth
@@ -68,7 +69,7 @@ func CreateLevelWithProfile(
 			localRng = rand.New(rand.NewSource(localSeed))
 		}
 
-		vines, err := TileGridIntoVines(gridSize, constraints, profile, cfg, localRng)
+		vines, mask, err := TileGridIntoVines(gridSize, constraints, profile, cfg, localRng)
 		lastSeed = localSeed
 		lastElapsed = int64(time.Since(start).Milliseconds())
 		if err != nil {
@@ -77,6 +78,9 @@ func CreateLevelWithProfile(
 
 		// Fast structural validation (should pass since tiler ensures this)
 		lvl := &common.Level{GridSize: gridSize, Vines: vines}
+		if mask != nil {
+			lvl.Mask = mask
+		}
 		if err := common.FastValidateLevelCoverage(lvl); err != nil {
 			continue
 		}
@@ -86,6 +90,7 @@ func CreateLevelWithProfile(
 		result.Score = score
 		result.MaxBlockingDepth = maxDepth
 		result.Vines = vines
+		result.Mask = mask
 
 		// Greedy solvability check
 		s := common.NewSolver(lvl)

@@ -22,6 +22,37 @@ type Mask struct {
 	Points []any  `json:"points"` // [][]int or []Point
 }
 
+// IsMasked returns true if the given point should be masked (hidden) based on the mask mode.
+func (m *Mask) IsMasked(x, y int) bool {
+	if m == nil {
+		return false
+	}
+	inMask := false
+	for _, p := range m.Points {
+		if pt, ok := p.(Point); ok {
+			if pt.X == x && pt.Y == y {
+				inMask = true
+				break
+			}
+		} else if arr, ok := p.([]interface{}); ok && len(arr) == 2 {
+			if int(arr[0].(float64)) == x && int(arr[1].(float64)) == y {
+				inMask = true
+				break
+			}
+		}
+	}
+	switch m.Mode {
+	case "hide":
+		return inMask
+	case "show":
+		return !inMask
+	case "show-all":
+		return false
+	default:
+		return false
+	}
+}
+
 // Vine represents a single vine in the level.
 type Vine struct {
 	ID            string   `json:"id"`
