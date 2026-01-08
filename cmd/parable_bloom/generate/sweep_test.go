@@ -14,7 +14,13 @@ func TestSweep_RunSmall(t *testing.T) {
 
 func TestSweep_Nurturing_Smoke(t *testing.T) {
 	bestScore, bestCfg, bestProf, bestTime := SweepParams("Nurturing", 1)
-	t.Logf("nurturing sweep result: score=%.2f cfg=%+v prof=%+v time=%d", bestScore, bestCfg, bestProf.LengthMix, bestTime)
+	t.Logf(
+		"nurturing sweep result: score=%.2f cfg=%+v prof=%+v time=%d",
+		bestScore,
+		bestCfg,
+		bestProf.LengthMix,
+		bestTime,
+	)
 	// Accept either a default negative score or any real score; ensure function completes
 	_ = bestScore
 	_ = bestCfg

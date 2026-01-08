@@ -189,7 +189,15 @@ func TestGenerateVines_VinePathValidity(t *testing.T) {
 		// Check bounds
 		for i, pt := range vine.OrderedPath {
 			if pt.X < 0 || pt.X >= gridSize[0] || pt.Y < 0 || pt.Y >= gridSize[1] {
-				t.Errorf("Vine %s segment %d at (%d,%d) out of bounds for grid %dx%d", vine.ID, i, pt.X, pt.Y, gridSize[0], gridSize[1])
+				t.Errorf(
+					"Vine %s segment %d at (%d,%d) out of bounds for grid %dx%d",
+					vine.ID,
+					i,
+					pt.X,
+					pt.Y,
+					gridSize[0],
+					gridSize[1],
+				)
 			}
 		}
 
@@ -209,7 +217,12 @@ func TestGenerateVines_VinePathValidity(t *testing.T) {
 			neck := vine.OrderedPath[1]
 			expectedDir := directionFromPoints(head, neck)
 			if expectedDir != vine.HeadDirection {
-				t.Errorf("Vine %s head_direction %s doesn't match path (expected %s)", vine.ID, vine.HeadDirection, expectedDir)
+				t.Errorf(
+					"Vine %s head_direction %s doesn't match path (expected %s)",
+					vine.ID,
+					vine.HeadDirection,
+					expectedDir,
+				)
 			}
 		}
 	}

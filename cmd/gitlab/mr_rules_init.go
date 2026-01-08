@@ -83,7 +83,8 @@ var mrRulesInitCmd = &cobra.Command{
 
 func init() {
 	mrRulesCmd.AddCommand(mrRulesInitCmd)
-	mrRulesInitCmd.Flags().StringVar(&initOutputPath, "output", "", "Output path for rules JSON (default: gitlab-rules.json)")
+	mrRulesInitCmd.Flags().
+		StringVar(&initOutputPath, "output", "", "Output path for rules JSON (default: gitlab-rules.json)")
 	mrRulesInitCmd.Flags().BoolVar(&initForce, "force", false, "Overwrite existing file without prompt")
 	mrRulesInitCmd.Flags().BoolVar(&initYes, "yes", false, "Use defaults without prompting")
 }

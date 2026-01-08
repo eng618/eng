@@ -33,7 +33,15 @@ func TestPerf_Tiling_Nurturing(t *testing.T) {
 	for i := 0; i < N; i++ {
 		spec := common.DifficultySpecs["Nurturing"]
 		cfg := common.GetGeneratorConfigForDifficulty("Nurturing")
-		res := GenerateWithProfile(common.GridSizeForLevel(15, "Nurturing"), spec, common.GetPresetProfile("Nurturing"), cfg, int64(i+100), false, nil)
+		res := GenerateWithProfile(
+			common.GridSizeForLevel(15, "Nurturing"),
+			spec,
+			common.GetPresetProfile("Nurturing"),
+			cfg,
+			int64(i+100),
+			false,
+			nil,
+		)
 		if len(res.Vines) == 0 {
 			t.Fatalf("generation failed on seed %d: %+v", i, res)
 		}

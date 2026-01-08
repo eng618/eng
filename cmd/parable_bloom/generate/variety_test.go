@@ -65,8 +65,14 @@ func TestVarietyProfile_LengthMixInfluence(t *testing.T) {
 	spec := common.DifficultySpecs["Seedling"]
 	cfg := common.GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
 
-	longProf := common.VarietyProfile{LengthMix: map[string]float64{"short": 0.1, "medium": 0.3, "long": 0.6}, TurnMix: 0.2}
-	shortProf := common.VarietyProfile{LengthMix: map[string]float64{"short": 0.6, "medium": 0.3, "long": 0.1}, TurnMix: 0.6}
+	longProf := common.VarietyProfile{
+		LengthMix: map[string]float64{"short": 0.1, "medium": 0.3, "long": 0.6},
+		TurnMix:   0.2,
+	}
+	shortProf := common.VarietyProfile{
+		LengthMix: map[string]float64{"short": 0.6, "medium": 0.3, "long": 0.1},
+		TurnMix:   0.6,
+	}
 
 	rng1 := rand.New(rand.NewSource(100))
 	v1, err := TileGridIntoVines(gridSize, spec, longProf, cfg, rng1)
@@ -80,7 +86,11 @@ func TestVarietyProfile_LengthMixInfluence(t *testing.T) {
 	}
 
 	if avgVineLength(v1) <= avgVineLength(v2) {
-		t.Fatalf("expected long profile average length > short profile (%.2f <= %.2f)", avgVineLength(v1), avgVineLength(v2))
+		t.Fatalf(
+			"expected long profile average length > short profile (%.2f <= %.2f)",
+			avgVineLength(v1),
+			avgVineLength(v2),
+		)
 	}
 }
 
@@ -89,8 +99,14 @@ func TestVarietyProfile_TurnMixInfluence(t *testing.T) {
 	spec := common.DifficultySpecs["Seedling"]
 	cfg := common.GeneratorConfig{MaxSeedRetries: 50, LocalRepairRadius: 3, RepairRetries: 4}
 
-	highTurn := common.VarietyProfile{LengthMix: map[string]float64{"short": 0.3, "medium": 0.4, "long": 0.3}, TurnMix: 0.9}
-	lowTurn := common.VarietyProfile{LengthMix: map[string]float64{"short": 0.3, "medium": 0.4, "long": 0.3}, TurnMix: 0.1}
+	highTurn := common.VarietyProfile{
+		LengthMix: map[string]float64{"short": 0.3, "medium": 0.4, "long": 0.3},
+		TurnMix:   0.9,
+	}
+	lowTurn := common.VarietyProfile{
+		LengthMix: map[string]float64{"short": 0.3, "medium": 0.4, "long": 0.3},
+		TurnMix:   0.1,
+	}
 
 	rng1 := rand.New(rand.NewSource(200))
 	vh, err := TileGridIntoVines(gridSize, spec, highTurn, cfg, rng1)

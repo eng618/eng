@@ -174,7 +174,12 @@ func askForConfirmation(prompt string) bool {
 // Returns:
 //   - A slice of strings, where each string is the absolute path to a non-movie folder.
 //   - An error if reading the root directory fails.
-func findNonMovieFolders(isVerbose bool, rootDir string, spinner *utils.Spinner, progress func(done, total int)) ([]string, error) {
+func findNonMovieFolders(
+	isVerbose bool,
+	rootDir string,
+	spinner *utils.Spinner,
+	progress func(done, total int),
+) ([]string, error) {
 	var nonMovieFolders []string
 
 	entries, err := os.ReadDir(rootDir)

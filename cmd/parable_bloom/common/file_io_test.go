@@ -20,7 +20,12 @@ func newSampleLevel(id int) *Level {
 			Points: []any{},
 		},
 		Vines: []Vine{
-			{ID: "vine_0", HeadDirection: "down", OrderedPath: []Point{{X: 7, Y: 1}, {X: 7, Y: 2}}, VineColor: "moss_green"},
+			{
+				ID:            "vine_0",
+				HeadDirection: "down",
+				OrderedPath:   []Point{{X: 7, Y: 1}, {X: 7, Y: 2}},
+				VineColor:     "moss_green",
+			},
 		},
 		MaxMoves:   8,
 		MinMoves:   4,

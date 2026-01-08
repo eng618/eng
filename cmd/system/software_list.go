@@ -132,7 +132,11 @@ func getSoftwareList() []Software {
 			URL:         "https://www.alfredapp.com/",
 			OS:          "darwin",
 			Check: func() bool {
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'").Run() == nil
+				return execCommand(
+					"mdfind",
+					"kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'",
+				).Run() ==
+					nil
 			},
 			Install: func() error { return openURL("https://www.alfredapp.com/") },
 		},

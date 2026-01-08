@@ -55,10 +55,36 @@ This command creates solvable levels with the required structure and metadata.`,
 
 		if count > 1 {
 			// Batch generation by module
-			generateBatch(modules, moduleID, count, output, overwrite, isVerbose, seed, randomize, render, renderStyle, renderCoords)
+			generateBatch(
+				modules,
+				moduleID,
+				count,
+				output,
+				overwrite,
+				isVerbose,
+				seed,
+				randomize,
+				render,
+				renderStyle,
+				renderCoords,
+			)
 		} else {
 			// Single level generation
-			generateSingle(name, width, height, output, stdout, overwrite, modules, isVerbose, seed, randomize, render, renderStyle, renderCoords)
+			generateSingle(
+				name,
+				width,
+				height,
+				output,
+				stdout,
+				overwrite,
+				modules,
+				isVerbose,
+				seed,
+				randomize,
+				render,
+				renderStyle,
+				renderCoords,
+			)
 		}
 	},
 }
@@ -74,14 +100,27 @@ func init() {
 	LevelGenerateCmd.Flags().BoolP("overwrite", "", false, "Overwrite existing level files")
 	LevelGenerateCmd.Flags().IntP("count", "c", 1, "Generate multiple levels (batch mode)")
 	LevelGenerateCmd.Flags().BoolP("dry-run", "", false, "Generate without writing to disk")
-	LevelGenerateCmd.Flags().Int64("seed", 0, "Optional base seed for generation (per-level seeds derived for batch runs)")
+	LevelGenerateCmd.Flags().
+		Int64("seed", 0, "Optional base seed for generation (per-level seeds derived for batch runs)")
 	LevelGenerateCmd.Flags().Bool("randomize", false, "Use a time-based random seed and record it in level JSON")
-	LevelGenerateCmd.Flags().Bool("render", false, "Render each level to the terminal after creation for quick sanity checks")
+	LevelGenerateCmd.Flags().
+		Bool("render", false, "Render each level to the terminal after creation for quick sanity checks")
 	LevelGenerateCmd.Flags().String("render-style", "unicode", "Render style when using --render: ascii or unicode")
 	LevelGenerateCmd.Flags().Bool("render-coords", false, "Show axis coordinates when rendering")
 }
 
-func generateSingle(name string, width, height int, output string, stdout, overwrite bool, modules []common.ModuleRange, verbose bool, seed int64, randomize, render bool, renderStyle string, renderCoords bool) {
+func generateSingle(
+	name string,
+	width, height int,
+	output string,
+	stdout, overwrite bool,
+	modules []common.ModuleRange,
+	verbose bool,
+	seed int64,
+	randomize, render bool,
+	renderStyle string,
+	renderCoords bool,
+) {
 	log.Verbose(verbose, "Generating single level")
 
 	// If name is numeric, treat it as level ID
@@ -149,7 +188,16 @@ func generateSingle(name string, width, height int, output string, stdout, overw
 	}
 }
 
-func generateBatch(modules []common.ModuleRange, moduleID, count int, output string, overwrite, verbose bool, seed int64, randomize, render bool, renderStyle string, renderCoords bool) {
+func generateBatch(
+	modules []common.ModuleRange,
+	moduleID, count int,
+	output string,
+	overwrite, verbose bool,
+	seed int64,
+	randomize, render bool,
+	renderStyle string,
+	renderCoords bool,
+) {
 	log.Verbose(verbose, "Generating batch of %d levels for module ID: %d", count, moduleID)
 
 	// Find module range by ID (1-indexed)
@@ -228,7 +276,14 @@ func generateBatch(modules []common.ModuleRange, moduleID, count int, output str
 	log.Info("Batch generation complete: %d/%d levels generated", successCount, (endID - startID + 1))
 }
 
-func GenerateLevel(id int, name, difficulty string, width, height int, verbose bool, seed int64, randomize bool) *common.Level {
+func GenerateLevel(
+	id int,
+	name, difficulty string,
+	width, height int,
+	verbose bool,
+	seed int64,
+	randomize bool,
+) *common.Level {
 	if name == "" {
 		name = fmt.Sprintf("Level %d", id)
 	}
@@ -275,14 +330,22 @@ func GenerateLevel(id int, name, difficulty string, width, height int, verbose b
 	if !solver.IsSolvableGreedy() {
 		// This is a critical error - generateVines should guarantee solvability
 		log.Error("CRITICAL: Generated level %d failed solvability check despite generateVines guarantee", id)
-		log.Error("This indicates a bug in the generator. Aborting to prevent unsolvable level from reaching production.")
+		log.Error(
+			"This indicates a bug in the generator. Aborting to prevent unsolvable level from reaching production.",
+		)
 		os.Exit(1)
 	}
 
 	return level
 }
 
-func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, randomize bool) ([]common.Vine, GenerationResult, error) {
+func generateVines(
+	gridSize [2]int,
+	difficulty string,
+	levelID int,
+	seed int64,
+	randomize bool,
+) ([]common.Vine, GenerationResult, error) {
 	seedStep := 1000
 	const maxAttempts = 1000000
 	var vines []common.Vine
@@ -306,10 +369,27 @@ func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, 
 	result := GenerateWithProfile(gridSize, spec, profile, cfg, usedSeed, false, rng)
 	if len(result.Vines) > 0 && result.GreedySolvable {
 		// Log generation telemetry for diagnostics
-		log.Verbose(true, "Tiled generation success: level=%d attempts=%d seed=%d elapsed_ms=%d score=%.1f maxDepth=%d", levelID, result.Attempts, result.SeedUsed, result.ElapsedMS, result.Score, result.MaxBlockingDepth)
+		log.Verbose(
+			true,
+			"Tiled generation success: level=%d attempts=%d seed=%d elapsed_ms=%d score=%.1f maxDepth=%d",
+			levelID,
+			result.Attempts,
+			result.SeedUsed,
+			result.ElapsedMS,
+			result.Score,
+			result.MaxBlockingDepth,
+		)
 		// Override SeedUsed with the base seed so runs can be reproduced by passing it back in
 		result.SeedUsed = usedSeed
-		return result.Vines, GenerationResult{Score: result.Score, MaxBlockingDepth: result.MaxBlockingDepth, GreedySolvable: result.GreedySolvable, BFSSolvable: result.BFSSolvable, Attempts: result.Attempts, SeedUsed: usedSeed, ElapsedMS: result.ElapsedMS}, nil
+		return result.Vines, GenerationResult{
+			Score:            result.Score,
+			MaxBlockingDepth: result.MaxBlockingDepth,
+			GreedySolvable:   result.GreedySolvable,
+			BFSSolvable:      result.BFSSolvable,
+			Attempts:         result.Attempts,
+			SeedUsed:         usedSeed,
+			ElapsedMS:        result.ElapsedMS,
+		}, nil
 	}
 
 	// Fallback to the legacy generator loop if tiling-first didn't find a solvable config
@@ -350,7 +430,11 @@ func generateVines(gridSize [2]int, difficulty string, levelID int, seed int64, 
 		}
 
 		if attempt >= maxAttempts {
-			return nil, GenerationResult{}, fmt.Errorf("failed to generate solvable level for ID %d after %d attempts", levelID, maxAttempts)
+			return nil, GenerationResult{}, fmt.Errorf(
+				"failed to generate solvable level for ID %d after %d attempts",
+				levelID,
+				maxAttempts,
+			)
 		}
 	}
 }
@@ -488,7 +572,14 @@ func buildVinesFast(gridSize [2]int, difficulty string, seed int64) []common.Vin
 
 // placeLongVines tries to place longer vines randomly until we reach target occupancy
 // or hit the maximum number of attempts.
-func placeLongVines(vines *[]common.Vine, occupied, blockedCells map[string]bool, gridSize [2]int, rng *rand.Rand, targetOccupancy, maxVines int, colors []string) int {
+func placeLongVines(
+	vines *[]common.Vine,
+	occupied, blockedCells map[string]bool,
+	gridSize [2]int,
+	rng *rand.Rand,
+	targetOccupancy, maxVines int,
+	colors []string,
+) int {
 	totalCells := gridSize[0] * gridSize[1]
 	maxAttempts := totalCells * 5
 	attempts := 0
@@ -581,7 +672,13 @@ func extendVinesToFill(vines *[]common.Vine, occupied map[string]bool, gridSize 
 }
 
 // pairGaps tries to pair adjacent empty cells into new 2-cell vines.
-func pairGaps(vines *[]common.Vine, occupied, blockedCells map[string]bool, gridSize [2]int, targetOccupancy, maxVines int, colors []string) { // Refresh blockedCells to include all current exit paths before creating pairs
+func pairGaps(
+	vines *[]common.Vine,
+	occupied, blockedCells map[string]bool,
+	gridSize [2]int,
+	targetOccupancy, maxVines int,
+	colors []string,
+) { // Refresh blockedCells to include all current exit paths before creating pairs
 	for _, vine := range *vines {
 		markExitPathBlocked(vine, blockedCells, gridSize)
 	}
@@ -701,7 +798,13 @@ func findVineIndexWithTail(vines *[]common.Vine, x, y int) int {
 }
 
 // tryCreatePairAt tries to create a paired vine at (x,y) and returns (ok, added).
-func tryCreatePairAt(x, y int, vines *[]common.Vine, occupied, blockedCells map[string]bool, gridSize [2]int, colors []string) (bool, int) {
+func tryCreatePairAt(
+	x, y int,
+	vines *[]common.Vine,
+	occupied, blockedCells map[string]bool,
+	gridSize [2]int,
+	colors []string,
+) (bool, int) {
 	key := fmt.Sprintf("%d,%d", x, y)
 	if occupied[key] {
 		return false, 0

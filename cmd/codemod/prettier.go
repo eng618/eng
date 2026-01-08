@@ -63,7 +63,14 @@ func runPrettier(targetPath string) error {
 
 // canResolvePackage checks if a Node.js package can be resolved.
 func canResolvePackage(packageName string) bool {
-	cmd := execCommand("node", "-e", fmt.Sprintf("try { require.resolve('%s'); console.log('true'); } catch(e) { console.log('false'); }", packageName))
+	cmd := execCommand(
+		"node",
+		"-e",
+		fmt.Sprintf(
+			"try { require.resolve('%s'); console.log('true'); } catch(e) { console.log('false'); }",
+			packageName,
+		),
+	)
 	output, err := cmd.Output()
 	if err != nil {
 		return false

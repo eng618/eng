@@ -148,7 +148,17 @@ func PullRebaseBareRepo(repoPath, workTree string) error {
 	log.Info("Pulling branch: %s", currentBranch)
 
 	// Pull with explicit remote and branch
-	cmd = exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "pull", "--rebase", "--autostash", "--progress", "origin", currentBranch)
+	cmd = exec.Command(
+		"git",
+		"--git-dir="+repoPath,
+		"--work-tree="+workTree,
+		"pull",
+		"--rebase",
+		"--autostash",
+		"--progress",
+		"origin",
+		currentBranch,
+	)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 

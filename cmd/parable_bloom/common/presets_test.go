@@ -7,11 +7,19 @@ func TestGetPresetProfile_BucketBiases(t *testing.T) {
 	trans := GetPresetProfile("Transcendent")
 
 	if seed.LengthMix["long"] <= trans.LengthMix["long"] {
-		t.Fatalf("expected Seedling to favor long vines more than Transcendent: seed.long=%f trans.long=%f", seed.LengthMix["long"], trans.LengthMix["long"])
+		t.Fatalf(
+			"expected Seedling to favor long vines more than Transcendent: seed.long=%f trans.long=%f",
+			seed.LengthMix["long"],
+			trans.LengthMix["long"],
+		)
 	}
 
 	if trans.LengthMix["short"] <= seed.LengthMix["short"] {
-		t.Fatalf("expected Transcendent to favor short vines more than Seedling: trans.short=%f seed.short=%f", trans.LengthMix["short"], seed.LengthMix["short"])
+		t.Fatalf(
+			"expected Transcendent to favor short vines more than Seedling: trans.short=%f seed.short=%f",
+			trans.LengthMix["short"],
+			seed.LengthMix["short"],
+		)
 	}
 }
 
@@ -27,6 +35,10 @@ func TestGetGeneratorConfigForDifficulty(t *testing.T) {
 	cSeed := GetGeneratorConfigForDifficulty("Seedling")
 	cTrans := GetGeneratorConfigForDifficulty("Transcendent")
 	if cSeed.MaxSeedRetries >= cTrans.MaxSeedRetries {
-		t.Fatalf("expected Transcendent to have higher MaxSeedRetries than Seedling: %d >= %d", cSeed.MaxSeedRetries, cTrans.MaxSeedRetries)
+		t.Fatalf(
+			"expected Transcendent to have higher MaxSeedRetries than Seedling: %d >= %d",
+			cSeed.MaxSeedRetries,
+			cTrans.MaxSeedRetries,
+		)
 	}
 }

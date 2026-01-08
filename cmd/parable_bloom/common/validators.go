@@ -73,7 +73,9 @@ func (v *Validator) validateVinePaths() {
 			continue
 		}
 		if len(vine.OrderedPath) < 2 {
-			v.addViolation(fmt.Sprintf("vine %s: path must have at least 2 segments, has %d", vine.ID, len(vine.OrderedPath)))
+			v.addViolation(
+				fmt.Sprintf("vine %s: path must have at least 2 segments, has %d", vine.ID, len(vine.OrderedPath)),
+			)
 			continue
 		}
 		// Check path contiguity
@@ -82,7 +84,9 @@ func (v *Validator) validateVinePaths() {
 			next := vine.OrderedPath[i+1]
 			dist := abs(curr.X-next.X) + abs(curr.Y-next.Y)
 			if dist != 1 {
-				v.addViolation(fmt.Sprintf("vine %s: path not contiguous at segment %d->%d (distance %d)", vine.ID, i, i+1, dist))
+				v.addViolation(
+					fmt.Sprintf("vine %s: path not contiguous at segment %d->%d (distance %d)", vine.ID, i, i+1, dist),
+				)
 			}
 		}
 		// Validate head direction
@@ -96,8 +100,16 @@ func (v *Validator) validateVinePaths() {
 		delta := HeadDirections[vine.HeadDirection]
 		expectedNeck := Point{X: head.X - delta[0], Y: head.Y - delta[1]}
 		if neck.X != expectedNeck.X || neck.Y != expectedNeck.Y {
-			v.addViolation(fmt.Sprintf("vine %s: head_direction %s doesn't match neck position (head %v, expected neck %v, got %v)",
-				vine.ID, vine.HeadDirection, head, expectedNeck, neck))
+			v.addViolation(
+				fmt.Sprintf(
+					"vine %s: head_direction %s doesn't match neck position (head %v, expected neck %v, got %v)",
+					vine.ID,
+					vine.HeadDirection,
+					head,
+					expectedNeck,
+					neck,
+				),
+			)
 		}
 		// Validate vine bounds
 		for i, pt := range vine.OrderedPath {

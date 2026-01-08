@@ -97,7 +97,11 @@ func installDotfiles(verbose bool) error {
 	// Step 7: Initialize submodules
 	if err := initSubmodules(bareRepoPath, worktreePath); err != nil {
 		log.Warn("Failed to initialize submodules: %v", err)
-		log.Message("You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive", bareRepoPath, worktreePath)
+		log.Message(
+			"You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive",
+			bareRepoPath,
+			worktreePath,
+		)
 	}
 
 	// Step 8: Configure git
@@ -387,7 +391,15 @@ func initSubmodules(bareRepoPath, homeDir string) error {
 func initSubmodulesWithCommand(bareRepoPath, homeDir string) error {
 	// For bare repos, we need to use git command with work-tree
 	// This is one case where shelling out is necessary due to go-git limitations with bare repos
-	cmd := exec.Command("git", "--git-dir="+bareRepoPath, "--work-tree="+homeDir, "submodule", "update", "--init", "--recursive")
+	cmd := exec.Command(
+		"git",
+		"--git-dir="+bareRepoPath,
+		"--work-tree="+homeDir,
+		"submodule",
+		"update",
+		"--init",
+		"--recursive",
+	)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 

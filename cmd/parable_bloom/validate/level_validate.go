@@ -46,11 +46,13 @@ This command uses the Parable Bloom level solver to verify that levels can be co
 func init() {
 	// Add flags for level validation
 	LevelValidateCmd.Flags().StringP("file", "f", "", "Path to a specific level file to validate")
-	LevelValidateCmd.Flags().StringP("directory", "d", "", "Directory containing level files to validate (default: assets/levels)")
+	LevelValidateCmd.Flags().
+		StringP("directory", "d", "", "Directory containing level files to validate (default: assets/levels)")
 	LevelValidateCmd.Flags().BoolP("check-solvability", "s", true, "Check if levels are solvable (default: true)")
 	LevelValidateCmd.Flags().BoolP("strict", "S", false, "Enable strict validation mode (BFS solver)")
 	LevelValidateCmd.Flags().BoolP("dry-run", "", false, "Validate without persisting changes")
-	LevelValidateCmd.Flags().BoolP("warnings", "w", false, "Show warnings in addition to violations (default: violations only)")
+	LevelValidateCmd.Flags().
+		BoolP("warnings", "w", false, "Show warnings in addition to violations (default: violations only)")
 }
 
 func validateSingleFile(filePath string, checkSolvability, strict, _dryRun, showWarnings, verbose bool) {

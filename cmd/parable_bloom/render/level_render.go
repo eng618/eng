@@ -136,7 +136,10 @@ func RenderLevelToWriter(w io.Writer, level *common.Level, style string, showCoo
 	}
 
 	// Legend
-	fmt.Fprintln(w, "\nLegend: each non-empty symbol represents a vine; head shown as arrow; '*' indicates collision of vines.")
+	fmt.Fprintln(
+		w,
+		"\nLegend: each non-empty symbol represents a vine; head shown as arrow; '*' indicates collision of vines.",
+	)
 }
 
 // buildOccupancy creates a map of cell -> list of segment entries.
@@ -155,7 +158,13 @@ func buildOccupancy(level *common.Level, width, height int) map[string][]struct{
 }
 
 // computeCellGlyph returns the glyph to draw at the given cell.
-func computeCellGlyph(level *common.Level, occ map[string][]struct{ vineIdx, segIdx int }, x, y int, style, emptyCell string, headMap map[string]string) string {
+func computeCellGlyph(
+	level *common.Level,
+	occ map[string][]struct{ vineIdx, segIdx int },
+	x, y int,
+	style, emptyCell string,
+	headMap map[string]string,
+) string {
 	key := fmt.Sprintf("%d,%d", x, y)
 	entries := occ[key]
 	if len(entries) == 0 {

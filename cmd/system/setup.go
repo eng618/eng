@@ -166,7 +166,11 @@ func setupOhMyZsh(verbose bool) {
 
 	log.Start("Installing Oh My Zsh...")
 	// Use --unattended to prevent switching shell immediately
-	cmd := execCommand("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh -s -- --unattended")
+	cmd := execCommand(
+		"sh",
+		"-c",
+		"curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh -s -- --unattended",
+	)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {
@@ -389,7 +393,10 @@ func ensureSSHConfig(sshKeyPath string) error {
 	sshDir := filepath.Dir(sshKeyPath)
 	sshConfigPath := filepath.Join(sshDir, "config")
 
-	configContent := fmt.Sprintf("Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n", sshKeyPath)
+	configContent := fmt.Sprintf(
+		"Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n",
+		sshKeyPath,
+	)
 
 	// Check if config exists and append or create
 	if _, err := os.Stat(sshConfigPath); err == nil {

@@ -17,7 +17,12 @@ const (
 var (
 	// Standard test proxies to reduce duplication.
 	testProxy1 = ProxyConfig{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: false, NoProxy: ""}
-	testProxy2 = ProxyConfig{Title: "Proxy2", Value: "http://proxy2:8080", Enabled: true, NoProxy: "internal.example.com"}
+	testProxy2 = ProxyConfig{
+		Title:   "Proxy2",
+		Value:   "http://proxy2:8080",
+		Enabled: true,
+		NoProxy: "internal.example.com",
+	}
 
 	// Environment variables that get modified during tests.
 	proxyEnvVars = []string{
@@ -124,7 +129,12 @@ func TestGetProxyConfigs(t *testing.T) {
 
 			if tc.name == "LegacyProxyMigration" && len(proxies) > 0 {
 				assert.Equal(t, "Default", proxies[0].Title, "Expected default title for migrated proxy")
-				assert.Equal(t, "http://legacy-proxy:8080", proxies[0].Value, "Expected legacy proxy value to be migrated")
+				assert.Equal(
+					t,
+					"http://legacy-proxy:8080",
+					proxies[0].Value,
+					"Expected legacy proxy value to be migrated",
+				)
 				assert.True(t, proxies[0].Enabled, "Expected migrated proxy to be enabled")
 			}
 		})
@@ -200,7 +210,12 @@ func TestSaveProxyConfigs(t *testing.T) {
 		setupViper(invalidConfigPath)
 		err := SaveProxyConfigs([]ProxyConfig{testProxy1})
 		assert.Error(t, err, "Expected an error when saving to invalid path")
-		assert.Contains(t, err.Error(), "Error writing config file", "Expected error message to indicate write config failure")
+		assert.Contains(
+			t,
+			err.Error(),
+			"Error writing config file",
+			"Expected error message to indicate write config failure",
+		)
 	})
 }
 
@@ -330,8 +345,18 @@ func TestProxyEnvironmentVariables(t *testing.T) {
 
 		// Check no_proxy vars - should include both default and custom values from active proxy
 		expectedNoProxy := "localhost,127.0.0.1,::1,.local,internal.example.com"
-		assert.Equal(t, expectedNoProxy, os.Getenv("NO_PROXY"), "Expected NO_PROXY to include both default and custom values")
-		assert.Equal(t, expectedNoProxy, os.Getenv("no_proxy"), "Expected no_proxy to include both default and custom values")
+		assert.Equal(
+			t,
+			expectedNoProxy,
+			os.Getenv("NO_PROXY"),
+			"Expected NO_PROXY to include both default and custom values",
+		)
+		assert.Equal(
+			t,
+			expectedNoProxy,
+			os.Getenv("no_proxy"),
+			"Expected no_proxy to include both default and custom values",
+		)
 	})
 
 	t.Run("SetProxyEnvVars_EmptyValue", func(t *testing.T) {

@@ -80,7 +80,13 @@ func ensureHomebrew(verbose bool) error {
 	tmpDir := os.TempDir()
 	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
 
-	downloadCmd := execCommand("curl", "-fsSL", "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", "-o", installScript)
+	downloadCmd := execCommand(
+		"curl",
+		"-fsSL",
+		"https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh",
+		"-o",
+		installScript,
+	)
 	downloadCmd.Stdout = log.Writer()
 	downloadCmd.Stderr = log.ErrorWriter()
 	if err := downloadCmd.Run(); err != nil {
@@ -286,7 +292,10 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 
 	// Create or update SSH config
 	sshConfigPath := filepath.Join(sshDir, "config")
-	configContent := fmt.Sprintf("Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n", sshKeyPath)
+	configContent := fmt.Sprintf(
+		"Host github.com\n    PreferredAuthentications publickey\n    HostName github.com\n    IdentityFile %s\n",
+		sshKeyPath,
+	)
 
 	// Check if config exists and append or create
 	if _, err := os.Stat(sshConfigPath); err == nil {

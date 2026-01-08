@@ -36,7 +36,15 @@ func FastScoreBlocking(vines []common.Vine, gridSize [2]int) (float64, int) {
 // GenerateWithProfile tries to create a tiled level using the given profile and config.
 // It runs fast pre-validation and greedy solver gating; optionally runs BFS for final verification
 // if strictMode is true. It returns a GenerationResult containing score and solvability flags.
-func GenerateWithProfile(gridSize [2]int, constraints common.DifficultySpec, profile common.VarietyProfile, cfg common.GeneratorConfig, seed int64, strictMode bool, rng *rand.Rand) GenerationResult {
+func GenerateWithProfile(
+	gridSize [2]int,
+	constraints common.DifficultySpec,
+	profile common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	seed int64,
+	strictMode bool,
+	rng *rand.Rand,
+) GenerationResult {
 	result := GenerationResult{Attempts: 0}
 	// Try a few tiled variants with different RNG states
 	lastSeed := seed

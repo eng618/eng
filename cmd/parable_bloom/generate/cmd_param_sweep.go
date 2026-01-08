@@ -46,7 +46,13 @@ func SweepParams(difficulty string, iters int) (float64, common.GeneratorConfig,
 			bestCfg = item.cfg
 			bestProf = item.prof
 			bestTime = avgTime
-			fmt.Printf("New best: score=%.2f cfg=%+v prof=%+v time=%d\n", bestScore, bestCfg, bestProf.LengthMix, bestTime)
+			fmt.Printf(
+				"New best: score=%.2f cfg=%+v prof=%+v time=%d\n",
+				bestScore,
+				bestCfg,
+				bestProf.LengthMix,
+				bestTime,
+			)
 		}
 	}
 
@@ -59,7 +65,17 @@ func buildCandidates(seedRetries, repairRadius, repairRetries []int, lengthPrese
 		for _, rr := range repairRadius {
 			for _, rtries := range repairRetries {
 				for _, prof := range lengthPresets {
-					candidates = append(candidates, cfgProf{cfg: common.GeneratorConfig{MaxSeedRetries: lr, LocalRepairRadius: rr, RepairRetries: rtries}, prof: prof})
+					candidates = append(
+						candidates,
+						cfgProf{
+							cfg: common.GeneratorConfig{
+								MaxSeedRetries:    lr,
+								LocalRepairRadius: rr,
+								RepairRetries:     rtries,
+							},
+							prof: prof,
+						},
+					)
 				}
 			}
 		}
@@ -68,7 +84,13 @@ func buildCandidates(seedRetries, repairRadius, repairRetries []int, lengthPrese
 }
 
 // evaluateConfig runs `iters` generation attempts and returns average score and average elapsed ms.
-func evaluateConfig(difficulty string, spec common.DifficultySpec, prof common.VarietyProfile, cfg common.GeneratorConfig, iters int) (float64, int64) {
+func evaluateConfig(
+	difficulty string,
+	spec common.DifficultySpec,
+	prof common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	iters int,
+) (float64, int64) {
 	totalScore := 0.0
 	totalTime := int64(0)
 	for i := 0; i < iters; i++ {

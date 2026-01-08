@@ -123,7 +123,9 @@ func TestRenderLevelUnicode_DebugTail(t *testing.T) {
 		ID:       99,
 		Name:     "Unicode Level",
 		GridSize: [2]int{3, 3},
-		Vines:    []common.Vine{{ID: "vine_0", HeadDirection: "left", OrderedPath: []common.Point{{X: 2, Y: 0}, {X: 1, Y: 0}}}},
+		Vines: []common.Vine{
+			{ID: "vine_0", HeadDirection: "left", OrderedPath: []common.Point{{X: 2, Y: 0}, {X: 1, Y: 0}}},
+		},
 	}
 	var buf bytes.Buffer
 	RenderLevelToWriter(&buf, level, "unicode", false)

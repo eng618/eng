@@ -103,7 +103,9 @@ you can use the --update flag to attempt an automatic upgrade.`,
 // init registers the command and its flags.
 func init() {
 	// Add the --update flag
-	VersionCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+	VersionCmd.Flags().
+		BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+
 	// Note: You would typically add VersionCmd to your root command in cmd/root.go
 	// Example: rootCmd.AddCommand(version.VersionCmd)
 }
@@ -148,7 +150,11 @@ func parseVersions(currentVerStr, latestTagStr string) (current, latest *semver.
 }
 
 // compareAndHandleUpdate compares versions and handles the update logic if requested.
-func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestRelease *githubReleaseInfo, isVerbose bool) {
+func compareAndHandleUpdate(
+	currentSemVer, latestSemVer *semver.Version,
+	latestRelease *githubReleaseInfo,
+	isVerbose bool,
+) {
 	brewDetected := isBrewInstallation(isVerbose)
 
 	if latestSemVer.GreaterThan(currentSemVer) {
@@ -298,7 +304,10 @@ func getLatestRelease(owner, repo string, isVerbose bool) (release *githubReleas
 		case http.StatusNotFound:
 			return nil, nil // No releases found is not an error here
 		case http.StatusForbidden:
-			return nil, fmt.Errorf("github API request forbidden (status %d). Check rate limits or token permissions", resp.StatusCode)
+			return nil, fmt.Errorf(
+				"github API request forbidden (status %d). Check rate limits or token permissions",
+				resp.StatusCode,
+			)
 		default:
 			return nil, fmt.Errorf("unexpected status code %d from GitHub API", resp.StatusCode)
 		}

@@ -64,7 +64,13 @@ func FastValidateLevelCoverage(level *Level) error {
 			dx := neck.X - head.X
 			dy := neck.Y - head.Y
 			if dx != -exp[0] || dy != -exp[1] {
-				return fmt.Errorf("vine %q head_direction %q does not match first segment (head=%v neck=%v)", vine.ID, vine.HeadDirection, head, neck)
+				return fmt.Errorf(
+					"vine %q head_direction %q does not match first segment (head=%v neck=%v)",
+					vine.ID,
+					vine.HeadDirection,
+					head,
+					neck,
+				)
 			}
 		}
 	}

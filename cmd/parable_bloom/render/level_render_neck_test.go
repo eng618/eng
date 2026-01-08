@@ -14,7 +14,11 @@ func TestRenderNeckMarkerUnicode(t *testing.T) {
 		Name:     "Neck Test",
 		GridSize: [2]int{5, 3},
 		Vines: []common.Vine{
-			{ID: "vine_0", HeadDirection: "right", OrderedPath: []common.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}}},
+			{
+				ID:            "vine_0",
+				HeadDirection: "right",
+				OrderedPath:   []common.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+			},
 		},
 	}
 
@@ -33,7 +37,11 @@ func TestRenderNeckMarkerAscii(t *testing.T) {
 		Name:     "Neck Test ASCII",
 		GridSize: [2]int{5, 3},
 		Vines: []common.Vine{
-			{ID: "vine_0", HeadDirection: "right", OrderedPath: []common.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}}},
+			{
+				ID:            "vine_0",
+				HeadDirection: "right",
+				OrderedPath:   []common.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+			},
 		},
 	}
 

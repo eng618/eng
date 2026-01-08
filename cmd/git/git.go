@@ -49,7 +49,8 @@ var GitCmd = &cobra.Command{
 
 func init() {
 	GitCmd.Flags().BoolP("info", "i", false, "Show current git repository management configuration")
-	GitCmd.PersistentFlags().BoolP("current", "c", false, "Use current working directory instead of configured development path")
+	GitCmd.PersistentFlags().
+		BoolP("current", "c", false, "Use current working directory instead of configured development path")
 
 	GitCmd.AddCommand(SyncAllCmd)
 	GitCmd.AddCommand(StatusAllCmd)
@@ -83,7 +84,9 @@ func getWorkingPath(cmd *cobra.Command) (string, error) {
 
 	devPath := viper.GetString("git.dev_path")
 	if devPath == "" {
-		return "", fmt.Errorf("development folder path is not set. Use 'eng config git-dev-path' to set it, or use the --current flag")
+		return "", fmt.Errorf(
+			"development folder path is not set. Use 'eng config git-dev-path' to set it, or use the --current flag",
+		)
 	}
 
 	// Expand environment variables

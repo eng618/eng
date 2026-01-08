@@ -100,7 +100,11 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 		if killedCount > 0 && errorCount == 0 {
 			log.Success("Finished killing process(es) on port %s.", portStr)
 		} else if killedCount > 0 && errorCount > 0 {
-			log.Warn("Finished attempting to kill process(es) on port %s, but encountered %d error(s).", portStr, errorCount)
+			log.Warn(
+				"Finished attempting to kill process(es) on port %s, but encountered %d error(s).",
+				portStr,
+				errorCount,
+			)
 		} else if killedCount == 0 && errorCount > 0 {
 			log.Error("Failed to kill any process found on port %s.", portStr)
 		}

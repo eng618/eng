@@ -38,7 +38,8 @@ This helps recover from partial writes or corrupted files produced by earlier ru
 }
 
 func init() {
-	LevelRepairCmd.Flags().StringP("directory", "d", "", "Directory containing level files to repair (default: assets/levels)")
+	LevelRepairCmd.Flags().
+		StringP("directory", "d", "", "Directory containing level files to repair (default: assets/levels)")
 	LevelRepairCmd.Flags().BoolP("overwrite", "o", true, "Overwrite repaired files")
 	LevelRepairCmd.Flags().BoolP("dry-run", "n", false, "Scan and report without writing files")
 }
@@ -95,7 +96,16 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun, verbose bool) (bo
 
 	log.Warn("Failed to parse %s: %v (scheduling regenerate)", path, err)
 	id, _ := strconv.Atoi(idStr)
-	level := generate.GenerateLevel(id, fmt.Sprintf("Level %d", id), common.DifficultyForLevel(id, nil), 0, 0, verbose, 0, false)
+	level := generate.GenerateLevel(
+		id,
+		fmt.Sprintf("Level %d", id),
+		common.DifficultyForLevel(id, nil),
+		0,
+		0,
+		verbose,
+		0,
+		false,
+	)
 
 	if dryRun {
 		log.Info("Would regenerate level %d -> %s", id, path)

@@ -151,7 +151,8 @@ func installLintDependencies(echo bool) error {
 	err = installCmd.Wait()
 	if err != nil && usingNpm {
 		stderrStr := string(stderrBytes)
-		if strings.Contains(stderrStr, "--legacy-peer-deps") || strings.Contains(stderrStr, "could not resolve dependency") {
+		if strings.Contains(stderrStr, "--legacy-peer-deps") ||
+			strings.Contains(stderrStr, "could not resolve dependency") {
 			log.Info("npm install failed due to peer deps, retrying with --legacy-peer-deps...")
 			installArgs = append(installArgs, "--legacy-peer-deps")
 			installCmd2 := execCommand("npm", installArgs...)

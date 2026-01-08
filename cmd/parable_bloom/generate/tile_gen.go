@@ -11,7 +11,13 @@ import (
 // TileGridIntoVines partitions the grid into vines according to the provided
 // difficulty constraints and a variety profile. It returns a full-coverage set
 // of vines (no overlaps, each cell assigned exactly once) or an error.
-func TileGridIntoVines(gridSize [2]int, constraints common.DifficultySpec, profile common.VarietyProfile, cfg common.GeneratorConfig, rng *rand.Rand) ([]common.Vine, error) {
+func TileGridIntoVines(
+	gridSize [2]int,
+	constraints common.DifficultySpec,
+	profile common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	rng *rand.Rand,
+) ([]common.Vine, error) {
 	w := gridSize[0]
 	h := gridSize[1]
 	total := w * h
@@ -130,7 +136,15 @@ func TileGridIntoVines(gridSize [2]int, constraints common.DifficultySpec, profi
 
 // GrowFromSeed attempts to grow a vine starting from seed, avoiding occupied cells.
 // It returns the vine and the updated occupancy map on success.
-func GrowFromSeed(seed common.Point, occupied map[string]bool, gridSize [2]int, targetLen int, profile common.VarietyProfile, _ common.GeneratorConfig, rng *rand.Rand) (common.Vine, map[string]bool, error) {
+func GrowFromSeed(
+	seed common.Point,
+	occupied map[string]bool,
+	gridSize [2]int,
+	targetLen int,
+	profile common.VarietyProfile,
+	_ common.GeneratorConfig,
+	rng *rand.Rand,
+) (common.Vine, map[string]bool, error) {
 	w := gridSize[0]
 	h := gridSize[1]
 
@@ -228,7 +242,12 @@ func availableNeighbors(p common.Point, w, h int, occ map[string]bool) []common.
 }
 
 // chooseNeighborByDirBias picks a neighbor closest to a desired direction distribution.
-func chooseNeighborByDirBias(origin common.Point, neighbors []common.Point, dirBalance map[string]float64, rng *rand.Rand) common.Point {
+func chooseNeighborByDirBias(
+	origin common.Point,
+	neighbors []common.Point,
+	dirBalance map[string]float64,
+	rng *rand.Rand,
+) common.Point {
 	if len(neighbors) == 0 || len(dirBalance) == 0 {
 		return common.Point{}
 	}
@@ -266,7 +285,12 @@ func chooseNeighborByDirBias(origin common.Point, neighbors []common.Point, dirB
 }
 
 // pickSeedWithRegionBias picks a seed based on profile.RegionBias and emptiness.
-func pickSeedWithRegionBias(w, h int, occ map[string]bool, profile common.VarietyProfile, rng *rand.Rand) *common.Point {
+func pickSeedWithRegionBias(
+	w, h int,
+	occ map[string]bool,
+	profile common.VarietyProfile,
+	rng *rand.Rand,
+) *common.Point {
 	// if no profile fields set, fall back to uniform
 	if profile.LengthMix == nil && profile.DirBalance == nil && profile.RegionBias == "" {
 		return randomEmptyCell(w, h, occ, rng)
