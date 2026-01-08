@@ -39,11 +39,11 @@ func TileGridIntoVines(gridSize [2]int, constraints common.DifficultySpec, profi
 		bucket := chooseLengthBucket(profile, rng)
 		switch bucket {
 		case "short":
-			lengths[i] = max(1, avgLen-2)
+			lengths[i] = maxInt(1, avgLen-2)
 		case "medium":
-			lengths[i] = max(1, avgLen)
+			lengths[i] = maxInt(1, avgLen)
 		case "long":
-			lengths[i] = max(1, avgLen+2)
+			lengths[i] = maxInt(1, avgLen+2)
 		default:
 			lengths[i] = avgLen
 		}
@@ -286,7 +286,7 @@ func pickSeedWithRegionBias(w, h int, occ map[string]bool, profile common.Variet
 			switch profile.RegionBias {
 			case "edge":
 				// favor distance to nearest edge
-				d := min(min(x, w-1-x), min(y, h-1-y))
+				d := minInt(minInt(x, w-1-x), minInt(y, h-1-y))
 				wgt = float64(1 + (w/2 - d))
 			case "center":
 				cx := float64(w-1) / 2.0
@@ -343,14 +343,14 @@ func chooseLengthBucket(profile common.VarietyProfile, rng *rand.Rand) string {
 	return "long"
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a, b int) int {
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}

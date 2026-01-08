@@ -12,7 +12,7 @@ var GitDevPathCmd = &cobra.Command{
 	Use:   "git-dev-path",
 	Short: "Update config git dev path",
 	Long:  `This command sets the path to the development folder containing git repositories in the config file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Checking for development folder path in config file...")
 		config.GitDevPath()
 	},

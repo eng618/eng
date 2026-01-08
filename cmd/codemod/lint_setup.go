@@ -77,7 +77,7 @@ var LintSetupCmd = &cobra.Command{
 	Use:   "lint-setup",
 	Short: "Setup linting and formatting for a Node.js project",
 	Long:  `Install and configure linting, formatting, and pre-commit hooks for a Node.js project (eslint, prettier, husky, etc).`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		if _, err := os.Stat("package.json"); errors.Is(err, os.ErrNotExist) {
 			log.Error("package.json not found in current directory")
 			return

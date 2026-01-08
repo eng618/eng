@@ -20,7 +20,7 @@ var LevelValidateCmd = &cobra.Command{
 	Short: "Validate game levels for solvability",
 	Long: `Validate game levels to ensure they are properly formatted and solvable.
 This command uses the Parable Bloom level solver to verify that levels can be completed.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		log.Start("Validating game levels")
 

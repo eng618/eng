@@ -16,7 +16,7 @@ var StashAllCmd = &cobra.Command{
 	Use:   "stash-all",
 	Short: "Stash changes in all git repositories in development folder",
 	Long:  `This command stashes uncommitted changes for all git repositories found in your development folder that have uncommitted changes.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Stashing changes in all git repositories")
 
 		isVerbose := utils.IsVerbose(cmd)

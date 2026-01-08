@@ -10,7 +10,7 @@ var TailscaleCmd = &cobra.Command{
 	Use:   "tailscale",
 	Short: "A helper for the tailscale command",
 	Long:  `This command will help manage various aspects of Tailscale.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		fmt.Println("tailscale called")
 	},
 	Aliases: []string{"ts"},

@@ -23,7 +23,7 @@ Running this command without subcommands will run all setup steps:
 - Oh My Zsh
 - ASDF plugins
 - Dotfiles installation`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		verbose := utils.IsVerbose(cmd)
 		if err := EnsurePrerequisites(verbose); err != nil {
 			log.Fatal("Prerequisites check failed: %v", err)

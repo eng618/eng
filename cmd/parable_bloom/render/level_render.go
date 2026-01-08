@@ -20,7 +20,7 @@ var LevelRenderCmd = &cobra.Command{
 
 You can supply a file path with --file (-f) or a level id with --id (-i) (looks in assets/levels).
 `,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		log.Start("Rendering level")
 

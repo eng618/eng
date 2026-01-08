@@ -24,7 +24,7 @@ var LevelGenerateCmd = &cobra.Command{
 	Short: "Generate a new game level",
 	Long: `Generate a new game level for the Parable Bloom project.
 This command creates solvable levels with the required structure and metadata.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		log.Start("Generating game levels")
 

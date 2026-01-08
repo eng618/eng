@@ -30,7 +30,7 @@ var (
 var mrRulesApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply merge request rules from a JSON file",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _args []string) error {
 		// Load and validate rules file
 		if rulesPath == "" {
 			return fmt.Errorf("--rules is required")

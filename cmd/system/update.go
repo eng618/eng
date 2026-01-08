@@ -19,7 +19,7 @@ var UpdateCmd = &cobra.Command{
 	Aliases: []string{"update", "u"},
 	Short:   "Update the system",
 	Long:    `This command updates the system. It supports Ubuntu and WSL Linux systems and logs a message for unsupported systems.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		autoApprove, _ := cmd.Flags().GetBool("yes")
 		log.Verbose(isVerbose, "Checking system type...")
@@ -57,7 +57,7 @@ var BrewCmd = &cobra.Command{
 	Use:   "brew",
 	Short: "Update Homebrew packages only",
 	Long:  `This command updates only Homebrew packages, skipping system updates.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		updateBrew(isVerbose)
 	},
@@ -84,10 +84,9 @@ func updateUbuntu(isVerbose, autoApprove bool) {
 		log.Error("Error updating system: %s", err)
 		log.Verbose(isVerbose, "Update command failed with error: %v", err)
 		return
-	} else {
-		log.Success("System updated successfully.")
-		log.Verbose(isVerbose, "APT update and upgrade completed successfully")
 	}
+	log.Success("System updated successfully.")
+	log.Verbose(isVerbose, "APT update and upgrade completed successfully")
 
 	// Run cleanup operations
 	runCleanup(isVerbose, autoApprove)

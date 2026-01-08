@@ -16,7 +16,7 @@ var StatusAllCmd = &cobra.Command{
 	Use:   "status-all",
 	Short: "Check status of all git repositories in development folder",
 	Long:  `This command checks the status of all git repositories found in your development folder.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Checking status of all git repositories")
 
 		isVerbose := utils.IsVerbose(cmd)

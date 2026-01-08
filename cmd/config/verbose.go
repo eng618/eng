@@ -12,7 +12,7 @@ var VerboseCmd = &cobra.Command{
 	Use:   "verbose",
 	Short: "Update config verbose setting",
 	Long:  `This command should validate and update the verbose config setting.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Checking for verbose setting in config file...")
 		config.Verbose()
 	},

@@ -32,31 +32,31 @@ func Message(format string, a ...any) {
 	_, _ = fmt.Fprintln(Out, s)
 }
 
-// Writer returns an io.Writer that prints to the terminal using Message.
-type logWriter struct{}
+// LogWriter is an io.Writer that writes to the terminal using Info.
+type LogWriter struct{}
 
-// Write implements io.Writer for logWriter, printing output as a message.
-func (w *logWriter) Write(p []byte) (n int, err error) {
+// Write implements io.Writer for LogWriter, printing output as an info message.
+func (w *LogWriter) Write(p []byte) (n int, err error) {
 	// Write directly to Out to preserve raw output semantics
 	return Out.Write(p)
 }
 
-// Writer returns a new logWriter for use as an io.Writer for standard output.
-func Writer() *logWriter {
-	return &logWriter{}
+// Writer returns a new LogWriter for use as an io.Writer for standard output.
+func Writer() *LogWriter {
+	return &LogWriter{}
 }
 
-// ErrorWriter returns an io.Writer that prints to the terminal using Error.
-type logErrorWriter struct{}
+// LogErrorWriter is an io.Writer that prints to the terminal using Error.
+type LogErrorWriter struct{}
 
-// Write implements io.Writer for logErrorWriter, printing output as an error message.
-func (w *logErrorWriter) Write(p []byte) (n int, err error) {
+// Write implements io.Writer for LogErrorWriter, printing output as an error message.
+func (w *LogErrorWriter) Write(p []byte) (n int, err error) {
 	return Err.Write(p)
 }
 
-// ErrorWriter returns a new logErrorWriter for use as an io.Writer for error output.
-func ErrorWriter() *logErrorWriter {
-	return &logErrorWriter{}
+// ErrorWriter returns a new LogErrorWriter for use as an io.Writer for error output.
+func ErrorWriter() *LogErrorWriter {
+	return &LogErrorWriter{}
 }
 
 // Start prints a message to the terminal in blue, indicating a starting action.

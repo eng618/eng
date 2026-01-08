@@ -90,13 +90,13 @@ func GetMinimumVineLength(vines []Vine) int {
 	if len(vines) == 0 {
 		return 0
 	}
-	min := vines[0].Length()
+	minLen := vines[0].Length()
 	for _, vine := range vines {
-		if vine.Length() < min {
-			min = vine.Length()
+		if vine.Length() < minLen {
+			minLen = vine.Length()
 		}
 	}
-	return min
+	return minLen
 }
 
 // GetMaximumVineLength returns the longest vine length.
@@ -104,13 +104,13 @@ func GetMaximumVineLength(vines []Vine) int {
 	if len(vines) == 0 {
 		return 0
 	}
-	max := vines[0].Length()
+	maxLen := vines[0].Length()
 	for _, vine := range vines {
-		if vine.Length() > max {
-			max = vine.Length()
+		if vine.Length() > maxLen {
+			maxLen = vine.Length()
 		}
 	}
-	return max
+	return maxLen
 }
 
 // ShuffleVines randomly shuffles a slice of vines using a deterministic seed.

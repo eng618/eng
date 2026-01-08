@@ -15,7 +15,7 @@ var ConfigCmd = &cobra.Command{
 	Long: `This command is used to facilitate the management of the config file specific to this cli.
 
 It should be located at $HOME/.eng.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		// Validate all configuration settings one by one
 		config.Email()
 		config.DotfilesRepo()

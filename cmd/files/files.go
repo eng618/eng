@@ -8,7 +8,7 @@ var FilesCmd = &cobra.Command{
 	Use:   "files",
 	Short: "A command for managing files",
 	Long:  `This command will help manage various aspects of file operations on MacOS and Linux systems.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		err := cmd.Help()
 		cobra.CheckErr(err)
 	},

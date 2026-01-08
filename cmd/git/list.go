@@ -15,7 +15,7 @@ var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all git repositories in development folder",
 	Long:  `This command lists all git repositories found in your development folder.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Listing git repositories")
 
 		isVerbose := utils.IsVerbose(cmd)

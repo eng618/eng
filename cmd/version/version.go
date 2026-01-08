@@ -64,7 +64,7 @@ and compares it with the currently running version.
 
 If a newer version is available and eng was installed via Homebrew,
 you can use the --update flag to attempt an automatic upgrade.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose, _ := cmd.Flags().GetBool("verbose")
 
 		printVersionInfo()
@@ -175,15 +175,14 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 			log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 			log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
 			return
-		} else {
-			// Just inform the user how to update
-			if brewDetected {
-				log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
-			} else { // If not brew detected, suggest go install
-				log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
-			}
-			log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 		}
+		// Just inform the user how to update
+		if brewDetected {
+			log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
+		} else { // If not brew detected, suggest go install
+			log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+		}
+		log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 	} else if latestSemVer.Equal(currentSemVer) {
 		log.Success("You are running the latest version.")
 		if updateFlag {

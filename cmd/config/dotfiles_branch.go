@@ -11,7 +11,7 @@ var DotfilesBranchCmd = &cobra.Command{
 	Use:   "dotfiles-branch",
 	Short: "Update config dotfiles branch",
 	Long:  `Get or set the dotfiles branch (main/work/server) in the configuration file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		config.Branch()
 	},
 }

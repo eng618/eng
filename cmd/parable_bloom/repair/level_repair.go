@@ -21,7 +21,7 @@ var LevelRepairCmd = &cobra.Command{
 	Short: "Repair corrupted level JSON files by regenerating them",
 	Long: `Scan a levels directory and regenerate any files that fail to parse.
 This helps recover from partial writes or corrupted files produced by earlier runs.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		log.Start("Repairing level files (scan + regenerate)")
 

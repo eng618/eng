@@ -15,7 +15,7 @@ var CopilotSetupCmd = &cobra.Command{
 	Use:   "copilot",
 	Short: "Setup custom Copilot instructions file",
 	Long:  `Create a base custom Copilot instructions file at .github/copilot-instructions.md. By default, this command assumes you are in the root of a Git repository. Use --force to bypass this check.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		force, _ := cmd.Flags().GetBool("force")
 
 		// Check if we're in a git repository unless force is used

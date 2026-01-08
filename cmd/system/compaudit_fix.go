@@ -16,7 +16,7 @@ var CompauditFixCmd = &cobra.Command{
 	Use:   "compauditFix",
 	Short: "Fix insecure directories reported by compaudit",
 	Long:  `Runs 'compaudit' and applies 'chmod g-w,o-w' to any directories reported as insecure. This uses an interactive zsh so zsh functions like compaudit (from oh-my-zsh) are available.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Running compaudit and fixing insecure directories...")
 		isVerbose := utils.IsVerbose(cmd)
 

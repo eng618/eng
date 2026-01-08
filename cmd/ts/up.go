@@ -13,7 +13,7 @@ var UpCmd = &cobra.Command{
 	Use:   "up",
 	Short: "bring up the tailscale service",
 	Long:  `This call 'sudo tailscale up' under the hood..`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _args []string) error {
 		log.Start("Bringing up the tailscale service")
 		tsUpCmd := exec.Command("sudo", "tailscale", "up")
 		err := utils.StartChildProcess(tsUpCmd)
