@@ -3,7 +3,7 @@ package system
 import (
 	"runtime"
 
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 type Software struct {

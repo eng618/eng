@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils/config"
+	"github.com/eng618/eng/internal/utils/config"
 )
 
 func TestListProxyConfigurations(t *testing.T) {
@@ -26,7 +26,7 @@ func TestListProxyConfigurations(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	listProxyConfigurations()
+	listProxyConfigurations(nil)
 
 	w.Close()
 	os.Stdout = old
@@ -38,8 +38,8 @@ func TestListProxyConfigurations(t *testing.T) {
 	if !strings.Contains(output, "Test Proxy") {
 		t.Error("Expected output to contain 'Test Proxy'")
 	}
-	if !strings.Contains(output, "[*] 1. Test Proxy") {
-		t.Error("Expected output to show proxy 1 as enabled with [*]")
+	if !strings.Contains(output, "1. ★ Test Proxy") {
+		t.Error("Expected output to show proxy 1 as enabled with star marker")
 	}
 }
 

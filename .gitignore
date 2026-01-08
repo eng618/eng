@@ -24,6 +24,7 @@ dist/
 
 # Build output
 eng
+param_sweep_main
 
 
 #Ignore vscode AI rules

@@ -16,8 +16,8 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // Build-time variables

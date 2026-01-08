@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
+	"github.com/eng618/eng/internal/utils/config"
 )
 
 // DotfilesRepoURLCmd represents the command to manage the dotfiles repository URL configuration.

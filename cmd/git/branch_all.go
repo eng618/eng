@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
-	"github.com/eng618/eng/utils/repo"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // BranchAllCmd defines the cobra command for showing current branch of all git repositories.
