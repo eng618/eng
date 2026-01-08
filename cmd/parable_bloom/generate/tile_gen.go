@@ -8,16 +8,13 @@ import (
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 )
 
-// TileGridIntoVines partitions the grid into vines according to the provided
-// difficulty constraints and a variety profile. It returns a full-coverage set
-// of vines (no overlaps, each cell assigned exactly once) or an error.
-func TileGridIntoVines(
+// calculateVineLengths computes the initial vine count and their lengths based on constraints and profile.
+func calculateVineLengths(
 	gridSize [2]int,
 	constraints common.DifficultySpec,
 	profile common.VarietyProfile,
-	cfg common.GeneratorConfig,
 	rng *rand.Rand,
-) ([]common.Vine, error) {
+) (int, []int) {
 	w := gridSize[0]
 	h := gridSize[1]
 	total := w * h
@@ -72,10 +69,24 @@ func TileGridIntoVines(
 		}
 	}
 
-	occupied := make(map[string]bool)
-	vines := make([]common.Vine, 0, vineCount)
+	return vineCount, lengths
+}
 
-	for i := 0; i < vineCount; i++ {
+// growVines attempts to grow vines based on the given lengths, returning the vines and occupied map.
+func growVines(
+	gridSize [2]int,
+	lengths []int,
+	profile common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	rng *rand.Rand,
+) ([]common.Vine, map[string]bool, error) {
+	w := gridSize[0]
+	h := gridSize[1]
+
+	occupied := make(map[string]bool)
+	vines := make([]common.Vine, 0, len(lengths))
+
+	for i := 0; i < len(lengths); i++ {
 		target := lengths[i]
 		// Try to grow a vine with several seed attempts
 		var grown common.Vine
@@ -100,7 +111,7 @@ func TileGridIntoVines(
 			// fallback: create small single-cell vine at any empty cell
 			s := pickSeedWithRegionBias(w, h, occupied, profile, rng)
 			if s == nil {
-				return nil, fmt.Errorf("unable to find empty cell for fallback: %w", err)
+				return nil, nil, fmt.Errorf("unable to find empty cell for fallback: %w", err)
 			}
 			id := fmt.Sprintf("v%d", len(vines)+1)
 			v := common.Vine{ID: id, HeadDirection: "up", OrderedPath: []common.Point{*s}}
@@ -112,7 +123,14 @@ func TileGridIntoVines(
 		}
 	}
 
-	// Final sweep: any remaining empty cells become single-segment vines
+	return vines, occupied, nil
+}
+
+// fillEmptyCells adds single-cell vines for any remaining empty cells.
+func fillEmptyCells(gridSize [2]int, vines []common.Vine, occupied map[string]bool) []common.Vine {
+	w := gridSize[0]
+	h := gridSize[1]
+
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			key := fmt.Sprintf("%d,%d", x, y)
@@ -124,6 +142,28 @@ func TileGridIntoVines(
 			}
 		}
 	}
+
+	return vines
+}
+
+// TileGridIntoVines partitions the grid into vines according to the provided
+// difficulty constraints and a variety profile. It returns a full-coverage set
+// of vines (no overlaps, each cell assigned exactly once) or an error.
+func TileGridIntoVines(
+	gridSize [2]int,
+	constraints common.DifficultySpec,
+	profile common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	rng *rand.Rand,
+) ([]common.Vine, error) {
+	_, lengths := calculateVineLengths(gridSize, constraints, profile, rng)
+
+	vines, occupied, err := growVines(gridSize, lengths, profile, cfg, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	vines = fillEmptyCells(gridSize, vines, occupied)
 
 	// Sanity: ensure coverage and no overlaps
 	level := &common.Level{GridSize: gridSize, Vines: vines}
