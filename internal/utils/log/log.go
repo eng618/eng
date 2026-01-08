@@ -32,31 +32,31 @@ func Message(format string, a ...any) {
 	_, _ = fmt.Fprintln(Out, s)
 }
 
-// LogWriter is an io.Writer that writes to the terminal using Info.
-type LogWriter struct{}
+// CMDWriter is an io.Writer that writes to the terminal using Info.
+type CMDWriter struct{}
 
 // Write implements io.Writer for LogWriter, printing output as an info message.
-func (w *LogWriter) Write(p []byte) (n int, err error) {
+func (w *CMDWriter) Write(p []byte) (n int, err error) {
 	// Write directly to Out to preserve raw output semantics
 	return Out.Write(p)
 }
 
 // Writer returns a new LogWriter for use as an io.Writer for standard output.
-func Writer() *LogWriter {
-	return &LogWriter{}
+func Writer() *CMDWriter {
+	return &CMDWriter{}
 }
 
-// LogErrorWriter is an io.Writer that prints to the terminal using Error.
-type LogErrorWriter struct{}
+// CMDErrorWriter is an io.Writer that prints to the terminal using Error.
+type CMDErrorWriter struct{}
 
 // Write implements io.Writer for LogErrorWriter, printing output as an error message.
-func (w *LogErrorWriter) Write(p []byte) (n int, err error) {
+func (w *CMDErrorWriter) Write(p []byte) (n int, err error) {
 	return Err.Write(p)
 }
 
 // ErrorWriter returns a new LogErrorWriter for use as an io.Writer for error output.
-func ErrorWriter() *LogErrorWriter {
-	return &LogErrorWriter{}
+func ErrorWriter() *CMDErrorWriter {
+	return &CMDErrorWriter{}
 }
 
 // Start prints a message to the terminal in blue, indicating a starting action.
