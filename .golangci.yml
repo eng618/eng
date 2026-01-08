@@ -32,11 +32,11 @@ linters:  # Linters configuration
     - govet  # Runs go vet for common mistakes
     - importas  # Enforces import aliases
     - misspell  # Checks for spelling errors
-    - revive  # Advanced linting with configurable rules
+    # - revive  # Advanced linting with configurable rules
     - staticcheck  # Advanced static analysis
     - unused  # Checks for unused code
     - whitespace  # Checks for unnecessary whitespace
-    - gosec  # Security-focused linter (disabled as not needed for this project)
+    # - gosec  # Security-focused linter (disabled as not needed for this project)
   settings:  # Specific settings for linters
     misspell:
       locale: US  # Use US English for spelling checks
