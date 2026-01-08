@@ -135,7 +135,6 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 
 // resetFile runs git checkout -- file.
 func resetFile(repoPath, worktreePath, file string) error {
-	//nolint:
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
 	cmd.Dir = worktreePath // Run from worktree directory
 	cmd.Stdout = log.Writer()

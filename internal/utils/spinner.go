@@ -117,7 +117,6 @@ func (s *Spinner) SetProgressBar(progress float64, msg ...string) {
 // Logf prints a formatted message above the progress bar.
 func (s *Spinner) Logf(format string, a ...interface{}) {
 	if s.p != nil {
-		//nolint:errcheck
 		fmt.Fprintf(s.p, format, a...)
 	}
 }

@@ -41,7 +41,6 @@ var StatusCmd = &cobra.Command{
 
 // checkStatus is injectable for tests to avoid executing git.
 var checkStatus = func(repoPath, worktreePath string) error {
-	//nolint:gosec
 	gitCmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status")
 	gitCmd.Stdout = log.Writer()
 	gitCmd.Stderr = log.ErrorWriter()
