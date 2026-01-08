@@ -96,7 +96,7 @@ func TestGenerateVines_SolverValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.difficulty, func(t *testing.T) {
-			level := GenerateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
+			level := CreateGameLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
 
 			solver := common.NewSolver(level)
 			greedySolvable := solver.IsSolvableGreedy()
@@ -110,7 +110,7 @@ func TestGenerateVines_SolverValidation(t *testing.T) {
 
 // TestGenerateLevel_AllFieldsPopulated verifies all required fields are set.
 func TestGenerateLevel_AllFieldsPopulated(t *testing.T) {
-	level := GenerateLevel(42, "Test Level", "Nurturing", 0, 0, false, 0, false)
+	level := CreateGameLevel(42, "Test Level", "Nurturing", 0, 0, false, 0, false)
 
 	if level.ID == 0 {
 		t.Error("Level.ID not set")
@@ -159,7 +159,7 @@ func TestGenerateLevel_Occupancy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.difficulty, func(t *testing.T) {
-			level := GenerateLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
+			level := CreateGameLevel(tt.levelID, "Test", tt.difficulty, 0, 0, false, 0, false)
 
 			occupied := level.GetOccupiedCells()
 			total := level.GetTotalCells()
@@ -276,8 +276,8 @@ func TestGenerateVines_ColorDistribution(t *testing.T) {
 
 // TestGenerateLevel_Deterministic verifies same seed produces same level.
 func TestGenerateLevel_Deterministic(t *testing.T) {
-	level1 := GenerateLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
-	level2 := GenerateLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
+	level1 := CreateGameLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
+	level2 := CreateGameLevel(42, "Test", "Nurturing", 0, 0, false, 0, false)
 
 	if len(level1.Vines) != len(level2.Vines) {
 		t.Errorf("Different vine counts: %d vs %d", len(level1.Vines), len(level2.Vines))
@@ -310,7 +310,7 @@ func TestGridSizeForLevelIncreasesDifficulty(t *testing.T) {
 // TestVineBlocking_CalculateBlocking verifies blocking relationships are computed.
 func TestVineBlocking_CalculateBlocking(t *testing.T) {
 	// Generate a level with multiple vines
-	level := GenerateLevel(30, "Test", "Nurturing", 0, 0, false, 0, false)
+	level := CreateGameLevel(30, "Test", "Nurturing", 0, 0, false, 0, false)
 
 	// All vines should have Blocks field populated
 	for _, vine := range level.Vines {
@@ -336,15 +336,15 @@ func TestVineBlocking_CalculateBlocking(t *testing.T) {
 // TestRandomize_PersistsSeedAndRepro ensures randomize records a seed and that seed reproduces the level when reused.
 func TestRandomize_PersistsSeedAndRepro(t *testing.T) {
 	// First generate with randomize=true (seed derived from time)
-	levelA := GenerateLevel(999, "RandomTest", "Nurturing", 0, 0, false, 0, true)
+	levelA := CreateGameLevel(999, "RandomTest", "Nurturing", 0, 0, false, 0, true)
 	if levelA.GenerationSeed == 0 {
 		t.Fatalf("Expected non-zero GenerationSeed when randomize=true")
 	}
 	t.Logf("Randomized base seed recorded: %d (attempts=%d)\n", levelA.GenerationSeed, levelA.GenerationAttempts)
 
 	// Re-generate twice with explicit recorded seed and compare for exact reproduction
-	levelB := GenerateLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
-	levelC := GenerateLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
+	levelB := CreateGameLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
+	levelC := CreateGameLevel(999, "RandomTest", "Nurturing", 0, 0, false, levelA.GenerationSeed, false)
 	t.Logf("Reproduced using seed: %d (attempts=%d)\n", levelB.GenerationSeed, levelB.GenerationAttempts)
 
 	// Compare B vs C as unordered sets (vine order may vary due to concurrency)

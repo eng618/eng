@@ -33,10 +33,10 @@ func FastScoreBlocking(vines []common.Vine, gridSize [2]int) (float64, int) {
 	return score, maxDepth
 }
 
-// GenerateWithProfile tries to create a tiled level using the given profile and config.
+// CreateLevelWithProfile tries to create a tiled level using the given profile and config.
 // It runs fast pre-validation and greedy solver gating; optionally runs BFS for final verification
 // if strictMode is true. It returns a GenerationResult containing score and solvability flags.
-func GenerateWithProfile(
+func CreateLevelWithProfile(
 	gridSize [2]int,
 	constraints common.DifficultySpec,
 	profile common.VarietyProfile,

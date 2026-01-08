@@ -83,14 +83,14 @@ func BenchmarkGenerateLevel_FullPipeline(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		levelID := 15 + (i % 10)
-		GenerateLevel(levelID, "Bench", "Nurturing", 0, 0, false, 0, false)
+		CreateGameLevel(levelID, "Bench", "Nurturing", 0, 0, false, 0, false)
 	}
 }
 
 // BenchmarkSolver_IsSolvableGreedy benchmarks the greedy solvability checker.
 // Target: < 5ms per level (used frequently during generation).
 func BenchmarkSolver_IsSolvableGreedy(b *testing.B) {
-	level := GenerateLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
+	level := CreateGameLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
 	solver := common.NewSolver(level)
 
 	b.ResetTimer()
@@ -102,7 +102,7 @@ func BenchmarkSolver_IsSolvableGreedy(b *testing.B) {
 // BenchmarkSolver_IsSolvableBFS benchmarks the thorough BFS solvability checker.
 // Target: < 50ms per level (used for validation, not generation).
 func BenchmarkSolver_IsSolvableBFS(b *testing.B) {
-	level := GenerateLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
+	level := CreateGameLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
 	solver := common.NewSolver(level)
 
 	b.ResetTimer()
@@ -214,7 +214,7 @@ func BenchmarkGridSizeForLevel(b *testing.B) {
 // BenchmarkValidateLevel benchmarks the full validation pipeline.
 // Target: < 10ms per level.
 func BenchmarkValidateLevel(b *testing.B) {
-	level := GenerateLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
+	level := CreateGameLevel(42, "Bench", "Nurturing", 0, 0, false, 0, false)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -234,7 +234,7 @@ func BenchmarkCompleteModule(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Simulate module 2 (Seedling/Sprout difficulty range)
 		for levelID := 6; levelID <= 20; levelID++ {
-			GenerateLevel(levelID, "Bench", common.DifficultyForLevel(levelID, modules), 0, 0, false, 0, false)
+			CreateGameLevel(levelID, "Bench", common.DifficultyForLevel(levelID, modules), 0, 0, false, 0, false)
 		}
 	}
 }
@@ -245,21 +245,21 @@ func BenchmarkMemory_GenerateLevel(b *testing.B) {
 	b.Run("Seedling", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			GenerateLevel(7, "Bench", "Seedling", 0, 0, false, 0, false)
+			CreateGameLevel(7, "Bench", "Seedling", 0, 0, false, 0, false)
 		}
 	})
 
 	b.Run("Nurturing", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			GenerateLevel(15, "Bench", "Nurturing", 0, 0, false, 0, false)
+			CreateGameLevel(15, "Bench", "Nurturing", 0, 0, false, 0, false)
 		}
 	})
 
 	b.Run("Transcendent", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			GenerateLevel(20, "Bench", "Transcendent", 0, 0, false, 0, false)
+			CreateGameLevel(20, "Bench", "Transcendent", 0, 0, false, 0, false)
 		}
 	})
 }
@@ -276,7 +276,7 @@ func BenchmarkParallel_MultipleModules(b *testing.B) {
 		i := 0
 		for pb.Next() {
 			levelID := 6 + (i % 95)
-			GenerateLevel(levelID, "Bench", common.DifficultyForLevel(levelID, modules), 0, 0, false, 0, false)
+			CreateGameLevel(levelID, "Bench", common.DifficultyForLevel(levelID, modules), 0, 0, false, 0, false)
 			i++
 		}
 	})

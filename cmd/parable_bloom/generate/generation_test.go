@@ -27,7 +27,7 @@ func TestGenerateWithProfile_Tiling(t *testing.T) {
 	spec := common.DifficultySpecs["Seedling"]
 	cfg := common.GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
 	rng := rand.New(rand.NewSource(7))
-	res := GenerateWithProfile(gridSize, spec, common.VarietyProfile{}, cfg, 7, false, rng)
+	res := CreateLevelWithProfile(gridSize, spec, common.VarietyProfile{}, cfg, 7, false, rng)
 	if !res.GreedySolvable {
 		t.Fatalf("expected tiling result to be greedy-solvable, got %+v", res)
 	}
@@ -43,7 +43,7 @@ func TestGenerateWithProfile_Telemetry(t *testing.T) {
 	spec := common.DifficultySpecs["Seedling"]
 	cfg := common.GetGeneratorConfigForDifficulty("Seedling")
 	rng := rand.New(rand.NewSource(42))
-	res := GenerateWithProfile(gridSize, spec, common.GetPresetProfile("Seedling"), cfg, 42, false, rng)
+	res := CreateLevelWithProfile(gridSize, spec, common.GetPresetProfile("Seedling"), cfg, 42, false, rng)
 	if len(res.Vines) == 0 {
 		t.Fatalf("expected generation to succeed, got empty result: %+v", res)
 	}

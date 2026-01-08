@@ -95,7 +95,7 @@ func evaluateConfig(
 	totalTime := int64(0)
 	for i := 0; i < iters; i++ {
 		seed := time.Now().UnixNano() + int64(i)
-		res := GenerateWithProfile(common.GridSizeForLevel(7, difficulty), spec, prof, cfg, seed, false, nil)
+		res := CreateLevelWithProfile(common.GridSizeForLevel(7, difficulty), spec, prof, cfg, seed, false, nil)
 		totalScore += res.Score
 		totalTime += res.ElapsedMS
 	}

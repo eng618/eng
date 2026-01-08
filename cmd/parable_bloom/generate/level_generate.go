@@ -150,7 +150,7 @@ func generateSingle(
 	}
 
 	// Generate level
-	level := GenerateLevel(levelID, name, difficulty, width, height, verbose, seedToUse, randomize)
+	level := CreateGameLevel(levelID, name, difficulty, width, height, verbose, seedToUse, randomize)
 
 	// Validate
 	violations, warnings := level.Validate()
@@ -250,7 +250,7 @@ func generateBatch(
 				seedToUse = baseSeed + int64(id)
 			}
 
-			level := GenerateLevel(id, fmt.Sprintf("Level %d", id), difficulty, 0, 0, verbose, seedToUse, randomize)
+			level := CreateGameLevel(id, fmt.Sprintf("Level %d", id), difficulty, 0, 0, verbose, seedToUse, randomize)
 
 			filePath := common.GetLevelFilePath(level.ID, output)
 			err := common.WriteLevel(filePath, level, overwrite)
@@ -276,7 +276,7 @@ func generateBatch(
 	log.Info("Batch generation complete: %d/%d levels generated", successCount, (endID - startID + 1))
 }
 
-func GenerateLevel(
+func CreateGameLevel(
 	id int,
 	name, difficulty string,
 	width, height int,
@@ -366,7 +366,7 @@ func generateVines(
 	cfg := common.GetGeneratorConfigForDifficulty(difficulty)
 	rng := rand.New(rand.NewSource(usedSeed))
 	profile := common.GetPresetProfile(difficulty)
-	result := GenerateWithProfile(gridSize, spec, profile, cfg, usedSeed, false, rng)
+	result := CreateLevelWithProfile(gridSize, spec, profile, cfg, usedSeed, false, rng)
 	if len(result.Vines) > 0 && result.GreedySolvable {
 		// Log generation telemetry for diagnostics
 		log.Verbose(

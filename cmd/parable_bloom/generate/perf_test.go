@@ -14,7 +14,15 @@ func TestPerf_Tiling_Seedling(t *testing.T) {
 	for i := 0; i < N; i++ {
 		spec := common.DifficultySpecs["Seedling"]
 		cfg := common.GetGeneratorConfigForDifficulty("Seedling")
-		res := GenerateWithProfile([2]int{8, 9}, spec, common.GetPresetProfile("Seedling"), cfg, int64(i+1), false, nil)
+		res := CreateLevelWithProfile(
+			[2]int{8, 9},
+			spec,
+			common.GetPresetProfile("Seedling"),
+			cfg,
+			int64(i+1),
+			false,
+			nil,
+		)
 		if len(res.Vines) == 0 {
 			t.Fatalf("generation failed on seed %d: %+v", i, res)
 		}
@@ -33,7 +41,7 @@ func TestPerf_Tiling_Nurturing(t *testing.T) {
 	for i := 0; i < N; i++ {
 		spec := common.DifficultySpecs["Nurturing"]
 		cfg := common.GetGeneratorConfigForDifficulty("Nurturing")
-		res := GenerateWithProfile(
+		res := CreateLevelWithProfile(
 			common.GridSizeForLevel(15, "Nurturing"),
 			spec,
 			common.GetPresetProfile("Nurturing"),
