@@ -90,7 +90,13 @@ func FastValidateLevelCoverage(level *Level) error {
 
 	expected := total - maskedCount
 	if len(occupied) != expected {
-		return fmt.Errorf("grid coverage mismatch: occupied %d cells, expected %d (total %d - masked %d)", len(occupied), expected, total, maskedCount)
+		return fmt.Errorf(
+			"grid coverage mismatch: occupied %d cells, expected %d (total %d - masked %d)",
+			len(occupied),
+			expected,
+			total,
+			maskedCount,
+		)
 	}
 
 	// ensure no overlaps (counts > 1)

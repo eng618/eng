@@ -55,7 +55,11 @@ This command creates solvable levels with the required structure and metadata.`,
 				}
 			}
 			if !found {
-				log.Error("Invalid difficulty '%s'. Valid options: %s", difficultyFlag, strings.Join(validDifficulties, ", "))
+				log.Error(
+					"Invalid difficulty '%s'. Valid options: %s",
+					difficultyFlag,
+					strings.Join(validDifficulties, ", "),
+				)
 				os.Exit(1)
 			}
 		}
@@ -76,7 +80,14 @@ This command creates solvable levels with the required structure and metadata.`,
 			if moduleID <= len(modules) {
 				moduleRange := modules[moduleID-1]
 				count = moduleRange.End - moduleRange.Start + 1
-				log.Verbose(isVerbose, "Module %d specified, setting count to %d levels (%d-%d)", moduleID, count, moduleRange.Start, moduleRange.End)
+				log.Verbose(
+					isVerbose,
+					"Module %d specified, setting count to %d levels (%d-%d)",
+					moduleID,
+					count,
+					moduleRange.Start,
+					moduleRange.End,
+				)
 			} else {
 				log.Error("Invalid module ID: %d (must be 1-%d)", moduleID, len(modules))
 				os.Exit(1)
@@ -138,7 +149,8 @@ func init() {
 		Bool("render", false, "Render each level to the terminal after creation for quick sanity checks")
 	LevelGenerateCmd.Flags().String("render-style", "unicode", "Render style when using --render: ascii or unicode")
 	LevelGenerateCmd.Flags().Bool("render-coords", false, "Show axis coordinates when rendering")
-	LevelGenerateCmd.Flags().String("difficulty", "", "Difficulty for one-off level generation (overrides auto-determination). Valid options: Tutorial, Seedling, Sprout, Nurturing, Flourishing, Transcendent")
+	LevelGenerateCmd.Flags().
+		String("difficulty", "", "Difficulty for one-off level generation (overrides auto-determination). Valid options: Tutorial, Seedling, Sprout, Nurturing, Flourishing, Transcendent")
 }
 
 func generateSingle(
