@@ -1,7 +1,9 @@
 package system
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
@@ -22,6 +24,7 @@ var UpdateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose := utils.IsVerbose(cmd)
 		autoApprove, _ := cmd.Flags().GetBool("yes")
+		cleanupTimeout, _ := cmd.Flags().GetInt("cleanup-timeout")
 		log.Verbose(isVerbose, "Checking system type...")
 
 		checkCmd := execCommand("uname", "-a")
@@ -36,7 +39,7 @@ var UpdateCmd = &cobra.Command{
 
 		if strings.Contains(uname, "ubuntu") || strings.Contains(uname, "linux") {
 			log.Verbose(isVerbose, "Detected Ubuntu/Linux system, running system update...")
-			updateUbuntu(isVerbose, autoApprove)
+			updateUbuntu(isVerbose, autoApprove, cleanupTimeout)
 		} else if strings.Contains(uname, "darwin") {
 			log.Verbose(isVerbose, "Detected macOS system, running macOS update...")
 			updateMacOS(isVerbose)
@@ -65,14 +68,16 @@ var BrewCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.Flags().BoolP("yes", "y", false, "Auto-approve cleanup operations without prompting")
+	UpdateCmd.Flags().Int("cleanup-timeout", 60, "Timeout in seconds for cleanup confirmation prompt")
 	UpdateCmd.AddCommand(BrewCmd)
 }
 
 // updateUbuntu performs system updates for Ubuntu and Linux systems.
 // It runs apt-get update and upgrade commands, then optionally performs cleanup operations.
 // If autoApprove is true, cleanup operations run automatically without prompting.
-// If autoApprove is false, the user is prompted to confirm cleanup operations.
-func updateUbuntu(isVerbose, autoApprove bool) {
+// If autoApprove is false, the user is prompted to confirm cleanup operations with a countdown.
+// cleanupTimeout specifies the seconds to wait before auto-approving cleanup.
+func updateUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
 	log.Message("Running system update for Ubuntu/Linux...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
@@ -89,7 +94,7 @@ func updateUbuntu(isVerbose, autoApprove bool) {
 	log.Verbose(isVerbose, "APT update and upgrade completed successfully")
 
 	// Run cleanup operations
-	runCleanup(isVerbose, autoApprove)
+	runCleanup(isVerbose, autoApprove, cleanupTimeout)
 
 	updateBrew(isVerbose)
 	updateAsdf(isVerbose)
@@ -169,75 +174,104 @@ func updateAsdf(isVerbose bool) {
 // runCleanup performs system cleanup operations for Ubuntu/Linux systems.
 // It runs apt autoremove --purge, apt autoclean, and optionally docker system prune.
 // If autoApprove is true, cleanup runs automatically without prompting.
-// If autoApprove is false, the user is prompted to confirm running cleanup operations.
+// If autoApprove is false, the user is prompted with a multi-select survey that auto-selects all after cleanupTimeout seconds.
 // Docker system prune is only executed if Docker is installed on the system.
-func runCleanup(isVerbose, autoApprove bool) {
-	var runCleanup bool
+func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
+	// Define available cleanup operations
+	operations := []string{
+		"apt autoremove --purge",
+		"apt autoclean",
+	}
+
+	// Check if docker is available
+	_, dockerErr := lookPath("docker")
+	if dockerErr == nil {
+		operations = append(operations, "docker system prune")
+	}
+
+	var selectedOperations []string
 	if autoApprove {
-		runCleanup = true
+		selectedOperations = operations
 	} else {
-		prompt := &survey.Confirm{
-			Message: "Run system cleanup operations (autoremove, autoclean, docker prune)?",
-			Default: true,
+		// Show initial message
+		log.Message("Select cleanup operations to run (auto-select all in %d seconds):", cleanupTimeout)
+
+		// Use survey multi-select with timeout
+		prompt := &survey.MultiSelect{
+			Message: "Select cleanup operations to run:",
+			Options: operations,
+			Default: operations, // Pre-select all
 		}
-		err := askOne(prompt, &runCleanup)
-		if err != nil {
-			log.Error("Error getting user confirmation: %s", err)
-			return
+
+		// Channel to receive survey result
+		resultCh := make(chan []string, 1)
+		errorCh := make(chan error, 1)
+
+		// Run survey in goroutine
+		go func() {
+			var result []string
+			err := survey.AskOne(prompt, &result)
+			if err != nil {
+				errorCh <- err
+			} else {
+				resultCh <- result
+			}
+		}()
+
+		// Wait for result or timeout
+		select {
+		case selected := <-resultCh:
+			selectedOperations = selected
+		case err := <-errorCh:
+			log.Error("Error with survey prompt: %v", err)
+			selectedOperations = operations // Default to all on error
+		case <-time.After(time.Duration(cleanupTimeout) * time.Second):
+			log.Message("Timeout reached, running all cleanup operations...")
+			selectedOperations = operations
 		}
 	}
 
-	if !runCleanup {
-		log.Message("Skipping cleanup operations.")
+	if len(selectedOperations) == 0 {
+		log.Message("No cleanup operations selected.")
 		return
 	}
 
-	log.Message("Running system cleanup operations...")
+	log.Message("Running selected system cleanup operations...")
 
-	// Run apt autoremove --purge
-	log.Verbose(isVerbose, "Running: sudo apt autoremove --purge -y")
-	cleanupCmd := execCommand("bash", "-c", "sudo apt autoremove --purge -y")
-	cleanupCmd.Stdout = log.Writer()
-	cleanupCmd.Stderr = log.ErrorWriter()
-	if err := cleanupCmd.Run(); err != nil {
-		log.Error("Error running apt autoremove: %s", err)
-		log.Verbose(isVerbose, "apt autoremove failed with error: %v", err)
-	} else {
-		log.Success("apt autoremove completed.")
-		log.Verbose(isVerbose, "apt autoremove --purge completed successfully")
-	}
-
-	// Run apt autoclean
-	log.Verbose(isVerbose, "Running: sudo apt autoclean")
-	cleanupCmd = execCommand("bash", "-c", "sudo apt autoclean")
-	cleanupCmd.Stdout = log.Writer()
-	cleanupCmd.Stderr = log.ErrorWriter()
-	if err := cleanupCmd.Run(); err != nil {
-		log.Error("Error running apt autoclean: %s", err)
-		log.Verbose(isVerbose, "apt autoclean failed with error: %v", err)
-	} else {
-		log.Success("apt autoclean completed.")
-		log.Verbose(isVerbose, "apt autoclean completed successfully")
-	}
-
-	// Check if docker is available and run docker system prune
-	_, err := lookPath("docker")
-	if err != nil {
-		log.Message("Docker is not installed on this system, skipping docker system prune.")
-		log.Verbose(isVerbose, "Could not find docker executable in PATH")
-	} else {
-		log.Verbose(isVerbose, "Running: docker system prune -f")
-		cleanupCmd = execCommand("bash", "-c", "docker system prune -f")
-		cleanupCmd.Stdout = log.Writer()
-		cleanupCmd.Stderr = log.ErrorWriter()
-		if err := cleanupCmd.Run(); err != nil {
-			log.Error("Error running docker system prune: %s", err)
-			log.Verbose(isVerbose, "docker system prune failed with error: %v", err)
-		} else {
-			log.Success("docker system prune completed.")
-			log.Verbose(isVerbose, "docker system prune completed successfully")
+	// Run selected operations with progress bars
+	for _, operation := range selectedOperations {
+		switch operation {
+		case "apt autoremove --purge":
+			runCleanupOperation(isVerbose, "sudo apt autoremove --purge -y", "apt autoremove")
+		case "apt autoclean":
+			runCleanupOperation(isVerbose, "sudo apt autoclean", "apt autoclean")
+		case "docker system prune":
+			runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
 		}
 	}
 
 	log.Success("System cleanup completed.")
+}
+
+// runCleanupOperation runs a single cleanup operation with a progress bar
+func runCleanupOperation(isVerbose bool, command, operationName string) {
+	log.Verbose(isVerbose, "Running: %s", command)
+
+	// Create progress bar for this operation
+	progress := utils.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
+
+	cleanupCmd := execCommand("bash", "-c", command)
+	cleanupCmd.Stdout = log.Writer()
+	cleanupCmd.Stderr = log.ErrorWriter()
+
+	if err := cleanupCmd.Run(); err != nil {
+		progress.Stop()
+		log.Error("Error running %s: %s", operationName, err)
+		log.Verbose(isVerbose, "%s failed with error: %v", operationName, err)
+	} else {
+		progress.SetProgressBar(1.0, fmt.Sprintf("%s completed", operationName))
+		progress.Stop()
+		log.Success("%s completed.", operationName)
+		log.Verbose(isVerbose, "%s completed successfully", operationName)
+	}
 }

@@ -12,10 +12,11 @@ import (
 // It's designed to manage a single progress bar and allow logging
 // messages above the bar without disrupting it.
 type Spinner struct {
-	p           *mpb.Progress
-	bar         *mpb.Bar
-	msgCh       chan string
-	baseMessage string
+	p              *mpb.Progress
+	bar            *mpb.Bar
+	msgCh          chan string
+	baseMessage    string
+	currentMessage string
 }
 
 // NewSpinner creates a new spinner with a default indeterminate style.
@@ -24,16 +25,18 @@ func NewSpinner(message string) *Spinner {
 	msgCh := make(chan string, 1)
 	msgCh <- message
 
+	s := &Spinner{
+		p:              p,
+		msgCh:          msgCh,
+		baseMessage:    message,
+		currentMessage: message,
+	}
+
 	bar := p.New(0, // Total is 0 for an indeterminate spinner
 		mpb.SpinnerStyle(),
 		mpb.PrependDecorators(
 			decor.Any(func(_ decor.Statistics) string {
-				select {
-				case msg := <-msgCh:
-					return msg
-				default:
-					return ""
-				}
+				return s.currentMessage
 			}),
 		),
 		mpb.AppendDecorators(
@@ -41,12 +44,8 @@ func NewSpinner(message string) *Spinner {
 		),
 	)
 
-	return &Spinner{
-		p:           p,
-		bar:         bar,
-		msgCh:       msgCh,
-		baseMessage: message,
-	}
+	s.bar = bar
+	return s
 }
 
 // NewProgressSpinner creates a spinner that displays progress as a bar.
@@ -55,16 +54,18 @@ func NewProgressSpinner(message string) *Spinner {
 	msgCh := make(chan string, 1)
 	msgCh <- message
 
+	s := &Spinner{
+		p:              p,
+		msgCh:          msgCh,
+		baseMessage:    message,
+		currentMessage: message,
+	}
+
 	bar := p.New(100, // Total is 100 for percentage-based progress
 		mpb.BarStyle().Lbound("[").Filler("=").Tip(">").Padding("-").Rbound("]"),
 		mpb.PrependDecorators(
 			decor.Any(func(_ decor.Statistics) string {
-				select {
-				case msg := <-msgCh:
-					return msg
-				default:
-					return ""
-				}
+				return s.currentMessage
 			}),
 			decor.Percentage(decor.WCSyncSpace),
 		),
@@ -73,12 +74,8 @@ func NewProgressSpinner(message string) *Spinner {
 		),
 	)
 
-	return &Spinner{
-		p:           p,
-		bar:         bar,
-		msgCh:       msgCh,
-		baseMessage: message,
-	}
+	s.bar = bar
+	return s
 }
 
 // Start does nothing in this implementation, as the bar is visible on creation.
@@ -99,7 +96,7 @@ func (s *Spinner) Stop() {
 // UpdateMessage updates the message displayed next to the spinner/bar.
 func (s *Spinner) UpdateMessage(msg string) {
 	s.baseMessage = msg
-	s.msgCh <- msg
+	s.currentMessage = msg
 }
 
 // SetProgressBar sets the progress of the bar. Progress should be from 0.0 to 1.0.
