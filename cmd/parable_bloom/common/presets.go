@@ -1,5 +1,10 @@
 package common
 
+// TODO: DEPRECATED - This file has been migrated to parable-bloom/tools/level-builder/pkg/common/presets.go
+// All preset generation parameters (variety profiles, generator configs) have been moved.
+// This file can be safely deleted once the old parable-bloom command is fully deprecated.
+// Migration completed: 2026-01-13
+
 // GetPresetProfile returns a VarietyProfile tuned for the given difficulty tier.
 func GetPresetProfile(difficulty string) VarietyProfile {
 	spec := DifficultySpecs[difficulty]
