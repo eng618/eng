@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // CopyChangesCmd defines the cobra command for copying modified dotfiles to the local git repository.
@@ -135,7 +135,6 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 
 // resetFile runs git checkout -- file.
 func resetFile(repoPath, worktreePath, file string) error {
-	//nolint:
 	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
 	cmd.Dir = worktreePath // Run from worktree directory
 	cmd.Stdout = log.Writer()

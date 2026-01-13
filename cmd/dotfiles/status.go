@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // StatusCmd defines the cobra command for checking the status of the dotfiles repository.
@@ -41,7 +41,6 @@ var StatusCmd = &cobra.Command{
 
 // checkStatus is injectable for tests to avoid executing git.
 var checkStatus = func(repoPath, worktreePath string) error {
-	//nolint:gosec
 	gitCmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status")
 	gitCmd.Stdout = log.Writer()
 	gitCmd.Stderr = log.ErrorWriter()

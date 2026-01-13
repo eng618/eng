@@ -24,7 +24,10 @@ dist/
 
 # Build output
 eng
+param_sweep_main
 
+# Linter output
+linter-output.json
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md

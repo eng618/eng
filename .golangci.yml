@@ -1,93 +1,123 @@
-version: "2"
+# golangci-lint configuration file
+# See https://golangci-lint.run/docs/configuration/file/ for full documentation
+# and https://github.com/golangci/golangci-lint/blob/HEAD/.golangci.reference.yml for reference
 
-run:
-  go: "1.25"
-  modules-download-mode: readonly
-  allow-parallel-runners: false
+version: "2"  # Defines the configuration version. The only possible value is "2".
 
-output:
-  formats:
-    default:
-      format: colored-line-number
-      print-linter-name: true
+run:  # Options for analysis running
+  go: "1.25"  # Define the Go version limit
+  modules-download-mode: readonly  # Use readonly mode for go.mod to avoid modifications
+  allow-parallel-runners: false  # Disable parallel runs to avoid conflicts in this project
+  timeout: 5m  # Timeout for analysis to prevent hangs in CI
+  relative-path-mode: gomod  # Use module-relative paths for consistent reporting
 
-linters:
-  enable:
-    - asciicheck
-    - bidichk
-    - copyloopvar
-    - cyclop
-    - decorder
-    - errorlint
-    - godot
-    # - gosec
-    - importas
-    - misspell
-    - revive
-    - whitespace
-  settings:
+output:  # Output configuration options
+  formats:  # Define output formats for issues
+    text:  # Human-readable text output
+      path: stdout  # Output to standard output
+    json:  # Machine-readable JSON for CI integration
+      path: ./linter-output.json  # Output to standard output
+  path-mode: abs  # Use absolute paths in output for clarity
+
+linters:  # Linters configuration
+  enable:  # List of enabled linters for code quality checks
+    - asciicheck  # Checks for non-ASCII identifiers
+    - bidichk  # Checks for bidirectional Unicode text
+    - copyloopvar  # Checks for incorrect copies of loop variables
+    - cyclop  # Checks for cyclomatic complexity
+    - decorder  # Checks for declaration order
+    - errcheck  # Checks for unchecked errors
+    - errorlint  # Checks for error handling
+    - godot  # Checks for missing godoc comments
+    - govet  # Runs go vet for common mistakes
+    - importas  # Enforces import aliases
+    - misspell  # Checks for spelling errors
+    # - revive  # Advanced linting with configurable rules
+    - staticcheck  # Advanced static analysis
+    - unused  # Checks for unused code
+    - whitespace  # Checks for unnecessary whitespace
+    # - gosec  # Security-focused linter (disabled as not needed for this project)
+  settings:  # Specific settings for linters
     misspell:
-      locale: US
+      locale: US  # Use US English for spelling checks
     cyclop:
-      max-complexity: 30 # Increased from 20
-      package-average: 10
+      max-complexity: 30  # Maximum cyclomatic complexity per function
+      package-average: 10  # Maximum average complexity per package
     revive:
+      enable-default-rules: true  # Enable default revive rules
       rules:
         - name: unused-parameter
           disabled: false
           arguments:
-            - allowRegex: "^_"
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    rules:
+            - allowRegex: "^_"  # Allow unused parameters starting with underscore
+        - name: var-naming  # Enforce variable naming conventions
+          disabled: false
+        - name: function-length  # Limit function length
+          disabled: false
+          arguments: [50, 0]  # Max lines, max statements
+  exclusions:  # Rules to ignore issues
+    generated: lax  # Exclude generated files with lax matching
+    presets:  # Preset exclusions
+      - comments  # Exclude issues in comments
+      - common-false-positives  # Exclude common false positives
+      - legacy  # Exclude legacy code patterns
+      - std-error-handling  # Exclude standard error handling patterns
+    rules:  # Custom exclusion rules
       - linters:
           - errcheck
           - revive
           - cyclop
-        path: _test\.go
+          - gocyclo
+          - dupl
+          - gosec
+        path: _test\.go  # Exclude these linters from test files
       - linters:
           - revive
-        text: "unused-parameter: parameter 'cmd' seems to be unused"
-      - linters:
-          - revive
-        text: "unused-parameter: parameter 'args' seems to be unused"
-    paths:
+        text: "unused-parameter: parameter 'cmd' seems to be unused"  # Specific exclusion for cmd parameter
+    paths:  # Exclude these paths from linting
       - third_party$
       - builtin$
       - examples$
 
-issues:
-  # Disable filter and show all errors defaults to 3
-  max-issues-per-linter: 0
+issues:  # Issues configuration
+  max-issues-per-linter: 0  # Unlimited issues per linter for thorough checks
+  max-same-issues: 0  # Unlimited same-issue reports
+  new: true  # Show only new issues compared to baseline
+  uniq-by-line: true  # Group issues by line to reduce noise
 
-formatters:
-  enable:
-    - gci
-    - gofmt
-    - gofumpt
-    - goimports
-  settings:
+severity:  # Severity configuration
+  default: warning  # Default severity for issues
+  rules:  # Custom severity rules per linter
+    - linters: [gosec]  # If enabled, treat security issues as errors
+      severity: error
+
+formatters:  # Formatters configuration
+  enable:  # Enabled formatters for code style
+    - gci  # Import organizer
+    - gofmt  # Standard Go formatter
+    - gofumpt  # Stricter Go formatter
+    - goimports  # Import organizer and formatter
+    - golines  # Line length formatter
+  settings:  # Formatter-specific options
     gci:
-      sections:
-        - standard
-        - default
-        - prefix(github.com/eng618/eng)
+      sections:  # Organize imports into sections
+        - standard  # Standard library imports
+        - default  # Third-party imports
+        - prefix(github.com/eng618/eng)  # Project-specific imports
+      custom-order: true  # Use custom import order
     gofmt:
-      simplify: true
+      simplify: true  # Simplify code where possible
     gofumpt:
-      module-path: github.com/eng618/eng
-      extra-rules: true
+      module-path: github.com/eng618/eng  # Module path for extra rules
+      extra-rules: true  # Apply extra formatting rules
     goimports:
-      local-prefixes:
+      local-prefixes:  # Local import prefixes
         - github.com/eng618/eng
-  exclusions:
-    generated: lax
-    paths:
+    golines:
+      max-len: 120  # Maximum line length
+  exclusions:  # Exclude paths from formatting
+    generated: lax  # Exclude generated files
+    paths:  # Exclude these paths
       - third_party$
       - builtin$
       - examples$

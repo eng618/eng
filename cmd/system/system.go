@@ -23,7 +23,7 @@ var SystemCmd = &cobra.Command{
 	Use:   "system",
 	Short: "A command for managing the system",
 	Long:  `This command will help manage various aspects of MacOS and Linux systems.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		err := cmd.Help()
 		cobra.CheckErr(err)
 	},

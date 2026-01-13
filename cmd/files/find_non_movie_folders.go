@@ -10,8 +10,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
@@ -174,7 +174,12 @@ func askForConfirmation(prompt string) bool {
 // Returns:
 //   - A slice of strings, where each string is the absolute path to a non-movie folder.
 //   - An error if reading the root directory fails.
-func findNonMovieFolders(isVerbose bool, rootDir string, spinner *utils.Spinner, progress func(done, total int)) ([]string, error) {
+func findNonMovieFolders(
+	isVerbose bool,
+	rootDir string,
+	spinner *utils.Spinner,
+	progress func(done, total int),
+) ([]string, error) {
 	var nonMovieFolders []string
 
 	entries, err := os.ReadDir(rootDir)

@@ -3,7 +3,7 @@ package system
 import (
 	"runtime"
 
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 type Software struct {
@@ -132,7 +132,11 @@ func getSoftwareList() []Software {
 			URL:         "https://www.alfredapp.com/",
 			OS:          "darwin",
 			Check: func() bool {
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'").Run() == nil
+				return execCommand(
+					"mdfind",
+					"kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'",
+				).Run() ==
+					nil
 			},
 			Install: func() error { return openURL("https://www.alfredapp.com/") },
 		},

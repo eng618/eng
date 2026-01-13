@@ -15,7 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 //go:embed eslint.config.standard.tmpl
@@ -77,7 +77,7 @@ var LintSetupCmd = &cobra.Command{
 	Use:   "lint-setup",
 	Short: "Setup linting and formatting for a Node.js project",
 	Long:  `Install and configure linting, formatting, and pre-commit hooks for a Node.js project (eslint, prettier, husky, etc).`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		if _, err := os.Stat("package.json"); errors.Is(err, os.ErrNotExist) {
 			log.Error("package.json not found in current directory")
 			return
@@ -151,7 +151,8 @@ func installLintDependencies(echo bool) error {
 	err = installCmd.Wait()
 	if err != nil && usingNpm {
 		stderrStr := string(stderrBytes)
-		if strings.Contains(stderrStr, "--legacy-peer-deps") || strings.Contains(stderrStr, "could not resolve dependency") {
+		if strings.Contains(stderrStr, "--legacy-peer-deps") ||
+			strings.Contains(stderrStr, "could not resolve dependency") {
 			log.Info("npm install failed due to peer deps, retrying with --legacy-peer-deps...")
 			installArgs = append(installArgs, "--legacy-peer-deps")
 			installCmd2 := execCommand("npm", installArgs...)

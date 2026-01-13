@@ -157,6 +157,7 @@ tasks:
     desc: Format Go code
     cmds:
       - gofmt -w .
+      - golangci-lint fmt
 
   format-check:
     desc: Check Go code formatting

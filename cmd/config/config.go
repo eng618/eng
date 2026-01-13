@@ -5,7 +5,7 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
+	"github.com/eng618/eng/internal/utils/config"
 )
 
 // ConfigCmd represents the base command for all configuration related operations.
@@ -15,7 +15,7 @@ var ConfigCmd = &cobra.Command{
 	Long: `This command is used to facilitate the management of the config file specific to this cli.
 
 It should be located at $HOME/.eng.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		// Validate all configuration settings one by one
 		config.Email()
 		config.DotfilesRepo()
