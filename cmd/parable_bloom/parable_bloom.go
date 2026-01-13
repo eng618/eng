@@ -1,4 +1,13 @@
 // Package parable_bloom provides cobra commands for managing the Parable Bloom Flutter game project.
+//
+// DEPRECATED: This package is deprecated and will be removed in a future release.
+// All functionality has been migrated to the standalone level-builder CLI tool located at:
+// parable-bloom/tools/level-builder
+//
+// Please use the new level-builder tool instead:
+//   cd parable-bloom/tools/level-builder
+//   go build
+//   ./level-builder --help
 package parable_bloom
 
 import (
