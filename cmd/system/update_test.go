@@ -4,8 +4,6 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
-
-	"github.com/AlecAivazis/survey/v2"
 )
 
 func TestUpdateCmd_Ubuntu(t *testing.T) {
@@ -28,7 +26,7 @@ func TestUpdateCmd_Ubuntu(t *testing.T) {
 	// We can't easily run the actual cobra command here without setting up flags,
 	// but we can test the logic by calling the Run function directly if we had access.
 	// For now, let's test the updateUbuntu function directly.
-	updateUbuntu(false, true)
+	updateUbuntu(false, true, 60)
 
 	expected := "bash -c sudo apt-get update && sudo apt-get upgrade -y"
 	found := false
@@ -120,16 +118,21 @@ func TestUpdateRaspberryPi(t *testing.T) {
 	}
 }
 
-func TestRunCleanup_Declined(t *testing.T) {
-	origAskOne := askOne
-	defer func() { askOne = origAskOne }()
+func TestRunCleanup_AutoApprove(t *testing.T) {
+	origExec := execCommand
+	defer func() { execCommand = origExec }()
 
-	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
-		r := response.(*bool)
-		*r = false
-		return nil
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "bash" && strings.Contains(args[1], "apt autoremove") {
+			called = true
+		}
+		return exec.Command("echo", "success")
 	}
 
-	// Should just return without error
-	runCleanup(false, false)
+	runCleanup(false, true, 60)
+
+	if !called {
+		t.Error("runCleanup with autoApprove should have called apt autoremove")
+	}
 }

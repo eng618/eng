@@ -20,7 +20,10 @@ func TestCopilotSetupCmd_CreatesFile(t *testing.T) {
 	}
 
 	// Create a mock .git directory to simulate git repository
-	if err := os.MkdirAll(".git", 0o755); err != nil { // Reverted to original MkdirAll, assuming user intended to add nolint to this line.
+	if err := os.MkdirAll(
+		".git",
+		0o755,
+	); err != nil { // Reverted to original MkdirAll, assuming user intended to add nolint to this line.
 		t.Fatalf("failed to create .git directory: %v", err)
 	}
 
@@ -177,7 +180,10 @@ func TestIsGitRepository(t *testing.T) {
 	_ = os.RemoveAll(".git")
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		if name == "git" && len(arg) > 0 && arg[0] == "rev-parse" {
-			return exec.Command("echo", "success") // Assuming tt.mockOutput was a placeholder and "success" is a reasonable mock output.
+			return exec.Command(
+				"echo",
+				"success",
+			) // Assuming tt.mockOutput was a placeholder and "success" is a reasonable mock output.
 		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}

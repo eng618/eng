@@ -16,8 +16,8 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // Build-time variables
@@ -64,7 +64,7 @@ and compares it with the currently running version.
 
 If a newer version is available and eng was installed via Homebrew,
 you can use the --update flag to attempt an automatic upgrade.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose, _ := cmd.Flags().GetBool("verbose")
 
 		printVersionInfo()
@@ -103,7 +103,9 @@ you can use the --update flag to attempt an automatic upgrade.`,
 // init registers the command and its flags.
 func init() {
 	// Add the --update flag
-	VersionCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+	VersionCmd.Flags().
+		BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+
 	// Note: You would typically add VersionCmd to your root command in cmd/root.go
 	// Example: rootCmd.AddCommand(version.VersionCmd)
 }
@@ -148,7 +150,11 @@ func parseVersions(currentVerStr, latestTagStr string) (current, latest *semver.
 }
 
 // compareAndHandleUpdate compares versions and handles the update logic if requested.
-func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestRelease *githubReleaseInfo, isVerbose bool) {
+func compareAndHandleUpdate(
+	currentSemVer, latestSemVer *semver.Version,
+	latestRelease *githubReleaseInfo,
+	isVerbose bool,
+) {
 	brewDetected := isBrewInstallation(isVerbose)
 
 	if latestSemVer.GreaterThan(currentSemVer) {
@@ -175,15 +181,14 @@ func compareAndHandleUpdate(currentSemVer, latestSemVer *semver.Version, latestR
 			log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 			log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
 			return
-		} else {
-			// Just inform the user how to update
-			if brewDetected {
-				log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
-			} else { // If not brew detected, suggest go install
-				log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
-			}
-			log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 		}
+		// Just inform the user how to update
+		if brewDetected {
+			log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
+		} else { // If not brew detected, suggest go install
+			log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+		}
+		log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 	} else if latestSemVer.Equal(currentSemVer) {
 		log.Success("You are running the latest version.")
 		if updateFlag {
@@ -299,7 +304,10 @@ func getLatestRelease(owner, repo string, isVerbose bool) (release *githubReleas
 		case http.StatusNotFound:
 			return nil, nil // No releases found is not an error here
 		case http.StatusForbidden:
-			return nil, fmt.Errorf("github API request forbidden (status %d). Check rate limits or token permissions", resp.StatusCode)
+			return nil, fmt.Errorf(
+				"github API request forbidden (status %d). Check rate limits or token permissions",
+				resp.StatusCode,
+			)
 		default:
 			return nil, fmt.Errorf("unexpected status code %d from GitHub API", resp.StatusCode)
 		}

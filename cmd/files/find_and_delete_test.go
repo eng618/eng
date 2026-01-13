@@ -331,10 +331,18 @@ func TestScanFiles(t *testing.T) {
 			name: "microsoft documents match",
 			matchFn: func(name string) bool {
 				ext := strings.ToLower(filepath.Ext(name))
-				return ext == ".doc" || ext == ".docx" || ext == ".xls" || ext == ".xlsx" || ext == ".ppt" || ext == ".pptx"
+				return ext == ".doc" || ext == ".docx" || ext == ".xls" || ext == ".xlsx" || ext == ".ppt" ||
+					ext == ".pptx"
 			},
-			expectedFiles: []string{"document.doc", "document.docx", "spreadsheet.xls", "spreadsheet.xlsx", "presentation.ppt", "presentation.pptx"},
-			expectedSize:  8700, // 1200 + 1300 + 1400 + 1500 + 1600 + 1700
+			expectedFiles: []string{
+				"document.doc",
+				"document.docx",
+				"spreadsheet.xls",
+				"spreadsheet.xlsx",
+				"presentation.ppt",
+				"presentation.pptx",
+			},
+			expectedSize: 8700, // 1200 + 1300 + 1400 + 1500 + 1600 + 1700
 		},
 		{
 			name: "archive files match",
@@ -342,8 +350,15 @@ func TestScanFiles(t *testing.T) {
 				ext := strings.ToLower(filepath.Ext(name))
 				return ext == ".zip" || ext == ".rar" || ext == ".7z" || ext == ".tar" || ext == ".gz" || ext == ".bz2"
 			},
-			expectedFiles: []string{"archive.zip", "archive.rar", "archive.7z", "archive.tar", "archive.gz", "archive.bz2"},
-			expectedSize:  12300, // 1800 + 1900 + 2000 + 2100 + 2200 + 2300
+			expectedFiles: []string{
+				"archive.zip",
+				"archive.rar",
+				"archive.7z",
+				"archive.tar",
+				"archive.gz",
+				"archive.bz2",
+			},
+			expectedSize: 12300, // 1800 + 1900 + 2000 + 2100 + 2200 + 2300
 		},
 		{
 			name: "audio files match",
@@ -368,8 +383,15 @@ func TestScanFiles(t *testing.T) {
 				ext := strings.ToLower(filepath.Ext(name))
 				return ext == ".txt" || ext == ".md" || ext == ".rtf"
 			},
-			expectedFiles: []string{".hidden.txt", "b.txt", "invalid*name.txt", "my.file.txt", "readme.md", "notes.rtf"},
-			expectedSize:  4100, // 150 + 200 + 250 + 100 + 300 + 3100
+			expectedFiles: []string{
+				".hidden.txt",
+				"b.txt",
+				"invalid*name.txt",
+				"my.file.txt",
+				"readme.md",
+				"notes.rtf",
+			},
+			expectedSize: 4100, // 150 + 200 + 250 + 100 + 300 + 3100
 		},
 		{
 			name: "log files match",
@@ -401,10 +423,18 @@ func TestScanFiles(t *testing.T) {
 			name: "executable files match",
 			matchFn: func(name string) bool {
 				ext := strings.ToLower(filepath.Ext(name))
-				return ext == ".exe" || ext == ".msi" || ext == ".dmg" || ext == ".pkg" || ext == ".deb" || ext == ".rpm"
+				return ext == ".exe" || ext == ".msi" || ext == ".dmg" || ext == ".pkg" || ext == ".deb" ||
+					ext == ".rpm"
 			},
-			expectedFiles: []string{"program.exe", "installer.msi", "app.dmg", "package.pkg", "software.deb", "rpm.rpm"},
-			expectedSize:  24300, // 3800 + 3900 + 4000 + 4100 + 4200 + 4300
+			expectedFiles: []string{
+				"program.exe",
+				"installer.msi",
+				"app.dmg",
+				"package.pkg",
+				"software.deb",
+				"rpm.rpm",
+			},
+			expectedSize: 24300, // 3800 + 3900 + 4000 + 4100 + 4200 + 4300
 		},
 		{
 			name: "m4v video files match",
@@ -418,10 +448,20 @@ func TestScanFiles(t *testing.T) {
 			name: "all video files match including m4v, wmv, 3gp",
 			matchFn: func(name string) bool {
 				ext := strings.ToLower(filepath.Ext(name))
-				return ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" || ext == ".m4v" || ext == ".wmv" || ext == ".3gp"
+				return ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" || ext == ".m4v" ||
+					ext == ".wmv" ||
+					ext == ".3gp"
 			},
-			expectedFiles: []string{"sub/d.mp4", "sub/g.mov", "sub/h.avi", "sub/i.mkv", "video.m4v", "movie.wmv", "clip.3gp"},
-			expectedSize:  15850, // 400 + 550 + 650 + 750 + 4400 + 4500 + 4600
+			expectedFiles: []string{
+				"sub/d.mp4",
+				"sub/g.mov",
+				"sub/h.avi",
+				"sub/i.mkv",
+				"video.m4v",
+				"movie.wmv",
+				"clip.3gp",
+			},
+			expectedSize: 15850, // 400 + 550 + 650 + 750 + 4400 + 4500 + 4600
 		},
 		// Edge case tests for safety
 		{

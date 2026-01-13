@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // VerboseCmd defines the command for managing the verbose output setting.
@@ -12,7 +12,7 @@ var VerboseCmd = &cobra.Command{
 	Use:   "verbose",
 	Short: "Update config verbose setting",
 	Long:  `This command should validate and update the verbose config setting.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Checking for verbose setting in config file...")
 		config.Verbose()
 	},
