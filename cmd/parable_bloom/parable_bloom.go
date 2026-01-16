@@ -5,9 +5,10 @@
 // parable-bloom/tools/level-builder
 //
 // Please use the new level-builder tool instead:
-//   cd parable-bloom/tools/level-builder
-//   go build
-//   ./level-builder --help
+//
+//	cd parable-bloom/tools/level-builder
+//	go build
+//	./level-builder --help
 package parable_bloom
 
 import (
