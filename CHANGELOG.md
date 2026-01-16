@@ -2,6 +2,244 @@
 
 ## [Unreleased]
 
+
+<a name="v0.31.2"></a>
+
+## [v0.31.2] - 2026-01-16
+
+### Chore
+
+- update golangci-lint installation method and reorder steps in CI workflow
+
+
+<a name="v0.31.1"></a>
+
+## [v0.31.1] - 2026-01-16
+
+### Chore
+
+- update indirect dependencies for go-viper/mapstructure and golang.org/x packages
+
+
+<a name="v0.31.0"></a>
+
+## [v0.31.0] - 2026-01-16
+
+### Chore
+
+- add deprecation notices to parable_bloom packages, migrating to level-builder CLI
+- Add deprecation notices to old eng CLI common files
+
+### Feat
+
+- implement process management commands for killing ports and processes
+- enhance update command with cleanup timeout and multi-select for cleanup operations
+- implement masking functionality for grid cells in level generation and rendering
+
+### Style
+
+- format error and log messages for improved readability
+
+
+<a name="v0.30.1"></a>
+
+## [v0.30.1] - 2026-01-08
+
+### Fix
+
+- comment out unused linters in golangci-lint configuration
+- add #nosec comments to exec.Command calls for security linting
+
+### Refactor
+
+- restructure vine generation functions for clarity and improved flow
+- rename GenerateWithProfile and GenerateLevel to CreateLevelWithProfile and CreateGameLevel for consistency
+
+
+<a name="v0.30.0"></a>
+
+## [v0.30.0] - 2026-01-08
+
+### Feat
+
+- update linter configurations and remove unnecessary nolint comments
+- update dependencies and improve command argument handling
+- enhance level generation with seed & rendering ([#36](https://github.com/eng618/eng/issues/36))
+
+### Refactor
+
+- rename LogWriter and LogErrorWriter to CMDWriter and CMDErrorWriter for clarity
+
+### BREAKING CHANGE
+
+
+Internal package structure completely reorganized
+
+* fix: update golangci-lint version to v2.8.0 and remove output formatting settings
+
+---------
+
+
+<a name="v0.29.7"></a>
+
+## [v0.29.7] - 2025-12-24
+
+### Feat
+
+- **proxy:** enhance proxy listing and environment variable management
+- **proxy:** add toggle and set commands for proxy management
+
+
+<a name="v0.29.6"></a>
+
+## [v0.29.6] - 2025-12-24
+
+### Feat
+
+- **gitlab:** add GitLab authentication and MR rules management
+
+
+<a name="v0.29.5"></a>
+
+## [v0.29.5] - 2025-12-20
+
+### Feat
+
+- **prerequisites:** add Bitwarden SSH key retrieval for GitHub setup
+
+
+<a name="v0.29.4"></a>
+
+## [v0.29.4] - 2025-12-20
+
+### Chore
+
+- update dependabot.yml to monitor pub dependencies
+
+### Feat
+
+- add Bitwarden CLI to software list
+
+### Reverts
+
+- chore: update dependabot.yml to monitor pub dependencies
+
+
+<a name="v0.29.3"></a>
+
+## [v0.29.3] - 2025-12-20
+
+### Feat
+
+- add Antigravity software to the system software list
+- **software_list:** add Spotify to the software list
+
+### Refactor
+
+- standardize single quotes and update validate task
+
+
+<a name="v0.29.2"></a>
+
+## [v0.29.2] - 2025-12-19
+
+### Feat
+
+- Add tests for system prerequisites, proxy, software list, setup, and update commands, and refactor command execution for improved testability.
+
+### Refactor
+
+- apply linter fixes, standardize comments, and update error wrapping.
+
+
+<a name="v0.29.1"></a>
+
+## [v0.29.1] - 2025-12-19
+
+### Feat
+
+- introduce config migration and rename dotfiles and git development path keys
+
+
+<a name="v0.29.0"></a>
+
+## [v0.29.0] - 2025-12-19
+
+### Feat
+
+- Add software installation to setup command and refactor config utilities for clarity.
+- improve dotfiles update by using `git pull` for worktrees and add error logging for temporary script removal.
+
+### Fix
+
+- improve error handling in homebrew setup and expand config tests
+
+### Test
+
+- add comprehensive tests for dotfiles config utilities
+
+
+<a name="v0.28.13"></a>
+
+## [v0.28.13] - 2025-12-19
+
+
+<a name="v0.28.12"></a>
+
+## [v0.28.12] - 2025-12-19
+
+### Feat
+
+- add checkout command for managing dotfiles and implement bare repository checkout functionality
+
+
+<a name="v0.28.11"></a>
+
+## [v0.28.11] - 2025-12-18
+
+### Feat
+
+- orchestrate system setup steps, add `oh-my-zsh` subcommand, and directly invoke dotfiles installation.
+
+### Fix
+
+- **lint:** format fiels
+
+
+<a name="v0.28.10"></a>
+
+## [v0.28.10] - 2025-12-18
+
+### Ci
+
+- remove tag triggers from Go workflow
+
+### Feat
+
+- simplify Homebrew installation by removing user choice and executing a downloaded script
+
+
+<a name="v0.28.9"></a>
+
+## [v0.28.9] - 2025-12-18
+
+### Feat
+
+- **prerequisites:** add interactive Homebrew install method selection
+
+
+<a name="v0.28.8"></a>
+
+## [v0.28.8] - 2025-12-18
+
+### Chore
+
+- **CHANGELOG:** update [skip-ci]
+
+### Fix
+
+- **system:** update Homebrew installation to pipe script to bash
+
 ### Refactor
 
 - **ci:** remove CI changelog generation, add local pre-commit hooks
@@ -2115,7 +2353,26 @@
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.28.7...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v0.31.2...HEAD
+[v0.31.2]: https://github.com/eng618/eng/compare/v0.31.1...v0.31.2
+[v0.31.1]: https://github.com/eng618/eng/compare/v0.31.0...v0.31.1
+[v0.31.0]: https://github.com/eng618/eng/compare/v0.30.1...v0.31.0
+[v0.30.1]: https://github.com/eng618/eng/compare/v0.30.0...v0.30.1
+[v0.30.0]: https://github.com/eng618/eng/compare/v0.29.7...v0.30.0
+[v0.29.7]: https://github.com/eng618/eng/compare/v0.29.6...v0.29.7
+[v0.29.6]: https://github.com/eng618/eng/compare/v0.29.5...v0.29.6
+[v0.29.5]: https://github.com/eng618/eng/compare/v0.29.4...v0.29.5
+[v0.29.4]: https://github.com/eng618/eng/compare/v0.29.3...v0.29.4
+[v0.29.3]: https://github.com/eng618/eng/compare/v0.29.2...v0.29.3
+[v0.29.2]: https://github.com/eng618/eng/compare/v0.29.1...v0.29.2
+[v0.29.1]: https://github.com/eng618/eng/compare/v0.29.0...v0.29.1
+[v0.29.0]: https://github.com/eng618/eng/compare/v0.28.13...v0.29.0
+[v0.28.13]: https://github.com/eng618/eng/compare/v0.28.12...v0.28.13
+[v0.28.12]: https://github.com/eng618/eng/compare/v0.28.11...v0.28.12
+[v0.28.11]: https://github.com/eng618/eng/compare/v0.28.10...v0.28.11
+[v0.28.10]: https://github.com/eng618/eng/compare/v0.28.9...v0.28.10
+[v0.28.9]: https://github.com/eng618/eng/compare/v0.28.8...v0.28.9
+[v0.28.8]: https://github.com/eng618/eng/compare/v0.28.7...v0.28.8
 [v0.28.7]: https://github.com/eng618/eng/compare/v0.28.6...v0.28.7
 [v0.28.6]: https://github.com/eng618/eng/compare/v0.28.5...v0.28.6
 [v0.28.5]: https://github.com/eng618/eng/compare/v0.28.4...v0.28.5
