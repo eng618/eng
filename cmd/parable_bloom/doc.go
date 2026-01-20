@@ -1,4 +1,9 @@
 /*
+DEPRECATED: The 'eng parable-bloom' command is deprecated and will be removed. Use the standalone
+`parble-bloom/tools/level-builder` tool instead. Example:
+
+	cd parable-bloom/tools/level-builder && go build && ./level-builder --help
+
 Package parable_bloom provides level management and validation tools for the Parable Bloom game.
 
 This package implements two main commands accessible via the eng CLI:

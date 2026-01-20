@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package generate
 
 import (
@@ -5,6 +8,10 @@ import (
 
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 )
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 // Fast CI perf checks: ensure tiling-first generator keeps acceptable runtime for common tiers.
 func TestPerf_Tiling_Seedling(t *testing.T) {

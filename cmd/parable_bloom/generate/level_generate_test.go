@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package generate
 
 import (
@@ -8,6 +11,10 @@ import (
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 	"github.com/eng618/eng/internal/utils/log"
 )
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 // TestDifficultyForLevel_Progression verifies that difficulty increases correctly through a module.
 func TestDifficultyForLevel_Progression(t *testing.T) {

@@ -172,15 +172,15 @@ func updateAsdf(isVerbose bool) {
 }
 
 // runCleanup performs system cleanup operations for Ubuntu/Linux systems.
-// It runs apt autoremove --purge, apt autoclean, and optionally docker system prune.
+// It runs apt-get autoremove --purge, apt-get autoclean, and optionally docker system prune.
 // If autoApprove is true, cleanup runs automatically without prompting.
 // If autoApprove is false, the user is prompted with a multi-select survey that auto-selects all after cleanupTimeout seconds.
 // Docker system prune is only executed if Docker is installed on the system.
 func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 	// Define available cleanup operations
 	operations := []string{
-		"apt autoremove --purge",
-		"apt autoclean",
+		"apt-get autoremove --purge",
+		"apt-get autoclean",
 	}
 
 	// Check if docker is available
@@ -241,10 +241,10 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 	// Run selected operations with progress bars
 	for _, operation := range selectedOperations {
 		switch operation {
-		case "apt autoremove --purge":
-			runCleanupOperation(isVerbose, "sudo apt autoremove --purge -y", "apt autoremove")
-		case "apt autoclean":
-			runCleanupOperation(isVerbose, "sudo apt autoclean", "apt autoclean")
+		case "apt-get autoremove --purge":
+			runCleanupOperation(isVerbose, "sudo apt-get autoremove --purge -y", "apt-get autoremove")
+		case "apt-get autoclean":
+			runCleanupOperation(isVerbose, "sudo apt-get autoclean", "apt-get autoclean")
 		case "docker system prune":
 			runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
 		}

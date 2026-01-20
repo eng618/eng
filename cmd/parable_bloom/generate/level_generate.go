@@ -1,3 +1,5 @@
+// DEPRECATED: This package is deprecated. Use parable-bloom/tools/level-builder instead.
+// See: parable-bloom/tools/level-builder/cmd/generate/generate.go
 package generate
 
 import (

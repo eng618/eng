@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package render
 
 import (
@@ -7,6 +10,10 @@ import (
 
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 )
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 func TestRenderNeckMarkerUnicode(t *testing.T) {
 	level := &common.Level{

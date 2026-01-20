@@ -1,8 +1,13 @@
+//go:build ignore
+// +build ignore
+
 package common
 
-import (
-	"testing"
-)
+import "testing"
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 func TestStateKeyDeterministic(t *testing.T) {
 	a := make(map[string]bool)

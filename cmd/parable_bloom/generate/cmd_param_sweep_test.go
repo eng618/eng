@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package generate
 
 import (
@@ -6,6 +9,10 @@ import (
 
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 )
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 func TestParamSweep_Smoke(t *testing.T) {
 	// Smoke test: run a tiny sweep configuration and ensure it completes
