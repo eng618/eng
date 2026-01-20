@@ -46,10 +46,11 @@ jobs:
         run: task format-check
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.8.0
           only-new-issues: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: task test
