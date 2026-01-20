@@ -15,6 +15,9 @@ output:  # Output configuration options
   formats:  # Define output formats for issues
     text:  # Human-readable text output
       path: stdout  # Output to standard output
+    json:  # Machine-readable JSON for CI integration
+      path: ./linter-output.json  # Output to standard output
+  path-mode: abs  # Use absolute paths in output for clarity
 
 linters:  # Linters configuration
   enable:  # List of enabled linters for code quality checks
