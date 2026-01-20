@@ -10,7 +10,12 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: write
+  # Required: allow read access to the content for analysis.
+  contents: read
+  # Optional: allow read access to pull request. Use with `only-new-issues` option.
+  pull-requests: read
+  # Optional: Allow write access to checks to allow the action to annotate code in the PR.
+  checks: write
 
 jobs:
   build:
@@ -43,7 +48,8 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v4
         with:
-          version: v2.8.o
+          version: v2.8.0
+          only-new-issues: true
 
       - name: Test
         run: task test
