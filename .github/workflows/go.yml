@@ -43,7 +43,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v4
         with:
-          version: v2.8.0
+          version: v2.8
           args: run
 
       - name: Test
