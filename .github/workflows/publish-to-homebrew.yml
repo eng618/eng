@@ -1,9 +1,8 @@
 name: Publish to Homebrew
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -30,7 +29,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean
+          args: release --clean --release=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,7 +63,7 @@ jobs:
       - name: Get Version without v prefix
         id: get_version
         run: |
-          TAG_NAME="${{ github.ref_name }}"
+          TAG_NAME="${{ github.event.release.tag_name }}"
           # Use bash parameter expansion to remove 'v' prefix if it exists
           VERSION_NO_V="${TAG_NAME#v}"
           echo "version_no_v=${VERSION_NO_V}" >> $GITHUB_OUTPUT
@@ -73,7 +72,7 @@ jobs:
         env:
           PROJECT_NAME: "eng"
           # TAG_NAME still includes the 'v' (e.g., v0.17.4) - used for URL path
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
           # Version for Homebrew formula (without v prefix)
           VERSION: ${{ steps.get_version.outputs.version_no_v }}
           # Construct filenames using the output from the previous step
