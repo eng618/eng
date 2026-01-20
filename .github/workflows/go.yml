@@ -28,9 +28,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
       - name: Install Task
         uses: arduino/setup-task@v2
         with:
@@ -44,7 +41,11 @@ jobs:
         run: task format-check
 
       - name: Lint
-        run: task lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: 2.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: task test
