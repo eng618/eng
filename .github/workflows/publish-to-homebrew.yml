@@ -95,65 +95,7 @@ jobs:
           DARWIN_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Darwin_arm64.tar.gz
           LINUX_AMD64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_x86_64.tar.gz
           LINUX_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_arm64.tar.gz
+          CHECKSUMS_JSON: ${{ steps.get_checksums.outputs.checksums }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # Change directory into the downloaded dist directory
-          cd dist
-
-          git clone https://github.com/eng618/homebrew-eng.git
-          cd homebrew-eng/Formula
-
-          echo "class Eng < Formula" > eng.rb
-          echo "  desc 'Personal cli to help facilitate my normal workflow'" >> eng.rb
-          echo "  homepage 'https://github.com/eng618/eng'" >> eng.rb
-          echo "  version '${VERSION}'" >> eng.rb
-          echo "  # URLs now use TAG_NAME (with v) for path, and FILE variable (without v) for filename" >> eng.rb
-          echo "  case" >> eng.rb
-          echo "  when OS.mac? && Hardware::CPU.intel?" >> eng.rb
-          # URL Path uses TAG_NAME (e.g., v0.17.4), Filename uses DARWIN_AMD64_FILE (e.g., eng_0.17.4...)
-          echo "    url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${DARWIN_AMD64_FILE}'" >> eng.rb
-          # Checksum lookup uses the filename variable (without 'v')
-          echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)[env.DARWIN_AMD64_FILE] }}'" >> eng.rb
-          echo "  when OS.mac? && Hardware::CPU.arm?" >> eng.rb
-          echo "    url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${DARWIN_ARM64_FILE}'" >> eng.rb
-          echo "    sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)[env.DARWIN_ARM64_FILE] }}'" >> eng.rb
-          echo "  when OS.linux?" >> eng.rb
-          echo "    if Hardware::CPU.intel?" >> eng.rb
-          echo "      url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${LINUX_AMD64_FILE}'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)[env.LINUX_AMD64_FILE] }}'" >> eng.rb
-          echo "    elsif Hardware::CPU.arm?" >> eng.rb
-          echo "      url 'https://github.com/eng618/eng/releases/download/${TAG_NAME}/${LINUX_ARM64_FILE}'" >> eng.rb
-          echo "      sha256 '${{ fromJson(steps.get_checksums.outputs.checksums)[env.LINUX_ARM64_FILE] }}'" >> eng.rb
-          echo "    end" >> eng.rb
-          echo "  end" >> eng.rb
-          echo "  license 'MIT'" >> eng.rb
-          echo "" >> eng.rb
-          echo "  def install" >> eng.rb
-          echo "    puts \"bin: #{bin}\"" >> eng.rb
-          echo "    puts \"Installing eng to: #{bin}\"" >> eng.rb
-          echo "    bin.install 'eng'" >> eng.rb
-          echo "    puts \"eng installed successfully\"" >> eng.rb
-          echo "    puts \"Permissions of eng: #{File.stat(\"#{bin}/eng\").mode.to_s(8)}\"" >> eng.rb
-          echo "    # Verify the binary is functional before generating completions" >> eng.rb
-          echo "    system \"#{bin}/eng\", '--help'" >> eng.rb
-          echo "    generate_completions" >> eng.rb
-          echo "  end" >> eng.rb
-          echo "" >> eng.rb
-          echo "  def generate_completions" >> eng.rb
-          echo "    puts \"PATH: #{ENV['PATH']}\"" >> eng.rb
-          echo "    puts \"Running: #{bin}/eng completion bash\"" >> eng.rb
-          echo "    (bash_completion/'eng').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'bash')" >> eng.rb
-          echo "    (zsh_completion/'_eng').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'zsh')" >> eng.rb
-          echo "    (fish_completion/'eng.fish').write Utils.safe_popen_read(\"#{bin}/eng\", 'completion', 'fish')" >> eng.rb
-          echo "  end" >> eng.rb
-          echo "" >> eng.rb
-          echo "  test do" >> eng.rb
-          echo "    system \"#{bin}/eng\", '--help'" >> eng.rb
-          echo "  end" >> eng.rb
-          echo "end" >> eng.rb
-
-          git config user.email "eng618@garciaericn.com"
-          git config user.name "Eric N. Garcia"
-          git add eng.rb
-          # Commit message still uses the full tag name (with 'v')
-          git commit -m "Update eng to ${TAG_NAME}"
-          git push https://oauth2:${{ secrets.PAT_TOKEN }}@github.com/eng618/homebrew-eng.git
+          ./tools/update_homebrew_formula.sh
