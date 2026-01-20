@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
 
+concurrency:
+  group: publish-homebrew-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   actions: read
@@ -22,6 +26,17 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: stable
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run tests
+        run: go test ./...
 
       - name: Install & Run GoReleaser
         id: goreleaser
