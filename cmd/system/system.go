@@ -31,6 +31,7 @@ var SystemCmd = &cobra.Command{
 
 func init() {
 	SystemCmd.AddCommand(KillPortCmd)
+	SystemCmd.AddCommand(KillProcessCmd)
 	SystemCmd.AddCommand(UpdateCmd)
 	SystemCmd.AddCommand(ProxyCmd)
 	SystemCmd.AddCommand(CompauditFixCmd)

@@ -1,5 +1,10 @@
 package common
 
+// TODO: DEPRECATED - This file has been migrated to parable-bloom/tools/level-builder/pkg/common/solver.go
+// All solver logic (IsSolvableGreedy, IsSolvableBFS, canVineClear) has been moved to the new location.
+// This file can be safely deleted once the old parable-bloom command is fully deprecated.
+// Migration completed: 2026-01-13
+
 import (
 	"fmt"
 	"sort"

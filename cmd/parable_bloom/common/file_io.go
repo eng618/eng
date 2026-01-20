@@ -1,5 +1,10 @@
 package common
 
+// TODO: DEPRECATED - This file has been migrated to parable-bloom/tools/level-builder/pkg/common/file_io.go
+// All file I/O functions (ReadLevel, WriteLevel, atomic writes) have been moved to the new location.
+// This file can be safely deleted once the old parable-bloom command is fully deprecated.
+// Migration completed: 2026-01-13
+
 import (
 	"bytes"
 	"encoding/json"

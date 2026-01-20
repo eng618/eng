@@ -1,3 +1,5 @@
+// DEPRECATED: This package is deprecated. Use parable-bloom/tools/level-builder instead.
+// Future versions will port this functionality to the new CLI.
 package repair
 
 import (
