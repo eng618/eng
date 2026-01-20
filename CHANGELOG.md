@@ -1,5 +1,26 @@
 <a name="unreleased"></a>
 
+## [0.33.0](https://github.com/eng618/eng/compare/v0.32.0...v0.33.0) (2026-01-20)
+
+
+### Features
+
+* add concurrency settings for Homebrew and Release workflows ([876e57e](https://github.com/eng618/eng/commit/876e57e35f855cdba920cfec2aeeadb8e2f389d2))
+* implement release workflow and configuration for automated versioning ([e07ab07](https://github.com/eng618/eng/commit/e07ab079722a041d2d8ea32c07c7289e5f13f52d))
+* update Go version matrix and switch to golangci-lint GitHub Action ([3799dd6](https://github.com/eng618/eng/commit/3799dd6b57221290329a6303a9c618289bc483c8))
+* update golangci-lint version and streamline Homebrew formula generation ([b6a5449](https://github.com/eng618/eng/commit/b6a54497f4b5fc126c7eb98d857b24b81a30104b))
+
+
+### Bug Fixes
+
+* correct Go version format in workflow matrix ([43e3449](https://github.com/eng618/eng/commit/43e3449bc901e1bba3891feaebb37ec8dcf78413))
+* correct Go version format in workflow matrix ([76b98d8](https://github.com/eng618/eng/commit/76b98d84c4b3f8b7237938beb39c9bb38c85c852))
+* correct key in release-please manifest ([61568dc](https://github.com/eng618/eng/commit/61568dc8ac1f03cd15c0a0dd201d38f59a7aa768))
+* reorganize permissions section in release-please workflow ([4d1b831](https://github.com/eng618/eng/commit/4d1b831a540cc20ad0eb1a422ea047e20999d24c))
+* update Go version matrix to include 1.26-rc.2 ([15d672b](https://github.com/eng618/eng/commit/15d672b8fea9c767701904949bc75483a9db9f6e))
+* update golangci-lint installation method to use curl script ([78f27c4](https://github.com/eng618/eng/commit/78f27c4f523dc039a75eac9c9dc2b4b7499bceff))
+* update golangci-lint installation method to use latest version ([51c1326](https://github.com/eng618/eng/commit/51c1326c761241d1197cfaed54f0928953dd8be9))
+
 ## [Unreleased]
 
 
