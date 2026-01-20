@@ -1,0 +1,54 @@
+name: PR CI for bot-created PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  build:
+    name: Build
+    if: ${{ github.actor == 'github-actions' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.25"]
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Check formatting
+        run: task format-check
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.8
+
+      - name: Test
+        run: task test
+
+      - name: Build
+        run: go build -v ./...
