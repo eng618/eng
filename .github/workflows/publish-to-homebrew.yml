@@ -3,9 +3,12 @@ name: Publish to Homebrew
 on:
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Release Please"]
+    types: [completed]
 
 concurrency:
-  group: publish-homebrew-${{ github.event.release.tag_name }}
+  group: publish-homebrew-${{ github.event.release.tag_name || github.run_id }}
   cancel-in-progress: false
 
 permissions:
@@ -14,6 +17,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Release Please' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -64,6 +68,19 @@ jobs:
           name: dist
           path: dist
 
+      - name: Determine release tag and version
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+          else
+            echo "Fetching latest published release tag from GitHub API..."
+            TAG_NAME=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r 'map(select(.draft==false and .prerelease==false))[0].tag_name')
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          VERSION_NO_V="${TAG_NAME#v}"
+          echo "version_no_v=$VERSION_NO_V" >> $GITHUB_OUTPUT
+
       - name: Get Checksums
         id: get_checksums
         run: |
@@ -75,26 +92,17 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           cd ..
 
-      - name: Get Version without v prefix
-        id: get_version
-        run: |
-          TAG_NAME="${{ github.event.release.tag_name }}"
-          # Use bash parameter expansion to remove 'v' prefix if it exists
-          VERSION_NO_V="${TAG_NAME#v}"
-          echo "version_no_v=${VERSION_NO_V}" >> $GITHUB_OUTPUT
+
 
       - name: Publish to Homebrew
         env:
           PROJECT_NAME: "eng"
-          # TAG_NAME still includes the 'v' (e.g., v0.17.4) - used for URL path
-          TAG_NAME: ${{ github.event.release.tag_name }}
-          # Version for Homebrew formula (without v prefix)
-          VERSION: ${{ steps.get_version.outputs.version_no_v }}
-          # Construct filenames using the output from the previous step
-          DARWIN_AMD64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Darwin_x86_64.tar.gz
-          DARWIN_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Darwin_arm64.tar.gz
-          LINUX_AMD64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_x86_64.tar.gz
-          LINUX_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_arm64.tar.gz
+          TAG_NAME: ${{ steps.get_tag.outputs.tag_name }}
+          VERSION: ${{ steps.get_tag.outputs.version_no_v }}
+          DARWIN_AMD64_FILE: eng_${{ steps.get_tag.outputs.version_no_v }}_Darwin_x86_64.tar.gz
+          DARWIN_ARM64_FILE: eng_${{ steps.get_tag.outputs.version_no_v }}_Darwin_arm64.tar.gz
+          LINUX_AMD64_FILE: eng_${{ steps.get_tag.outputs.version_no_v }}_Linux_x86_64.tar.gz
+          LINUX_ARM64_FILE: eng_${{ steps.get_tag.outputs.version_no_v }}_Linux_arm64.tar.gz
           CHECKSUMS_JSON: ${{ steps.get_checksums.outputs.checksums }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
