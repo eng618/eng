@@ -11,10 +11,10 @@ run:  # Options for analysis running
   timeout: 5m  # Timeout for analysis to prevent hangs in CI
   relative-path-mode: gomod  # Use module-relative paths for consistent reporting
 
-# output:  # Output configuration options
-#   formats:  # Define output formats for issues
-#     text:  # Human-readable text output
-#       path: stdout  # Output to standard output
+output:  # Output configuration options
+  formats:  # Define output formats for issues
+    text:  # Human-readable text output
+      path: stdout  # Output to standard output
 
 linters:  # Linters configuration
   enable:  # List of enabled linters for code quality checks
