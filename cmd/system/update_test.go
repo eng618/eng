@@ -124,7 +124,7 @@ func TestRunCleanup_AutoApprove(t *testing.T) {
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "apt autoremove") {
+		if name == "bash" && strings.Contains(args[1], "apt-get autoremove") {
 			called = true
 		}
 		return exec.Command("echo", "success")
@@ -133,6 +133,6 @@ func TestRunCleanup_AutoApprove(t *testing.T) {
 	runCleanup(false, true, 60)
 
 	if !called {
-		t.Error("runCleanup with autoApprove should have called apt autoremove")
+		t.Error("runCleanup with autoApprove should have called apt-get autoremove")
 	}
 }
