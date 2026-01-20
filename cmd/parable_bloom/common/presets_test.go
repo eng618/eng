@@ -1,6 +1,13 @@
+//go:build ignore
+// +build ignore
+
 package common
 
 import "testing"
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 func TestGetPresetProfile_BucketBiases(t *testing.T) {
 	seed := GetPresetProfile("Seedling")

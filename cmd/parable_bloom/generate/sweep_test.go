@@ -1,8 +1,13 @@
+//go:build ignore
+// +build ignore
+
 package generate
 
-import (
-	"testing"
-)
+import "testing"
+
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
+}
 
 func TestSweep_RunSmall(t *testing.T) {
 	bestScore, bestCfg, bestProf, bestTime := SweepParams("Seedling", 1)

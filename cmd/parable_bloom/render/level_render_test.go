@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package render
 
 import (
@@ -8,13 +11,8 @@ import (
 	"github.com/eng618/eng/cmd/parable_bloom/common"
 )
 
-func containsAny(s string, choices []string) bool {
-	for _, c := range choices {
-		if strings.Contains(s, c) {
-			return true
-		}
-	}
-	return false
+func TestParableBloomTestsRemoved(t *testing.T) {
+	t.Skip("Parable Bloom eng CLI tests removed; use tools/level-builder tests instead.")
 }
 
 func TestRenderLevelAscii(t *testing.T) {
