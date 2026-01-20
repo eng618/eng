@@ -1,5 +1,16 @@
 <a name="unreleased"></a>
 
+## [1.0.0](https://github.com/eng618/eng/compare/v0.33.0...v1.0.0) (2026-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* removed tools from deprecated command
+
+### Features
+
+* removed tools from deprecated command ([4d1f5bb](https://github.com/eng618/eng/commit/4d1f5bba05c3118571b6d10b6d8c71fc40d2806c))
+
 ## [0.33.0](https://github.com/eng618/eng/compare/v0.32.0...v0.33.0) (2026-01-20)
 
 
