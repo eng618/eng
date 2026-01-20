@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.1.0](https://github.com/eng618/eng/compare/v1.0.0...v1.1.0) (2026-01-20)
+
+
+### Features
+
+* remove deprecated Parable Bloom CLI commands and associated tests ([0e3f01b](https://github.com/eng618/eng/commit/0e3f01b99b7d85858f1ec1716c0dab2406698ba0))
+
+
+### Bug Fixes
+
+* correct syntax error in pull_request_target types array ([9fb7cf8](https://github.com/eng618/eng/commit/9fb7cf849dcb2e8e8adbad5c905774132235ed6b))
+
 ## [1.0.0](https://github.com/eng618/eng/compare/v0.33.0...v1.0.0) (2026-01-20)
 
 
