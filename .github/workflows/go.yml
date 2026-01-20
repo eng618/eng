@@ -10,7 +10,8 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: write
+  contents: read
+  checks: write
 
 jobs:
   build:
@@ -18,10 +19,13 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip-ci]') }}
     strategy:
       matrix:
-        go-version: ["1.25", "1.26.0-rc.2"]
+        go-version: ["1.25"]
+        # go-version: ["1.25", "1.26.0-rc.2"]
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
@@ -41,10 +45,9 @@ jobs:
         run: task format-check
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.8.0
-          args: run
+          version: v2.8
 
       - name: Test
         run: task test
