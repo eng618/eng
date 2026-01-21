@@ -50,6 +50,11 @@ jobs:
           name: dist
           path: dist
 
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
       - name: Get Checksums
         id: get_checksums
         run: |
