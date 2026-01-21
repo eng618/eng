@@ -86,4 +86,5 @@ jobs:
         run: |
           cd dist
           # ../scripts/update-homebrew-formula.sh
+          echo "PWD before running Go script: $(pwd)"
           go run ../tools/homebrew-update.go

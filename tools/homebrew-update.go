@@ -22,11 +22,26 @@ func main() {
 	linuxARM64File := os.Getenv("LINUX_ARM64_FILE")
 	patToken := os.Getenv("PAT_TOKEN")
 
-	if version == "" || tagName == "" || checksumsJSON == "" || darwinAMD64File == "" || darwinARM64File == "" ||
-		linuxAMD64File == "" ||
-		linuxARM64File == "" ||
-		patToken == "" {
-		log.Fatal("Missing required environment variables")
+	// Check required environment variables
+	requiredVars := map[string]string{
+		"VERSION":           version,
+		"TAG_NAME":          tagName,
+		"CHECKSUMS_JSON":    checksumsJSON,
+		"DARWIN_AMD64_FILE": darwinAMD64File,
+		"DARWIN_ARM64_FILE": darwinARM64File,
+		"LINUX_AMD64_FILE":  linuxAMD64File,
+		"LINUX_ARM64_FILE":  linuxARM64File,
+		"PAT_TOKEN":         patToken,
+	}
+
+	var missingVars []string
+	for varName, value := range requiredVars {
+		if value == "" {
+			missingVars = append(missingVars, varName)
+		}
+	}
+	if len(missingVars) > 0 {
+		log.Fatalf("Missing required environment variables: %s", strings.Join(missingVars, ", "))
 	}
 
 	// Parse checksums
@@ -111,9 +126,11 @@ end
 	// Git operations
 	runCmd("git", "config", "user.email", "eng618@garciaericn.com")
 	runCmd("git", "config", "user.name", "Eric N. Garcia")
+	runCmd("git", "config", "--global", "credential.helper", "store")
+	runCmd("sh", "-c", fmt.Sprintf("echo 'https://oauth2:%s@github.com' > ~/.git-credentials", patToken))
 	runCmd("git", "add", "eng.rb")
 	runCmd("git", "commit", "-m", fmt.Sprintf("Update eng to %s", tagName))
-	runCmd("git", "push", fmt.Sprintf("https://oauth2:%s@github.com/eng618/homebrew-eng.git", patToken))
+	runCmd("git", "push", "https://github.com/eng618/homebrew-eng.git")
 }
 
 func runCmd(name string, args ...string) {
