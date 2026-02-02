@@ -92,7 +92,7 @@ var doctorCmd = &cobra.Command{
 			out, err := cmdUser.Output()
 			if err != nil {
 				return fmt.Errorf(
-					"failed to call glab api user: %w\nEnsure GITLAB_TOKEN is set or configured via Bitwarden/config",
+					"failed to call glab api user (ensure GITLAB_TOKEN is set or configured via Bitwarden/config): %w",
 					err,
 				)
 			}

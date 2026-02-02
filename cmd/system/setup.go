@@ -331,8 +331,10 @@ func generateSSHKey(sshKeyPath string, verbose bool) error {
 	if err := os.MkdirAll(sshDir, 0o700); err != nil {
 		return fmt.Errorf("failed to create SSH directory: %w", err)
 	}
+	log.Verbose(verbose, "SSH directory ready at %s", sshDir)
 
 	// Generate SSH key
+	log.Verbose(verbose, "Generating SSH key with command: ssh-keygen -t ed25519 -f %s -N '' -C github", sshKeyPath)
 	cmd := execCommand("ssh-keygen", "-t", "ed25519", "-f", sshKeyPath, "-N", "", "-C", "github")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
@@ -360,6 +362,7 @@ func storeSSHKeyInBitwarden(sshKeyPath string, verbose bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to read SSH private key: %w", err)
 	}
+	log.Verbose(verbose, "Read SSH private key from %s", sshKeyPath)
 
 	// Read the public key
 	publicKeyPath := sshKeyPath + ".pub"

@@ -45,6 +45,13 @@ func MigrateConfig() {
 		changed = true
 	}
 
+	// Initialize projects key if not set (no migration needed, just ensure key exists)
+	if !viper.IsSet("projects") {
+		viper.Set("projects", []interface{}{})
+		log.Verbose(isVerbose, "Initialized empty projects configuration")
+		changed = true
+	}
+
 	if changed {
 		if err := viper.WriteConfig(); err != nil {
 			log.Warn("Failed to save migrated configuration: %v", err)
