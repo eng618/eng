@@ -91,10 +91,7 @@ var doctorCmd = &cobra.Command{
 			cmdUser.Env = env
 			out, err := cmdUser.Output()
 			if err != nil {
-				return fmt.Errorf(
-					"failed to call glab api user: %w\nEnsure GITLAB_TOKEN is set or configured via Bitwarden/config",
-					err,
-				)
+				return fmt.Errorf("failed to call glab api user: %w\nEnsure GITLAB_TOKEN is set or configured via Bitwarden/config.", err)
 			}
 			var user struct {
 				Username string `json:"username"`
@@ -155,6 +152,7 @@ var doctorCmd = &cobra.Command{
 func init() {
 	AuthCmd.AddCommand(doctorCmd)
 	doctorCmd.Flags().StringVar(&docHostOpt, "host", "", "GitLab host (e.g., gitlab.com)")
+	doctorCmd.Flags().StringVar(&docHostOpt, "hose", "", "Alias for --host")
 	doctorCmd.Flags().StringVar(&docProjectOpt, "project", "", "GitLab project path (e.g., group/subgroup/repo)")
 	doctorCmd.Flags().BoolVar(&docQuiet, "quiet", false, "Only print essential OK/error messages")
 }
