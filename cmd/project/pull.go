@@ -23,15 +23,15 @@ var PullCmd = &cobra.Command{
 Note: Repositories with uncommitted changes will be skipped.
 
 Example:
-  eng project pull              # Pull all projects
-  eng project pull -p Echo      # Pull only the Echo project
-  eng project pull --dry-run    # Preview what would be pulled`,
+  eng project pull                  # Pull all projects
+  eng project pull -p MyProject     # Pull only the specified project
+  eng project pull --dry-run        # Preview what would be pulled`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Pulling project repositories")
 
 		isVerbose := utils.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		projectFilter, _ := cmd.Flags().GetString("project")
+		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
+		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
 		if devPath == "" {
@@ -92,6 +92,12 @@ Example:
 					continue
 				}
 
+				if dryRun {
+					log.Info("  [DRY RUN] Would pull: %s", repoPath)
+					successCount++
+					continue
+				}
+
 				// Check for uncommitted changes
 				isDirty, err := repo.IsDirty(fullRepoPath)
 				if err != nil {
@@ -103,12 +109,6 @@ Example:
 				if isDirty {
 					log.Warn("  Skipping %s (has uncommitted changes)", repoPath)
 					dirtyCount++
-					continue
-				}
-
-				if dryRun {
-					log.Info("  [DRY RUN] Would pull: %s", repoPath)
-					successCount++
 					continue
 				}
 

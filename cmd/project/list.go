@@ -25,12 +25,12 @@ Use the --verbose flag to see detailed information including:
   - Local paths
 
 Example:
-  eng project list           # Show projects summary
-  eng project list -v        # Show detailed repository information
-  eng project list -p Echo   # Show only the Echo project`,
+  eng project list               # Show projects summary
+  eng project list -v            # Show detailed repository information
+  eng project list -p MyProject  # Show only the specified project`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isVerbose := utils.IsVerbose(cmd)
-		projectFilter, _ := cmd.Flags().GetString("project")
+		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
 		if devPath == "" {

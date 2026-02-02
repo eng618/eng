@@ -21,8 +21,8 @@ You will be prompted for:
   - Optional custom directory name
 
 Example:
-  eng project add              # Interactive add
-  eng project add -p Echo      # Add a repo to the Echo project`,
+  eng project add                  # Interactive add
+  eng project add -p MyProject     # Add a repo to the specified project`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Adding project configuration")
 

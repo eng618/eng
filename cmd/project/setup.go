@@ -30,15 +30,15 @@ Use this command when:
   - You want to verify all project repos are present
 
 Example:
-  eng project setup              # Setup all projects
-  eng project setup -p Echo      # Setup only the Echo project
-  eng project setup --dry-run    # Preview what would be done`,
+  eng project setup                  # Setup all projects
+  eng project setup -p MyProject     # Setup only the specified project
+  eng project setup --dry-run        # Preview what would be done`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Setting up project repositories")
 
 		isVerbose := utils.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		projectFilter, _ := cmd.Flags().GetString("project")
+		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
+		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
 		if devPath == "" {

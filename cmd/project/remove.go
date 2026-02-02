@@ -19,8 +19,8 @@ Note: This only removes the entry from your configuration.
 It does NOT delete any files from disk.
 
 Example:
-  eng project remove              # Interactive removal
-  eng project remove -p Echo      # Remove from the Echo project`,
+  eng project remove                  # Interactive removal
+  eng project remove -p MyProject     # Remove from the specified project`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Removing project configuration")
 

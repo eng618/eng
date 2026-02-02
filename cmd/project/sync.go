@@ -25,15 +25,15 @@ var SyncCmd = &cobra.Command{
 Repositories with uncommitted changes will have fetch performed but pull will be skipped.
 
 Example:
-  eng project sync              # Sync all projects
-  eng project sync -p Echo      # Sync only the Echo project
-  eng project sync --dry-run    # Preview what would be synced`,
+  eng project sync                  # Sync all projects
+  eng project sync -p MyProject     # Sync only the specified project
+  eng project sync --dry-run        # Preview what would be synced`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Syncing project repositories")
 
 		isVerbose := utils.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		projectFilter, _ := cmd.Flags().GetString("project")
+		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
+		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
 		if devPath == "" {

@@ -1,5 +1,5 @@
 // Package project provides cobra commands for managing project-based repository collections.
-// A project is a logical grouping of related repositories (e.g., "Echo" with multiple microservices).
+// A project is a logical grouping of related repositories (e.g., a product with multiple microservices).
 package project
 
 import (
@@ -18,21 +18,20 @@ var ProjectCmd = &cobra.Command{
 	Long: `This command facilitates the management of project-based repository collections.
 
 A project is a logical grouping of related repositories. For example, you might have 
-an "Echo" project containing multiple microservices, or a "Platform" project with 
-shared infrastructure repositories.
+a project containing multiple microservices, or a shared infrastructure project.
 
 Projects are stored in your development folder (configured via 'eng config git-dev-path'),
 with each project having its own subdirectory containing all related repositories.
 
 Example structure:
   ~/Development/
-    Echo/
-      echo-api/
-      echo-web/
-      echo-shared/
-    Platform/
-      platform-core/
-      platform-auth/`,
+    MyProject/
+      api/
+      web/
+      shared/
+    Infrastructure/
+      core/
+      auth/`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
 		isVerbose := utils.IsVerbose(cmd)

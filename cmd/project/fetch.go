@@ -21,15 +21,15 @@ var FetchCmd = &cobra.Command{
 	Long: `This command fetches updates from remote for all repositories in configured projects.
 
 Example:
-  eng project fetch              # Fetch all projects
-  eng project fetch -p Echo      # Fetch only the Echo project
-  eng project fetch --dry-run    # Preview what would be fetched`,
+  eng project fetch                  # Fetch all projects
+  eng project fetch -p MyProject     # Fetch only the specified project
+  eng project fetch --dry-run        # Preview what would be fetched`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Fetching project repositories")
 
 		isVerbose := utils.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		projectFilter, _ := cmd.Flags().GetString("project")
+		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
+		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
 		if devPath == "" {
