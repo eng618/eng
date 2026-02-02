@@ -4,8 +4,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // AddCmd defines the cobra command for adding projects or repositories.

@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils"
-	"github.com/eng618/eng/utils/config"
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // ListCmd defines the cobra command for listing configured projects.
