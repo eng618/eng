@@ -3,7 +3,6 @@ package project
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -49,26 +48,6 @@ func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, clean
 	}
 
 	return workspace, configPath, cleanup
-}
-
-// setupTestRepo creates a bare git repository that can be cloned.
-func setupTestRepo(t *testing.T, name string) string {
-	t.Helper()
-
-	repoDir, err := os.MkdirTemp("", "test-bare-repo-*")
-	require.NoError(t, err)
-
-	repoPath := filepath.Join(repoDir, name+".git")
-	err = os.MkdirAll(repoPath, 0o755)
-	require.NoError(t, err)
-
-	// Initialize bare repo
-	cmd := exec.Command("git", "init", "--bare")
-	cmd.Dir = repoPath
-	err = cmd.Run()
-	require.NoError(t, err)
-
-	return repoPath
 }
 
 func TestProjectCmd_Help(t *testing.T) {

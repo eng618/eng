@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/utils/config"
@@ -21,12 +22,18 @@ func TestListProxyConfigurations(t *testing.T) {
 	}
 	viper.Set("proxies", proxies)
 
+	// Create a test command with the required flags
+	testCmd := &cobra.Command{}
+	testCmd.Flags().Bool("compact", false, "")
+	testCmd.Flags().Bool("env", false, "")
+	testCmd.Flags().Bool("lowercase-env", false, "")
+
 	// Capture stdout
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	listProxyConfigurations(nil)
+	listProxyConfigurations(testCmd)
 
 	w.Close()
 	os.Stdout = old
@@ -38,8 +45,9 @@ func TestListProxyConfigurations(t *testing.T) {
 	if !strings.Contains(output, "Test Proxy") {
 		t.Error("Expected output to contain 'Test Proxy'")
 	}
-	if !strings.Contains(output, "1. ★ Test Proxy") {
-		t.Error("Expected output to show proxy 1 as enabled with star marker")
+	// The format is now: "1. ★ Test Proxy (http://test:8080) [ACTIVE]"
+	if !strings.Contains(output, "1.") || !strings.Contains(output, "ACTIVE") {
+		t.Error("Expected output to show proxy 1 as active with [ACTIVE]")
 	}
 }
 
