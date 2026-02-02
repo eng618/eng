@@ -50,7 +50,11 @@ var setCmd = &cobra.Command{
 			if strings.TrimSpace(setTokenItem) == "" {
 				return errors.New("--token-item is required when providing a token")
 			}
-			if _, err := utils.SaveOrUpdateBitwardenSecret(setTokenItem, strings.TrimSpace(tokenToSave), setNotes); err != nil {
+			if _, err := utils.SaveOrUpdateBitwardenSecret(
+				setTokenItem,
+				strings.TrimSpace(tokenToSave),
+				setNotes,
+			); err != nil {
 				return err
 			}
 			log.Success("Saved/updated GitLab token in Bitwarden item: %s", setTokenItem)
@@ -97,6 +101,7 @@ func init() {
 	setCmd.Flags().StringVar(&setToken, "token", "", "GitLab token to save into Bitwarden (discouraged; prefer stdin)")
 	setCmd.Flags().BoolVar(&setTokenStdin, "stdin", false, "Read token from STDIN")
 	setCmd.Flags().StringVar(&setHost, "host", "", "Default GitLab host to save in config (e.g., gitlab.com)")
-	setCmd.Flags().StringVar(&setProject, "project", "", "Default GitLab project path to save in config (e.g., group/sub/repo)")
+	setCmd.Flags().
+		StringVar(&setProject, "project", "", "Default GitLab project path to save in config (e.g., group/sub/repo)")
 	setCmd.Flags().StringVar(&setNotes, "notes", "", "Optional notes to save with the Bitwarden item")
 }

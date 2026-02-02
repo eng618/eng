@@ -131,7 +131,13 @@ Example:
 		}
 
 		log.Info("")
-		log.Info("Pull complete: %d successful, %d skipped, %d dirty, %d failed", successCount, skippedCount, dirtyCount, failedCount)
+		log.Info(
+			"Pull complete: %d successful, %d skipped, %d dirty, %d failed",
+			successCount,
+			skippedCount,
+			dirtyCount,
+			failedCount,
+		)
 
 		if dirtyCount > 0 {
 			log.Warn("Some repositories were skipped due to uncommitted changes.")

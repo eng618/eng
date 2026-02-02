@@ -170,11 +170,20 @@ func cloneRepository(url, destPath string) error {
 		case errStr == "repository already exists":
 			return fmt.Errorf("repository already exists at %s", destPath)
 		case strings.Contains(errStr, "authentication"):
-			return fmt.Errorf("authentication failed - ensure your SSH keys are configured or use HTTPS with credentials: %w", err)
+			return fmt.Errorf(
+				"authentication failed - ensure your SSH keys are configured or use HTTPS with credentials: %w",
+				err,
+			)
 		case strings.Contains(errStr, "could not read username"):
-			return fmt.Errorf("credentials required - for HTTPS URLs, configure git credential helper or use SSH: %w", err)
+			return fmt.Errorf(
+				"credentials required - for HTTPS URLs, configure git credential helper or use SSH: %w",
+				err,
+			)
 		case strings.Contains(errStr, "ssh:"):
-			return fmt.Errorf("SSH error - ensure your SSH keys are loaded (ssh-add) and have access to the repository: %w", err)
+			return fmt.Errorf(
+				"SSH error - ensure your SSH keys are loaded (ssh-add) and have access to the repository: %w",
+				err,
+			)
 		default:
 			return err
 		}

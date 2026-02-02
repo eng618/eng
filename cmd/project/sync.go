@@ -149,7 +149,13 @@ Example:
 		log.Info("")
 		log.Info("Sync complete:")
 		log.Info("  Fetch: %d successful, %d failed", fetchSuccess, fetchFailed)
-		log.Info("  Pull:  %d successful, %d failed, %d dirty, %d skipped", pullSuccess, pullFailed, dirtyCount, skippedCount)
+		log.Info(
+			"  Pull:  %d successful, %d failed, %d dirty, %d skipped",
+			pullSuccess,
+			pullFailed,
+			dirtyCount,
+			skippedCount,
+		)
 
 		if dirtyCount > 0 {
 			log.Warn("Some repositories were not pulled due to uncommitted changes.")

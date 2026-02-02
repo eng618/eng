@@ -93,7 +93,9 @@ Example:
 			// Confirm project removal
 			var confirm bool
 			confirmPrompt := &survey.Confirm{
-				Message: "Remove project '" + projectName + "' with " + string(rune('0'+len(project.Repos))) + " repositories?",
+				Message: "Remove project '" + projectName + "' with " + string(
+					rune('0'+len(project.Repos)),
+				) + " repositories?",
 				Default: false,
 			}
 			if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
