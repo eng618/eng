@@ -150,6 +150,7 @@ Example:
 			Default: false,
 		}
 		if err := survey.AskOne(morePrompt, &addMore); err != nil {
+			log.Error("Prompt failed: %s", err)
 			return
 		}
 

@@ -1,9 +1,11 @@
 package project
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -115,7 +117,7 @@ Example:
 				log.Info("  Pulling %s...", repoPath)
 				if err := repo.PullLatestCode(fullRepoPath); err != nil {
 					// Check if it's just "already up to date"
-					if err.Error() == "already up-to-date" {
+					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						log.Info("  %s is already up to date", repoPath)
 						successCount++
 						continue

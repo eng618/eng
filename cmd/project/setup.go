@@ -1,6 +1,7 @@
 package project
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -167,7 +168,7 @@ func cloneRepository(url, destPath string) error {
 		errStr := strings.ToLower(err.Error())
 		// Provide more helpful error messages for common issues
 		switch {
-		case errStr == "repository already exists":
+		case errors.Is(err, git.ErrRepositoryAlreadyExists):
 			return fmt.Errorf("repository already exists at %s", destPath)
 		case strings.Contains(errStr, "authentication"):
 			return fmt.Errorf(

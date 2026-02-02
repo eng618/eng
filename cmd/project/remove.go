@@ -1,6 +1,8 @@
 package project
 
 import (
+	"strconv"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
@@ -93,8 +95,8 @@ Example:
 			// Confirm project removal
 			var confirm bool
 			confirmPrompt := &survey.Confirm{
-				Message: "Remove project '" + projectName + "' with " + string(
-					rune('0'+len(project.Repos)),
+				Message: "Remove project '" + projectName + "' with " + strconv.Itoa(
+					len(project.Repos),
 				) + " repositories?",
 				Default: false,
 			}

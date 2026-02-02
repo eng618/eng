@@ -155,7 +155,6 @@ var doctorCmd = &cobra.Command{
 func init() {
 	AuthCmd.AddCommand(doctorCmd)
 	doctorCmd.Flags().StringVar(&docHostOpt, "host", "", "GitLab host (e.g., gitlab.com)")
-	doctorCmd.Flags().StringVar(&docHostOpt, "hose", "", "Alias for --host")
 	doctorCmd.Flags().StringVar(&docProjectOpt, "project", "", "GitLab project path (e.g., group/subgroup/repo)")
 	doctorCmd.Flags().BoolVar(&docQuiet, "quiet", false, "Only print essential OK/error messages")
 }
