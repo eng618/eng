@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/utils/log"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // Project represents a collection of related repositories.
