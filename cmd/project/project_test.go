@@ -17,7 +17,7 @@ import (
 )
 
 // setupTestEnvironment creates a temporary workspace and config for testing.
-func setupTestEnvironment(t *testing.T) (workspacePath string, configPath string, cleanup func()) {
+func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, cleanup func()) {
 	t.Helper()
 
 	// Create temporary workspace directory
