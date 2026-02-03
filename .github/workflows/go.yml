@@ -23,7 +23,7 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip-ci]') }}
     strategy:
       matrix:
-        go-version: ['1.24', '1.25', '1.26.0-rc2']
+        go-version: ['1.24', '1.25', '1.26.0-rc.2']
 
     steps:
       - uses: actions/checkout@v6
