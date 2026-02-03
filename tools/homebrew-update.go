@@ -94,7 +94,7 @@ func main() {
     puts "Installing eng to: #{bin}"
     bin.install 'eng'
     puts "eng installed successfully"
-    puts "Permissions of eng: #{File.stat(\"#{bin}/eng\").mode.to_s(8)}"
+    puts "Permissions of eng: #{File.stat("#{bin}/eng").mode.to_s(8)}"
     # Verify the binary is functional before generating completions
     system "#{bin}/eng", '--help'
     generate_completions
