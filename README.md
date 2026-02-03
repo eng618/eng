@@ -22,68 +22,18 @@
 
 A modern, modular CLI tool for developer automation, dotfiles management, system utilities, and project codemods. Built in Go, designed for extensibility and productivity.
 
----
-
 ## Features
 
-- **Modular CLI**: Each command is a self-contained module (git, dotfiles, system, codemod, ts, version, config)
-- **Git Repository Management**: Bulk operations across multiple git repositories with intelligent branch detection
-- **Dotfiles Management**: Manage dotfiles via a bare git repo, with sync/fetch helpers
-- **System Utilities**: MacOS/Linux helpers (kill port, find folders, proxy, update)
-- **Codemod Automation**: Project codemods (e.g., lint setup for JS/TS projects)
-- **TypeScript Helpers**: Up/down migration helpers for TypeScript projects
-- **Config Management**: Centralized config via Viper
-- **Versioning**: Shows build info, checks for updates, Homebrew auto-update
-- **Taskfile-based Dev Workflow**: Build, test, lint, release, changelog automation
-- **CI/CD**: GitHub Actions for lint, test, release, changelog
-
----
-
-## Architecture
-
-```mermaid
-graph LR
-    A[main.go] --> B[cmd/root.go]
-    
-    B --> C1[Git Commands]
-    C1 --> D1[sync-all]
-    C1 --> D2[fetch-all]
-    C1 --> D3[pull-all]
-    C1 --> D4[push-all]
-    C1 --> D5[status-all]
-    C1 --> D6[list]
-    C1 --> D7[branch-all]
-    C1 --> D8[stash-all]
-    C1 --> D9[clean-all]
-    
-    B --> C2[Dotfiles]
-    C2 --> E1[install]
-    C2 --> E2[sync]
-    C2 --> E3[fetch]
-    
-    B --> C3[System]
-    C3 --> F1[setup]
-    C3 --> F2[kill-port]
-    C3 --> F3[find-non-movie-folders]
-    C3 --> F4[proxy]
-    C3 --> F5[update]
-    
-    B --> C4[Other Commands]
-    C4 --> G1[codemod]
-    G1 --> G1a[lint-setup]
-    G1 --> G1b[copilot]
-    C4 --> G2[ts up/down]
-    C4 --> G3[version]
-    C4 --> G4[config]
-    C4 --> G5[gitlab]
-    
-    B --> C5[Utils]
-    C5 --> H1[log]
-    C5 --> H2[repo]
-    C5 --> H3[config]
-    C5 --> H4[files]
-    C5 --> H5[command]
-```
+- **Git Repository Management** — Bulk operations across multiple git repositories with intelligent branch detection
+- **Project Management** — Organize and manage groups of related repositories as logical projects
+- **Dotfiles Management** — Manage dotfiles via a bare git repo, with sync/fetch/checkout helpers
+- **System Utilities** — macOS/Linux helpers (kill port, kill process, proxy, update, compaudit fix)
+- **File Utilities** — Find and delete files by extension, filename, or glob pattern
+- **Codemod Automation** — Project codemods (lint setup, prettier, copilot instructions)
+- **Tailscale Helpers** — Bring Tailscale service up/down
+- **GitLab Integration** — Manage MR rules and authentication via glab CLI
+- **Config Management** — Centralized config via Viper with automatic migration
+- **Auto-Update** — Version checking and Homebrew auto-update support
 
 ## Installation
 
@@ -105,10 +55,8 @@ go install github.com/eng618/eng@latest
 ```sh
 git clone https://github.com/eng618/eng.git
 cd eng
-go install .
+task install  # or: go install .
 ```
-
----
 
 ## Usage
 
@@ -116,267 +64,97 @@ go install .
 eng [command] [flags]
 ```
 
-### Common Commands
-
-- `eng git` — Git repository management across multiple repos
-- `eng dotfiles` — Manage dotfiles (sync, fetch, info)
-- `eng system` — System utilities (kill-port, find-non-movie-folders, update, proxy)
-- `eng codemod` — Project codemods (e.g., lint-setup)
-- `eng ts` — TypeScript helpers (up, down)
-- `eng version` — Show version, check for updates
-- `eng config` — Show or edit config
-
----
-
-## Command Reference
-
-### Git Repository Management
-
-Manage multiple git repositories in your development folder with a comprehensive set of commands. All commands support the `--current` flag to operate on the current directory instead of the configured development path.
-
-#### Setup
+### Quick Start
 
 ```sh
-# Configure your development folder path
-eng config git-dev-path /path/to/your/dev/folder
-```
+# Configure your development folder
+eng config git-dev-path ~/Development
 
-#### Repository Operations
+# Sync all git repositories
+eng git sync-all
 
-- `eng git sync-all [--current] [--dry-run]` — Fetch and pull with rebase across all repositories
-- `eng git fetch-all [--current] [--dry-run]` — Fetch latest changes from remote for all repositories  
-- `eng git pull-all [--current] [--dry-run]` — Pull latest changes with rebase for all repositories
-- `eng git push-all [--current] [--dry-run]` — Push local changes to remote for all repositories
-- `eng git status-all [--current]` — Show git status for all repositories
-- `eng git list [--current]` — List all git repositories found
-- `eng git branch-all [--current]` — Show current branch for all repositories
-- `eng git stash-all [--current] [--dry-run]` — Stash changes in all repositories
-- `eng git clean-all [--current] [--dry-run]` — Clean untracked files in all repositories
-
-#### Flags
-
-- `--current` — Use current working directory instead of configured development path
-- `--dry-run` — Show what would be done without making changes (where applicable)
-
-### Dotfiles
-
-Manage your dotfiles with a bare git repository approach. This allows you to version control your home directory configuration files without the overhead of a traditional git repository.
-
-#### Install
-
-```sh
-# First-time setup: Install dotfiles from your repository
+# Install dotfiles from your repo
 eng dotfiles install
+
+# Setup a new development machine
+eng system setup
+
+# Check version and updates
+eng version
 ```
 
-This command will:
+### Available Commands
 
-- Check and install prerequisites (Homebrew, Git, Bash)
-- Verify you have a valid SSH key at `~/.ssh/github`
-- Prompt for and save your dotfiles repository URL and branch
-- Clone your repository as a bare repository using go-git (default: `~/.eng-cfg`)
-- Backup any conflicting files to a timestamped directory
-- Checkout dotfiles to your home directory
-- Initialize git submodules
-- Configure git to hide untracked files
+| Command         | Description                                                        |
+| --------------- | ------------------------------------------------------------------ |
+| `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status) |
+| `eng project`   | Manage project-based repository collections                        |
+| `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)           |
+| `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)   |
+| `eng files`     | File utilities (find-and-delete, find-non-movie-folders)           |
+| `eng codemod`   | Project codemods (lint-setup, prettier, copilot)                   |
+| `eng tailscale` | Tailscale helpers (up, down) — alias: `ts`                         |
+| `eng gitlab`    | GitLab integration (mr-rules, auth)                                |
+| `eng version`   | Show version, check for updates                                    |
+| `eng config`    | Manage CLI configuration                                           |
 
-#### System Setup Integration
+For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
+
+### Global Flags
 
 ```sh
-# Set up dotfiles as part of new system setup
-eng system setup dotfiles
+--config string   # Config file (default: $HOME/.eng.yaml)
+-v, --verbose     # Verbose output
+-h, --help        # Help for any command
 ```
 
-This checks prerequisites and then guides you through the installation process.
+## Documentation
 
-#### Configuration
+- [Command Reference](docs/COMMANDS.md) — Complete documentation for all commands
+- [Architecture](docs/ARCHITECTURE.md) — Technical architecture and design
+- [Changelog](CHANGELOG.md) — Version history and release notes
 
-```sh
-# Configure dotfiles settings
-eng config dotfiles-repo-url          # Set repository URL
-eng config dotfiles-branch            # Set branch (main/work/server)
-eng config dotfiles-bare-repo-path    # Set bare repo location
-```
+## Support
 
-#### Daily Usage
-
-- `eng dotfiles --info` — Show current dotfiles config
-- `eng dotfiles sync` — Fetch and pull latest dotfiles
-- `eng dotfiles fetch` — Fetch latest dotfiles without merging
-
-After installation, you can also use the `cfg` alias (if configured in your dotfiles):
-
-```sh
-cfg status              # Check dotfiles status
-cfg add ~/.vimrc        # Stage a file
-cfg commit -m "Update"  # Commit changes
-cfg push                # Push changes
-cfg pull                # Pull changes
-```
-
-### System
-
-System utilities for macOS and Linux, including developer setup automation.
-
-#### Setup Commands
-
-- `eng system setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
-- `eng system setup dotfiles` — Setup dotfiles (checks prerequisites then runs install)
-
-#### System Utilities
-
-- `eng system kill-port <port>` — Kill process on a port
-- `eng system find-non-movie-folders [--dry-run]` — Find/delete non-movie folders
-- `eng system update` — Update system packages
-- `eng system proxy` — Manage proxy settings
-
-### Codemod
-
-Project automation and setup helpers for various development environments.
-
-- `eng codemod lint-setup` — Setup lint/format (eslint, prettier, husky, lint-staged) in JS/TS projects
-- `eng codemod prettier [path]` — Format code with prettier using @eng618/prettier-config (installs globally if needed)
-- `eng codemod copilot [--force]` — Create base custom Copilot instructions file at `.github/copilot-instructions.md`
-  - Validates you're in a Git repository (use `--force` to bypass)
-  - Creates `.github/` directory if it doesn't exist
-  - Won't overwrite existing files
-  - Includes comprehensive template with code quality guidelines
-
-### TypeScript
-
-- `eng ts up` — Run up migration
-- `eng ts down` — Run down migration
-
-### Version
-
-- `eng version` — Show version, build info, check for updates
-- `eng version --update` — Auto-update via Homebrew (if installed that way)
-
-### Config
-
-- `eng config` — Show config
-- `eng config edit` — Edit config
-- `eng config git-dev-path` — Set development folder path for git commands
-
----
-
-### GitLab
-
-Apply Merge Request rules to a project using your JSON rules file and the `glab` CLI:
-
-```sh
-# Example rules.json (see also docs/gitlab-rules.example.json)
-cat > rules.json <<'JSON'
-{
-  "schemaVersion": "1",
-  "mergeMethod": "ff",
-  "deleteSourceBranch": true,
-  "requireSquash": true,
-  "pipelinesMustSucceed": true,
-  "allowSkippedAsSuccess": true,
-  "allThreadsMustResolve": true
-}
-JSON
-
-# Apply to current repo's GitLab project (auto-detect host/project)
-eng gitlab mr-rules apply --rules rules.json
-
-# Explicit host/project
-eng gitlab mr-rules apply --rules rules.json --host gitlab.com --project group/sub/repo
-
-# Dry run
-eng gitlab mr-rules apply --rules rules.json --dry-run
-```
-
-Generate rules interactively:
-
-```sh
-# Prompt for each option and write to a file
-eng gitlab mr-rules init --output gitlab-rules.json
-
-# Use defaults without prompting
-eng gitlab mr-rules init --yes --output gitlab-rules.json
-```
-
-Authentication options:
-
-- Set `GITLAB_TOKEN` in your environment; or
-- Store a token in Bitwarden and reference it via config `gitlab.tokenItem` or `--token-item <itemName>`.
-  The CLI will unlock Bitwarden (prompting if needed), read the token from the item's password or a field named `token`, and export it for the `glab` call.
-
-Config keys (optional):
-
-- `gitlab.host` — default host (e.g., `gitlab.com`)
-- `gitlab.project` — default project path (e.g., `group/sub/repo`)
-- `gitlab.tokenItem` — Bitwarden item name holding token
-
-Authenticate and set defaults via eng:
-
-```sh
-# Save a token into Bitwarden and set defaults
-printf "%s" "$GITLAB_TOKEN" | eng gitlab auth set \
-  --stdin \
-  --token-item "eng/gitlab-token" \
-  --host gitlab.com \
-  --project group/sub/repo
-
-# Or later, just set the defaults without re-saving a token
-eng gitlab auth set --host gitlab.com --project group/sub/repo --token-item "eng/gitlab-token"
-
-# Show effective defaults and token source (no secrets)
-eng gitlab auth show
-
-# Validate token and project access (no writes)
-eng gitlab auth doctor
-
-# Force-check a specific host/project and run quietly
-eng gitlab auth doctor --host gitlab.example.com --project group/sub/repo --quiet
-```
-
-## Development Workflow
-
-- **Build**: `task build` or `go build`
-- **Install**: `task install` or `go install`
-- **Lint**: `task lint` (uses golangci-lint)
-- **Test**: `task test` (with coverage)
-- **Validate**: `task validate` (lint + test)
-- **Changelog**: `task changelog` (uses git-chglog)
-- **Release**: `task release` (goreleaser + changelog)
-- **Module Management**: `task tidy`, `task deps-upgrade`, etc.
-
-See `Taskfile.yaml` for all tasks.
-
----
-
-## Release & CI/CD
-
-- **Changelog**: Automated with [git-chglog](https://github.com/git-chglog/git-chglog)
-- **Release**: [goreleaser](https://goreleaser.com/) for multi-platform builds
-- **CI**: GitHub Actions (`.github/workflows/go.yml`) runs lint, test, changelog, and release on tag push
-- **Changelog in CI**: `task changelog-ci` runs on tag push
-
----
+- **Issues**: [GitHub Issues](https://github.com/eng618/eng/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/eng618/eng/discussions)
 
 ## Contributing
 
-- Follow idiomatic Go style (see `.github/copilot-instructions.md`)
-- Use Go modules (`go mod tidy`)
-- Lint with `golangci-lint`
-- Write and update tests for all code (`go test -cover`)
-- Document code with GoDoc comments
-- Keep this README up to date
+Contributions are welcome! Please follow these guidelines:
 
----
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following the [Go style guidelines](.github/copilot-instructions.md)
+4. Run validation: `task validate` (runs format, lint, and tests)
+5. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Development Commands
+
+```sh
+task build      # Build the binary
+task install    # Install to $GOPATH/bin
+task lint       # Run golangci-lint
+task test       # Run tests with coverage
+task validate   # Run format + lint + test
+task changelog  # Generate changelog
+task release    # Create a release (goreleaser)
+```
+
+See [Taskfile.yaml](Taskfile.yaml) for all available tasks.
+
+## Authors
+
+- **Eric N. Garcia** — [@eng618](https://github.com/eng618)
 
 ## License
 
-MIT License © 2023–2025 Eric N. Garcia
-
----
+[MIT License](LICENSE) © 2023–2026 Eric N. Garcia
 
 ## Links
 
-- [GitHub Repo](https://github.com/eng618/eng)
+- [GitHub Repository](https://github.com/eng618/eng)
 - [Releases](https://github.com/eng618/eng/releases)
-- [Changelog](CHANGELOG.md)
-- [Taskfile](Taskfile.yaml)
+- [Homebrew Tap](https://github.com/eng618/homebrew-eng)
