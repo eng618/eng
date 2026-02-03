@@ -88,7 +88,7 @@ func loadConfig() (*Config, error) {
 
 	var checksums Checksums
 	if err := json.Unmarshal([]byte(checksumsJSON), &checksums); err != nil {
-		return nil, fmt.Errorf("failed to parse CHECKSUMS_JSON: %v", err)
+		return nil, fmt.Errorf("failed to parse CHECKSUMS_JSON: %w", err)
 	}
 
 	return &Config{
