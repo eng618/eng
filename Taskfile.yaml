@@ -139,7 +139,7 @@ tasks:
     desc: Run linter
     cmds:
       - echo "Running linter..."
-      - golangci-lint run
+      - golangci-lint run ./...
 
   lint-fix:
     desc: Run linter with auto-fix
@@ -157,7 +157,7 @@ tasks:
     desc: Format Go code
     cmds:
       - gofmt -w .
-      - golangci-lint fmt
+      - golangci-lint fmt ./...
 
   format-check:
     desc: Check Go code formatting
@@ -221,3 +221,20 @@ tasks:
     cmds:
       - echo "Listing all modules..."
       - go list -mod=mod all
+
+  # -----------------------------------------------------------------------------
+  # Tools (Maintenance & Automation)
+
+  tools:test:
+    desc: Run tests for maintenance tools
+    dir: tools
+    cmds:
+      - echo "Testing maintenance tools..."
+      - go test -v ./...
+
+  tools:lint:
+    desc: Lint maintenance tools
+    dir: tools
+    cmds:
+      - echo "Linting maintenance tools..."
+      - golangci-lint run ./...

@@ -11,7 +11,50 @@ import (
 
 type Checksums map[string]string
 
+type Config struct {
+	Version         string
+	TagName         string
+	Checksums       Checksums
+	DarwinAMD64File string
+	DarwinARM64File string
+	LinuxAMD64File  string
+	LinuxARM64File  string
+	PatToken        string
+}
+
 func main() {
+	config, err := loadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	formula, err := generateFormula(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Clone repo
+	runCmd("git", "clone", "https://github.com/eng618/homebrew-eng.git")
+	if err := os.Chdir("homebrew-eng/Formula"); err != nil {
+		log.Fatalf("Failed to change directory: %v", err)
+	}
+
+	// Write to file
+	if err := os.WriteFile("eng.rb", []byte(formula), 0o644); err != nil {
+		log.Fatalf("Failed to write eng.rb: %v", err)
+	}
+
+	// Git operations
+	runCmd("git", "config", "user.email", "eng618@garciaericn.com")
+	runCmd("git", "config", "user.name", "Eric N. Garcia")
+	runCmd("git", "config", "--global", "credential.helper", "store")
+	runCmd("sh", "-c", fmt.Sprintf("echo 'https://oauth2:%s@github.com' > ~/.git-credentials", config.PatToken))
+	runCmd("git", "add", "eng.rb")
+	runCmd("git", "commit", "-m", fmt.Sprintf("Update eng to %s", config.TagName))
+	runCmd("git", "push", "https://github.com/eng618/homebrew-eng.git")
+}
+
+func loadConfig() (*Config, error) {
 	// Get env vars
 	version := os.Getenv("VERSION")
 	tagName := os.Getenv("TAG_NAME")
@@ -22,7 +65,6 @@ func main() {
 	linuxARM64File := os.Getenv("LINUX_ARM64_FILE")
 	patToken := os.Getenv("PAT_TOKEN")
 
-	// Check required environment variables
 	requiredVars := map[string]string{
 		"VERSION":           version,
 		"TAG_NAME":          tagName,
@@ -41,50 +83,70 @@ func main() {
 		}
 	}
 	if len(missingVars) > 0 {
-		log.Fatalf("Missing required environment variables: %s", strings.Join(missingVars, ", "))
+		return nil, fmt.Errorf("missing required environment variables: %s", strings.Join(missingVars, ", "))
 	}
 
-	// Parse checksums
 	var checksums Checksums
 	if err := json.Unmarshal([]byte(checksumsJSON), &checksums); err != nil {
-		log.Fatalf("Failed to parse CHECKSUMS_JSON: %v", err)
+		return nil, fmt.Errorf("failed to parse CHECKSUMS_JSON: %v", err)
 	}
 
-	// Function to get checksum
-	getChecksum := func(file string) string {
-		if c, ok := checksums[file]; ok {
-			return c
+	return &Config{
+		Version:         version,
+		TagName:         tagName,
+		Checksums:       checksums,
+		DarwinAMD64File: darwinAMD64File,
+		DarwinARM64File: darwinARM64File,
+		LinuxAMD64File:  linuxAMD64File,
+		LinuxARM64File:  linuxARM64File,
+		PatToken:        patToken,
+	}, nil
+}
+
+func generateFormula(c *Config) (string, error) {
+	getChecksum := func(file string) (string, error) {
+		if val, ok := c.Checksums[file]; ok {
+			return val, nil
 		}
-		log.Fatalf("Checksum not found for file: %s", file)
-		return ""
+		return "", fmt.Errorf("checksum not found for file: %s", file)
 	}
 
-	// Clone repo
-	runCmd("git", "clone", "https://github.com/eng618/homebrew-eng.git")
-	if err := os.Chdir("homebrew-eng/Formula"); err != nil {
-		log.Fatalf("Failed to change directory: %v", err)
+	dAMD64, err := getChecksum(c.DarwinAMD64File)
+	if err != nil {
+		return "", err
+	}
+	dARM64, err := getChecksum(c.DarwinARM64File)
+	if err != nil {
+		return "", err
+	}
+	lAMD64, err := getChecksum(c.LinuxAMD64File)
+	if err != nil {
+		return "", err
+	}
+	lARM64, err := getChecksum(c.LinuxARM64File)
+	if err != nil {
+		return "", err
 	}
 
-	// Generate formula
 	formula := fmt.Sprintf(`class Eng < Formula
   desc 'Personal cli to help facilitate my normal workflow'
   homepage 'https://github.com/eng618/eng'
-  version '%s'
+  version '%[1]s'
   # URLs now use TAG_NAME (with v) for path, and FILE variable (without v) for filename
   case
   when OS.mac? && Hardware::CPU.intel?
-    url 'https://github.com/eng618/eng/releases/download/%s/%s'
-    sha256 '%s'
+    url 'https://github.com/eng618/eng/releases/download/%[2]s/%[3]s'
+    sha256 '%[4]s'
   when OS.mac? && Hardware::CPU.arm?
-    url 'https://github.com/eng618/eng/releases/download/%s/%s'
-    sha256 '%s'
+    url 'https://github.com/eng618/eng/releases/download/%[2]s/%[5]s'
+    sha256 '%[6]s'
   when OS.linux?
     if Hardware::CPU.intel?
-      url 'https://github.com/eng618/eng/releases/download/%s/%s'
-      sha256 '%s'
+      url 'https://github.com/eng618/eng/releases/download/%[2]s/%[7]s'
+      sha256 '%[8]s'
     elsif Hardware::CPU.arm?
-      url 'https://github.com/eng618/eng/releases/download/%s/%s'
-      sha256 '%s'
+      url 'https://github.com/eng618/eng/releases/download/%[2]s/%[9]s'
+      sha256 '%[10]s'
     end
   end
   license 'MIT'
@@ -112,25 +174,13 @@ func main() {
     system "#{bin}/eng", '--help'
   end
 end
-`, version,
-		tagName, darwinAMD64File, getChecksum(darwinAMD64File),
-		tagName, darwinARM64File, getChecksum(darwinARM64File),
-		tagName, linuxAMD64File, getChecksum(linuxAMD64File),
-		tagName, linuxARM64File, getChecksum(linuxARM64File))
+`, c.Version, c.TagName,
+		c.DarwinAMD64File, dAMD64,
+		c.DarwinARM64File, dARM64,
+		c.LinuxAMD64File, lAMD64,
+		c.LinuxARM64File, lARM64)
 
-	// Write to file
-	if err := os.WriteFile("eng.rb", []byte(formula), 0o644); err != nil {
-		log.Fatalf("Failed to write eng.rb: %v", err)
-	}
-
-	// Git operations
-	runCmd("git", "config", "user.email", "eng618@garciaericn.com")
-	runCmd("git", "config", "user.name", "Eric N. Garcia")
-	runCmd("git", "config", "--global", "credential.helper", "store")
-	runCmd("sh", "-c", fmt.Sprintf("echo 'https://oauth2:%s@github.com' > ~/.git-credentials", patToken))
-	runCmd("git", "add", "eng.rb")
-	runCmd("git", "commit", "-m", fmt.Sprintf("Update eng to %s", tagName))
-	runCmd("git", "push", "https://github.com/eng618/homebrew-eng.git")
+	return formula, nil
 }
 
 func runCmd(name string, args ...string) {
