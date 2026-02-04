@@ -28,7 +28,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25' # Run linting on the stable version
+          go-version-file: go.mod
 
       - name: Install Task
         uses: arduino/setup-task@v2
@@ -53,8 +53,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Always support current -1, current, and upcoming releases
-        go-version: ['1.24', '1.25', '1.26.0-rc.2']
+        # Always support current, and upcoming releases
+        go-version: ['1.25', '1.26.0-rc.2']
 
     steps:
       - uses: actions/checkout@v6
@@ -76,8 +76,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: Test
-        env:
-          GOTOOLCHAIN: auto # Allows 1.24 to run tests for a 1.25 go.mod
         run: task test
 
       - name: Build
