@@ -119,6 +119,7 @@ func installLintDependencies(echo bool) error {
 		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
 		"@eng618/prettier-config@latest", "globals@latest",
 		"husky@latest", "lint-staged@latest", "prettier@latest",
+		"prettier-plugin-organize-imports@latest",
 	}
 
 	// Add TypeScript ESLint dependencies only if TypeScript is detected
