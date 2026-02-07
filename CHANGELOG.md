@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.5.0](https://github.com/eng618/eng/compare/v1.4.0...v1.5.0) (2026-02-07)
+
+
+### Features
+
+* Add Codacy code coverage reporting to Go CI, a local coverage view task, and document the new token. ([858ad29](https://github.com/eng618/eng/commit/858ad29ed357cb134da5cb3fd3188f4fd48fd10d))
+
 ## [1.4.0](https://github.com/eng618/eng/compare/v1.3.8...v1.4.0) (2026-02-07)
 
 
