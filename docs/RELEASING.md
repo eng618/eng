@@ -4,62 +4,56 @@ This document describes the automated process for releasing new versions of `eng
 
 ## Overview
 
-The release process is fully automated using GitHub Actions. It is triggered whenever a tag matching `v*` or `[0-9]*` is pushed to the repository.
+The release process is semi-automated using **GitHub Actions** and **Google's Release Please**. 
 
-The workflow is defined in [`.github/workflows/publish-to-homebrew.yml`](../.github/workflows/publish-to-homebrew.yml).
+1.  **Release Please** tracks commits on the `main` branch and maintains a "Release PR".
+2.  When the Release PR is merged, it automatically creates a GitHub Release and a Git tag.
+3.  The creation of a tag triggers the **Homebrew Publication** workflow.
 
-## Release Workflow
+## Release Components
 
-The workflow consists of two main jobs: `build` and `publish`.
+### 1. Release Please Workflow (`release-please.yml`)
 
-### 1. The Build Job (`build`)
-
-- **Tool**: Uses [GoReleaser](https://goreleaser.com/).
+- **Trigger**: Pushes to the `main` branch.
 - **Actions**:
-  - Build binaries for Darwin (macOS) and Linux across multiple architectures (`amd64`, `arm64`).
-  - Creates a GitHub Release with the tag name.
-  - Generates checksums for all artifacts.
-  - Uploads the resulting `dist/` directory as a GitHub Action artifact for the next job.
+  - Maintains a Release PR (e.g., `chore: release 0.17.5`) with an updated `CHANGELOG.md` and version.
+  - Upon merging the PR, it creates a new GitHub Release and tag.
 
-### 2. The Publish Job (`publish`)
+### 2. Homebrew Publication Workflow (`publish-to-homebrew.yml`)
 
-This job specifically handles updating the Homebrew tap at [eng618/homebrew-eng](https://github.com/eng618/homebrew-eng).
+This workflow is triggered when a new tag `v*` is created.
 
-- **Checkout**: It checks out the main repository to access the update tools.
-- **Artifacts**: It downloads the `dist/` artifact created in the `build` job.
-- **Checksum Extraction**: It parses the `artifacts.json` produced by GoReleaser to extract the SHA256 checksums for each platform.
-- **Go Script**: It runs [`tools/homebrew-update.go`](../tools/homebrew-update.go) which performs the following:
-  - Clones the Homebrew tap repository.
-  - Generates a new Ruby formula (`eng.rb`) using a template and the extracted checksums/version.
-  - Commits and pushes the change back to the tap repository using a Personal Access Token (`PAT_TOKEN`).
+- **Job: `build` (GoReleaser)**:
+  - Builds binaries for multiple platforms.
+  - Updates the GitHub Release with the compiled artifacts.
+- **Job: `publish` (Homebrew Update)**:
+  - Extracts checksums from GoReleaser artifacts.
+  - Updates the [eng618/homebrew-eng](https://github.com/eng618/homebrew-eng) tap repository.
 
 ## Requirements
 
-### Personal Access Token (`PAT_TOKEN`)
+### Conventional Commits
+To allow Release Please to determine the next version number and generate the changelog, you **must** use [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat: ...` for new features (minor version bump).
+- `fix: ...` for bug fixes (patch version bump).
+- `feat!: ...` or `BREAKING CHANGE: ...` for breaking changes (major version bump).
 
-The `publish` job requires a secret named `PAT_TOKEN`. This token must have `repo` scope permissions for the target Homebrew tap repository (`eng618/homebrew-eng`), as the default `GITHUB_TOKEN` only has permissions for the current repository.
+### Secrets
+- `RELEASE_PLEASE_TOKEN`: A Personal Access Token (PAT) with `repo` and `workflow` scopes. This is used for:
+  1.  **Release Please**: To maintain PRs and push tags that trigger subsequent workflows.
+  2.  **Homebrew Publication**: To push changes to the `eng618/homebrew-eng` tap repository.
 
-## How to Trigger a Release
+## How to Release a New Version
 
-To release a new version:
-
-1. Ensure all changes are committed and pushed to `main`.
-2. Create a new tag:
-
-   ```bash
-   git tag v1.3.4
-   ```
-
-3. Push the tag:
-
-   ```bash
-   git push origin v1.3.4
-   ```
-
-The GitHub Actions will take care of the rest. You can monitor the progress in the **Actions** tab of the repository.
+1.  **Merge changes to `main`**: Ensure your commits follow the Conventional Commits format.
+2.  **Wait for Release PR**: A PR titled `chore: release X.Y.Z` will be automatically opened or updated by a bot.
+3.  **Approve and Merge**: Once you are ready to release, merge this PR.
+4.  **Automation handles the rest**: Merging will create the tag, which triggers the build and publication to Homebrew.
 
 ## Troubleshooting
 
-### "no such file or directory" for Go script
+### Release PR not Updating
+Ensure your commits on `main` follow the Conventional Commits prefix. If no "feature" or "fix" commits are detected since the last release, a new PR might not be created.
 
-If the `publish` job fails to find `../tools/homebrew-update.go`, ensure that the `Checkout repository` step is present in the `publish` job. Since jobs run on fresh runners, the repository is not automatically available unless explicitly checked out.
+### Homebrew Workflow not Triggered
+If the tag is created but the `Publish to Homebrew` workflow doesn't start, verify that `release-please.yml` is using the `RELEASE_PLEASE_TOKEN` (PAT) instead of the default `GITHUB_TOKEN`.

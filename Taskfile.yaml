@@ -57,13 +57,13 @@ tasks:
   # Release helpers
 
   changelog:
-    desc: Generate changelog and commit
+    desc: "[DEPRECATED] Generate changelog and commit (Now automated by release-please)"
     cmds:
       - echo "Generating changelog..."
       - git-chglog -o CHANGELOG.md
       - git add --update
       - 'git commit -m "chore(CHANGELOG): update [skip-ci]"'
-      - echo "Changelog updated and committed."
+      - echo "Changelog updated and committed. Note: release-please now automates this on main."
     silent: true
 
   changelog-ci:
@@ -117,10 +117,12 @@ tasks:
       - goreleaser release --clean
 
   release:
-    desc: Perform a release (goreleaser + changelog)
+    desc: "[DEPRECATED] Perform a release (Now automated by release-please)"
     cmds:
-      - task: release-clean
-      - task: changelog
+      - echo "Manual release is deprecated. Releases are now automated via release-please on GitHub."
+      - echo "To release, merge the 'release-please' PR on the main branch."
+      - # task: release-clean
+      - # task: changelog
 
   # -----------------------------------------------------------------------------
   # development

@@ -98,7 +98,7 @@ jobs:
           LINUX_AMD64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_x86_64.tar.gz
           LINUX_ARM64_FILE: eng_${{ steps.get_version.outputs.version_no_v }}_Linux_arm64.tar.gz
           CHECKSUMS_JSON: ${{ steps.get_checksums.outputs.checksums }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           cd dist
           # ../scripts/update-homebrew-formula.sh
