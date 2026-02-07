@@ -1,5 +1,19 @@
 <a name="unreleased"></a>
 
+## [1.4.0](https://github.com/eng618/eng/compare/v1.3.8...v1.4.0) (2026-02-07)
+
+
+### Features
+
+* Configure release-please using manifest and config files ([ca297b0](https://github.com/eng618/eng/commit/ca297b041146c2156c00308bf2c3c7e6f6763a8c))
+* Introduce Release Please for automated versioning and release management, deprecating manual release tasks and updating release documentation and Homebrew token usage. ([4448900](https://github.com/eng618/eng/commit/4448900626dc619debdc9ba1ca1b8d5730cbb446))
+
+
+### Miscellaneous
+
+* **CHANGELOG:** Update [skip-ci] ([184c8bb](https://github.com/eng618/eng/commit/184c8bb3ad0d711e73458e1e5c6a9a81e74faddb))
+* Quote the echo command string in the changelog task for consistency. ([d38f84e](https://github.com/eng618/eng/commit/d38f84ef22c5c28bafc249b8d96f81fc4f2894ef))
+
 ## [Unreleased]
 
 ### Chore
