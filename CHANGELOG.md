@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.6.1](https://github.com/eng618/eng/compare/v1.6.0...v1.6.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* Update prettier config dependency from `[@gv-tech](https://github.com/gv-tech)` to `[@eng618](https://github.com/eng618)`. ([8efbe28](https://github.com/eng618/eng/commit/8efbe28a57d67ea7919b0749df944680a85c5c58))
+
 ## [1.6.0](https://github.com/eng618/eng/compare/v1.5.0...v1.6.0) (2026-02-07)
 
 
