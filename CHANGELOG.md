@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.7.0](https://github.com/eng618/eng/compare/v1.6.1...v1.7.0) (2026-02-07)
+
+
+### Features
+
+* Allow spinner output to be redirected for testing and add unit tests. ([62b2932](https://github.com/eng618/eng/commit/62b2932a26bbcdc36e3405b79ecfd0d5b6f159e5))
+
+
+### Bug Fixes
+
+* Remove unneeded downstream dependency ([78d84d4](https://github.com/eng618/eng/commit/78d84d4a705766048a2e7d29090807c52c837fc6))
+
 ## [1.6.1](https://github.com/eng618/eng/compare/v1.6.0...v1.6.1) (2026-02-07)
 
 
