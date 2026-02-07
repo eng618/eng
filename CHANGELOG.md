@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.4.0](https://github.com/eng618/eng/compare/v1.3.8...v1.4.0) (2026-02-07)
+
+
+### Features
+
+* Introduce Release Please for automated versioning and release management, deprecating manual release tasks and updating release documentation and Homebrew token usage. ([4448900](https://github.com/eng618/eng/commit/4448900626dc619debdc9ba1ca1b8d5730cbb446))
+
 ## [Unreleased]
 
 
