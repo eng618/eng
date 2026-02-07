@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.6.0](https://github.com/eng618/eng/compare/v1.5.0...v1.6.0) (2026-02-07)
+
+
+### Features
+
+* Add Next.js ESLint configuration and refactor existing configs to use `@gv-tech/eslint-config` presets. ([84ebf1e](https://github.com/eng618/eng/commit/84ebf1e4853366513509050ca686427d4d45919c))
+
 ## [1.5.0](https://github.com/eng618/eng/compare/v1.4.0...v1.5.0) (2026-02-07)
 
 
