@@ -2,6 +2,281 @@
 
 ## [Unreleased]
 
+### Chore
+
+- Quote the echo command string in the changelog task for consistency.
+
+### Feat
+
+- configure release-please using manifest and config files
+- Introduce Release Please for automated versioning and release management, deprecating manual release tasks and updating release documentation and Homebrew token usage.
+
+
+<a name="v1.3.8"></a>
+
+## [v1.3.8] - 2026-02-06
+
+
+<a name="v1.3.7"></a>
+
+## [v1.3.7] - 2026-02-05
+
+### Ci
+
+- Use `go.mod` for Go version in linting and remove Go 1.24 from the test matrix.
+- update Go version matrix to include 1.24 and 1.26.0-rc2
+
+### Feat
+
+- introduce a dedicated lint job and refactor the test workflow with updated Go versions and dependencies.
+- Update Go CI matrix to include upcoming RC versions and adapt linting steps for stable and RC/beta Go versions.
+
+### Fix
+
+- Correct Go 1.26.0 release candidate version string from `1.26.0-rc2` to `1.26.0-rc.2` in the CI workflow.
+- **lint:** add prettier-plugin-organize-imports dependency
+
+### Refactor
+
+- wrap JSON unmarshalling error using %w.
+
+
+<a name="v1.3.6"></a>
+
+## [v1.3.6] - 2026-02-03
+
+### Feat
+
+- Introduce tests for the Homebrew update tool, refactor its configuration and formula generation, and add tool-specific Taskfile commands.
+
+
+<a name="v1.3.5"></a>
+
+## [v1.3.5] - 2026-02-03
+
+### Ci
+
+- Add concurrency control, job timeouts, and refine permissions in GitHub workflows.
+
+### Feat
+
+- add documentation for the automated release and Homebrew publication process.
+
+### Fix
+
+- remove unnecessary backslash escapes in string literal
+
+
+<a name="v1.3.4"></a>
+
+## [v1.3.4] - 2026-02-03
+
+### Chore
+
+- update Homebrew publish workflow by removing numeric tag trigger, adding a checkout step, and downgrading download-artifact action to v6.
+
+
+<a name="v1.3.3"></a>
+
+## [v1.3.3] - 2026-02-03
+
+### Ci
+
+- fix path
+
+
+<a name="1.3.2"></a>
+
+## [1.3.2] - 2026-02-03
+
+
+<a name="v1.3.2"></a>
+
+## [v1.3.2] - 2026-02-03
+
+### Ci
+
+- update workflows
+
+### Docs
+
+- update architecture and command reference documentation
+
+
+<a name="1.3.1"></a>
+
+## [1.3.1] - 2026-02-03
+
+
+<a name="v1.3.1"></a>
+
+## [v1.3.1] - 2026-02-03
+
+### Build
+
+- bump deps
+
+
+<a name="1.3.0"></a>
+
+## [1.3.0] - 2026-02-03
+
+
+<a name="v1.3.0"></a>
+
+## [v1.3.0] - 2026-02-03
+
+### Build
+
+- **deps:** bump actions/upload-artifact from 5 to 6 ([#43](https://github.com/eng618/eng/issues/43))
+- **deps:** bump actions/download-artifact from 6 to 7 ([#44](https://github.com/eng618/eng/issues/44))
+
+### Feat
+
+- **project:** add project-based repository management ([#45](https://github.com/eng618/eng/issues/45))
+
+
+<a name="v1.1.5"></a>
+
+## [v1.1.5] - 2026-01-20
+
+### Fix
+
+- correct path to homebrew-update.go in publish workflow
+
+
+<a name="v1.1.4"></a>
+
+## [v1.1.4] - 2026-01-20
+
+### Fix
+
+- add Go setup step before checksum extraction in publish workflow
+- improve environment variable checks and update Git credentials handling in homebrew-update.go
+
+
+<a name="v1.1.3"></a>
+
+## [v1.1.3] - 2026-01-20
+
+### Fix
+
+- change package declaration from 'tools' to 'main' in homebrew-update.go
+
+
+<a name="v1.1.2"></a>
+
+## [v1.1.2] - 2026-01-20
+
+### Feat
+
+- implement Homebrew formula update script and remove deprecated parameter sweep files
+
+
+<a name="v1.1.1"></a>
+
+## [v1.1.1] - 2026-01-20
+
+### Ci
+
+- update ci to work correctly and modernize actions ([#42](https://github.com/eng618/eng/issues/42))
+
+
+<a name="v1.2.0"></a>
+
+## [v1.2.0] - 2026-01-20
+
+
+<a name="v1.1.0"></a>
+
+## [v1.1.0] - 2026-01-20
+
+### Chore
+
+- **main:** release 1.1.0 ([#41](https://github.com/eng618/eng/issues/41))
+
+### Ci
+
+- use 'goreleaser build --clean' to produce artifacts (avoid release flags)
+
+### Feat
+
+- remove deprecated Parable Bloom CLI commands and associated tests
+
+### Fix
+
+- correct syntax error in pull_request_target types array
+
+
+<a name="v1.0.0"></a>
+
+## [v1.0.0] - 2026-01-20
+
+### Chore
+
+- **ci:** trigger publish-to-homebrew on Release Please workflow_run and handle tag resolution
+- **main:** release 1.0.0 ([#40](https://github.com/eng618/eng/issues/40))
+
+### Ci
+
+- run Go CI for PRs created by github-actions (pull_request_target)
+- run publish-to-homebrew on Release Please completion only when a release was created
+
+
+<a name="v0.33.0"></a>
+
+## [v0.33.0] - 2026-01-20
+
+### Build
+
+- **deps:** bump actions/download-artifact from 6 to 7 ([#35](https://github.com/eng618/eng/issues/35))
+- **deps:** bump actions/upload-artifact from 5 to 6 ([#34](https://github.com/eng618/eng/issues/34))
+
+### Chore
+
+- remove deprecated workflow files for parameter sweep and performance checks
+- **main:** release 0.33.0 ([#39](https://github.com/eng618/eng/issues/39))
+
+### Ci
+
+- fix ci build issues ([#38](https://github.com/eng618/eng/issues/38))
+
+### Feat
+
+- update Go version matrix and switch to golangci-lint GitHub Action
+- update golangci-lint version and streamline Homebrew formula generation
+- add concurrency settings for Homebrew and Release workflows
+- implement release workflow and configuration for automated versioning
+
+### Fix
+
+- reorganize permissions section in release-please workflow
+- correct Go version format in workflow matrix
+- correct Go version format in workflow matrix
+- update Go version matrix to include 1.26-rc.2
+- correct key in release-please manifest
+- update golangci-lint installation method to use latest version
+- update golangci-lint installation method to use curl script
+
+
+<a name="v0.32.0"></a>
+
+## [v0.32.0] - 2026-01-20
+
+### Chore
+
+- update golangci-lint installation method to use latest version
+- **CHANGELOG:** update [skip-ci]
+
+### Fix
+
+- update cleanup command to use apt-get for consistency
+- update cleanup commands to use apt-get for consistency
+
+### Refactor
+
+- mark Parable Bloom tests as deprecated and provide alternative usage instructions
+
 
 <a name="v0.31.2"></a>
 
@@ -2353,7 +2628,29 @@ Internal package structure completely reorganized
 - fix example output
 
 
-[Unreleased]: https://github.com/eng618/eng/compare/v0.31.2...HEAD
+[Unreleased]: https://github.com/eng618/eng/compare/v1.3.8...HEAD
+[v1.3.8]: https://github.com/eng618/eng/compare/v1.3.7...v1.3.8
+[v1.3.7]: https://github.com/eng618/eng/compare/v1.3.6...v1.3.7
+[v1.3.6]: https://github.com/eng618/eng/compare/v1.3.5...v1.3.6
+[v1.3.5]: https://github.com/eng618/eng/compare/v1.3.4...v1.3.5
+[v1.3.4]: https://github.com/eng618/eng/compare/v1.3.3...v1.3.4
+[v1.3.3]: https://github.com/eng618/eng/compare/1.3.2...v1.3.3
+[1.3.2]: https://github.com/eng618/eng/compare/v1.3.2...1.3.2
+[v1.3.2]: https://github.com/eng618/eng/compare/1.3.1...v1.3.2
+[1.3.1]: https://github.com/eng618/eng/compare/v1.3.1...1.3.1
+[v1.3.1]: https://github.com/eng618/eng/compare/1.3.0...v1.3.1
+[1.3.0]: https://github.com/eng618/eng/compare/v1.3.0...1.3.0
+[v1.3.0]: https://github.com/eng618/eng/compare/v1.1.5...v1.3.0
+[v1.1.5]: https://github.com/eng618/eng/compare/v1.1.4...v1.1.5
+[v1.1.4]: https://github.com/eng618/eng/compare/v1.1.3...v1.1.4
+[v1.1.3]: https://github.com/eng618/eng/compare/v1.1.2...v1.1.3
+[v1.1.2]: https://github.com/eng618/eng/compare/v1.1.1...v1.1.2
+[v1.1.1]: https://github.com/eng618/eng/compare/v1.2.0...v1.1.1
+[v1.2.0]: https://github.com/eng618/eng/compare/v1.1.0...v1.2.0
+[v1.1.0]: https://github.com/eng618/eng/compare/v1.0.0...v1.1.0
+[v1.0.0]: https://github.com/eng618/eng/compare/v0.33.0...v1.0.0
+[v0.33.0]: https://github.com/eng618/eng/compare/v0.32.0...v0.33.0
+[v0.32.0]: https://github.com/eng618/eng/compare/v0.31.2...v0.32.0
 [v0.31.2]: https://github.com/eng618/eng/compare/v0.31.1...v0.31.2
 [v0.31.1]: https://github.com/eng618/eng/compare/v0.31.0...v0.31.1
 [v0.31.0]: https://github.com/eng618/eng/compare/v0.30.1...v0.31.0
