@@ -42,6 +42,7 @@ To allow Release Please to determine the next version number and generate the ch
 - `RELEASE_PLEASE_TOKEN`: A Personal Access Token (PAT) with `repo` and `workflow` scopes. This is used for:
   1.  **Release Please**: To maintain PRs and push tags that trigger subsequent workflows.
   2.  **Homebrew Publication**: To push changes to the `eng618/homebrew-eng` tap repository.
+- `CODACY_PROJECT_TOKEN`: (Optional but recommended) Used by the Go CI workflow to report code coverage to Codacy.
 
 ## How to Release a New Version
 

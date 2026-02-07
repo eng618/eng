@@ -155,6 +155,13 @@ tasks:
       - echo "Running tests with coverage report..."
       - CGO_ENABLED=1 go test ./... -cover -race -coverprofile=coverage.out -covermode=atomic
 
+  cover-view:
+    desc: View the coverage report in the browser
+    cmds:
+      - go tool cover -html=coverage.out
+    deps:
+      - test
+
   format:
     desc: Format Go code
     cmds:
