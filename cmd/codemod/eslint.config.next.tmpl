@@ -1,11 +1,11 @@
-import { typescript, prettier } from '@gv-tech/eslint-config';
+import { next, prettier } from '@gv-tech/eslint-config';
 
 /**
- * ESLint configuration for TypeScript projects.
+ * ESLint configuration for Next.js projects.
  * Uses @gv-tech/eslint-config for sensible defaults.
  */
 export default [
-  ...typescript,
+  ...next,
   ...prettier,
   // Add project-specific overrides here
   {

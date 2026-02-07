@@ -31,6 +31,9 @@ func TestLintSetupCmd_ModifiesPackageJson(t *testing.T) {
 	oldCommand := execCommand
 	defer func() { execCommand = oldCommand }()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
+		if name == "npx" && len(arg) > 0 && arg[0] == "husky" {
+			_ = os.MkdirAll(".husky", 0o755)
+		}
 		return exec.Command("echo", append([]string{name}, arg...)...)
 	}
 	// Run
@@ -142,6 +145,49 @@ func TestWriteESLintConfig_EchoMode(t *testing.T) {
 	}
 }
 
+func TestDetectNextJsUsage(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	// Case 1: Next.js in dependencies
+	pkgDeps := map[string]interface{}{
+		"dependencies": map[string]interface{}{
+			"next": "latest",
+		},
+	}
+	data, _ := json.Marshal(pkgDeps)
+	_ = os.WriteFile("package.json", data, 0o644)
+	if !detectNextJsUsage() {
+		t.Error("detectNextJsUsage should return true when next is in dependencies")
+	}
+
+	// Case 2: Next.js in devDependencies
+	pkgDevDeps := map[string]interface{}{
+		"devDependencies": map[string]interface{}{
+			"next": "latest",
+		},
+	}
+	data, _ = json.Marshal(pkgDevDeps)
+	_ = os.WriteFile("package.json", data, 0o644)
+	if !detectNextJsUsage() {
+		t.Error("detectNextJsUsage should return true when next is in devDependencies")
+	}
+
+	// Case 3: No Next.js
+	pkgNoNext := map[string]interface{}{
+		"dependencies": map[string]interface{}{
+			"react": "latest",
+		},
+	}
+	data, _ = json.Marshal(pkgNoNext)
+	_ = os.WriteFile("package.json", data, 0o644)
+	if detectNextJsUsage() {
+		t.Error("detectNextJsUsage should return false when next is not present")
+	}
+}
+
 func TestDetectTypeScriptUsage_TypeScriptFiles(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWd, _ := os.Getwd()
@@ -218,8 +264,11 @@ func TestWriteESLintConfig_TypeScriptProject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("eslint.config.mjs not written: %v", err)
 	}
-	if !strings.Contains(string(data), "@typescript-eslint") {
-		t.Error("@typescript-eslint imports should be used for TypeScript projects")
+	if !strings.Contains(string(data), "typescript") {
+		t.Error("typescript config should be used for TypeScript projects")
+	}
+	if !strings.Contains(string(data), "@gv-tech/eslint-config") {
+		t.Error("@gv-tech/eslint-config should be imported")
 	}
 }
 
@@ -245,8 +294,8 @@ func TestWriteESLintConfig_JavaScriptProject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("eslint.config.mjs not written: %v", err)
 	}
-	if strings.Contains(string(data), "typescript-eslint") {
-		t.Error("typescript-eslint config should not be used for JavaScript projects")
+	if strings.Contains(string(data), "typescript") {
+		t.Error("typescript config should not be used for JavaScript projects")
 	}
 	// Should contain prettier config but no typescript-eslint import
 	if !strings.Contains(string(data), "prettier") {

@@ -27,6 +27,29 @@ var echoConfigTmpl []byte
 //go:embed eslint.config.js-only.tmpl
 var jsOnlyConfigTmpl []byte
 
+//go:embed eslint.config.next.tmpl
+var nextConfigTmpl []byte
+
+// detectNextJsUsage checks if the project uses Next.js by looking for next in package.json.
+func detectNextJsUsage() bool {
+	if pkgData, err := os.ReadFile("package.json"); err == nil {
+		var pkg map[string]interface{}
+		if json.Unmarshal(pkgData, &pkg) == nil {
+			checkDeps := func(deps interface{}) bool {
+				if depsMap, ok := deps.(map[string]interface{}); ok {
+					_, ok := depsMap["next"]
+					return ok
+				}
+				return false
+			}
+			if checkDeps(pkg["dependencies"]) || checkDeps(pkg["devDependencies"]) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // detectTypeScriptUsage checks if the project uses TypeScript by looking for .ts/.tsx files or typescript dependency.
 func detectTypeScriptUsage() bool {
 	// Check for TypeScript files
@@ -55,7 +78,8 @@ func detectTypeScriptUsage() bool {
 				checkDeps := func(deps interface{}) bool {
 					if depsMap, ok := deps.(map[string]interface{}); ok {
 						for pkgName := range depsMap {
-							if strings.HasPrefix(pkgName, "typescript") {
+							if strings.HasPrefix(pkgName, "typescript") ||
+								strings.HasPrefix(pkgName, "typescript-eslint") {
 								return true
 							}
 						}
@@ -117,14 +141,19 @@ func installLintDependencies(echo bool) error {
 	baseDeps := []string{
 		"eslint@latest", "@eslint/js@latest",
 		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-		"@eng618/prettier-config@latest", "globals@latest",
-		"husky@latest", "lint-staged@latest", "prettier@latest",
+		"@gv-tech/eslint-config@latest", "@gv-tech/prettier-config@latest",
+		"globals@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
 		"prettier-plugin-organize-imports@latest",
 	}
 
 	// Add TypeScript ESLint dependencies only if TypeScript is detected
 	if detectTypeScriptUsage() {
-		baseDeps = append(baseDeps, "@typescript-eslint/eslint-plugin@latest", "@typescript-eslint/parser@latest")
+		baseDeps = append(baseDeps, "typescript@latest", "typescript-eslint@latest")
+	}
+
+	// Add Next.js ESLint plugin if Next.js is detected
+	if detectNextJsUsage() {
+		baseDeps = append(baseDeps, "@next/eslint-plugin-next@latest")
 	}
 
 	if echo {
@@ -175,11 +204,14 @@ func installLintDependencies(echo bool) error {
 func writeESLintConfig(echo bool) error {
 	log.Info("Writing eslint.config.mjs...")
 	var data []byte
-	if echo {
+	switch {
+	case echo:
 		data = echoConfigTmpl
-	} else if detectTypeScriptUsage() {
+	case detectNextJsUsage():
+		data = nextConfigTmpl
+	case detectTypeScriptUsage():
 		data = standardConfigTmpl
-	} else {
+	default:
 		data = jsOnlyConfigTmpl
 	}
 	return os.WriteFile("eslint.config.mjs", data, 0o644)
