@@ -2,11 +2,15 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
 )
+
+// Out is the writer used for spinner output. Tests may replace it.
+var Out io.Writer = os.Stderr
 
 // Spinner wraps the mpb.Progress container and a single bar.
 // It's designed to manage a single progress bar and allow logging
@@ -21,7 +25,7 @@ type Spinner struct {
 
 // NewSpinner creates a new spinner with a default indeterminate style.
 func NewSpinner(message string) *Spinner {
-	p := mpb.New(mpb.WithOutput(os.Stderr))
+	p := mpb.New(mpb.WithOutput(Out))
 	msgCh := make(chan string, 1)
 	msgCh <- message
 
@@ -50,7 +54,7 @@ func NewSpinner(message string) *Spinner {
 
 // NewProgressSpinner creates a spinner that displays progress as a bar.
 func NewProgressSpinner(message string) *Spinner {
-	p := mpb.New(mpb.WithOutput(os.Stderr))
+	p := mpb.New(mpb.WithOutput(Out))
 	msgCh := make(chan string, 1)
 	msgCh <- message
 
@@ -88,7 +92,7 @@ func (s *Spinner) Stop() {
 	if s.bar != nil {
 		s.bar.SetTotal(0, true) // Mark as complete
 	}
-	if s.p != nil {
+	if s.p != nil && Out == os.Stderr {
 		s.p.Wait() // Wait for the container to finish rendering
 	}
 }
