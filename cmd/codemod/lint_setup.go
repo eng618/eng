@@ -141,7 +141,7 @@ func installLintDependencies(echo bool) error {
 	baseDeps := []string{
 		"eslint@latest", "@eslint/js@latest",
 		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
-		"@gv-tech/eslint-config@latest", "@gv-tech/prettier-config@latest",
+		"@gv-tech/eslint-config@latest", "@eng618/prettier-config@latest",
 		"globals@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
 		"prettier-plugin-organize-imports@latest",
 	}
