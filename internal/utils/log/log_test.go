@@ -12,12 +12,12 @@ func TestLogFunctions(t *testing.T) {
 	defer ResetWriters()
 
 	tests := []struct {
-		name     string
-		logFunc  func(string, ...any)
-		format   string
-		args     []any
-		waited   string
-		isError  bool
+		name    string
+		logFunc func(string, ...any)
+		format  string
+		args    []any
+		waited  string
+		isError bool
 	}{
 		{
 			name:    "Message",
