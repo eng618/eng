@@ -292,7 +292,7 @@ func updatePackageJSON() error {
 	pkg["prettier"] = "@eng618/prettier-config"
 	// Write back to package.json with standard field order
 	standardOrder := []string{
-		"name", "version", "description", "keywords", "homepage", "bugs", "license", "author", "contributors", "funding", "main", "module", "types", "exports", "files", "bin", "directories", "repository", "scripts", "dependencies", "devDependencies", "peerDependencies", "optionalDependencies", "engines", "os", "cpu", "private", "publishConfig", "lint-staged", "prettier",
+		"name", "version", "private", "description", "keywords", "homepage", "bugs", "repository", "license", "author", "type", "exports", "main", "module", "types", "files", "bin", "directories", "scripts", "dependencies", "devDependencies", "peerDependencies", "peerDependenciesMeta", "optionalDependencies", "overrides", "resolutions", "engines", "packageManager", "os", "cpu", "publishConfig", "lint-staged", "prettier",
 	}
 	allKeys := make(map[string]struct{})
 	for k := range pkg {
