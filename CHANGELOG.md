@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.8.1](https://github.com/eng618/eng/compare/v1.8.0...v1.8.1) (2026-02-08)
+
+
+### Miscellaneous
+
+* Update the standard order of fields for package.json files. ([67f0af0](https://github.com/eng618/eng/commit/67f0af0c8e597850fae1698867450ea169ce8f1f))
+
 ## [1.8.0](https://github.com/eng618/eng/compare/v1.7.0...v1.8.0) (2026-02-08)
 
 
