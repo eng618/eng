@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.8.0](https://github.com/eng618/eng/compare/v1.7.0...v1.8.0) (2026-02-08)
+
+
+### Features
+
+* Update ESLint configuration templates to use consolidated presets and add a check for redundant linting dependencies. ([606864b](https://github.com/eng618/eng/commit/606864b7dbb0a9b01c58a76871815d578238c248))
+
 ## [1.7.0](https://github.com/eng618/eng/compare/v1.6.1...v1.7.0) (2026-02-07)
 
 
