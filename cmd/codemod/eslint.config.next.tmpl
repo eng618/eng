@@ -1,4 +1,4 @@
-import { next, prettier } from '@gv-tech/eslint-config';
+import { nextjs } from '@gv-tech/eslint-config';
 
 /**
  * ESLint configuration for Next.js projects.
@@ -7,8 +7,7 @@ import { next, prettier } from '@gv-tech/eslint-config';
  * https://github.com/Garcia-Ventures/eslint-config
  */
 export default [
-  ...next,
-  ...prettier,
+  ...nextjs,
   // Add project-specific overrides here
   {
     ignores: ['eslint.config.mjs'],

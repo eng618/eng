@@ -127,8 +127,53 @@ var LintSetupCmd = &cobra.Command{
 			return
 		}
 
+		checkRedundantDependencies()
+
 		log.Success("Linting, formatting, and pre-commit hooks are set up!")
 	},
+}
+
+// checkRedundantDependencies checks if any dependencies now handled by our config are installed and suggests removal.
+func checkRedundantDependencies() {
+	redundant := []string{
+		"@eslint/js",
+		"eslint-config-prettier",
+		"eslint-plugin-prettier",
+		"globals",
+		"typescript-eslint",
+	}
+
+	pkgData, err := os.ReadFile("package.json")
+	if err != nil {
+		return
+	}
+
+	var pkg map[string]interface{}
+	if err := json.Unmarshal(pkgData, &pkg); err != nil {
+		return
+	}
+
+	var found []string
+	check := func(deps interface{}) {
+		if depsMap, ok := deps.(map[string]interface{}); ok {
+			for _, r := range redundant {
+				if _, ok := depsMap[r]; ok {
+					found = append(found, r)
+				}
+			}
+		}
+	}
+
+	check(pkg["dependencies"])
+	check(pkg["devDependencies"])
+
+	if len(found) > 0 {
+		log.Warn("The following dependencies are now handled automatically by @gv-tech/eslint-config and can be removed:")
+		for _, f := range found {
+			log.Warn("  - %s", f)
+		}
+		log.Info("You can remove them with: npm uninstall %s (or yarn remove)", strings.Join(found, " "))
+	}
 }
 
 // installLintDependencies installs lint/format dependencies via npm or yarn and handles peer dep errors for npm.
@@ -139,18 +184,17 @@ func installLintDependencies(echo bool) error {
 	usingNpm := true
 
 	baseDeps := []string{
-		"eslint@latest", "@eslint/js@latest",
-		"eslint-config-prettier@latest", "eslint-plugin-prettier@latest",
+		"eslint@latest", "prettier@latest",
 		"@gv-tech/eslint-config@latest", "@eng618/prettier-config@latest",
-		"globals@latest", "husky@latest", "lint-staged@latest", "prettier@latest",
+		"husky@latest", "lint-staged@latest",
 	}
 
-	// Add TypeScript ESLint dependencies only if TypeScript is detected
+	// Add TypeScript only if detected (required peer dep)
 	if detectTypeScriptUsage() {
-		baseDeps = append(baseDeps, "typescript@latest", "typescript-eslint@latest")
+		baseDeps = append(baseDeps, "typescript@latest")
 	}
 
-	// Add Next.js ESLint plugin if Next.js is detected
+	// Add Next.js plugin only if Next.js is detected (optional peer dep)
 	if detectNextJsUsage() {
 		baseDeps = append(baseDeps, "@next/eslint-plugin-next@latest")
 	}

@@ -264,11 +264,11 @@ func TestWriteESLintConfig_TypeScriptProject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("eslint.config.mjs not written: %v", err)
 	}
-	if !strings.Contains(string(data), "typescript") {
-		t.Error("typescript config should be used for TypeScript projects")
-	}
 	if !strings.Contains(string(data), "@gv-tech/eslint-config") {
 		t.Error("@gv-tech/eslint-config should be imported")
+	}
+	if !strings.Contains(string(data), "recommended") {
+		t.Error("recommended config should be used for TypeScript projects")
 	}
 }
 
@@ -294,12 +294,12 @@ func TestWriteESLintConfig_JavaScriptProject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("eslint.config.mjs not written: %v", err)
 	}
-	if strings.Contains(string(data), "typescript") {
+	if strings.Contains(string(data), "...typescript") {
 		t.Error("typescript config should not be used for JavaScript projects")
 	}
-	// Should contain prettier config but no typescript-eslint import
-	if !strings.Contains(string(data), "prettier") {
-		t.Error("prettier config should be included for JavaScript projects")
+	// Should contain the new javascriptRecommended preset
+	if !strings.Contains(string(data), "javascriptRecommended") {
+		t.Error("javascriptRecommended config should be included for JavaScript projects")
 	}
 }
 
@@ -450,4 +450,23 @@ func TestInstallLintDependencies_UsesNpmIfNoYarnLock(t *testing.T) {
 	if called.yarn != 0 {
 		t.Error("did not expect yarn to be called when yarn.lock is not present")
 	}
+}
+func TestCheckRedundantDependencies(t *testing.T) {
+	tempDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(tempDir)
+
+	pkg := map[string]interface{}{
+		"devDependencies": map[string]interface{}{
+			"eslint-plugin-prettier": "latest",
+			"globals":                "latest",
+		},
+	}
+	pkgData, _ := json.Marshal(pkg)
+	_ = os.WriteFile("package.json", pkgData, 0o644)
+
+	// Since it just logs, we could try to capture logs if we had a logger mock,
+	// but for now we just ensure it doesn't crash and we can visually verify output in -v mode.
+	checkRedundantDependencies()
 }

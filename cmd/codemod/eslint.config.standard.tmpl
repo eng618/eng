@@ -1,4 +1,4 @@
-import { typescript, prettier } from '@gv-tech/eslint-config';
+import { recommended } from '@gv-tech/eslint-config';
 
 /**
  * ESLint configuration for TypeScript projects.
@@ -7,8 +7,7 @@ import { typescript, prettier } from '@gv-tech/eslint-config';
  * https://github.com/Garcia-Ventures/eslint-config
  */
 export default [
-  ...typescript,
-  ...prettier,
+  ...recommended,
   // Add project-specific overrides here
   {
     ignores: ['eslint.config.mjs'],
