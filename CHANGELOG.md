@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.8.2](https://github.com/eng618/eng/compare/v1.8.1...v1.8.2) (2026-03-05)
+
+
+### Miscellaneous
+
+* **lint:** Improve logging and update dependency handling in lint setup ([3a6752f](https://github.com/eng618/eng/commit/3a6752feebbdb286ee807233d2a152050c4d3cfc))
+* Update Go version to 1.26 and adjust related configurations ([1bdbc8c](https://github.com/eng618/eng/commit/1bdbc8c7050179e267fb5203a60871d6c8208a1a))
+
 ## [1.8.1](https://github.com/eng618/eng/compare/v1.8.0...v1.8.1) (2026-02-08)
 
 
