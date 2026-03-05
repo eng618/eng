@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.8.3](https://github.com/eng618/eng/compare/v1.8.2...v1.8.3) (2026-03-05)
+
+
+### Bug Fixes
+
+* **lint:** Enhance package manager detection and error logging in lint setup ([9edf62d](https://github.com/eng618/eng/commit/9edf62df3d1ae66bf425b902d2affacea2251387))
+
 ## [1.8.2](https://github.com/eng618/eng/compare/v1.8.1...v1.8.2) (2026-03-05)
 
 
