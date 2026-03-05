@@ -451,6 +451,7 @@ func TestInstallLintDependencies_UsesNpmIfNoYarnLock(t *testing.T) {
 		t.Error("did not expect yarn to be called when yarn.lock is not present")
 	}
 }
+
 func TestCheckRedundantDependencies(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWd, _ := os.Getwd()

@@ -168,7 +168,9 @@ func checkRedundantDependencies() {
 	check(pkg["devDependencies"])
 
 	if len(found) > 0 {
-		log.Warn("The following dependencies are now handled automatically by @gv-tech/eslint-config and can be removed:")
+		log.Warn(
+			"The following dependencies are now handled automatically by @gv-tech/eslint-config and can be removed:",
+		)
 		for _, f := range found {
 			log.Warn("  - %s", f)
 		}
@@ -185,8 +187,12 @@ func installLintDependencies(echo bool) error {
 
 	baseDeps := []string{
 		"eslint@latest", "prettier@latest",
-		"@gv-tech/eslint-config@latest", "@eng618/prettier-config@latest",
+		"@eng618/prettier-config@latest",
 		"husky@latest", "lint-staged@latest",
+	}
+
+	if !echo {
+		baseDeps = append(baseDeps, "@gv-tech/eslint-config@latest")
 	}
 
 	// Add TypeScript only if detected (required peer dep)
