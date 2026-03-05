@@ -5,9 +5,9 @@ name: Go
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         # Always support current, and upcoming releases
-        go-version: ['1.25', '1.26.0-rc.2']
+        go-version: ["1.26"]
 
     steps:
       - uses: actions/checkout@v6
@@ -79,7 +79,7 @@ jobs:
         run: task test
 
       - name: Report coverage to Codacy
-        if: matrix.go-version == '1.25'
+        if: matrix.go-version == '1.26'
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         continue-on-error: true
         with:

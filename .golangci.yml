@@ -5,7 +5,7 @@
 version: "2" # Defines the configuration version. The only possible value is "2".
 
 run: # Options for analysis running
-  go: "1.25" # Define the Go version limit
+  go: "1.26" # Define the Go version limit
   modules-download-mode: readonly # Use readonly mode for go.mod to avoid modifications
   allow-parallel-runners: false # Disable parallel runs to avoid conflicts in this project
   timeout: 5m # Timeout for analysis to prevent hangs in CI
