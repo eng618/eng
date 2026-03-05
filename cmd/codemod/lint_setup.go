@@ -108,7 +108,7 @@ var LintSetupCmd = &cobra.Command{
 		}
 
 		if err := installLintDependencies(echo); err != nil {
-			log.Error("npm install failed: %v", err)
+			log.Error("package manager install failed: %v", err)
 			return
 		}
 
@@ -174,16 +174,25 @@ func checkRedundantDependencies() {
 		for _, f := range found {
 			log.Warn("  - %s", f)
 		}
-		log.Info("You can remove them with: npm uninstall %s (or yarn remove)", strings.Join(found, " "))
+		// Suggest removal command based on package manager
+		var removeCmd string
+		if _, err := os.Stat("bun.lock"); err == nil {
+			removeCmd = "bun remove"
+		} else if _, err := os.Stat("yarn.lock"); err == nil {
+			removeCmd = "yarn remove"
+		} else {
+			removeCmd = "npm uninstall"
+		}
+		log.Info("You can remove them with: %s %s", removeCmd, strings.Join(found, " "))
 	}
 }
 
-// installLintDependencies installs lint/format dependencies via npm or yarn and handles peer dep errors for npm.
+// installLintDependencies installs lint/format dependencies via npm, yarn, or bun and handles peer dep errors for npm.
 func installLintDependencies(echo bool) error {
-	log.Info("Installing lint/format dependencies via npm or yarn...")
+	log.Info("Installing lint/format dependencies via npm, yarn, or bun...")
 	var installCmd *exec.Cmd
 	var installArgs []string
-	usingNpm := true
+	var packageManager string
 
 	baseDeps := []string{
 		"eslint@latest", "prettier@latest",
@@ -209,11 +218,17 @@ func installLintDependencies(echo bool) error {
 		baseDeps = append(baseDeps, "echo-eslint-config@latest")
 	}
 
-	if _, err := os.Stat("yarn.lock"); err == nil {
-		usingNpm = false
+	// Detect package manager: bun > yarn > npm
+	if _, err := os.Stat("bun.lock"); err == nil {
+		packageManager = "bun"
+		installArgs = append([]string{"add", "--dev"}, baseDeps...)
+		installCmd = execCommand("bun", installArgs...)
+	} else if _, err := os.Stat("yarn.lock"); err == nil {
+		packageManager = "yarn"
 		installArgs = append([]string{"add", "--dev"}, baseDeps...)
 		installCmd = execCommand("yarn", installArgs...)
 	} else {
+		packageManager = "npm"
 		installArgs = append([]string{"install", "--save-dev"}, baseDeps...)
 		installCmd = execCommand("npm", installArgs...)
 	}
@@ -228,7 +243,7 @@ func installLintDependencies(echo bool) error {
 	}
 	stderrBytes, _ := io.ReadAll(stderrPipe)
 	err = installCmd.Wait()
-	if err != nil && usingNpm {
+	if err != nil && packageManager == "npm" {
 		stderrStr := string(stderrBytes)
 		if strings.Contains(stderrStr, "--legacy-peer-deps") ||
 			strings.Contains(stderrStr, "could not resolve dependency") {
