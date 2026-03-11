@@ -1,5 +1,16 @@
 <a name="unreleased"></a>
 
+## [1.9.0](https://github.com/eng618/eng/compare/v1.8.3...v1.9.0) (2026-03-11)
+
+
+### Features
+
+* **dotfiles:** Add 'doctor' command to validate secrets and templates ([4aec62d](https://github.com/eng618/eng/commit/4aec62d7141c7fc8cfe4b327e64bc5f26af70540))
+* **dotfiles:** Add "Bitwarden" to cSpell custom words list ([433fd31](https://github.com/eng618/eng/commit/433fd31f1afe192529331b833e2ce6ddd9c6f0ae))
+* **dotfiles:** Enhance SSH setup and validation for private repositories ([7bb6a2d](https://github.com/eng618/eng/commit/7bb6a2d8612fe393605f364a817801a2c487030b))
+* **dotfiles:** Integrate secrets restore into setup ([8255db5](https://github.com/eng618/eng/commit/8255db53d3f1bc66da5e2138b14839342c66000f))
+* **system:** Harden dotfiles SSH bootstrap flow ([bdecb70](https://github.com/eng618/eng/commit/bdecb70606efa735bfd588bd40fe0a9a288b2056))
+
 ## [1.8.3](https://github.com/eng618/eng/compare/v1.8.2...v1.8.3) (2026-03-05)
 
 
