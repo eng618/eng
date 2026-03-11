@@ -51,7 +51,8 @@ var SetupDotfilesCmd = &cobra.Command{
 	Use:   "dotfiles",
 	Short: "Setup dotfiles from your git repository",
 	Long: `Setup dotfiles from your git repository. This command will:
-  - Check and install prerequisites (Homebrew, Git, Bash, SSH keys)
+	- Check and install prerequisites (Homebrew, Git, Bash)
+	- Setup SSH keys for GitHub when required by the repository URL
   - Clone your dotfiles repository as a bare repository
   - Backup any conflicting files
   - Checkout dotfiles to your home directory
@@ -320,6 +321,11 @@ func setupSSH(verbose bool) error {
 
 	// Ensure SSH config is set up
 	return ensureSSHConfig(sshKeyPath)
+}
+
+// SetupSSHForGitHub exposes the SSH setup flow for other commands that need GitHub access.
+func SetupSSHForGitHub(verbose bool) error {
+	return setupSSH(verbose)
 }
 
 // generateSSHKey generates a new SSH key pair.

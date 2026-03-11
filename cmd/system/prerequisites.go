@@ -13,8 +13,8 @@ import (
 	"github.com/eng618/eng/internal/utils/log"
 )
 
-// EnsurePrerequisites checks and installs all prerequisites needed for dotfiles installation.
-// Returns an error if any critical prerequisite cannot be satisfied.
+// EnsurePrerequisites checks and installs core prerequisites needed for setup flows.
+// SSH is handled contextually by callers that need GitHub access.
 func EnsurePrerequisites(verbose bool) error {
 	log.Verbose(verbose, "Checking prerequisites for dotfiles installation")
 
@@ -28,10 +28,6 @@ func EnsurePrerequisites(verbose bool) error {
 	}
 
 	if err := ensureBash(verbose); err != nil {
-		return err
-	}
-
-	if err := ensureGitHubSSH(verbose); err != nil {
 		return err
 	}
 

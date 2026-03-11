@@ -76,11 +76,25 @@ eng git sync-all
 # Install dotfiles from your repo
 eng dotfiles install
 
+# Optional: run SSH setup directly if you want to prepare keys first
+eng system setup ssh
+
 # Setup a new development machine
 eng system setup
 
 # Check version and updates
 eng version
+```
+
+### Private Dotfiles Quickstart
+
+For private GitHub dotfiles repositories, `eng dotfiles install` now validates dotfiles config first,
+checks core prerequisites, and only then runs GitHub SSH setup when the configured repo URL uses SSH.
+
+If cloning fails due to SSH auth, run:
+
+```sh
+eng system setup ssh
 ```
 
 ### Available Commands

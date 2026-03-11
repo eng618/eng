@@ -25,7 +25,8 @@ var InstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install dotfiles from a bare git repository",
 	Long: `Install dotfiles from a bare git repository. This command will:
-  - Check and install prerequisites (Homebrew, Git, Bash, SSH keys)
+	- Check and install prerequisites (Homebrew, Git, Bash)
+	- Setup SSH keys for GitHub when required by the repository URL
   - Clone your dotfiles repository as a bare repository
   - Backup any conflicting files
   - Checkout dotfiles to your home directory
@@ -42,13 +43,13 @@ var InstallCmd = &cobra.Command{
 func installDotfiles(verbose bool) error {
 	log.Start("Starting dotfiles installation")
 
-	// Step 1: Check prerequisites
+	// Step 1: Get configuration values first so we can make context-aware setup decisions.
+	repoURL, branch, bareRepoPath, worktreePath := config.VerifyDotfilesConfig()
+
+	// Step 2: Check prerequisites
 	if err := system.EnsurePrerequisites(verbose); err != nil {
 		return err
 	}
-
-	// Step 2: Get configuration values
-	repoURL, branch, bareRepoPath, worktreePath := config.VerifyDotfilesConfig()
 
 	// Step 3: Handle existing bare repository
 	if _, err := os.Stat(bareRepoPath); err == nil {
@@ -62,11 +63,17 @@ func installDotfiles(verbose bool) error {
 			log.Message("Skipping repository clone, using existing repository")
 			return nil
 		case "update":
+			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+				return err
+			}
 			if err := updateBareRepoWorktree(bareRepoPath, worktreePath, verbose); err != nil {
 				return err
 			}
 			return nil
 		case "fresh":
+			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+				return err
+			}
 			if err := freshInstall(bareRepoPath, repoURL, branch); err != nil {
 				return err
 			}
@@ -74,6 +81,9 @@ func installDotfiles(verbose bool) error {
 		}
 	} else {
 		// Step 4: Clone bare repository
+		if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+			return err
+		}
 		if err := cloneBareRepo(repoURL, branch, bareRepoPath); err != nil {
 			return err
 		}
@@ -174,10 +184,14 @@ func freshInstall(bareRepoPath, repoURL, branch string) error {
 func cloneBareRepo(repoURL, branch, bareRepoPath string) error {
 	log.Start("Cloning repository from: %s (branch: %s)", repoURL, branch)
 
-	// Get SSH auth
-	auth, err := getSSHAuth()
-	if err != nil {
-		return fmt.Errorf("failed to get SSH auth: %w", err)
+	var auth *ssh.PublicKeys
+	var err error
+	if isSSHRepoURL(repoURL) {
+		// Get SSH auth for SSH remotes.
+		auth, err = getSSHAuth()
+		if err != nil {
+			return fmt.Errorf("failed to get SSH auth from ~/.ssh/github: %w", err)
+		}
 	}
 
 	// Clone as bare repository
@@ -189,7 +203,7 @@ func cloneBareRepo(repoURL, branch, bareRepoPath string) error {
 		Progress:      log.Writer(),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to clone repository: %w", err)
+		return wrapCloneError(repoURL, err)
 	}
 
 	log.Success("Repository cloned successfully")
@@ -355,10 +369,13 @@ func initSubmodules(bareRepoPath, homeDir string) error {
 		return initSubmodulesWithCommand(bareRepoPath, homeDir)
 	}
 
-	// Get SSH auth
-	auth, err := getSSHAuth()
-	if err != nil {
-		return err
+	var auth *ssh.PublicKeys
+	remote, err := repo.Remote("origin")
+	if err == nil && len(remote.Config().URLs) > 0 && isSSHRepoURL(remote.Config().URLs[0]) {
+		auth, err = getSSHAuth()
+		if err != nil {
+			return fmt.Errorf("failed to get SSH auth for submodules: %w", err)
+		}
 	}
 
 	// Initialize submodules
@@ -490,4 +507,35 @@ func getSSHAuth() (*ssh.PublicKeys, error) {
 	}
 
 	return auth, nil
+}
+
+func ensureSSHIfRequired(repoURL string, verbose bool) error {
+	if !isSSHRepoURL(repoURL) {
+		return nil
+	}
+
+	if err := system.SetupSSHForGitHub(verbose); err != nil {
+		return fmt.Errorf("unable to setup GitHub SSH access: %w", err)
+	}
+
+	return nil
+}
+
+func isSSHRepoURL(repoURL string) bool {
+	return strings.HasPrefix(repoURL, "git@") || strings.HasPrefix(repoURL, "ssh://")
+}
+
+func wrapCloneError(repoURL string, err error) error {
+	errMsg := strings.ToLower(err.Error())
+	if isSSHRepoURL(repoURL) &&
+		(strings.Contains(errMsg, "permission denied") ||
+			strings.Contains(errMsg, "authentication") ||
+			strings.Contains(errMsg, "publickey")) {
+		return fmt.Errorf(
+			"failed to clone repository via SSH: %w. Verify ~/.ssh/github works for GitHub or run `eng system setup ssh`",
+			err,
+		)
+	}
+
+	return fmt.Errorf("failed to clone repository: %w", err)
 }
