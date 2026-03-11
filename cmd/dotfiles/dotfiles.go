@@ -60,6 +60,7 @@ func init() {
 	DotfilesCmd.AddCommand(StatusCmd)
 	DotfilesCmd.AddCommand(CopyChangesCmd)
 	DotfilesCmd.AddCommand(CheckoutCmd)
+	DotfilesCmd.AddCommand(SecretsCmd)
 }
 
 // getDotfilesConfig retrieves the repository and worktree paths from configuration.

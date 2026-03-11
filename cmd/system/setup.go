@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/utils"
+	configUtils "github.com/eng618/eng/internal/utils/config"
 	"github.com/eng618/eng/internal/utils/log"
 )
 
@@ -22,7 +23,8 @@ var SetupCmd = &cobra.Command{
 Running this command without subcommands will run all setup steps:
 - Oh My Zsh
 - ASDF plugins
-- Dotfiles installation`,
+- Dotfiles installation
+- Dotfiles secrets restore (when configured)`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		verbose := utils.IsVerbose(cmd)
 		if err := EnsurePrerequisites(verbose); err != nil {
@@ -57,7 +59,8 @@ var SetupDotfilesCmd = &cobra.Command{
   - Backup any conflicting files
   - Checkout dotfiles to your home directory
   - Initialize git submodules
-  - Configure git to hide untracked files`,
+	- Configure git to hide untracked files
+	- Restore dotfiles secrets when manifest and BWS token are available`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := setupDotfiles(utils.IsVerbose(cmd)); err != nil {
 			log.Fatal("Dotfiles setup failed: %v", err)
@@ -204,6 +207,41 @@ func setupDotfiles(verbose bool) error {
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("dotfiles install failed: %w", err)
+	}
+
+	if err := maybeRestoreDotfilesSecrets(exe, verbose); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func maybeRestoreDotfilesSecrets(exe string, verbose bool) error {
+	manifestPath := filepath.Join(configUtils.WorktreePath(), "bin", "secrets", "server.manifest")
+	if _, err := stat(manifestPath); err != nil {
+		log.Verbose(verbose, "Skipping dotfiles secrets restore, manifest not found: %s", manifestPath)
+		return nil
+	}
+
+	if strings.TrimSpace(os.Getenv("BWS_ACCESS_TOKEN")) == "" {
+		log.Warn("Skipping dotfiles secrets restore: BWS_ACCESS_TOKEN is not set")
+		log.Message("Run manually after exporting BWS_ACCESS_TOKEN: eng dotfiles secrets restore")
+		return nil
+	}
+
+	log.Start("Restoring dotfiles secrets...")
+	args := []string{"dotfiles", "secrets", "restore", "--manifest", manifestPath}
+	if verbose {
+		args = append(args, "-v")
+	}
+
+	cmd := execCommand(exe, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("dotfiles secrets restore failed: %w", err)
 	}
 
 	return nil

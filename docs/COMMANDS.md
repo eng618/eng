@@ -124,7 +124,8 @@ This command will:
 eng system setup dotfiles
 ```
 
-This checks prerequisites and then guides you through the installation process.
+This checks prerequisites, runs dotfiles installation, and then attempts `eng dotfiles secrets restore`
+automatically when a manifest is present and `BWS_ACCESS_TOKEN` is set.
 
 ### Configuration
 
@@ -138,15 +139,41 @@ eng config dotfiles-repo              # Set dotfiles repo path
 
 ### Commands
 
-| Command                     | Description                                  |
-| --------------------------- | -------------------------------------------- |
-| `eng dotfiles --info`       | Show current dotfiles config                 |
-| `eng dotfiles install`      | First-time dotfiles installation             |
-| `eng dotfiles sync`         | Fetch and pull latest dotfiles               |
-| `eng dotfiles fetch`        | Fetch latest dotfiles without merging        |
-| `eng dotfiles checkout`     | Checkout files from the bare repository      |
-| `eng dotfiles copy-changes` | Copy modified dotfiles to local git repo     |
-| `eng dotfiles status`       | Check the status of your dotfiles repository |
+| Command                        | Description                                    |
+| ------------------------------ | ---------------------------------------------- |
+| `eng dotfiles --info`          | Show current dotfiles config                   |
+| `eng dotfiles install`         | First-time dotfiles installation               |
+| `eng dotfiles sync`            | Fetch and pull latest dotfiles                 |
+| `eng dotfiles fetch`           | Fetch latest dotfiles without merging          |
+| `eng dotfiles checkout`        | Checkout files from the bare repository        |
+| `eng dotfiles copy-changes`    | Copy modified dotfiles to local git repo       |
+| `eng dotfiles status`          | Check the status of your dotfiles repository   |
+| `eng dotfiles secrets backup`  | Backup manifest-managed env values into `bws`  |
+| `eng dotfiles secrets restore` | Restore env files from templates and `bws`     |
+
+### Dotfiles Secrets
+
+The `eng dotfiles secrets` commands use a tracked manifest, by default at `$HOME/bin/secrets/server.manifest`,
+to back up and restore managed env files from Bitwarden Secrets Manager.
+
+The project UUID is resolved in this order:
+
+- `--project-id`
+- `BWS_PROJECT_ID`
+- `# Project UUID:` in the manifest
+
+Common usage:
+
+```sh
+eng dotfiles secrets backup
+eng dotfiles secrets restore
+```
+
+Flags:
+
+- `--manifest <path>` — Override the manifest path
+- `--root <path>` — Override the root used for manifest-relative file paths
+- `--project-id <uuid>` — Override the Bitwarden Secrets Manager project ID
 
 ### Using the `cfg` Alias
 
@@ -168,13 +195,11 @@ System utilities for macOS and Linux, including developer setup automation.
 
 ### Setup Commands
 
-| Command                      | Description                                             |
-| ---------------------------- | ------------------------------------------------------- |
-| `eng system setup`           | Run all setup steps (Oh My Zsh, ASDF, dotfiles)         |
-| `eng system setup asdf`      | Setup asdf plugins from `$HOME/.tool-versions`          |
-| `eng system setup dotfiles`  | Setup dotfiles (checks prerequisites then runs install) |
-| `eng system setup oh-my-zsh` | Install Oh My Zsh                                       |
-| `eng system setup ssh`       | Setup SSH keys for GitHub access                        |
+- `eng system setup` — Run all setup steps (Oh My Zsh, ASDF, dotfiles, and secrets restore when configured)
+- `eng system setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
+- `eng system setup dotfiles` — Setup dotfiles (checks prerequisites, runs install, and restores secrets when configured)
+- `eng system setup oh-my-zsh` — Install Oh My Zsh
+- `eng system setup ssh` — Setup SSH keys for GitHub access
 
 ### System Utilities
 

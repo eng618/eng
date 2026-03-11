@@ -27,6 +27,7 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 - **Git Repository Management** — Bulk operations across multiple git repositories with intelligent branch detection
 - **Project Management** — Organize and manage groups of related repositories as logical projects
 - **Dotfiles Management** — Manage dotfiles via a bare git repo, with sync/fetch/checkout helpers
+- **Dotfiles Secrets** — Backup and restore manifest-managed env files with Bitwarden Secrets Manager
 - **System Utilities** — macOS/Linux helpers (kill port, kill process, proxy, update, compaudit fix)
 - **File Utilities** — Find and delete files by extension, filename, or glob pattern
 - **Codemod Automation** — Project codemods (lint setup, prettier, copilot instructions)
@@ -76,6 +77,10 @@ eng git sync-all
 # Install dotfiles from your repo
 eng dotfiles install
 
+# Backup or restore manifest-managed dotfiles secrets
+eng dotfiles secrets backup
+eng dotfiles secrets restore
+
 # Optional: run SSH setup directly if you want to prepare keys first
 eng system setup ssh
 
@@ -96,6 +101,29 @@ If cloning fails due to SSH auth, run:
 ```sh
 eng system setup ssh
 ```
+
+### Dotfiles Secrets
+
+`eng dotfiles secrets` turns the manifest-driven `bws` backup and restore flow into a first-class CLI feature.
+
+By default it looks for the manifest at `$HOME/bin/secrets/server.manifest` using the configured dotfiles
+worktree, and restores files relative to that worktree. The Bitwarden Secrets Manager project UUID can come
+from `--project-id`, `BWS_PROJECT_ID`, or the manifest comment header.
+
+```sh
+# Backup managed env values into Bitwarden Secrets Manager
+eng dotfiles secrets backup
+
+# Restore env files from their tracked .example templates
+eng dotfiles secrets restore
+```
+
+`eng system setup dotfiles` now runs `eng dotfiles secrets restore` automatically after install when:
+
+- the manifest exists at the configured dotfiles worktree (`bin/secrets/server.manifest`)
+- `BWS_ACCESS_TOKEN` is set
+
+If those prerequisites are not met, the restore step is skipped safely.
 
 ### Available Commands
 
