@@ -116,6 +116,9 @@ eng dotfiles secrets backup
 
 # Restore env files from their tracked .example templates
 eng dotfiles secrets restore
+
+# Validate manifest/template/secret consistency
+eng dotfiles secrets doctor
 ```
 
 `eng system setup dotfiles` now runs `eng dotfiles secrets restore` automatically after install when:

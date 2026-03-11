@@ -52,6 +52,7 @@ bin/containers/app.env|app|DB_PASSWORD,API_TOKEN
 
 	var calls []string
 	bwsLookUp = func(file string) (string, error) { return "/usr/bin/bws", nil }
+	t.Setenv("BWS_ACCESS_TOKEN", "test-token")
 	bwsInvoke = func(args ...string) ([]byte, error) {
 		calls = append(calls, strings.Join(args, " "))
 		switch strings.Join(args, " ") {
@@ -100,9 +101,12 @@ bin/containers/app.env|app|DB_PASSWORD,API_TOKEN
 	}()
 
 	bwsLookUp = func(file string) (string, error) { return "/usr/bin/bws", nil }
+	t.Setenv("BWS_ACCESS_TOKEN", "test-token")
 	bwsInvoke = func(args ...string) ([]byte, error) {
 		if strings.Join(args, " ") == "secret list project-123" {
-			return []byte(`[{"id":"1","key":"app/DB_PASSWORD","value":"restored-db"},{"id":"2","key":"app/API_TOKEN","value":"restored-token"}]`), nil
+			return []byte(
+				`[{"id":"1","key":"app/DB_PASSWORD","value":"restored-db"},{"id":"2","key":"app/API_TOKEN","value":"restored-token"}]`,
+			), nil
 		}
 		return nil, fmt.Errorf("unexpected call: %s", strings.Join(args, " "))
 	}
@@ -117,6 +121,71 @@ bin/containers/app.env|app|DB_PASSWORD,API_TOKEN
 	assert.Contains(t, string(content), "API_TOKEN=restored-token")
 }
 
+func TestDoctorDotfilesSecrets(t *testing.T) {
+	tmpDir := t.TempDir()
+	manifestPath := filepath.Join(tmpDir, "bin", "secrets", "server.manifest")
+	examplePath := filepath.Join(tmpDir, "bin", "containers", "app.env.example")
+	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Dir(examplePath), 0o755))
+	require.NoError(t, os.WriteFile(manifestPath, []byte(`# Project UUID: project-123
+bin/containers/app.env|app|DB_PASSWORD,API_TOKEN
+`), 0o600))
+	require.NoError(t, os.WriteFile(examplePath, []byte("DB_PASSWORD=__RESTORE__\nAPI_TOKEN=__RESTORE__\n"), 0o600))
+
+	originalInvoke := bwsInvoke
+	originalLookup := bwsLookUp
+	defer func() {
+		bwsInvoke = originalInvoke
+		bwsLookUp = originalLookup
+	}()
+
+	bwsLookUp = func(file string) (string, error) { return "/usr/bin/bws", nil }
+	t.Setenv("BWS_ACCESS_TOKEN", "test-token")
+	bwsInvoke = func(args ...string) ([]byte, error) {
+		if strings.Join(args, " ") == "secret list project-123" {
+			return []byte(
+				`[{"id":"1","key":"app/DB_PASSWORD","value":"restored-db"},{"id":"2","key":"app/API_TOKEN","value":"restored-token"}]`,
+			), nil
+		}
+		return nil, fmt.Errorf("unexpected call: %s", strings.Join(args, " "))
+	}
+
+	err := DoctorDotfilesSecrets(DotfilesSecretsOptions{ManifestPath: manifestPath})
+	require.NoError(t, err)
+}
+
+func TestDoctorDotfilesSecretsReportsMissingSecret(t *testing.T) {
+	tmpDir := t.TempDir()
+	manifestPath := filepath.Join(tmpDir, "bin", "secrets", "server.manifest")
+	examplePath := filepath.Join(tmpDir, "bin", "containers", "app.env.example")
+	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Dir(examplePath), 0o755))
+	require.NoError(t, os.WriteFile(manifestPath, []byte(`# Project UUID: project-123
+bin/containers/app.env|app|DB_PASSWORD,API_TOKEN
+`), 0o600))
+	require.NoError(t, os.WriteFile(examplePath, []byte("DB_PASSWORD=__RESTORE__\nAPI_TOKEN=__RESTORE__\n"), 0o600))
+
+	originalInvoke := bwsInvoke
+	originalLookup := bwsLookUp
+	defer func() {
+		bwsInvoke = originalInvoke
+		bwsLookUp = originalLookup
+	}()
+
+	bwsLookUp = func(file string) (string, error) { return "/usr/bin/bws", nil }
+	t.Setenv("BWS_ACCESS_TOKEN", "test-token")
+	bwsInvoke = func(args ...string) ([]byte, error) {
+		if strings.Join(args, " ") == "secret list project-123" {
+			return []byte(`[{"id":"1","key":"app/DB_PASSWORD","value":"restored-db"}]`), nil
+		}
+		return nil, fmt.Errorf("unexpected call: %s", strings.Join(args, " "))
+	}
+
+	err := DoctorDotfilesSecrets(DotfilesSecretsOptions{ManifestPath: manifestPath})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "issue")
+}
+
 func TestInvokeBWSWithRetryRetriesRateLimit(t *testing.T) {
 	originalInvoke := bwsInvoke
 	originalSleep := sleepFn
@@ -129,7 +198,11 @@ func TestInvokeBWSWithRetryRetriesRateLimit(t *testing.T) {
 	bwsInvoke = func(args ...string) ([]byte, error) {
 		attempts++
 		if attempts == 1 {
-			return []byte(`Error: 429 Too Many Requests. Slow down! Too many requests. Try again in 1s.`), fmt.Errorf("rate limited")
+			return []byte(
+					`Error: 429 Too Many Requests. Slow down! Too many requests. Try again in 1s.`,
+				), fmt.Errorf(
+					"rate limited",
+				)
 		}
 		return []byte(`[]`), nil
 	}

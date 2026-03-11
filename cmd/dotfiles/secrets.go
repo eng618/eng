@@ -44,13 +44,26 @@ var SecretsRestoreCmd = &cobra.Command{
 	},
 }
 
+// SecretsDoctorCmd validates manifest mappings, templates, and bws secrets.
+var SecretsDoctorCmd = &cobra.Command{
+	Use:   "doctor",
+	Short: "Validate manifest templates and Bitwarden Secrets Manager values",
+	RunE: func(cmd *cobra.Command, _args []string) error {
+		return utils.DoctorDotfilesSecrets(dotfilesSecretsOptions(cmd))
+	},
+}
+
 func init() {
-	SecretsCmd.PersistentFlags().StringVar(&dotfilesSecretsManifestPath, "manifest", "", "Path to the dotfiles secrets manifest")
-	SecretsCmd.PersistentFlags().StringVar(&dotfilesSecretsRootPath, "root", "", "Root path for manifest-relative env files")
-	SecretsCmd.PersistentFlags().StringVar(&dotfilesSecretsProjectID, "project-id", "", "Bitwarden Secrets Manager project ID override")
+	SecretsCmd.PersistentFlags().
+		StringVar(&dotfilesSecretsManifestPath, "manifest", "", "Path to the dotfiles secrets manifest")
+	SecretsCmd.PersistentFlags().
+		StringVar(&dotfilesSecretsRootPath, "root", "", "Root path for manifest-relative env files")
+	SecretsCmd.PersistentFlags().
+		StringVar(&dotfilesSecretsProjectID, "project-id", "", "Bitwarden Secrets Manager project ID override")
 
 	SecretsCmd.AddCommand(SecretsBackupCmd)
 	SecretsCmd.AddCommand(SecretsRestoreCmd)
+	SecretsCmd.AddCommand(SecretsDoctorCmd)
 }
 
 func dotfilesSecretsOptions(cmd *cobra.Command) utils.DotfilesSecretsOptions {
@@ -69,5 +82,6 @@ func dotfilesSecretsOptions(cmd *cobra.Command) utils.DotfilesSecretsOptions {
 		RootPath:     dotfilesSecretsRootPath,
 		ProjectID:    dotfilesSecretsProjectID,
 		Verbose:      utils.IsVerbose(cmd),
+		UseSpinner:   true,
 	}
 }

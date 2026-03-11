@@ -139,17 +139,16 @@ eng config dotfiles-repo              # Set dotfiles repo path
 
 ### Commands
 
-| Command                        | Description                                    |
-| ------------------------------ | ---------------------------------------------- |
-| `eng dotfiles --info`          | Show current dotfiles config                   |
-| `eng dotfiles install`         | First-time dotfiles installation               |
-| `eng dotfiles sync`            | Fetch and pull latest dotfiles                 |
-| `eng dotfiles fetch`           | Fetch latest dotfiles without merging          |
-| `eng dotfiles checkout`        | Checkout files from the bare repository        |
-| `eng dotfiles copy-changes`    | Copy modified dotfiles to local git repo       |
-| `eng dotfiles status`          | Check the status of your dotfiles repository   |
-| `eng dotfiles secrets backup`  | Backup manifest-managed env values into `bws`  |
-| `eng dotfiles secrets restore` | Restore env files from templates and `bws`     |
+- `eng dotfiles --info` — Show current dotfiles config
+- `eng dotfiles install` — First-time dotfiles installation
+- `eng dotfiles sync` — Fetch and pull latest dotfiles
+- `eng dotfiles fetch` — Fetch latest dotfiles without merging
+- `eng dotfiles checkout` — Checkout files from the bare repository
+- `eng dotfiles copy-changes` — Copy modified dotfiles to local git repo
+- `eng dotfiles status` — Check the status of your dotfiles repository
+- `eng dotfiles secrets backup` — Backup manifest-managed env values into `bws`
+- `eng dotfiles secrets restore` — Restore env files from templates and `bws`
+- `eng dotfiles secrets doctor` — Validate templates and secrets for all manifest entries
 
 ### Dotfiles Secrets
 
@@ -167,6 +166,7 @@ Common usage:
 ```sh
 eng dotfiles secrets backup
 eng dotfiles secrets restore
+eng dotfiles secrets doctor
 ```
 
 Flags:

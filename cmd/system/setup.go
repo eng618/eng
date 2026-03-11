@@ -10,9 +10,9 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/utils"
-	configUtils "github.com/eng618/eng/internal/utils/config"
 	"github.com/eng618/eng/internal/utils/log"
 )
 
@@ -217,7 +217,7 @@ func setupDotfiles(verbose bool) error {
 }
 
 func maybeRestoreDotfilesSecrets(exe string, verbose bool) error {
-	manifestPath := filepath.Join(configUtils.WorktreePath(), "bin", "secrets", "server.manifest")
+	manifestPath := filepath.Join(resolveDotfilesWorktreePath(), "bin", "secrets", "server.manifest")
 	if _, err := stat(manifestPath); err != nil {
 		log.Verbose(verbose, "Skipping dotfiles secrets restore, manifest not found: %s", manifestPath)
 		return nil
@@ -245,6 +245,17 @@ func maybeRestoreDotfilesSecrets(exe string, verbose bool) error {
 	}
 
 	return nil
+}
+
+func resolveDotfilesWorktreePath() string {
+	worktreePath := strings.TrimSpace(viper.GetString("dotfiles.worktree_path"))
+	if worktreePath == "" {
+		worktreePath = strings.TrimSpace(os.Getenv("HOME"))
+	}
+	if worktreePath == "" {
+		return "."
+	}
+	return os.ExpandEnv(worktreePath)
 }
 
 func setupSoftware(verbose bool) {

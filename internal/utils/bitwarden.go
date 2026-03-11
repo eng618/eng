@@ -7,8 +7,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/eng618/eng/internal/utils/log"
 	"golang.org/x/term"
+
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // BitwardenItem represents a Bitwarden vault item.

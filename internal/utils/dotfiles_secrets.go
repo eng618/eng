@@ -31,6 +31,7 @@ type DotfilesSecretsOptions struct {
 	RootPath     string
 	ProjectID    string
 	Verbose      bool
+	UseSpinner   bool
 }
 
 // DotfilesSecretsManifest defines the tracked secret mappings for dotfiles env files.
@@ -57,6 +58,12 @@ func BackupDotfilesSecrets(opts DotfilesSecretsOptions) error {
 	if err := ensureBWSAvailable(); err != nil {
 		return err
 	}
+	if err := ensureBWSTokenConfigured(); err != nil {
+		return err
+	}
+
+	sp := maybeStartSpinner(opts.UseSpinner, "Preparing dotfiles secrets backup...")
+	defer stopSpinner(sp)
 
 	manifest, err := LoadDotfilesSecretsManifest(opts.ManifestPath)
 	if err != nil {
@@ -69,12 +76,14 @@ func BackupDotfilesSecrets(opts DotfilesSecretsOptions) error {
 	}
 
 	rootPath := resolveDotfilesSecretsRoot(opts.RootPath, opts.ManifestPath)
+	updateSpinner(sp, "Loading existing secrets from Bitwarden Secrets Manager...")
 	secretsByKey, err := listBWSSecretsByKey(projectID)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range manifest.Entries {
+		updateSpinner(sp, fmt.Sprintf("Backing up %s...", entry.RelativeFile))
 		targetFile := resolveDotfilesSecretsFile(rootPath, entry.RelativeFile)
 		if _, statErr := os.Stat(targetFile); errors.Is(statErr, os.ErrNotExist) {
 			log.Warn("Skipping missing file: %s", entry.RelativeFile)
@@ -91,6 +100,7 @@ func BackupDotfilesSecrets(opts DotfilesSecretsOptions) error {
 		}
 
 		for _, key := range entry.Keys {
+			updateSpinner(sp, fmt.Sprintf("Backing up %s/%s...", entry.Prefix, key))
 			value, ok := values[key]
 			if !ok || strings.TrimSpace(value) == "" {
 				return fmt.Errorf("missing key %q in %s", key, entry.RelativeFile)
@@ -116,6 +126,7 @@ func BackupDotfilesSecrets(opts DotfilesSecretsOptions) error {
 		}
 	}
 
+	updateSpinner(sp, "Backup complete")
 	log.Success("Backup complete")
 	return nil
 }
@@ -125,6 +136,12 @@ func RestoreDotfilesSecrets(opts DotfilesSecretsOptions) error {
 	if err := ensureBWSAvailable(); err != nil {
 		return err
 	}
+	if err := ensureBWSTokenConfigured(); err != nil {
+		return err
+	}
+
+	sp := maybeStartSpinner(opts.UseSpinner, "Preparing dotfiles secrets restore...")
+	defer stopSpinner(sp)
 
 	manifest, err := LoadDotfilesSecretsManifest(opts.ManifestPath)
 	if err != nil {
@@ -137,12 +154,14 @@ func RestoreDotfilesSecrets(opts DotfilesSecretsOptions) error {
 	}
 
 	rootPath := resolveDotfilesSecretsRoot(opts.RootPath, opts.ManifestPath)
+	updateSpinner(sp, "Loading secrets from Bitwarden Secrets Manager...")
 	secretsByKey, err := listBWSSecretsByKey(projectID)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range manifest.Entries {
+		updateSpinner(sp, fmt.Sprintf("Restoring %s...", entry.RelativeFile))
 		targetFile := resolveDotfilesSecretsFile(rootPath, entry.RelativeFile)
 		exampleFile := targetFile + ".example"
 
@@ -154,6 +173,7 @@ func RestoreDotfilesSecrets(opts DotfilesSecretsOptions) error {
 
 		replacements := make(map[string]string, len(entry.Keys))
 		for _, key := range entry.Keys {
+			updateSpinner(sp, fmt.Sprintf("Restoring %s/%s...", entry.Prefix, key))
 			secretName := entry.Prefix + "/" + key
 			secret, exists := secretsByKey[secretName]
 			if !exists || strings.TrimSpace(secret.Value) == "" {
@@ -180,7 +200,70 @@ func RestoreDotfilesSecrets(opts DotfilesSecretsOptions) error {
 		}
 	}
 
+	updateSpinner(sp, "Restore complete")
 	log.Success("Restore complete")
+	return nil
+}
+
+// DoctorDotfilesSecrets validates manifest-driven secret mappings and templates.
+func DoctorDotfilesSecrets(opts DotfilesSecretsOptions) error {
+	if err := ensureBWSAvailable(); err != nil {
+		return err
+	}
+	if err := ensureBWSTokenConfigured(); err != nil {
+		return err
+	}
+
+	sp := maybeStartSpinner(opts.UseSpinner, "Running dotfiles secrets doctor...")
+	defer stopSpinner(sp)
+
+	manifest, err := LoadDotfilesSecretsManifest(opts.ManifestPath)
+	if err != nil {
+		return err
+	}
+
+	projectID, err := resolveDotfilesSecretsProjectID(opts.ProjectID, manifest.ProjectID)
+	if err != nil {
+		return err
+	}
+
+	rootPath := resolveDotfilesSecretsRoot(opts.RootPath, opts.ManifestPath)
+	updateSpinner(sp, "Loading secrets from Bitwarden Secrets Manager...")
+	secretsByKey, err := listBWSSecretsByKey(projectID)
+	if err != nil {
+		return err
+	}
+
+	issues := []string{}
+	checked := 0
+	for _, entry := range manifest.Entries {
+		updateSpinner(sp, fmt.Sprintf("Checking %s...", entry.RelativeFile))
+		targetFile := resolveDotfilesSecretsFile(rootPath, entry.RelativeFile)
+		exampleFile := targetFile + ".example"
+		if _, err := os.Stat(exampleFile); err != nil {
+			issues = append(issues, fmt.Sprintf("missing template: %s", exampleFile))
+		}
+
+		for _, key := range entry.Keys {
+			checked++
+			secretName := entry.Prefix + "/" + key
+			secret, exists := secretsByKey[secretName]
+			if !exists || strings.TrimSpace(secret.Value) == "" {
+				issues = append(issues, fmt.Sprintf("missing secret: %s", secretName))
+			}
+		}
+	}
+
+	if len(issues) > 0 {
+		updateSpinner(sp, "Doctor found issues")
+		for _, issue := range issues {
+			log.Error(issue)
+		}
+		return fmt.Errorf("dotfiles secrets doctor found %d issue(s)", len(issues))
+	}
+
+	updateSpinner(sp, "Doctor checks passed")
+	log.Success("Dotfiles secrets doctor passed (%d managed keys checked)", checked)
 	return nil
 }
 
@@ -249,6 +332,13 @@ func ensureBWSAvailable() error {
 	return nil
 }
 
+func ensureBWSTokenConfigured() error {
+	if strings.TrimSpace(os.Getenv("BWS_ACCESS_TOKEN")) == "" {
+		return errors.New("BWS_ACCESS_TOKEN is not set; export your Bitwarden Secrets Manager access token first")
+	}
+	return nil
+}
+
 func resolveDotfilesSecretsProjectID(override, manifestProjectID string) (string, error) {
 	if strings.TrimSpace(override) != "" {
 		return strings.TrimSpace(override), nil
@@ -259,7 +349,9 @@ func resolveDotfilesSecretsProjectID(override, manifestProjectID string) (string
 	if strings.TrimSpace(manifestProjectID) != "" {
 		return strings.TrimSpace(manifestProjectID), nil
 	}
-	return "", errors.New("no Bitwarden Secrets Manager project ID configured; use --project-id, set BWS_PROJECT_ID, or add '# Project UUID:' to the manifest")
+	return "", errors.New(
+		"no Bitwarden Secrets Manager project ID configured; use --project-id, set BWS_PROJECT_ID, or add '# Project UUID:' to the manifest",
+	)
 }
 
 func resolveDotfilesSecretsRoot(rootPath, manifestPath string) string {
@@ -409,7 +501,8 @@ func defaultBWSInvoke(args ...string) ([]byte, error) {
 
 func isBWSRateLimit(output []byte) bool {
 	message := string(output)
-	return strings.Contains(message, "429 Too Many Requests") || strings.Contains(message, "Slow down! Too many requests")
+	return strings.Contains(message, "429 Too Many Requests") ||
+		strings.Contains(message, "Slow down! Too many requests")
 }
 
 func parseBWSRateLimitDelay(output []byte) time.Duration {
@@ -421,4 +514,25 @@ func parseBWSRateLimitDelay(output []byte) time.Duration {
 		}
 	}
 	return time.Second
+}
+
+func maybeStartSpinner(enabled bool, msg string) *Spinner {
+	if !enabled {
+		return nil
+	}
+	sp := NewSpinner(msg)
+	sp.Start()
+	return sp
+}
+
+func updateSpinner(sp *Spinner, msg string) {
+	if sp != nil {
+		sp.UpdateMessage(msg)
+	}
+}
+
+func stopSpinner(sp *Spinner) {
+	if sp != nil {
+		sp.Stop()
+	}
 }
