@@ -8,15 +8,25 @@ import (
 	"strings"
 
 	"github.com/eng618/eng/internal/utils/log"
+	"golang.org/x/term"
 )
 
 // BitwardenItem represents a Bitwarden vault item.
 type BitwardenItem struct {
 	ID     string           `json:"id"`
 	Name   string           `json:"name"`
+	Type   int              `json:"type,omitempty"`
 	Fields []BitwardenField `json:"fields,omitempty"`
 	Login  *BitwardenLogin  `json:"login,omitempty"`
 	Notes  string           `json:"notes,omitempty"`
+	SSHKey *BitwardenSSHKey `json:"sshKey,omitempty"`
+}
+
+// BitwardenSSHKey represents native SSH key payloads in Bitwarden items.
+type BitwardenSSHKey struct {
+	PrivateKey  string `json:"privateKey,omitempty"`
+	PublicKey   string `json:"publicKey,omitempty"`
+	Fingerprint string `json:"fingerprint,omitempty"`
 }
 
 // BitwardenField represents a custom field in a Bitwarden item.
@@ -96,26 +106,90 @@ func EnsureBitwardenSession() (string, error) {
 		if err := login.Run(); err != nil {
 			return "", fmt.Errorf("bitwarden login failed: %w", err)
 		}
-		// fallthrough to unlock
+
+		// Refresh status after login.
+		cmd = exec.Command("bw", "status")
+		out, err = cmd.Output()
+		if err != nil {
+			return "", fmt.Errorf("bitwarden status failed after login: %w", err)
+		}
+		if err := json.Unmarshal(out, &status); err != nil {
+			return "", fmt.Errorf("parse bitwarden status failed after login: %w", err)
+		}
+
+		if status.Status == "unlocked" {
+			session := os.Getenv("BW_SESSION")
+			if session != "" {
+				return session, nil
+			}
+		}
+
+		if status.Status != "locked" {
+			return "", fmt.Errorf("unexpected bitwarden status after login: %s", status.Status)
+		}
+
 		fallthrough
 	case "locked":
-		log.Info("Unlocking Bitwarden vault (enter master password)")
-		unlock := exec.Command("bw", "unlock", "--raw")
-		unlock.Stdin = os.Stdin
-		tokenBytes, err := unlock.Output()
+		token, err := unlockBitwardenVault()
 		if err != nil {
-			return "", fmt.Errorf("bitwarden unlock failed: %w", err)
+			return "", err
 		}
-		token := strings.TrimSpace(string(tokenBytes))
-		if token == "" {
-			return "", fmt.Errorf("empty BW_SESSION returned from unlock")
+		if err := os.Setenv("BW_SESSION", token); err != nil {
+			return "", fmt.Errorf("failed to set BW_SESSION: %w", err)
 		}
 		return token, nil
 	case "unlocked":
-		return os.Getenv("BW_SESSION"), nil
+		session := os.Getenv("BW_SESSION")
+		if session != "" {
+			return session, nil
+		}
+
+		// If unlocked without BW_SESSION exported in this process, get a fresh session token.
+		token, err := unlockBitwardenVault()
+		if err != nil {
+			return "", err
+		}
+		if err := os.Setenv("BW_SESSION", token); err != nil {
+			return "", fmt.Errorf("failed to set BW_SESSION: %w", err)
+		}
+		return token, nil
 	default:
 		return "", fmt.Errorf("unknown bitwarden status: %s", status.Status)
 	}
+}
+
+func unlockBitwardenVault() (string, error) {
+	log.Info("Unlocking Bitwarden vault (enter master password)")
+
+	passwordEnv := "BW_MASTER_PASSWORD_ENG"
+	masterPassword := os.Getenv(passwordEnv)
+	if masterPassword == "" {
+		fmt.Fprint(os.Stderr, "Bitwarden master password: ")
+		pw, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(os.Stderr)
+		if err != nil {
+			return "", fmt.Errorf("failed to read bitwarden master password: %w", err)
+		}
+		masterPassword = strings.TrimSpace(string(pw))
+		if masterPassword == "" {
+			return "", fmt.Errorf("empty bitwarden master password")
+		}
+	}
+
+	unlock := exec.Command("bw", "unlock", "--raw", "--passwordenv", passwordEnv)
+	unlock.Env = append(os.Environ(), passwordEnv+"="+masterPassword)
+	unlock.Stderr = log.ErrorWriter()
+	tokenBytes, err := unlock.Output()
+	if err != nil {
+		return "", fmt.Errorf("bitwarden unlock failed: %w", err)
+	}
+
+	token := strings.TrimSpace(string(tokenBytes))
+	if token == "" {
+		return "", fmt.Errorf("empty BW_SESSION returned from unlock")
+	}
+
+	return token, nil
 }
 
 // SaveOrUpdateBitwardenSecret saves a secret value into Bitwarden under the given item name.
@@ -188,7 +262,13 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 
 // GetBitwardenItem retrieves an item from Bitwarden vault by name.
 func GetBitwardenItem(name string) (*BitwardenItem, error) {
+	sess, err := EnsureBitwardenSession()
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := exec.Command("bw", "get", "item", name)
+	cmd.Env = append(os.Environ(), "BW_SESSION="+sess)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get item '%s' from Bitwarden: %w", name, err)
@@ -204,7 +284,13 @@ func GetBitwardenItem(name string) (*BitwardenItem, error) {
 
 // ListBitwardenItems returns all items in the vault (filtered by type if specified).
 func ListBitwardenItems() ([]BitwardenItem, error) {
+	sess, err := EnsureBitwardenSession()
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := exec.Command("bw", "list", "items")
+	cmd.Env = append(os.Environ(), "BW_SESSION="+sess)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list Bitwarden items: %w", err)
@@ -227,11 +313,17 @@ func FindSSHKeysInVault() ([]BitwardenItem, error) {
 
 	var sshKeys []BitwardenItem
 	for _, item := range items {
-		// Look for items with "ssh" or "SSH" in the name
-		if strings.Contains(strings.ToLower(item.Name), "ssh") {
-			// Check if it contains SSH key data
-			if hasSSHKeyData(&item) {
-				sshKeys = append(sshKeys, item)
+		name := strings.ToLower(item.Name)
+		if strings.Contains(name, "ssh") || strings.Contains(name, "github") || item.Type == 5 {
+			// Fetch full item details because `bw list items` may omit sensitive fields.
+			fullItem, getErr := GetBitwardenItem(item.ID)
+			if getErr != nil {
+				log.Verbose(true, "Failed to load Bitwarden item %s: %v", item.ID, getErr)
+				continue
+			}
+
+			if hasSSHKeyData(fullItem) {
+				sshKeys = append(sshKeys, *fullItem)
 			}
 		}
 	}
@@ -241,6 +333,11 @@ func FindSSHKeysInVault() ([]BitwardenItem, error) {
 
 // hasSSHKeyData checks if a Bitwarden item contains SSH key data.
 func hasSSHKeyData(item *BitwardenItem) bool {
+	// Native SSH key type payload.
+	if item.SSHKey != nil && strings.TrimSpace(item.SSHKey.PrivateKey) != "" {
+		return true
+	}
+
 	// Check notes for SSH key format
 	if strings.Contains(item.Notes, "-----BEGIN") && strings.Contains(item.Notes, "-----END") {
 		return true
@@ -268,6 +365,10 @@ func hasSSHKeyData(item *BitwardenItem) bool {
 
 // ExtractSSHKeyFromItem extracts SSH private key from a Bitwarden item.
 func ExtractSSHKeyFromItem(item *BitwardenItem) (string, error) {
+	if item.SSHKey != nil && strings.TrimSpace(item.SSHKey.PrivateKey) != "" {
+		return item.SSHKey.PrivateKey, nil
+	}
+
 	// First check notes
 	if strings.Contains(item.Notes, "-----BEGIN") && strings.Contains(item.Notes, "-----END") {
 		return item.Notes, nil

@@ -288,39 +288,48 @@ func setupSSH(verbose bool) error {
 	// Check if SSH key already exists
 	if _, err := stat(sshKeyPath); err == nil {
 		log.Success("SSH key already exists at ~/.ssh/github")
-		return ensureSSHConfig(sshKeyPath)
+		if err := ensureSSHConfig(sshKeyPath); err != nil {
+			return err
+		}
+		return validateGitHubSSHAuth(sshKeyPath, verbose)
 	}
 
 	// Try to setup from Bitwarden first
 	log.Verbose(verbose, "Attempting to retrieve SSH key from Bitwarden...")
+	needsManualGitHubRegistration := false
+	sshConfigAlreadyEnsured := false
 	if err := setupSSHFromBitwarden(sshKeyPath, verbose); err != nil {
 		log.Warn("Could not retrieve SSH key from Bitwarden: %v", err)
 		log.Message("Generating new SSH key...")
 
 		// Generate new SSH key
-		if err := generateSSHKey(sshKeyPath, verbose); err != nil {
+		autoRegistered, err := generateSSHKey(sshKeyPath, verbose)
+		if err != nil {
 			return fmt.Errorf("failed to generate SSH key: %w", err)
 		}
+		needsManualGitHubRegistration = !autoRegistered
 
-		// Optionally store in Bitwarden
-		var storeInBitwarden bool
-		prompt := &survey.Confirm{
-			Message: "Would you like to store the new SSH key in Bitwarden for future use?",
-			Default: true,
-		}
-		if err := askOne(prompt, &storeInBitwarden); err != nil {
-			log.Warn("Could not prompt for Bitwarden storage: %v", err)
-		} else if storeInBitwarden {
-			if err := storeSSHKeyInBitwarden(sshKeyPath, verbose); err != nil {
-				log.Warn("Failed to store SSH key in Bitwarden: %v", err)
-			} else {
-				log.Success("SSH key stored in Bitwarden")
-			}
-		}
+		log.Message("")
+		log.Message("SSH key generated and configured successfully")
+		log.Message("Tip: Store this key in Bitwarden manually for backup, or manage it with later phases")
+	} else {
+		sshConfigAlreadyEnsured = true
 	}
 
 	// Ensure SSH config is set up
-	return ensureSSHConfig(sshKeyPath)
+	if !sshConfigAlreadyEnsured {
+		if err := ensureSSHConfig(sshKeyPath); err != nil {
+			return err
+		}
+	}
+
+	if needsManualGitHubRegistration {
+		if err := waitForManualGitHubKeyRegistration(sshKeyPath); err != nil {
+			return err
+		}
+	}
+
+	return validateGitHubSSHAuth(sshKeyPath, verbose)
 }
 
 // SetupSSHForGitHub exposes the SSH setup flow for other commands that need GitHub access.
@@ -329,13 +338,14 @@ func SetupSSHForGitHub(verbose bool) error {
 }
 
 // generateSSHKey generates a new SSH key pair.
-func generateSSHKey(sshKeyPath string, verbose bool) error {
+// Returns true when the key was automatically registered in GitHub.
+func generateSSHKey(sshKeyPath string, verbose bool) (bool, error) {
 	log.Start("Generating new SSH key pair...")
 
 	// Ensure .ssh directory exists
 	sshDir := filepath.Dir(sshKeyPath)
 	if err := os.MkdirAll(sshDir, 0o700); err != nil {
-		return fmt.Errorf("failed to create SSH directory: %w", err)
+		return false, fmt.Errorf("failed to create SSH directory: %w", err)
 	}
 	log.Verbose(verbose, "SSH directory ready at %s", sshDir)
 
@@ -347,54 +357,146 @@ func generateSSHKey(sshKeyPath string, verbose bool) error {
 
 	log.Verbose(verbose, "Running command: %s", strings.Join(cmd.Args, " "))
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to generate SSH key: %w", err)
+		return false, fmt.Errorf("failed to generate SSH key: %w", err)
 	}
 
 	log.Success("SSH key pair generated successfully")
+
+	// Attempt to add the SSH key to GitHub
+	if err := addSSHKeyToGitHub(sshKeyPath); err != nil {
+		log.Warn("Could not automatically add SSH key to GitHub: %v", err)
+		log.Message("")
+		log.Message("Please manually add your SSH key to GitHub:")
+		displaySSHKeyInstructions(sshKeyPath)
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func waitForManualGitHubKeyRegistration(sshKeyPath string) error {
+	log.Message("After adding the key to GitHub, press Enter to continue...")
+	_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
+
+	if _, err := os.Stat(sshKeyPath + ".pub"); err != nil {
+		return fmt.Errorf("could not find public key at %s.pub: %w", sshKeyPath, err)
+	}
+
 	return nil
 }
 
-// storeSSHKeyInBitwarden stores the SSH key in Bitwarden vault.
-func storeSSHKeyInBitwarden(sshKeyPath string, verbose bool) error {
-	// Check if Bitwarden is available
-	if _, err := utils.CheckBitwardenLoginStatus(); err != nil {
-		return fmt.Errorf("bitwarden not available: %w", err)
-	}
-
-	log.Verbose(verbose, "Storing SSH key in Bitwarden...")
-
-	// Read the private key
-	privateKey, err := os.ReadFile(sshKeyPath)
-	if err != nil {
-		return fmt.Errorf("failed to read SSH private key: %w", err)
-	}
-	log.Verbose(verbose, "Read SSH private key from %s", sshKeyPath)
-
-	// Read the public key
+// addSSHKeyToGitHub attempts to add the SSH key to GitHub using the gh CLI.
+func addSSHKeyToGitHub(sshKeyPath string) error {
 	publicKeyPath := sshKeyPath + ".pub"
-	publicKey, err := os.ReadFile(publicKeyPath)
+
+	// Check if gh CLI is available
+	_, err := lookPath("gh")
 	if err != nil {
-		return fmt.Errorf("failed to read SSH public key: %w", err)
+		return fmt.Errorf("gh CLI not found - manual setup required")
 	}
 
-	log.Start("Storing SSH key in Bitwarden...")
-
-	// Create Bitwarden item
-	itemName := "SSH Key - GitHub"
-	itemNotes := fmt.Sprintf("Private Key:\n%s\n\nPublic Key:\n%s", string(privateKey), string(publicKey))
-
-	// Use bw create to add the item
-	cmd := execCommand("bw", "create", "item", itemName,
-		"--notes", itemNotes,
-		"--organizationid", "", // Personal vault
-	)
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to create Bitwarden item: %w", err)
+	// Check if gh is authenticated
+	authCmd := execCommand("gh", "auth", "status")
+	if err := authCmd.Run(); err != nil {
+		return fmt.Errorf("gh CLI not authenticated")
 	}
 
-	log.Success("SSH key stored in Bitwarden")
+	// Read public key
+	pubKeyBytes, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read public key: %w", err)
+	}
+
+	// Add SSH key to GitHub using gh CLI
+	log.Start("Adding SSH key to GitHub...")
+	addCmd := execCommand("gh", "ssh-key", "add", publicKeyPath, "--title", "eng-github")
+	addCmd.Stdout = log.Writer()
+	addCmd.Stderr = log.ErrorWriter()
+
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("failed to add SSH key via gh CLI: %w", err)
+	}
+
+	log.Success("SSH key successfully added to GitHub")
+	_ = pubKeyBytes
 	return nil
+}
+
+// displaySSHKeyInstructions displays the SSH public key and GitHub setup instructions.
+func displaySSHKeyInstructions(sshKeyPath string) {
+	publicKeyPath := sshKeyPath + ".pub"
+
+	pubKeyBytes, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		log.Error("Could not read public key: %v", err)
+		return
+	}
+
+	log.Message("")
+	log.Message("Your SSH public key:")
+	log.Message("---------------------------------------------")
+	log.Message("%s", string(pubKeyBytes))
+	log.Message("---------------------------------------------")
+	log.Message("")
+	log.Message("Steps to add your SSH key to GitHub:")
+	log.Message("1. Copy your public key (shown above)")
+	log.Message("2. Go to: https://github.com/settings/keys")
+	log.Message("3. Click 'New SSH key' and paste your key")
+	log.Message("4. Give it a title (e.g., 'My Dev Machine')")
+	log.Message("5. Click 'Add SSH key'")
+	log.Message("")
+	log.Message("Alternatively, if you have gh CLI installed and authenticated:")
+	log.Message("  gh ssh-key add %s --title 'My Key Title'", publicKeyPath)
+	log.Message("")
+}
+
+// validateGitHubSSHAuth verifies GitHub SSH authentication using the configured key.
+func validateGitHubSSHAuth(sshKeyPath string, verbose bool) error {
+	log.Start("Validating GitHub SSH authentication...")
+	log.Verbose(verbose, "Validating with explicit key: %s", sshKeyPath)
+
+	showConfig := execCommand("ssh", "-G", "github.com")
+	configOut, configErr := showConfig.Output()
+	if configErr == nil {
+		for _, line := range strings.Split(string(configOut), "\n") {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "identityfile ") {
+				log.Verbose(verbose, "ssh -G github.com -> %s", trimmed)
+			}
+		}
+	} else {
+		log.Verbose(verbose, "Could not inspect ssh config with `ssh -G`: %v", configErr)
+	}
+
+	cmd := execCommand(
+		"ssh",
+		"-T",
+		"-o",
+		"BatchMode=yes",
+		"-o",
+		"IdentitiesOnly=yes",
+		"-o",
+		"StrictHostKeyChecking=accept-new",
+		"-i",
+		sshKeyPath,
+		"git@github.com",
+	)
+	output, err := cmd.CombinedOutput()
+	outStr := strings.TrimSpace(string(output))
+	if outStr != "" {
+		log.Verbose(verbose, "GitHub SSH validation output: %s", outStr)
+	}
+
+	if strings.Contains(outStr, "successfully authenticated") || strings.Contains(outStr, "Hi ") {
+		log.Success("GitHub SSH authentication validated with ~/.ssh/github")
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("github SSH validation failed with ~/.ssh/github: %w", err)
+	}
+
+	return fmt.Errorf("github SSH validation failed with ~/.ssh/github")
 }
 
 // ensureSSHConfig ensures SSH config is set up for GitHub.

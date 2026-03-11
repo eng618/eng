@@ -40,6 +40,16 @@ func TestHasSSHKeyData(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "Native SSH key payload",
+			item: BitwardenItem{
+				SSHKey: &BitwardenSSHKey{
+					PrivateKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nkey data\n-----END OPENSSH PRIVATE KEY-----",
+					PublicKey:  "ssh-ed25519 AAA...",
+				},
+			},
+			expected: true,
+		},
+		{
 			name: "No SSH key data",
 			item: BitwardenItem{
 				Name: "Regular Password",
@@ -69,6 +79,17 @@ func TestExtractSSHKeyFromItem(t *testing.T) {
 		expectedKey string
 		expectError bool
 	}{
+		{
+			name: "Extract from native SSH key payload",
+			item: BitwardenItem{
+				Name: "SSH Key",
+				SSHKey: &BitwardenSSHKey{
+					PrivateKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nkey data\n-----END OPENSSH PRIVATE KEY-----",
+				},
+			},
+			expectedKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nkey data\n-----END OPENSSH PRIVATE KEY-----",
+			expectError: false,
+		},
 		{
 			name: "Extract from notes",
 			item: BitwardenItem{

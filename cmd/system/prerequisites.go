@@ -215,15 +215,12 @@ func ensureGitHubSSH(verbose bool) error {
 
 // setupSSHFromBitwarden attempts to retrieve SSH keys from Bitwarden vault and set them up locally.
 func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
-	// Check if Bitwarden is logged in and unlocked
-	loggedIn, err := utils.CheckBitwardenLoginStatus()
+	// Ensure Bitwarden session is unlocked (prompts user interactively if needed)
+	session, err := utils.EnsureBitwardenSession()
 	if err != nil {
-		return fmt.Errorf("failed to check Bitwarden status: %w", err)
+		return fmt.Errorf("failed to access Bitwarden: %w", err)
 	}
-
-	if !loggedIn {
-		return utils.UnlockBitwardenVault()
-	}
+	_ = session // Session is set in environment by EnsureBitwardenSession
 
 	// Find SSH keys in vault
 	sshKeys, err := utils.FindSSHKeysInVault()
