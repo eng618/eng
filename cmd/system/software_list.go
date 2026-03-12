@@ -87,6 +87,30 @@ func getSoftwareList() []Software {
 
 		// Manual Installs
 		{
+			Name:        "Ente",
+			Description: "Encrypted Photo Backup",
+			Optional:    true,
+			URL:         "https://ente.io/download",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://ente.io/download") },
+		},
+		{
+			Name:        "Ente Auth",
+			Description: "Ente Authenticator (2FA)",
+			Optional:    true,
+			URL:         "https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4") },
+		},
+		{
+			Name:        "Ente Locker",
+			Description: "Ente Password Manager",
+			Optional:    true,
+			URL:         "https://ente.io/locker/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://ente.io/locker/") },
+		},
+		{
 			Name:        "Google Chrome",
 			Description: "Web Browser",
 			Optional:    true,
