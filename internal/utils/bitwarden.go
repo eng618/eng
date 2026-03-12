@@ -43,6 +43,19 @@ type BitwardenLogin struct {
 	Password string `json:"password,omitempty"`
 }
 
+// setEnvVar builds a new environment slice with the given key=value, replacing any existing entry.
+func setEnvVar(env []string, key, value string) []string {
+	// Remove existing key if present
+	var result []string
+	for _, e := range env {
+		if !strings.HasPrefix(e, key+"=") {
+			result = append(result, e)
+		}
+	}
+	// Add new key=value pair
+	return append(result, key+"="+value)
+}
+
 // CheckBitwardenLoginStatus checks if the user is logged into Bitwarden.
 func CheckBitwardenLoginStatus() (bool, error) {
 	cmd := exec.Command("bw", "status")
@@ -178,7 +191,8 @@ func unlockBitwardenVault() (string, error) {
 	}
 
 	unlock := exec.Command("bw", "unlock", "--raw", "--passwordenv", passwordEnv)
-	unlock.Env = append(os.Environ(), passwordEnv+"="+masterPassword)
+	unlock.Env = setEnvVar(os.Environ(), passwordEnv, masterPassword)
+	unlock.Stdout = log.Writer()
 	unlock.Stderr = log.ErrorWriter()
 	tokenBytes, err := unlock.Output()
 	if err != nil {
@@ -218,11 +232,24 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	env := append(os.Environ(), "BW_SESSION="+sess)
+
+	if err := VerifyBitwardenSession(sess); err != nil {
+		log.Verbose(true, "session verification failed: %v, forcing re-authentication", err)
+		if err := os.Unsetenv("BW_SESSION"); err != nil {
+			return "", fmt.Errorf("failed to clear invalid session: %w", err)
+		}
+		sess, err = EnsureBitwardenSession()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	env := setEnvVar(os.Environ(), "BW_SESSION", sess)
 
 	// Try to find existing item
 	find := exec.Command("bw", "list", "items", "--search", name)
 	find.Env = env
+	find.Stderr = log.ErrorWriter()
 	fb, err := find.Output()
 	if err != nil {
 		return "", fmt.Errorf("bitwarden list items failed: %w", err)
@@ -234,6 +261,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	enc := exec.Command("bw", "encode")
 	enc.Env = env
 	enc.Stdin = strings.NewReader(string(b))
+	enc.Stderr = log.ErrorWriter()
 	encoded, err := enc.Output()
 	if err != nil {
 		return "", fmt.Errorf("bitwarden encode failed: %w", err)
@@ -243,6 +271,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 		id := existing[0].ID
 		edit := exec.Command("bw", "edit", "item", id, string(encoded))
 		edit.Env = env
+		edit.Stderr = log.ErrorWriter()
 		if _, err := edit.Output(); err != nil {
 			return "", fmt.Errorf("bitwarden edit item failed: %w", err)
 		}
@@ -250,6 +279,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	}
 	create := exec.Command("bw", "create", "item", string(encoded))
 	create.Env = env
+	create.Stderr = log.ErrorWriter()
 	out, err := create.Output()
 	if err != nil {
 		return "", fmt.Errorf("bitwarden create item failed: %w", err)
@@ -261,6 +291,34 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	return created.ID, nil
 }
 
+// VerifyBitwardenSession checks if the current Bitwarden session is still valid.
+func VerifyBitwardenSession(sess string) error {
+	if sess == "" {
+		return fmt.Errorf("empty bitwarden session")
+	}
+
+	cmd := exec.Command("bw", "status")
+	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
+	cmd.Stderr = log.ErrorWriter()
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("bitwarden session verification failed: %w", err)
+	}
+
+	var status struct {
+		Status string `json:"status"`
+	}
+	if err := json.Unmarshal(output, &status); err != nil {
+		return fmt.Errorf("failed to parse bitwarden status: %w", err)
+	}
+
+	if status.Status != "unlocked" {
+		return fmt.Errorf("bitwarden vault is locked (status: %s)", status.Status)
+	}
+
+	return nil
+}
+
 // GetBitwardenItem retrieves an item from Bitwarden vault by name.
 func GetBitwardenItem(name string) (*BitwardenItem, error) {
 	sess, err := EnsureBitwardenSession()
@@ -268,8 +326,20 @@ func GetBitwardenItem(name string) (*BitwardenItem, error) {
 		return nil, err
 	}
 
+	if err := VerifyBitwardenSession(sess); err != nil {
+		log.Verbose(true, "session verification failed: %v, forcing re-authentication", err)
+		if err := os.Unsetenv("BW_SESSION"); err != nil {
+			return nil, fmt.Errorf("failed to clear invalid session: %w", err)
+		}
+		sess, err = EnsureBitwardenSession()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cmd := exec.Command("bw", "get", "item", name)
-	cmd.Env = append(os.Environ(), "BW_SESSION="+sess)
+	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
+	cmd.Stderr = log.ErrorWriter()
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get item '%s' from Bitwarden: %w", name, err)
@@ -290,8 +360,20 @@ func ListBitwardenItems() ([]BitwardenItem, error) {
 		return nil, err
 	}
 
+	if err := VerifyBitwardenSession(sess); err != nil {
+		log.Verbose(true, "session verification failed: %v, forcing re-authentication", err)
+		if err := os.Unsetenv("BW_SESSION"); err != nil {
+			return nil, fmt.Errorf("failed to clear invalid session: %w", err)
+		}
+		sess, err = EnsureBitwardenSession()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cmd := exec.Command("bw", "list", "items")
-	cmd.Env = append(os.Environ(), "BW_SESSION="+sess)
+	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
+	cmd.Stderr = log.ErrorWriter()
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list Bitwarden items: %w", err)

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -201,4 +202,151 @@ func TestSetupSoftware(t *testing.T) {
 
 	setupSoftware(false)
 	// If it doesn't panic and reaches here, basic flow works
+}
+
+func TestRunSetup_NonInteractive(t *testing.T) {
+	origPrereq := ensurePrerequisitesStep
+	origZsh := setupOhMyZshStep
+	origASDF := setupASDFStep
+	origDotfiles := setupDotfilesStep
+	origSoftware := setupSoftwareStep
+	defer func() {
+		ensurePrerequisitesStep = origPrereq
+		setupOhMyZshStep = origZsh
+		setupASDFStep = origASDF
+		setupDotfilesStep = origDotfiles
+		setupSoftwareStep = origSoftware
+	}()
+
+	var ran []string
+	ensurePrerequisitesStep = func(_ bool) error { ran = append(ran, "prerequisites"); return nil }
+	setupOhMyZshStep = func(_ bool) { ran = append(ran, "oh-my-zsh") }
+	setupASDFStep = func(_ bool) { ran = append(ran, "asdf") }
+	setupDotfilesStep = func(_ bool) error { ran = append(ran, "dotfiles"); return nil }
+	setupSoftwareStep = func(_ bool) { ran = append(ran, "software") }
+
+	cmd := &cobra.Command{}
+	cmd.Flags().BoolP("interactive", "i", false, "")
+
+	if err := runSetup(cmd, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := []string{"prerequisites", "oh-my-zsh", "asdf", "dotfiles", "software"}
+	if len(ran) != len(expected) {
+		t.Fatalf("expected steps %v, got %v", expected, ran)
+	}
+	for i, want := range expected {
+		if ran[i] != want {
+			t.Errorf("step %d: want %q, got %q", i, want, ran[i])
+		}
+	}
+}
+
+func TestRunSetup_Interactive_SkipStep(t *testing.T) {
+	origPrereq := ensurePrerequisitesStep
+	origZsh := setupOhMyZshStep
+	origASDF := setupASDFStep
+	origDotfiles := setupDotfilesStep
+	origSoftware := setupSoftwareStep
+	origAskOne := askOne
+	defer func() {
+		ensurePrerequisitesStep = origPrereq
+		setupOhMyZshStep = origZsh
+		setupASDFStep = origASDF
+		setupDotfilesStep = origDotfiles
+		setupSoftwareStep = origSoftware
+		askOne = origAskOne
+	}()
+
+	var ran []string
+	ensurePrerequisitesStep = func(_ bool) error { ran = append(ran, "prerequisites"); return nil }
+	// oh-my-zsh will be skipped below
+	setupOhMyZshStep = func(_ bool) { ran = append(ran, "oh-my-zsh") }
+	setupASDFStep = func(_ bool) { ran = append(ran, "asdf") }
+	setupDotfilesStep = func(_ bool) error { ran = append(ran, "dotfiles"); return nil }
+	setupSoftwareStep = func(_ bool) { ran = append(ran, "software") }
+
+	promptIdx := 0
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		resp := response.(*string)
+		if promptIdx == 1 { // second step = Oh My Zsh → skip it
+			*resp = setupActionSkip
+		} else {
+			*resp = setupActionContinue
+		}
+		promptIdx++
+		return nil
+	}
+
+	cmd := &cobra.Command{}
+	cmd.Flags().BoolP("interactive", "i", false, "")
+	if err := cmd.Flags().Set("interactive", "true"); err != nil {
+		t.Fatalf("could not set interactive flag: %v", err)
+	}
+
+	if err := runSetup(cmd, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, step := range ran {
+		if step == "oh-my-zsh" {
+			t.Error("oh-my-zsh step should have been skipped")
+		}
+	}
+
+	// All other steps should have run
+	for _, want := range []string{"prerequisites", "asdf", "dotfiles", "software", "gpg-permissions"} {
+		found := false
+		for _, got := range ran {
+			if got == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected step %q to run, but it did not", want)
+		}
+	}
+}
+
+func TestRunSetup_Interactive_ExitEarly(t *testing.T) {
+	origPrereq := ensurePrerequisitesStep
+	origZsh := setupOhMyZshStep
+	origAskOne := askOne
+	defer func() {
+		ensurePrerequisitesStep = origPrereq
+		setupOhMyZshStep = origZsh
+		askOne = origAskOne
+	}()
+
+	zshRan := false
+	ensurePrerequisitesStep = func(_ bool) error { return nil }
+	setupOhMyZshStep = func(_ bool) { zshRan = true }
+
+	promptIdx := 0
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		resp := response.(*string)
+		if promptIdx == 1 { // second step = Oh My Zsh → exit
+			*resp = setupActionExit
+		} else {
+			*resp = setupActionContinue
+		}
+		promptIdx++
+		return nil
+	}
+
+	cmd := &cobra.Command{}
+	cmd.Flags().BoolP("interactive", "i", false, "")
+	if err := cmd.Flags().Set("interactive", "true"); err != nil {
+		t.Fatalf("could not set interactive flag: %v", err)
+	}
+
+	if err := runSetup(cmd, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if zshRan {
+		t.Error("oh-my-zsh step should not have run after user chose exit")
+	}
 }

@@ -24,21 +24,36 @@ Running this command without subcommands will run all setup steps:
 - Oh My Zsh
 - ASDF plugins
 - Dotfiles installation
-- Dotfiles secrets restore (when configured)`,
+- Dotfiles secrets restore (when configured)
+- Software installation
+- GPG permissions fix`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		verbose := utils.IsVerbose(cmd)
-		if err := EnsurePrerequisites(verbose); err != nil {
-			log.Fatal("Prerequisites check failed: %v", err)
+		if err := runSetup(cmd, utils.IsVerbose(cmd)); err != nil {
+			log.Fatal("Setup failed: %v", err)
 		}
-
-		setupOhMyZsh(verbose)
-		setupASDF(verbose)
-		if err := setupDotfiles(verbose); err != nil {
-			log.Error("Dotfiles setup failed: %v", err)
-		}
-		setupSoftware(verbose)
 	},
 }
+
+var (
+	ensurePrerequisitesStep = EnsurePrerequisites
+	setupOhMyZshStep        = setupOhMyZsh
+	setupASDFStep           = setupASDF
+	setupDotfilesStep       = setupDotfiles
+	setupSoftwareStep       = setupSoftware
+	setupGPGPermissionsStep = setupGPGPermissions
+)
+
+type setupStep struct {
+	Name    string
+	Purpose string
+	Run     func() error
+}
+
+const (
+	setupActionContinue = "Continue"
+	setupActionSkip     = "Skip"
+	setupActionExit     = "Exit"
+)
 
 var SetupASDFCmd = &cobra.Command{
 	Use:   "asdf",
@@ -97,6 +112,135 @@ func init() {
 	SetupCmd.AddCommand(SetupDotfilesCmd)
 	SetupCmd.AddCommand(SetupOhMyZshCmd)
 	SetupCmd.AddCommand(SetupSSHCmd)
+	SetupCmd.Flags().BoolP("interactive", "i", false, "Prompt before each setup step with continue/skip/exit options")
+}
+
+func runSetup(cmd *cobra.Command, verbose bool) error {
+	interactive, err := cmd.Flags().GetBool("interactive")
+	if err != nil {
+		return fmt.Errorf("failed to read interactive flag: %w", err)
+	}
+
+	steps := []setupStep{
+		{
+			Name:    "Prerequisites",
+			Purpose: "Verify required tools are installed before setup runs.",
+			Run: func() error {
+				if err := ensurePrerequisitesStep(verbose); err != nil {
+					return fmt.Errorf("prerequisites check failed: %w", err)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "Oh My Zsh",
+			Purpose: "Install or verify Oh My Zsh for shell configuration.",
+			Run: func() error {
+				setupOhMyZshStep(verbose)
+				return nil
+			},
+		},
+		{
+			Name:    "ASDF Plugins",
+			Purpose: "Install ASDF plugins and tool versions from $HOME/.tool-versions.",
+			Run: func() error {
+				setupASDFStep(verbose)
+				return nil
+			},
+		},
+		{
+			Name:    "Dotfiles",
+			Purpose: "Install dotfiles and restore managed secrets when available.",
+			Run: func() error {
+				if err := setupDotfilesStep(verbose); err != nil {
+					log.Error("Dotfiles setup failed: %v", err)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "Software",
+			Purpose: "Install required software and open download links for optional apps.",
+			Run: func() error {
+				setupSoftwareStep(verbose)
+				return nil
+			},
+		},
+		{
+			Name:    "GPG Permissions",
+			Purpose: "Fix GPG directory permissions to prevent warnings.",
+			Run: func() error {
+				setupGPGPermissionsStep(verbose)
+				return nil
+			},
+		},
+	}
+
+	for _, step := range steps {
+		if interactive {
+			action, promptErr := promptSetupStepAction(step)
+			if promptErr != nil {
+				log.Info("Interactive prompt canceled; exiting setup.")
+				return nil
+			}
+
+			switch action {
+			case setupActionSkip:
+				log.Info("Skipping setup step: %s", step.Name)
+				continue
+			case setupActionExit:
+				log.Info("Exiting setup before step: %s", step.Name)
+				return nil
+			}
+		}
+
+		if err := step.Run(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func promptSetupStepAction(step setupStep) (string, error) {
+	selected := setupActionContinue
+	prompt := &survey.Select{
+		Message: fmt.Sprintf("Next step: %s\nPurpose: %s\nChoose an action:", step.Name, step.Purpose),
+		Options: []string{setupActionContinue, setupActionSkip, setupActionExit},
+		Default: setupActionContinue,
+	}
+
+	if err := askOne(prompt, &selected); err != nil {
+		return "", err
+	}
+
+	return selected, nil
+}
+
+func setupGPGPermissions(verbose bool) {
+	log.Verbose(verbose, "Checking GPG directory permissions...")
+
+	homeDir, err := userHomeDir()
+	if err != nil {
+		log.Error("Could not determine home directory: %v", err)
+		return
+	}
+
+	gpgDir := filepath.Join(homeDir, ".gnupg")
+	if _, err := stat(gpgDir); err != nil {
+		log.Verbose(verbose, "GPG directory does not exist, skipping permissions fix")
+		return
+	}
+
+	log.Start("Fixing GPG directory permissions...")
+	cmd := execCommand("chmod", "700", gpgDir)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+	if err := cmd.Run(); err != nil {
+		log.Error("Failed to fix GPG directory permissions: %v", err)
+	} else {
+		log.Success("GPG directory permissions fixed")
+	}
 }
 
 func setupASDF(verbose bool) {

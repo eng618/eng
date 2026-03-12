@@ -115,15 +115,15 @@ func getSoftwareList() []Software {
 			Install: func() error { return openURL("https://brave.com/download/") },
 		},
 		{
-			Name:        "iTerm2",
+			Name:        "iTerm",
 			Description: "Terminal Emulator",
 			Optional:    true,
-			URL:         "https://iterm2.com/",
+			URL:         "https://iterm2.com/downloads.html",
 			OS:          "darwin",
 			Check: func() bool {
 				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'").Run() == nil
 			},
-			Install: func() error { return openURL("https://iterm2.com/") },
+			Install: func() error { return openURL("https://iterm2.com/downloads.html") },
 		},
 		{
 			Name:        "Alfred",

@@ -195,11 +195,17 @@ System utilities for macOS and Linux, including developer setup automation.
 
 ### Setup Commands
 
-- `eng system setup` — Run all setup steps (Oh My Zsh, ASDF, dotfiles, and secrets restore when configured)
+- `eng system setup` — Run all setup steps (Oh My Zsh, ASDF, dotfiles, software installation, and secrets restore when configured)
 - `eng system setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
 - `eng system setup dotfiles` — Setup dotfiles (checks prerequisites, runs install, and restores secrets when configured)
 - `eng system setup oh-my-zsh` — Install Oh My Zsh
 - `eng system setup ssh` — Setup SSH keys for GitHub access
+
+#### Setup Flags
+
+| Flag                   | Description                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `-i`, `--interactive`  | Prompt before each step — choose to continue, skip, or exit cleanly            |
 
 ### System Utilities
 
