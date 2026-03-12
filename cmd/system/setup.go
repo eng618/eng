@@ -26,6 +26,7 @@ Running this command without subcommands will run all setup steps:
 - Dotfiles installation
 - Dotfiles secrets restore (when configured)
 - Software installation
+- GPG keys setup (interactive)
 - GPG permissions fix`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		if err := runSetup(cmd, utils.IsVerbose(cmd)); err != nil {
@@ -40,6 +41,7 @@ var (
 	setupASDFStep           = setupASDF
 	setupDotfilesStep       = setupDotfiles
 	setupSoftwareStep       = setupSoftware
+	setupGPGStep            = setupGPG
 	setupGPGPermissionsStep = setupGPGPermissions
 )
 
@@ -112,6 +114,7 @@ func init() {
 	SetupCmd.AddCommand(SetupDotfilesCmd)
 	SetupCmd.AddCommand(SetupOhMyZshCmd)
 	SetupCmd.AddCommand(SetupSSHCmd)
+	SetupCmd.AddCommand(SetupGPGCmd)
 	SetupCmd.Flags().BoolP("interactive", "i", false, "Prompt before each setup step with continue/skip/exit options")
 }
 
@@ -163,6 +166,16 @@ func runSetup(cmd *cobra.Command, verbose bool) error {
 			Purpose: "Install required software and open download links for optional apps.",
 			Run: func() error {
 				setupSoftwareStep(verbose)
+				return nil
+			},
+		},
+		{
+			Name:    "GPG Keys",
+			Purpose: "Setup GPG keys for signing commits and encryption (interactive).",
+			Run: func() error {
+				if err := setupGPGStep(verbose); err != nil {
+					log.Error("GPG setup failed: %v", err)
+				}
 				return nil
 			},
 		},

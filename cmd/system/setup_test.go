@@ -210,12 +210,14 @@ func TestRunSetup_NonInteractive(t *testing.T) {
 	origASDF := setupASDFStep
 	origDotfiles := setupDotfilesStep
 	origSoftware := setupSoftwareStep
+	origGPG := setupGPGStep
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
 		setupOhMyZshStep = origZsh
 		setupASDFStep = origASDF
 		setupDotfilesStep = origDotfiles
 		setupSoftwareStep = origSoftware
+		setupGPGStep = origGPG
 	}()
 
 	var ran []string
@@ -224,6 +226,7 @@ func TestRunSetup_NonInteractive(t *testing.T) {
 	setupASDFStep = func(_ bool) { ran = append(ran, "asdf") }
 	setupDotfilesStep = func(_ bool) error { ran = append(ran, "dotfiles"); return nil }
 	setupSoftwareStep = func(_ bool) { ran = append(ran, "software") }
+	setupGPGStep = func(_ bool) error { ran = append(ran, "gpg"); return nil }
 
 	cmd := &cobra.Command{}
 	cmd.Flags().BoolP("interactive", "i", false, "")
@@ -232,7 +235,7 @@ func TestRunSetup_NonInteractive(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	expected := []string{"prerequisites", "oh-my-zsh", "asdf", "dotfiles", "software"}
+	expected := []string{"prerequisites", "oh-my-zsh", "asdf", "dotfiles", "software", "gpg"}
 	if len(ran) != len(expected) {
 		t.Fatalf("expected steps %v, got %v", expected, ran)
 	}
@@ -249,6 +252,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	origASDF := setupASDFStep
 	origDotfiles := setupDotfilesStep
 	origSoftware := setupSoftwareStep
+	origGPG := setupGPGStep
 	origAskOne := askOne
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
@@ -256,6 +260,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 		setupASDFStep = origASDF
 		setupDotfilesStep = origDotfiles
 		setupSoftwareStep = origSoftware
+		setupGPGStep = origGPG
 		askOne = origAskOne
 	}()
 
@@ -266,6 +271,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	setupASDFStep = func(_ bool) { ran = append(ran, "asdf") }
 	setupDotfilesStep = func(_ bool) error { ran = append(ran, "dotfiles"); return nil }
 	setupSoftwareStep = func(_ bool) { ran = append(ran, "software") }
+	setupGPGStep = func(_ bool) error { ran = append(ran, "gpg"); return nil }
 
 	promptIdx := 0
 	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
@@ -296,7 +302,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	}
 
 	// All other steps should have run
-	for _, want := range []string{"prerequisites", "asdf", "dotfiles", "software", "gpg-permissions"} {
+	for _, want := range []string{"prerequisites", "asdf", "dotfiles", "software", "gpg"} {
 		found := false
 		for _, got := range ran {
 			if got == want {
