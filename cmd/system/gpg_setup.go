@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -189,6 +190,12 @@ func importGPGKeys(verbose bool) (string, error) {
 	keyID = strings.TrimSpace(keyID)
 	if keyID == "" {
 		return "", fmt.Errorf("key ID is required")
+	}
+
+	// Validate key ID format to prevent argument injection
+	validKeyID := regexp.MustCompile(`^[0-9A-Fa-f]{16}$`)
+	if !validKeyID.MatchString(keyID) {
+		return "", fmt.Errorf("invalid GPG key ID format: must be a 16-character hexadecimal string")
 	}
 
 	// Verify the key exists

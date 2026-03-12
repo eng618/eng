@@ -723,11 +723,18 @@ func ensureSSHConfig(sshKeyPath string) error {
 			log.Warn("Could not read existing SSH config: %v", err)
 		} else {
 			configStr := string(existingConfig)
-			if strings.Contains(configStr, "Host github.com") {
-				log.Verbose(true, "GitHub SSH config entry already exists")
-				return nil
+			// Parse line-by-line to avoid matching commented-out entries
+			for _, line := range strings.Split(configStr, "\n") {
+				trimmed := strings.TrimSpace(line)
+				if !strings.HasPrefix(trimmed, "#") && strings.Contains(trimmed, "Host github.com") {
+					log.Verbose(true, "GitHub SSH config entry already exists")
+					return nil
+				}
 			}
-			// Append to existing config
+			// Append to existing config, ensuring content is separated by a blank line
+			if !strings.HasSuffix(configStr, "\n") {
+				configStr += "\n"
+			}
 			configContent = configStr + "\n" + configContent
 		}
 	}
