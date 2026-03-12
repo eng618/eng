@@ -1,5 +1,16 @@
 <a name="unreleased"></a>
 
+## [1.10.0](https://github.com/eng618/eng/compare/v1.9.0...v1.10.0) (2026-03-12)
+
+
+### Features
+
+* **dotfiles:** Improve modified files parsing to handle filenames with spaces ([8f60f1b](https://github.com/eng618/eng/commit/8f60f1b2086bf6b27138f5eee72c6fabb33deed8))
+* **gpg:** Add interactive GPG keys setup command and update documentation ([27866a0](https://github.com/eng618/eng/commit/27866a0ec685e928115c719241f9f028c729bb53))
+* **gpg:** Add validation for GPG key ID format to prevent argument injection ([5aab277](https://github.com/eng618/eng/commit/5aab277dc29fd64584123be06991712634efa78f))
+* **setup:** Enhance setup process with interactive prompts and additional steps ([405c0cb](https://github.com/eng618/eng/commit/405c0cb3543f09afd5869054a48b7173ec7d60bb))
+* **setup:** Enhance SSH config check to avoid matching commented entries ([5aab277](https://github.com/eng618/eng/commit/5aab277dc29fd64584123be06991712634efa78f))
+
 ## [1.9.0](https://github.com/eng618/eng/compare/v1.8.3...v1.9.0) (2026-03-11)
 
 
