@@ -122,11 +122,10 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 	scanner := bufio.NewScanner(&buf)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, " M ") || strings.HasPrefix(line, "M ") {
-			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				files = append(files, parts[1])
-			}
+		// Git status format: XY PATH
+		// X = staged status, Y = working tree status, followed by space and path starting at index 3
+		if len(line) > 3 && (strings.HasPrefix(line, " M ") || strings.HasPrefix(line, "M ")) {
+			files = append(files, line[3:])
 		}
 	}
 

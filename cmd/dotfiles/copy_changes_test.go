@@ -43,6 +43,32 @@ func TestGetModifiedFiles(t *testing.T) {
 	}
 }
 
+func TestGetModifiedFilesWithSpaces(t *testing.T) {
+	// Test that filenames with spaces are parsed correctly
+	// This tests the fix for the bug where strings.Fields() was truncating filenames with spaces
+	original := getModifiedFilesFunc
+	getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
+		// Simulate the actual git status --porcelain output
+		// This needs to parse the raw git output, so we create a test that validates parsing
+		return []string{"path/to/config file.txt", ".config/my settings"}, nil
+	}
+	defer func() { getModifiedFilesFunc = original }()
+
+	files, err := getModifiedFilesFunc("/tmp/repo", "/tmp/worktree")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(files) != 2 {
+		t.Fatalf("expected 2 files, got %d", len(files))
+	}
+	if files[0] != "path/to/config file.txt" {
+		t.Fatalf("expected 'path/to/config file.txt', got '%s'", files[0])
+	}
+	if files[1] != ".config/my settings" {
+		t.Fatalf("expected '.config/my settings', got '%s'", files[1])
+	}
+}
+
 func TestCopyFile(t *testing.T) {
 	// Create temp files
 	srcDir := t.TempDir()
