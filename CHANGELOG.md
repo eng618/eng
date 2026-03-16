@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.11.0](https://github.com/eng618/eng/compare/v1.10.0...v1.11.0) (2026-03-16)
+
+
+### Features
+
+* **software:** Add Ente software suite for encrypted photo backup and password management ([d9718d0](https://github.com/eng618/eng/commit/d9718d0bf08cc1f96ea47a9562c5c0fe42e137ea))
+* **software:** Add Obsidian and SafeInCloud to software list with installation checks ([1223cb3](https://github.com/eng618/eng/commit/1223cb35a9f7b34a9c9c83afb652a15bfb09b3ca))
+
 ## [1.10.0](https://github.com/eng618/eng/compare/v1.9.0...v1.10.0) (2026-03-12)
 
 
