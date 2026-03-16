@@ -1,6 +1,7 @@
 package system
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/eng618/eng/internal/utils/log"
@@ -264,6 +265,56 @@ func getSoftwareList() []Software {
 			URL:         "https://www.notion.so/desktop",
 			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://www.notion.so/desktop") },
+		},
+		{
+			Name:        "Obsidian",
+			Description: "Markdown notes & knowledge base",
+			Optional:    true,
+			URL:         "https://obsidian.md/download",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'").Run() == nil
+				}
+				_, err := lookPath("obsidian")
+				return err == nil
+			},
+			Install: func() error { return openURL("https://obsidian.md/download") },
+		},
+		{
+			Name:        "SafeInCloud",
+			Description: "Password manager",
+			Optional:    true,
+			URL:         "https://www.safe-in-cloud.com/en/download/",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					// macOS bundle identifier
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'").Run() == nil
+				}
+				return false
+			},
+			Install: func() error { return openURL("https://www.safe-in-cloud.com/en/download/") },
+		},
+		{
+			Name:        "Android Studio",
+			Description: "Android app development IDE",
+			Optional:    true,
+			URL:         "https://developer.android.com/studio",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					_, err := os.Stat("/Applications/Android Studio.app")
+					return err == nil
+				}
+				if runtime.GOOS == "linux" {
+					_, err := lookPath("studio")
+					if err == nil {
+						return true
+					}
+					_, err = lookPath("studio.sh")
+					return err == nil
+				}
+				return false
+			},
+			Install: func() error { return openURL("https://developer.android.com/studio") },
 		},
 		{
 			Name:        "NextDNS",
