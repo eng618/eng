@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.11.1](https://github.com/eng618/eng/compare/v1.11.0...v1.11.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* Echo install fix ([a7522e3](https://github.com/eng618/eng/commit/a7522e39d55a20ee29246836b753c958093fc256))
+
 ## [1.11.0](https://github.com/eng618/eng/compare/v1.10.0...v1.11.0) (2026-03-16)
 
 
