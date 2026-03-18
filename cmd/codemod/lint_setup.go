@@ -127,7 +127,9 @@ var LintSetupCmd = &cobra.Command{
 			return
 		}
 
-		checkRedundantDependencies()
+		if !echo {
+			checkRedundantDependencies()
+		}
 
 		log.Success("Linting, formatting, and pre-commit hooks are set up!")
 	},
@@ -215,7 +217,14 @@ func installLintDependencies(echo bool) error {
 	}
 
 	if echo {
-		baseDeps = append(baseDeps, "echo-eslint-config@latest")
+		baseDeps = append(baseDeps,
+			"echo-eslint-config@latest",
+			"@eslint/js@latest",
+			"eslint-plugin-prettier@latest",
+			"globals@latest",
+			"@typescript-eslint/eslint-plugin@latest",
+			"@typescript-eslint/parser@latest",
+		)
 	}
 
 	// Detect package manager: bun > yarn > npm
