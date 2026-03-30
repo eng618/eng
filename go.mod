@@ -6,11 +6,12 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/fatih/color v1.18.0
-	github.com/go-git/go-git/v5 v5.17.0
+	github.com/go-git/go-git/v5 v5.17.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vbauerster/mpb/v8 v8.12.0
+	golang.org/x/term v0.40.0
 )
 
 require (
@@ -54,7 +55,6 @@ require (
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
