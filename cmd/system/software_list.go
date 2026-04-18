@@ -273,7 +273,11 @@ func getSoftwareList() []Software {
 			URL:         "https://obsidian.md/download",
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'").Run() == nil
+					return execCommand(
+						"mdfind",
+						"kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'",
+					).Run() ==
+						nil
 				}
 				_, err := lookPath("obsidian")
 				return err == nil
@@ -288,7 +292,11 @@ func getSoftwareList() []Software {
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
 					// macOS bundle identifier
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'").Run() == nil
+					return execCommand(
+						"mdfind",
+						"kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'",
+					).Run() ==
+						nil
 				}
 				return false
 			},
