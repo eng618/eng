@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.11.2](https://github.com/eng618/eng/compare/v1.11.1...v1.11.2) (2026-05-03)
+
+
+### Miscellaneous
+
+* **deps:** Update Go and golangci-lint versions; bump dependencies ([7238052](https://github.com/eng618/eng/commit/7238052b70a5e9a4cdbf23b380bc2720be0314b0))
+
 ## [1.11.1](https://github.com/eng618/eng/compare/v1.11.0...v1.11.1) (2026-03-18)
 
 
