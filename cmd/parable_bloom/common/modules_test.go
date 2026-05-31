@@ -61,7 +61,7 @@ func TestLoadModules_Success(t *testing.T) {
 		]
 	}`
 
-	err := os.WriteFile(tempFile, []byte(validJSON), 0644)
+	err := os.WriteFile(tempFile, []byte(validJSON), 0o644)
 	if err != nil {
 		t.Fatalf("failed to write temp file: %v", err)
 	}
