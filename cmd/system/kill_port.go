@@ -172,7 +172,7 @@ var (
 	signal      string
 	filter      string
 
-lsofPortRe = regexp.MustCompile(":(\\d+)$")
+	lsofPortRe = regexp.MustCompile(`:(\d+)`)
 	ssPidRe    = regexp.MustCompile(`pid=(\d+)`)
 	ssCmdRe    = regexp.MustCompile(`\("([^"]+)"`)
 )

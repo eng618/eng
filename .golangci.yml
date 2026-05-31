@@ -86,7 +86,7 @@ issues: # Issues configuration
   uniq-by-line: true # Group issues by line to reduce noise
 
 severity: # Severity configuration
-  default: warning # Default severity for issues
+  default-severity: warning # Default severity for issues
   rules: # Custom severity rules per linter
     - linters: [gosec] # If enabled, treat security issues as errors
       severity: error
