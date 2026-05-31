@@ -14,13 +14,25 @@ func TestGridSizeForLevel(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			result := GridSizeForLevel(levelID, difficulty)
 			if result != expected {
-				t.Errorf("Expected deterministic result %v, got %v on iteration %d", expected, result, i)
+				t.Errorf(
+					"Expected deterministic result %v, got %v on iteration %d",
+					expected,
+					result,
+					i,
+				)
 			}
 		}
 	})
 
 	t.Run("Bounds checking across difficulties", func(t *testing.T) {
-		difficulties := []string{"Tutorial", "Seedling", "Sprout", "Nurturing", "Flourishing", "Transcendent"}
+		difficulties := []string{
+			"Tutorial",
+			"Seedling",
+			"Sprout",
+			"Nurturing",
+			"Flourishing",
+			"Transcendent",
+		}
 
 		for _, diff := range difficulties {
 			t.Run(diff, func(t *testing.T) {
@@ -32,10 +44,24 @@ func TestGridSizeForLevel(t *testing.T) {
 					width, height := result[0], result[1]
 
 					if width < ranges.MinW || width > ranges.MaxW {
-						t.Errorf("Difficulty %s, Level %d: Width %d is out of bounds [%d, %d]", diff, levelID, width, ranges.MinW, ranges.MaxW)
+						t.Errorf(
+							"Difficulty %s, Level %d: Width %d is out of bounds [%d, %d]",
+							diff,
+							levelID,
+							width,
+							ranges.MinW,
+							ranges.MaxW,
+						)
 					}
 					if height < ranges.MinH || height > ranges.MaxH {
-						t.Errorf("Difficulty %s, Level %d: Height %d is out of bounds [%d, %d]", diff, levelID, height, ranges.MinH, ranges.MaxH)
+						t.Errorf(
+							"Difficulty %s, Level %d: Height %d is out of bounds [%d, %d]",
+							diff,
+							levelID,
+							height,
+							ranges.MinH,
+							ranges.MaxH,
+						)
 					}
 				}
 			})
@@ -48,13 +74,25 @@ func TestGridSizeForLevel(t *testing.T) {
 		seedlingResult := GridSizeForLevel(levelID, "Seedling")
 
 		if unknownResult != seedlingResult {
-			t.Errorf("Expected unknown difficulty to fallback to Seedling. Got %v, expected %v", unknownResult, seedlingResult)
+			t.Errorf(
+				"Expected unknown difficulty to fallback to Seedling. Got %v, expected %v",
+				unknownResult,
+				seedlingResult,
+			)
 		}
 
 		ranges := GridSizeRanges["Seedling"]
 		width, height := unknownResult[0], unknownResult[1]
-		if width < ranges.MinW || width > ranges.MaxW || height < ranges.MinH || height > ranges.MaxH {
-			t.Errorf("Fallback result out of Seedling bounds. Result: %v, Bounds: [%d-%d, %d-%d]", unknownResult, ranges.MinW, ranges.MaxW, ranges.MinH, ranges.MaxH)
+		if width < ranges.MinW || width > ranges.MaxW || height < ranges.MinH ||
+			height > ranges.MaxH {
+			t.Errorf(
+				"Fallback result out of Seedling bounds. Result: %v, Bounds: [%d-%d, %d-%d]",
+				unknownResult,
+				ranges.MinW,
+				ranges.MaxW,
+				ranges.MinH,
+				ranges.MaxH,
+			)
 		}
 	})
 
@@ -63,7 +101,11 @@ func TestGridSizeForLevel(t *testing.T) {
 		negResult := GridSizeForLevel(-5, "Seedling")
 		zeroResult := GridSizeForLevel(0, "Seedling")
 		if negResult != zeroResult {
-			t.Errorf("Expected levelID < 0 to be clamped to 0. Got %v, expected %v", negResult, zeroResult)
+			t.Errorf(
+				"Expected levelID < 0 to be clamped to 0. Got %v, expected %v",
+				negResult,
+				zeroResult,
+			)
 		}
 
 		// Extremely large levelID should be clamped or wrapped without panicking
@@ -78,8 +120,16 @@ func TestGridSizeForLevel(t *testing.T) {
 		ranges := GridSizeRanges["Sprout"]
 		for _, result := range largeResults {
 			width, height := result[0], result[1]
-			if width < ranges.MinW || width > ranges.MaxW || height < ranges.MinH || height > ranges.MaxH {
-				t.Errorf("Edge case result out of bounds. Result: %v, Bounds: [%d-%d, %d-%d]", result, ranges.MinW, ranges.MaxW, ranges.MinH, ranges.MaxH)
+			if width < ranges.MinW || width > ranges.MaxW || height < ranges.MinH ||
+				height > ranges.MaxH {
+				t.Errorf(
+					"Edge case result out of bounds. Result: %v, Bounds: [%d-%d, %d-%d]",
+					result,
+					ranges.MinW,
+					ranges.MaxW,
+					ranges.MinH,
+					ranges.MaxH,
+				)
 			}
 		}
 	})
