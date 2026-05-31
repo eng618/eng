@@ -153,7 +153,7 @@ func BenchmarkTileGridVsLegacy_Seedling(b *testing.B) {
 	b.Run("tiling", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rng := rand.New(rand.NewSource(int64(i)))
-			_, _, _ = TileGridIntoVines(gridSize, spec, common.GetPresetProfile("Seedling"), cfg, rng)
+			_, _, _ = TileGridIntoVines(gridSize, spec, getPresetProfile("Seedling"), cfg, rng)
 		}
 	})
 	b.Run("legacy", func(b *testing.B) {
@@ -183,7 +183,7 @@ func BenchmarkTileGridVsLegacy_Nurturing(b *testing.B) {
 	b.Run("tiling", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rng := rand.New(rand.NewSource(int64(i)))
-			_, _, _ = TileGridIntoVines(gridSize, spec, common.GetPresetProfile("Nurturing"), cfg, rng)
+			_, _, _ = TileGridIntoVines(gridSize, spec, getPresetProfile("Nurturing"), cfg, rng)
 		}
 	})
 	b.Run("legacy", func(b *testing.B) {

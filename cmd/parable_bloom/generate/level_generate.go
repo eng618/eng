@@ -418,9 +418,9 @@ func generateVines(
 
 	// Try tiling-first approach for a limited number of attempts
 	spec := common.DifficultySpecs[difficulty]
-	cfg := common.GetGeneratorConfigForDifficulty(difficulty)
+	cfg := getGeneratorConfigForDifficulty(difficulty)
 	rng := rand.New(rand.NewSource(usedSeed))
-	profile := common.GetPresetProfile(difficulty)
+	profile := getPresetProfile(difficulty)
 	result := CreateLevelWithProfile(gridSize, spec, profile, cfg, usedSeed, false, rng)
 	if len(result.Vines) > 0 && result.GreedySolvable {
 		// Log generation telemetry for diagnostics
