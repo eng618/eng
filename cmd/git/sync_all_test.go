@@ -27,12 +27,17 @@ func TestSyncAllCmd_DryRun(t *testing.T) {
 	}
 
 	cmd := createTestCommandWithFlags(true)
-	if cmd.Flags().Lookup("dry-run") == nil { cmd.Flags().Bool("dry-run", true, "Perform a dry run without making actual changes") }
+	if cmd.Flags().Lookup("dry-run") == nil {
+		cmd.Flags().Bool("dry-run", true, "Perform a dry run without making actual changes")
+	}
 
 	// Mock SyncAllCmd to test internal functionality while providing it with valid flag structure
 	oldRun := SyncAllCmd.Run
 	SyncAllCmd.Run = func(c *cobra.Command, args []string) {
-		if err := cmd.Flags().Set("dry-run", "true"); err != nil { panic(err) }; oldRun(cmd, args)
+		if err := cmd.Flags().Set("dry-run", "true"); err != nil {
+			panic(err)
+		}
+		oldRun(cmd, args)
 	}
 	defer func() { SyncAllCmd.Run = oldRun }()
 
@@ -64,7 +69,9 @@ func TestSyncAllCmd_DirtyRepo(t *testing.T) {
 	}
 
 	cmd := createTestCommandWithFlags(true)
-	if cmd.Flags().Lookup("dry-run") == nil { cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes") }
+	if cmd.Flags().Lookup("dry-run") == nil {
+		cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	}
 
 	var stdout bytes.Buffer
 	cmd.SetOut(&stdout)
@@ -119,7 +126,9 @@ func TestSyncAllCmd_CleanRepo(t *testing.T) {
 	}
 
 	cmd := createTestCommandWithFlags(true)
-	if cmd.Flags().Lookup("dry-run") == nil { cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes") }
+	if cmd.Flags().Lookup("dry-run") == nil {
+		cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	}
 
 	var stdout bytes.Buffer
 	cmd.SetOut(&stdout)
@@ -180,7 +189,9 @@ func TestSyncAllCmd_NonDefaultBranch(t *testing.T) {
 	}
 
 	cmd := createTestCommandWithFlags(true)
-	if cmd.Flags().Lookup("dry-run") == nil { cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes") }
+	if cmd.Flags().Lookup("dry-run") == nil {
+		cmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	}
 
 	var stdout bytes.Buffer
 	cmd.SetOut(&stdout)
