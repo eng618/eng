@@ -48,9 +48,9 @@ func TestGenerateWithProfile_Tiling(t *testing.T) {
 func TestGenerateWithProfile_Telemetry(t *testing.T) {
 	gridSize := [2]int{6, 6}
 	spec := common.DifficultySpecs["Seedling"]
-	cfg := common.GetGeneratorConfigForDifficulty("Seedling")
+	cfg := getGeneratorConfigForDifficulty("Seedling")
 	rng := rand.New(rand.NewSource(42))
-	res := CreateLevelWithProfile(gridSize, spec, common.GetPresetProfile("Seedling"), cfg, 42, false, rng)
+	res := CreateLevelWithProfile(gridSize, spec, getPresetProfile("Seedling"), cfg, 42, false, rng)
 	if len(res.Vines) == 0 {
 		t.Fatalf("expected generation to succeed, got empty result: %+v", res)
 	}

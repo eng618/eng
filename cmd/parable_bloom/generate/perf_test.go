@@ -20,11 +20,11 @@ func TestPerf_Tiling_Seedling(t *testing.T) {
 	total := int64(0)
 	for i := 0; i < N; i++ {
 		spec := common.DifficultySpecs["Seedling"]
-		cfg := common.GetGeneratorConfigForDifficulty("Seedling")
+		cfg := getGeneratorConfigForDifficulty("Seedling")
 		res := CreateLevelWithProfile(
 			[2]int{8, 9},
 			spec,
-			common.GetPresetProfile("Seedling"),
+			getPresetProfile("Seedling"),
 			cfg,
 			int64(i+1),
 			false,
@@ -47,11 +47,11 @@ func TestPerf_Tiling_Nurturing(t *testing.T) {
 	total := int64(0)
 	for i := 0; i < N; i++ {
 		spec := common.DifficultySpecs["Nurturing"]
-		cfg := common.GetGeneratorConfigForDifficulty("Nurturing")
+		cfg := getGeneratorConfigForDifficulty("Nurturing")
 		res := CreateLevelWithProfile(
 			common.GridSizeForLevel(15, "Nurturing"),
 			spec,
-			common.GetPresetProfile("Nurturing"),
+			getPresetProfile("Nurturing"),
 			cfg,
 			int64(i+100),
 			false,
