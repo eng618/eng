@@ -80,7 +80,6 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			pi.PID = fields[1]
 			pi.User = fields[2]
 			name := fields[8] // NAME field
-
 			if match := lsofPortRe.FindStringSubmatch(name); len(match) > 1 {
 				pi.Port = match[1]
 			}
@@ -97,7 +96,6 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			}
 			process := fields[len(fields)-1]
 			if strings.Contains(process, "pid=") {
-
 				if match := ssPidRe.FindStringSubmatch(process); len(match) > 1 {
 					pi.PID = match[1]
 				}

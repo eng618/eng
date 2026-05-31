@@ -40,3 +40,29 @@ python  5678 user   24u  IPv4 0x1234567891      0t0  TCP *:8000 (LISTEN)`
 	assert.Len(t, ports, 1)
 	assert.Equal(t, "node", ports[0].Command)
 }
+
+func BenchmarkParsePortOutputLsof(b *testing.B) {
+	output := `COMMAND  PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    1234 user   23u  IPv4 0x1234567890      0t0  TCP *:3000 (LISTEN)
+python  5678 user   24u  IPv4 0x1234567891      0t0  TCP *:8000 (LISTEN)`
+	for i := 0; i < 100; i++ {
+		output += "\nnode    1234 user   23u  IPv4 0x1234567890      0t0  TCP *:3000 (LISTEN)"
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = parsePortOutput(output, "lsof", "")
+	}
+}
+
+func BenchmarkParsePortOutputSS(b *testing.B) {
+	output := `Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port Process
+tcp   LISTEN 0      128          0.0.0.0:22             0.0.0.0:*      users:(("sshd",pid=1003,fd=3))`
+	for i := 0; i < 100; i++ {
+		output += "\ntcp   LISTEN 0      128          0.0.0.0:22             0.0.0.0:*      users:((\"sshd\",pid=1003,fd=3))"
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = parsePortOutput(output, "ss", "")
+	}
+}
