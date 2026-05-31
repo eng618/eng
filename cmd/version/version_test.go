@@ -105,6 +105,7 @@ func TestParseVersions(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
+				return
 			}
 
 			if current == nil || latest == nil {
