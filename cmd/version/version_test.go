@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/eng618/eng/internal/utils/log"
 )
 

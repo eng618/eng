@@ -39,9 +39,7 @@ const (
 	brewPkgName     = "eng"           // Package name in Homebrew
 )
 
-var (
-	githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
-)
+var githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
 
 // Flag variable for the --update flag.
 var updateFlag bool
