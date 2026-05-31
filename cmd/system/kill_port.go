@@ -22,6 +22,7 @@ type PortInfo struct {
 	User    string
 }
 
+
 func findPortTool() string {
 	if _, err := exec.LookPath("lsof"); err == nil {
 		return "lsof"
@@ -170,7 +171,7 @@ var (
 	signal      string
 	filter      string
 
-	lsofPortRe = regexp.MustCompile(`:(\d+)`)
+	lsofPortRe = regexp.MustCompile(`:(\d+)$`)
 	ssPidRe    = regexp.MustCompile(`pid=(\d+)`)
 	ssCmdRe    = regexp.MustCompile(`\("([^"]+)"`)
 )
