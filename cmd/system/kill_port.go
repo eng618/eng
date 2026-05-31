@@ -80,8 +80,8 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			pi.PID = fields[1]
 			pi.User = fields[2]
 			name := fields[8] // NAME field
-			re := regexp.MustCompile(`:(\d+)`)
-			if match := re.FindStringSubmatch(name); len(match) > 1 {
+
+			if match := lsofPortRe.FindStringSubmatch(name); len(match) > 1 {
 				pi.Port = match[1]
 			}
 		case "ss":
@@ -97,12 +97,12 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			}
 			process := fields[len(fields)-1]
 			if strings.Contains(process, "pid=") {
-				re := regexp.MustCompile(`pid=(\d+)`)
-				if match := re.FindStringSubmatch(process); len(match) > 1 {
+
+				if match := ssPidRe.FindStringSubmatch(process); len(match) > 1 {
 					pi.PID = match[1]
 				}
-				reCmd := regexp.MustCompile(`\("([^"]+)"`)
-				if match := reCmd.FindStringSubmatch(process); len(match) > 1 {
+
+				if match := ssCmdRe.FindStringSubmatch(process); len(match) > 1 {
 					pi.Command = match[1]
 				}
 			}
@@ -171,6 +171,10 @@ var (
 	interactive bool
 	signal      string
 	filter      string
+
+	lsofPortRe = regexp.MustCompile(`:(\d+)`)
+	ssPidRe    = regexp.MustCompile(`pid=(\d+)`)
+	ssCmdRe    = regexp.MustCompile(`\("([^"]+)"`)
 )
 
 var KillPortCmd = &cobra.Command{
