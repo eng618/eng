@@ -37,7 +37,7 @@ func openURL(url string) error {
 	return execCommand(cmd, args...).Start()
 }
 
-func getSoftwareList() []Software {
+func getCoreSoftware() []Software {
 	return []Software{
 		// Critical / Core Items
 		// VS Code is needed before Brew Bundle for extensions
@@ -85,7 +85,11 @@ func getSoftwareList() []Software {
 				return nil
 			},
 		},
+	}
+}
 
+func getManualInstalls() []Software {
+	return []Software{
 		// Manual Installs
 		{
 			Name:        "Ente",
@@ -354,6 +358,11 @@ func getSoftwareList() []Software {
 			},
 			Install: func() error { return openURL("https://open.spotify.com/download") },
 		},
+	}
+}
+
+func getCLITools() []Software {
+	return []Software{
 		{
 			Name:        "Bitwarden CLI",
 			Description: "Password Manager CLI",
@@ -371,4 +380,12 @@ func getSoftwareList() []Software {
 			},
 		},
 	}
+}
+
+func getSoftwareList() []Software {
+	var list []Software
+	list = append(list, getCoreSoftware()...)
+	list = append(list, getManualInstalls()...)
+	list = append(list, getCLITools()...)
+	return list
 }
