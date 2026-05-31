@@ -654,12 +654,12 @@ func TestCheckoutBareRepo(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		repoPath   string
-		workTree   string
-		force      bool
-		all        bool
-		expectErr  bool
+		name      string
+		repoPath  string
+		workTree  string
+		force     bool
+		all       bool
+		expectErr bool
 	}{
 		{
 			name:      "Successful checkout with force",
