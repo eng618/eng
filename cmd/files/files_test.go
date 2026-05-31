@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/eng618/eng/cmd/files"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/eng618/eng/cmd/files"
 )
 
 func TestFilesCmd(t *testing.T) {
@@ -14,7 +15,11 @@ func TestFilesCmd(t *testing.T) {
 	assert.NotNil(t, cmd)
 	assert.Equal(t, "files", cmd.Use)
 	assert.Equal(t, "A command for managing files", cmd.Short)
-	assert.Equal(t, "This command will help manage various aspects of file operations on MacOS and Linux systems.", cmd.Long)
+	assert.Equal(
+		t,
+		"This command will help manage various aspects of file operations on MacOS and Linux systems.",
+		cmd.Long,
+	)
 
 	assert.True(t, cmd.HasSubCommands())
 
