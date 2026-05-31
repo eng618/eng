@@ -8,8 +8,8 @@ func TestDifficultyForLevel(t *testing.T) {
 	// A small set of modules to test all boundaries and special cases.
 	modules := []ModuleRange{
 		{ID: 1, Name: "Tutorial", Start: 1, End: 5},
-		{ID: 2, Name: "ModuleA", Start: 6, End: 20},    // 15 levels (remaining = 14)
-		{ID: 3, Name: "ModuleB", Start: 21, End: 25},   // 5 levels (remaining = 4)
+		{ID: 2, Name: "ModuleA", Start: 6, End: 20},      // 15 levels (remaining = 14)
+		{ID: 3, Name: "ModuleB", Start: 21, End: 25},     // 5 levels (remaining = 4)
 		{ID: 4, Name: "ModuleShort", Start: 26, End: 26}, // 1 level (edge case)
 	}
 
