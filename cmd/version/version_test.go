@@ -164,8 +164,8 @@ func TestCompareAndHandleUpdate(t *testing.T) {
 	log.SetWriters(&outBuf, &outBuf)
 	defer log.ResetWriters()
 
-	currentSemVer, _ := semver.NewVersion("1.0.0")
-	latestSemVer, _ := semver.NewVersion("1.1.0")
+	currentSemVer := semver.MustParse("1.0.0")
+	latestSemVer := semver.MustParse("1.1.0")
 
 	release := &githubReleaseInfo{
 		TagName: "v1.1.0",
