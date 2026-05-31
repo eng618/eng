@@ -172,6 +172,8 @@ func TestCompareAndHandleUpdate(t *testing.T) {
 		HTMLURL: "https://github.com/eng618/eng/releases/tag/v1.1.0",
 	}
 
+	origUpdateFlag := updateFlag
+	defer func() { updateFlag = origUpdateFlag }()
 	updateFlag = false // Ensure updateFlag is false initially
 
 	compareAndHandleUpdate(currentSemVer, latestSemVer, release, false)
