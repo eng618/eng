@@ -801,3 +801,48 @@ func TestConfigTypeValidation(t *testing.T) {
 		assert.False(t, storedValue, "Expected boolean false value to be stored correctly")
 	})
 }
+
+// TestDotfilesConfigHelpers tests the actual helper functions defined in dotfiles.go
+// by pre-populating the viper configuration to avoid interactive prompts.
+func TestDotfilesConfigHelpers(t *testing.T) {
+	// Setup test environment variables that might be expanded
+	oldHome := os.Getenv("HOME")
+	testHome := "/home/testuser"
+	os.Setenv("HOME", testHome)
+	defer os.Setenv("HOME", oldHome)
+
+	// Pre-populate viper config
+	viper.Reset()
+	expectedRepoURL := "https://github.com/eng618/dotfiles.git"
+	expectedBranch := "main"
+	expectedBareRepoPath := "$HOME/.test-cfg"
+	expectedWorktreePath := "$HOME/test-worktree"
+
+	viper.Set("dotfiles.repo_url", expectedRepoURL)
+	viper.Set("dotfiles.branch", expectedBranch)
+	viper.Set("dotfiles.bare_repo_path", expectedBareRepoPath)
+	viper.Set("dotfiles.worktree_path", expectedWorktreePath)
+
+	t.Run("RepoURL", func(t *testing.T) {
+		assert.Equal(t, expectedRepoURL, RepoURL(), "RepoURL() should return the pre-populated config value")
+	})
+
+	t.Run("Branch", func(t *testing.T) {
+		assert.Equal(t, expectedBranch, Branch(), "Branch() should return the pre-populated config value")
+	})
+
+	t.Run("BareRepoPath", func(t *testing.T) {
+		expandedBarePath := os.ExpandEnv(expectedBareRepoPath)
+		assert.Equal(t, expandedBarePath, BareRepoPath(), "BareRepoPath() should return the expanded config value")
+	})
+
+	t.Run("WorktreePath", func(t *testing.T) {
+		expandedWorktreePath := os.ExpandEnv(expectedWorktreePath)
+		assert.Equal(t, expandedWorktreePath, WorktreePath(), "WorktreePath() should return the expanded config value")
+	})
+
+	t.Run("DotfilesRepo", func(t *testing.T) {
+		expandedBarePath := os.ExpandEnv(expectedBareRepoPath)
+		assert.Equal(t, expandedBarePath, DotfilesRepo(), "DotfilesRepo() should return the same as BareRepoPath()")
+	})
+}
