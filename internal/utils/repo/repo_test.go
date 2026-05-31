@@ -611,3 +611,106 @@ func TestBranchExists_Comprehensive(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckoutBareRepo(t *testing.T) {
+	// Create a normal repository first
+	normalRepoDir := setupTestRepo(t, "main")
+	defer os.RemoveAll(normalRepoDir)
+
+	// Add another file to the normal repo to have something to checkout
+	testFile := filepath.Join(normalRepoDir, "additional.txt")
+	if err := os.WriteFile(testFile, []byte("additional content"), 0o644); err != nil {
+		t.Fatalf("Failed to create additional file: %v", err)
+	}
+
+	cmd := exec.Command("git", "add", "additional.txt")
+	cmd.Dir = normalRepoDir
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("Failed to add additional file: %v", err)
+	}
+
+	cmd = exec.Command("git", "commit", "-m", "Add additional file")
+	cmd.Dir = normalRepoDir
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("Failed to commit additional file: %v", err)
+	}
+
+	// Create a bare clone of the normal repository
+	tmpDir, err := os.MkdirTemp("", "bare-repo-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir for bare repo: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	bareRepoDir := filepath.Join(tmpDir, "bare.git")
+	cmd = exec.Command("git", "clone", "--bare", normalRepoDir, bareRepoDir)
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("Failed to create bare clone: %v", err)
+	}
+
+	workTreeDir := filepath.Join(tmpDir, "worktree")
+	if err := os.MkdirAll(workTreeDir, 0o755); err != nil {
+		t.Fatalf("Failed to create worktree dir: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		repoPath   string
+		workTree   string
+		force      bool
+		all        bool
+		expectErr  bool
+	}{
+		{
+			name:      "Successful checkout with force",
+			repoPath:  bareRepoDir,
+			workTree:  workTreeDir,
+			force:     true,
+			all:       false,
+			expectErr: false,
+		},
+		{
+			name:      "Successful checkout with all and force",
+			repoPath:  bareRepoDir,
+			workTree:  workTreeDir,
+			force:     true,
+			all:       true,
+			expectErr: false,
+		},
+		{
+			name:      "Error path - invalid repo path",
+			repoPath:  "/path/does/not/exist/git",
+			workTree:  workTreeDir,
+			force:     false,
+			all:       false,
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := CheckoutBareRepo(tt.repoPath, tt.workTree, tt.force, tt.all)
+
+			if tt.expectErr {
+				if err == nil {
+					t.Errorf("CheckoutBareRepo() expected error but got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("CheckoutBareRepo() unexpected error: %v", err)
+				}
+
+				// Verify that files were checked out
+				if tt.all {
+					files := []string{"test.txt", "additional.txt"}
+					for _, f := range files {
+						path := filepath.Join(tt.workTree, f)
+						if _, err := os.Stat(path); os.IsNotExist(err) {
+							t.Errorf("Expected file %s to be checked out, but it wasn't", f)
+						}
+					}
+				}
+			}
+		})
+	}
+}
