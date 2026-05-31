@@ -383,9 +383,13 @@ func getCLITools() []Software {
 }
 
 func getSoftwareList() []Software {
-	var list []Software
-	list = append(list, getCoreSoftware()...)
-	list = append(list, getManualInstalls()...)
-	list = append(list, getCLITools()...)
+	core := getCoreSoftware()
+	manual := getManualInstalls()
+	cli := getCLITools()
+
+	list := make([]Software, 0, len(core)+len(manual)+len(cli))
+	list = append(list, core...)
+	list = append(list, manual...)
+	list = append(list, cli...)
 	return list
 }
