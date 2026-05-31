@@ -59,6 +59,12 @@ func listPorts(filter string) ([]PortInfo, error) {
 	return parsePortOutput(string(outputBytes), tool, filter)
 }
 
+var (
+	lsofPortRegex = regexp.MustCompile(`:(\d+)`)
+	ssPidRegex    = regexp.MustCompile(`pid=(\d+)`)
+	ssCmdRegex    = regexp.MustCompile(`\("([^"]+)"`)
+)
+
 func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 	var ports []PortInfo
 	lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -80,8 +86,7 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			pi.PID = fields[1]
 			pi.User = fields[2]
 			name := fields[8] // NAME field
-			re := regexp.MustCompile(`:(\d+)`)
-			if match := re.FindStringSubmatch(name); len(match) > 1 {
+			if match := lsofPortRegex.FindStringSubmatch(name); len(match) > 1 {
 				pi.Port = match[1]
 			}
 		case "ss":
@@ -97,12 +102,10 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			}
 			process := fields[len(fields)-1]
 			if strings.Contains(process, "pid=") {
-				re := regexp.MustCompile(`pid=(\d+)`)
-				if match := re.FindStringSubmatch(process); len(match) > 1 {
+				if match := ssPidRegex.FindStringSubmatch(process); len(match) > 1 {
 					pi.PID = match[1]
 				}
-				reCmd := regexp.MustCompile(`\("([^"]+)"`)
-				if match := reCmd.FindStringSubmatch(process); len(match) > 1 {
+				if match := ssCmdRegex.FindStringSubmatch(process); len(match) > 1 {
 					pi.Command = match[1]
 				}
 			}
