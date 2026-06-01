@@ -34,11 +34,12 @@ var (
 const (
 	githubRepoOwner = "eng618"
 	githubRepoName  = "eng"
-	githubAPIURL    = "https://api.github.com/repos/%s/%s/releases/latest"
 	requestTimeout  = 5 * time.Second // Timeout for the GitHub API request.
 	brewCmd         = "brew"          // Command for Homebrew
 	brewPkgName     = "eng"           // Package name in Homebrew
 )
+
+var githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
 
 // Flag variable for the --update flag.
 var updateFlag bool
