@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	configUtils "github.com/eng618/eng/internal/utils/config"
@@ -40,14 +41,17 @@ func TestSecretsCmd_Run(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Save original output and reset after
-	cmd := &cobra.Command{}
-	*cmd = *SecretsCmd
-
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
+	oldOut := SecretsCmd.OutOrStdout()
+	oldErr := SecretsCmd.ErrOrStderr()
+	SecretsCmd.SetOut(&buf)
+	SecretsCmd.SetErr(&buf)
+	defer func() {
+		SecretsCmd.SetOut(oldOut)
+		SecretsCmd.SetErr(oldErr)
+	}()
 
 	// Running without args should return the help error or show help
-	err := cmd.RunE(cmd, []string{})
+	err := SecretsCmd.RunE(SecretsCmd, []string{})
 
 	// Our RunE function returns cmd.Help() which should not error but prints help
 	assert.NoError(t, err)
