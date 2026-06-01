@@ -126,19 +126,6 @@ func growVines(
 	return vines, occupied, nil
 }
 
-// fillEmptyCells adds single-cell vines for any remaining empty cells.
-func fillEmptyCells(gridSize [2]int, vines []common.Vine, occupied map[string]bool) []common.Vine {
-	w := gridSize[0]
-	h := gridSize[1]
-
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
-			if !occupied[key] {
-				id := fmt.Sprintf("v%d", len(vines)+1)
-				v := common.Vine{ID: id, HeadDirection: "up", OrderedPath: []common.Point{{X: x, Y: y}}}
-				vines = append(vines, v)
-				occupied[key] = true
 			}
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	configUtils "github.com/eng618/eng/internal/utils/config"
@@ -55,6 +56,10 @@ func TestSecretsCmd_Run(t *testing.T) {
 
 func TestDotfilesSecretsOptions(t *testing.T) {
 	// Need to clear out global flags to test defaults and set values
+	// Set a dummy worktree path in Viper to prevent interactive prompts in CI
+	viper.Set("dotfiles.worktree_path", "/tmp/worktree")
+	defer viper.Set("dotfiles.worktree_path", "")
+
 	oldManifest := dotfilesSecretsManifestPath
 	oldRoot := dotfilesSecretsRootPath
 	oldProjectID := dotfilesSecretsProjectID

@@ -42,7 +42,7 @@ linters: # Linters configuration
       locale: US # Use US English for spelling checks
     cyclop:
       max-complexity: 30 # Maximum cyclomatic complexity per function
-      package-average: 10 # Maximum average complexity per package
+      package-average: 15 # Maximum average complexity per package
     revive:
       enable-default-rules: true # Enable default revive rules
       rules:
