@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	configUtils "github.com/eng618/eng/internal/utils/config"
@@ -41,17 +40,14 @@ func TestSecretsCmd_Run(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Save original output and reset after
-	oldOut := SecretsCmd.OutOrStdout()
-	oldErr := SecretsCmd.ErrOrStderr()
-	SecretsCmd.SetOut(&buf)
-	SecretsCmd.SetErr(&buf)
-	defer func() {
-		SecretsCmd.SetOut(oldOut)
-		SecretsCmd.SetErr(oldErr)
-	}()
+	cmd := &cobra.Command{}
+	*cmd = *SecretsCmd
+
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
 
 	// Running without args should return the help error or show help
-	err := SecretsCmd.RunE(SecretsCmd, []string{})
+	err := cmd.RunE(cmd, []string{})
 
 	// Our RunE function returns cmd.Help() which should not error but prints help
 	assert.NoError(t, err)
@@ -105,4 +101,13 @@ func TestDotfilesSecretsOptions(t *testing.T) {
 		// assert.True(t, opts.Verbose)
 		assert.True(t, opts.UseSpinner)
 	})
+}
+
+func TestSecretsCmd_Help(t *testing.T) {
+	var buf bytes.Buffer
+	cmd := &cobra.Command{}
+	*cmd = *SecretsCmd
+	cmd.SetOut(&buf)
+	err := cmd.Help()
+	assert.NoError(t, err)
 }
