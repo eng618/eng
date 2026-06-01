@@ -805,11 +805,7 @@ func TestConfigTypeValidation(t *testing.T) {
 // TestDotfilesConfigHelpers tests the actual helper functions defined in dotfiles.go
 // by pre-populating the viper configuration to avoid interactive prompts.
 func TestDotfilesConfigHelpers(t *testing.T) {
-	// Setup test environment variables that might be expanded
-	oldHome := os.Getenv("HOME")
-	testHome := "/home/testuser"
-	os.Setenv("HOME", testHome)
-	defer os.Setenv("HOME", oldHome)
+	t.Setenv("HOME", "/home/testuser")
 
 	// Pre-populate viper config
 	viper.Reset()
