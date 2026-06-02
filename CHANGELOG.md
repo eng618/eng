@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.12.0](https://github.com/eng618/eng/compare/v1.11.4...v1.12.0) (2026-06-02)
+
+
+### Features
+
+* Add native and web project bootstrapping commands to codemod CLI ([04e398b](https://github.com/eng618/eng/commit/04e398be0f196645b7424c3cdbc201719ff1d4d0))
+
+
+### Miscellaneous
+
+* Upgrade toolchain, apply code style improvements, and update dependencies ([befa78e](https://github.com/eng618/eng/commit/befa78e9c6fd153f11778b3f03f62b5e51257097))
+
 ## [1.11.4](https://github.com/eng618/eng/compare/v1.11.3...v1.11.4) (2026-05-27)
 
 
