@@ -23,6 +23,7 @@ func init() {
 	CodemodCmd.AddCommand(LintSetupCmd)
 	CodemodCmd.AddCommand(CopilotSetupCmd)
 	CodemodCmd.AddCommand(PrettierCmd)
-
+	CodemodCmd.AddCommand(NativeCmd)
+	CodemodCmd.AddCommand(WebCmd)
 	LintSetupCmd.Flags().BoolVarP(&echo, "echo", "e", false, "Use echo linting setup")
 }
