@@ -23,17 +23,29 @@ var NativeCmd = &cobra.Command{
 		}
 
 		fmt.Printf("🚀 Bootstrapping Native project: %s...\n", projectName)
-		
+
 		// Create Expo App
 		createCmd := execCommand("bunx", "create-expo-app@latest", projectName)
 		createCmd.Stdout = log.Writer()
 		createCmd.Stderr = log.ErrorWriter()
 		if err := createCmd.Run(); err != nil {
 			return fmt.Errorf("failed to create expo app: %w", err)
-		}	
+		}
 
 		log.Info("Installing gvtech-design Native dependencies...")
-		installCmd := execCommand("bun", "add", "nativewind@^4.2.2", "tailwindcss@^3.4.1", "react-native-reanimated@^4.3.1", "lucide-react-native", "@gv-tech/ui-native", "@gv-tech/ui-core", "@gv-tech/design-tokens", "clsx", "tailwind-merge")
+		installCmd := execCommand(
+			"bun",
+			"add",
+			"nativewind@^4.2.2",
+			"tailwindcss@^3.4.1",
+			"react-native-reanimated@^4.3.1",
+			"lucide-react-native",
+			"@gv-tech/ui-native",
+			"@gv-tech/ui-core",
+			"@gv-tech/design-tokens",
+			"clsx",
+			"tailwind-merge",
+		)
 		installCmd.Dir = targetDir
 		installCmd.Stdout = log.Writer()
 		installCmd.Stderr = log.ErrorWriter()
@@ -42,7 +54,7 @@ var NativeCmd = &cobra.Command{
 		}
 
 		log.Info("Configuring Tailwind & NativeWind...")
-		
+
 		tailwindConfig := `/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -57,7 +69,11 @@ module.exports = {
   plugins: [],
 };
 `
-		if err := os.WriteFile(filepath.Join(targetDir, "tailwind.config.js"), []byte(tailwindConfig), 0644); err != nil {
+		if err := os.WriteFile(
+			filepath.Join(targetDir, "tailwind.config.js"),
+			[]byte(tailwindConfig),
+			0o644,
+		); err != nil {
 			return fmt.Errorf("failed to write tailwind.config.js: %w", err)
 		}
 
@@ -74,7 +90,7 @@ module.exports = {
   };
 };
 `
-		if err := os.WriteFile(filepath.Join(targetDir, "babel.config.js"), []byte(babelConfig), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(targetDir, "babel.config.js"), []byte(babelConfig), 0o644); err != nil {
 			return fmt.Errorf("failed to write babel.config.js: %w", err)
 		}
 
@@ -94,11 +110,11 @@ export default function Index() {
 }
 `
 		appDir := filepath.Join(targetDir, "app")
-		if err := os.MkdirAll(appDir, 0755); err != nil {
+		if err := os.MkdirAll(appDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create app dir: %w", err)
 		}
-		
-		if err := os.WriteFile(filepath.Join(appDir, "index.tsx"), []byte(appIndex), 0644); err != nil {
+
+		if err := os.WriteFile(filepath.Join(appDir, "index.tsx"), []byte(appIndex), 0o644); err != nil {
 			return fmt.Errorf("failed to write app/index.tsx: %w", err)
 		}
 

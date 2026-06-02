@@ -23,7 +23,7 @@ var WebCmd = &cobra.Command{
 		}
 
 		log.Info("Bootstrapping Web project: %s...", projectName)
-		
+
 		// Create Vite App
 		createCmd := execCommand("bun", "create", "vite", projectName, "--template", "react-ts")
 		createCmd.Stdout = log.Writer()
@@ -33,7 +33,18 @@ var WebCmd = &cobra.Command{
 		}
 
 		log.Info("Installing gvtech-design Web dependencies...")
-		installCmd := execCommand("bun", "add", "tailwindcss", "@tailwindcss/vite", "@gv-tech/ui-web", "@gv-tech/ui-core", "@gv-tech/design-tokens", "clsx", "tailwind-merge", "lucide-react")
+		installCmd := execCommand(
+			"bun",
+			"add",
+			"tailwindcss",
+			"@tailwindcss/vite",
+			"@gv-tech/ui-web",
+			"@gv-tech/ui-core",
+			"@gv-tech/design-tokens",
+			"clsx",
+			"tailwind-merge",
+			"lucide-react",
+		)
 		installCmd.Dir = targetDir
 		installCmd.Stdout = log.Writer()
 		installCmd.Stderr = log.ErrorWriter()
@@ -42,7 +53,7 @@ var WebCmd = &cobra.Command{
 		}
 
 		log.Info("Configuring Tailwind...")
-		
+
 		viteConfig := `import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -55,7 +66,7 @@ export default defineConfig({
   ],
 })
 `
-		if err := os.WriteFile(filepath.Join(targetDir, "vite.config.ts"), []byte(viteConfig), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(targetDir, "vite.config.ts"), []byte(viteConfig), 0o644); err != nil {
 			return fmt.Errorf("failed to write vite.config.ts: %w", err)
 		}
 
@@ -71,7 +82,7 @@ export default defineConfig({
   }
 }
 `
-		if err := os.WriteFile(filepath.Join(targetDir, "src", "index.css"), []byte(indexCss), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(targetDir, "src", "index.css"), []byte(indexCss), 0o644); err != nil {
 			return fmt.Errorf("failed to write index.css: %w", err)
 		}
 
@@ -95,7 +106,7 @@ function App() {
 
 export default App
 `
-		if err := os.WriteFile(filepath.Join(targetDir, "src", "App.tsx"), []byte(appTsx), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(targetDir, "src", "App.tsx"), []byte(appTsx), 0o644); err != nil {
 			return fmt.Errorf("failed to write App.tsx: %w", err)
 		}
 
