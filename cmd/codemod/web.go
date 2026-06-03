@@ -36,8 +36,8 @@ var WebCmd = &cobra.Command{
 		installCmd := execCommand(
 			"bun",
 			"add",
-			"tailwindcss",
-			"@tailwindcss/vite",
+			"tailwindcss@^4.3.0",
+			"@tailwindcss/vite@^4.3.0",
 			"@gv-tech/ui-web",
 			"@gv-tech/ui-core",
 			"@gv-tech/design-tokens",
