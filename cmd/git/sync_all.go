@@ -84,7 +84,7 @@ var SyncAllCmd = &cobra.Command{
 			}
 
 			// Pull latest code
-			if err := repo.PullLatestCode(repoPath); err != nil {
+			if err := repo.PullLatestCode(repoPath); err != nil && err.Error() != "already up-to-date" {
 				log.Error("  Failed to pull latest code: %s", err)
 				failureCount++
 				continue
