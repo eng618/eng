@@ -8,7 +8,6 @@ that allow you to simply write output to the screen for various scenarios.
 - Debug     ==> Magenta
 - Warn      ==> Yellow
 - Error     ==> Red
-- Fatal     ==> Red (and exits the program)
 */
 package log
 
@@ -87,12 +86,6 @@ func Warn(format string, a ...any) {
 // Error prints a message to the terminal in red, indicating an error.
 func Error(format string, a ...any) {
 	_, _ = color.New(color.FgRed).Fprintf(Err, "==x "+format+"\n", a...)
-}
-
-// Fatal prints a message to the terminal in red, then exits the program with an error code.
-func Fatal(format string, a ...any) {
-	Error(format, a...)
-	os.Exit(1)
 }
 
 // Verbose prints a message to the terminal if v is true, prefixed with '---'.

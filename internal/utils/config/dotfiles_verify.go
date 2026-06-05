@@ -14,7 +14,7 @@ import (
 // VerifyDotfilesConfig checks for Repo URL, Branch, and Bare Repo Path.
 // If all are present, it offers a single multi-select to update them.
 // If any are missing, it falls back to sequential mandatory prompts.
-func VerifyDotfilesConfig() (string, string, string, string) {
+func VerifyDotfilesConfig() (string, string, string, string, error) {
 	repoURL := viper.GetString("dotfiles.repo_url")
 	branch := viper.GetString("dotfiles.branch")
 	bareRepoPath := viper.GetString("dotfiles.bare_repo_path")
@@ -26,7 +26,7 @@ func VerifyDotfilesConfig() (string, string, string, string) {
 		branch = Branch()
 		bareRepoPath = BareRepoPath()
 		worktreePath = WorktreePath()
-		return repoURL, branch, bareRepoPath, worktreePath
+		return repoURL, branch, bareRepoPath, worktreePath, nil
 	}
 
 	// All are present, offer multi-select
@@ -47,7 +47,7 @@ func VerifyDotfilesConfig() (string, string, string, string) {
 	}
 
 	if err := survey.AskOne(prompt, &selected); err != nil {
-		log.Fatal("Selection failed: %v", err)
+		return "", "", "", "", fmt.Errorf("selection failed: %w", err)
 	}
 
 	updateRepo := false
@@ -88,5 +88,5 @@ func VerifyDotfilesConfig() (string, string, string, string) {
 	}
 
 	log.Success("Dotfiles configuration verified")
-	return repoURL, branch, bareRepoPath, worktreePath
+	return repoURL, branch, bareRepoPath, worktreePath, nil
 }

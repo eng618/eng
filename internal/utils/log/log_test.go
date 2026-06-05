@@ -145,6 +145,3 @@ func TestVerbose(t *testing.T) {
 		t.Errorf("Verbose(true) got = %q, want to contain '--- should see this 42'", outBuf.String())
 	}
 }
-
-// TestFatal is tricky because it calls os.Exit. We could use a subprocess or just skip it for now.
-// Given the scope, skipping is safer unless we want to implement the "Crashing Test" pattern.

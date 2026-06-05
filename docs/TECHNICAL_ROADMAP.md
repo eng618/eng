@@ -27,7 +27,7 @@ These items represent immediate reliability issues and simple fixes that provide
 
 ### 1.2 Remove `log.Fatal` from Library Packages
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Remove all `log.Fatal()` and `os.Exit(1)` calls from the `internal/` directory. Return `error` types to the caller so the top-level command can handle fatal exits gracefully.
 - **Impact**: Critical (improves reliability and testability)
 - **Effort**: Low

@@ -28,10 +28,11 @@ Running this command without subcommands will run all setup steps:
 - Software installation
 - GPG keys setup (interactive)
 - GPG permissions fix`,
-	Run: func(cmd *cobra.Command, _args []string) {
+	RunE: func(cmd *cobra.Command, _args []string) error {
 		if err := runSetup(cmd, utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Setup failed: %v", err)
+			return fmt.Errorf("setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -78,10 +79,11 @@ var SetupDotfilesCmd = &cobra.Command{
   - Initialize git submodules
 	- Configure git to hide untracked files
 	- Restore dotfiles secrets when manifest and BWS token are available`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := setupDotfiles(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Dotfiles setup failed: %v", err)
+			return fmt.Errorf("dotfiles setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -102,10 +104,11 @@ var SetupSSHCmd = &cobra.Command{
   - Attempt to retrieve SSH keys from Bitwarden vault
   - Generate new SSH keys if none found
   - Configure SSH config for GitHub`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := setupSSH(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("SSH setup failed: %v", err)
+			return fmt.Errorf("ssh setup failed: %w", err)
 		}
+		return nil
 	},
 }
 

@@ -41,7 +41,7 @@ func StartChildProcess(c *exec.Cmd) error {
 	go func() {
 		// Wait for a signal and forward it to the child process.
 		if err := c.Process.Signal(<-sigCh); err != nil {
-			log.Fatal("failed to process command with error: %s", err.Error())
+			log.Error("failed to process command with error: %s", err.Error())
 		}
 	}()
 

@@ -32,10 +32,11 @@ var InstallCmd = &cobra.Command{
   - Checkout dotfiles to your home directory
   - Initialize git submodules
   - Configure git to hide untracked files`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := installDotfiles(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Dotfiles installation failed: %v", err)
+			return fmt.Errorf("dotfiles installation failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -44,7 +45,10 @@ func installDotfiles(verbose bool) error {
 	log.Start("Starting dotfiles installation")
 
 	// Step 1: Get configuration values first so we can make context-aware setup decisions.
-	repoURL, branch, bareRepoPath, worktreePath := config.VerifyDotfilesConfig()
+	repoURL, branch, bareRepoPath, worktreePath, err := config.VerifyDotfilesConfig()
+	if err != nil {
+		return err
+	}
 
 	// Step 2: Check prerequisites
 	if err := system.EnsurePrerequisites(verbose); err != nil {
