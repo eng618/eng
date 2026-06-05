@@ -137,6 +137,62 @@ func TestExtractSSHKeyFromItem(t *testing.T) {
 			expectedKey: "",
 			expectError: true,
 		},
+		{
+			name: "SSHKey exists but PrivateKey is only whitespace",
+			item: BitwardenItem{
+				Name: "Whitespace SSH Key",
+				SSHKey: &BitwardenSSHKey{
+					PrivateKey: "   \n  \t ",
+				},
+				Notes: "-----BEGIN OPENSSH PRIVATE KEY-----\nnotes key data\n-----END OPENSSH PRIVATE KEY-----",
+			},
+			expectedKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nnotes key data\n-----END OPENSSH PRIVATE KEY-----",
+			expectError: false,
+		},
+		{
+			name: "Custom field with mixed casing in name",
+			item: BitwardenItem{
+				Name: "Mixed Case Field Name",
+				Fields: []BitwardenField{
+					{
+						Name:  "PrIvAtE KeY",
+						Value: "-----BEGIN OPENSSH PRIVATE KEY-----\nmixed case key data\n-----END OPENSSH PRIVATE KEY-----",
+						Type:  0,
+					},
+				},
+			},
+			expectedKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nmixed case key data\n-----END OPENSSH PRIVATE KEY-----",
+			expectError: false,
+		},
+		{
+			name: "Custom field matching name but invalid value",
+			item: BitwardenItem{
+				Name: "Invalid Field Value",
+				Fields: []BitwardenField{
+					{
+						Name:  "Private Key",
+						Value: "just some random text without markers",
+						Type:  0,
+					},
+				},
+				Login: &BitwardenLogin{
+					Password: "-----BEGIN OPENSSH PRIVATE KEY-----\nfallback login data\n-----END OPENSSH PRIVATE KEY-----",
+				},
+			},
+			expectedKey: "-----BEGIN OPENSSH PRIVATE KEY-----\nfallback login data\n-----END OPENSSH PRIVATE KEY-----",
+			expectError: false,
+		},
+		{
+			name: "Login exists but lacks required markers",
+			item: BitwardenItem{
+				Name: "Login Without Markers",
+				Login: &BitwardenLogin{
+					Password: "not a private key",
+				},
+			},
+			expectedKey: "",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
