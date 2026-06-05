@@ -162,15 +162,21 @@ export default App
 		// Replace default icon with GV Tech icon
 		if iconData, err := AssetsFS.ReadFile("assets/icon.png"); err == nil {
 			publicDir := filepath.Join(targetDir, "public")
-			os.MkdirAll(publicDir, 0o755)
-			os.WriteFile(filepath.Join(publicDir, "favicon.png"), iconData, 0o644)
-			
+			if err := os.MkdirAll(publicDir, 0o755); err != nil {
+				return fmt.Errorf("failed to create public dir: %w", err)
+			}
+			if err := os.WriteFile(filepath.Join(publicDir, "favicon.png"), iconData, 0o644); err != nil {
+				return fmt.Errorf("failed to write favicon.png: %w", err)
+			}
+
 			// Update index.html to use the new icon
 			indexPath := filepath.Join(targetDir, "index.html")
 			if htmlData, err := os.ReadFile(indexPath); err == nil {
 				updatedHtml := strings.ReplaceAll(string(htmlData), "/vite.svg", "/favicon.png")
 				updatedHtml = strings.ReplaceAll(updatedHtml, `type="image/svg+xml"`, `type="image/png"`)
-				os.WriteFile(indexPath, []byte(updatedHtml), 0o644)
+				if err := os.WriteFile(indexPath, []byte(updatedHtml), 0o644); err != nil {
+					return fmt.Errorf("failed to update index.html: %w", err)
+				}
 			}
 		}
 

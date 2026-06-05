@@ -261,7 +261,7 @@ export default function Layout() {
 		if err == nil {
 			patchedAppJson := strings.Replace(string(appJsonBytes), `"output": "static"`, `"output": "single"`, 1)
 			if !strings.Contains(patchedAppJson, `"output": "single"`) {
-			    // Fallback if static wasn't explicitly defined
+				// Fallback if static wasn't explicitly defined
 				patchedAppJson = strings.Replace(string(appJsonBytes), `"web": {`, `"web": {
       "output": "single",`, 1)
 			}
@@ -303,13 +303,23 @@ export default function Index() {
 		// Inject GV Tech icon
 		if iconData, err := AssetsFS.ReadFile("assets/icon.png"); err == nil {
 			assetsDir := filepath.Join(targetDir, "assets", "images")
-			os.MkdirAll(assetsDir, 0o755)
-			
+			if err := os.MkdirAll(assetsDir, 0o755); err != nil {
+				return fmt.Errorf("failed to create assets directory: %w", err)
+			}
+
 			// Replace all standard Expo icons
-			os.WriteFile(filepath.Join(assetsDir, "icon.png"), iconData, 0o644)
-			os.WriteFile(filepath.Join(assetsDir, "favicon.png"), iconData, 0o644)
-			os.WriteFile(filepath.Join(assetsDir, "adaptive-icon.png"), iconData, 0o644)
-			os.WriteFile(filepath.Join(assetsDir, "splash-icon.png"), iconData, 0o644)
+			if err := os.WriteFile(filepath.Join(assetsDir, "icon.png"), iconData, 0o644); err != nil {
+				return fmt.Errorf("failed to write icon.png: %w", err)
+			}
+			if err := os.WriteFile(filepath.Join(assetsDir, "favicon.png"), iconData, 0o644); err != nil {
+				return fmt.Errorf("failed to write favicon.png: %w", err)
+			}
+			if err := os.WriteFile(filepath.Join(assetsDir, "adaptive-icon.png"), iconData, 0o644); err != nil {
+				return fmt.Errorf("failed to write adaptive-icon.png: %w", err)
+			}
+			if err := os.WriteFile(filepath.Join(assetsDir, "splash-icon.png"), iconData, 0o644); err != nil {
+				return fmt.Errorf("failed to write splash-icon.png: %w", err)
+			}
 		}
 
 		log.Info("Native project %s bootstrapped successfully!", projectName)
