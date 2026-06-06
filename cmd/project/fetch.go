@@ -1,16 +1,20 @@
 package project
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync/atomic"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // FetchCmd defines the cobra command for fetching all project repositories.
@@ -64,58 +68,85 @@ Example:
 			projects = filtered
 		}
 
-		successCount := 0
-		failedCount := 0
-		skippedCount := 0
+		var successCount atomic.Int32
+		var failedCount atomic.Int32
+		var skippedCount atomic.Int32
+
+		multi, err := ui.NewMultiSpinner()
+		if err != nil {
+			log.Error("Failed to initialize UI: %s", err)
+			return
+		}
+		defer multi.Stop()
+
+		var eg errgroup.Group
+		eg.SetLimit(10) // Concurrent fetch limit
 
 		for _, project := range projects {
-			log.Info("Fetching project: %s", project.Name)
 			projectPath := filepath.Join(devPath, project.Name)
 
 			for _, repo := range project.Repos {
-				repoPath, err := repo.GetEffectivePath()
-				if err != nil {
-					log.Error("  Failed to determine path for %s: %s", repo.URL, err)
-					failedCount++
-					continue
-				}
+				r := repo // explicitly capture loop variable for closure
 
-				fullRepoPath := filepath.Join(projectPath, repoPath)
+				eg.Go(func() error {
+					repoPath, err := r.GetEffectivePath()
+					if err != nil {
+						failedCount.Add(1)
+						return nil
+					}
 
-				// Check if repo exists
-				if !isRepoCloned(fullRepoPath) {
-					log.Verbose(isVerbose, "  Skipping %s (not cloned)", repoPath)
-					skippedCount++
-					continue
-				}
+					fullRepoPath := filepath.Join(projectPath, repoPath)
 
-				if dryRun {
-					log.Info("  [DRY RUN] Would fetch: %s", repoPath)
-					successCount++
-					continue
-				}
+					// Check if repo exists
+					if !isRepoCloned(fullRepoPath) {
+						if isVerbose {
+							spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
+							spinner.Warning()
+						}
+						skippedCount.Add(1)
+						return nil
+					}
 
-				log.Info("  Fetching %s...", repoPath)
-				if err := fetchRepo(fullRepoPath); err != nil {
-					log.Error("  Failed to fetch %s: %s", repoPath, err)
-					failedCount++
-					continue
-				}
+					if dryRun {
+						spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would fetch: %s", repoPath))
+						spinner.Success()
+						successCount.Add(1)
+						return nil
+					}
 
-				log.Success("  Fetched %s", repoPath)
-				successCount++
+					spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoPath))
+					if err := fetchRepo(fullRepoPath); err != nil {
+						spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoPath, err))
+						failedCount.Add(1)
+						return nil
+					}
+
+					spinner.Success(fmt.Sprintf("Fetched %s", repoPath))
+					successCount.Add(1)
+					return nil
+				})
 			}
 		}
 
+		_ = eg.Wait()
+		multi.Stop() // explicitly stop to flush output before summary logs
+
 		log.Info("")
-		log.Info("Fetch complete: %d successful, %d skipped, %d failed", successCount, skippedCount, failedCount)
+		log.Info(
+			"Fetch complete: %d successful, %d skipped, %d failed",
+			successCount.Load(),
+			skippedCount.Load(),
+			failedCount.Load(),
+		)
 	},
 }
 
 // fetchRepo performs git fetch on a repository.
 func fetchRepo(repoPath string) error {
 	cmd := exec.Command("git", "-C", repoPath, "fetch", "--all", "--prune")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, string(out))
+	}
+	return nil
 }

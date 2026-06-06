@@ -2,17 +2,21 @@ package project
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // SyncCmd defines the cobra command for syncing all project repositories.
@@ -70,96 +74,119 @@ Example:
 			projects = filtered
 		}
 
-		fetchSuccess := 0
-		fetchFailed := 0
-		pullSuccess := 0
-		pullFailed := 0
-		skippedCount := 0
-		dirtyCount := 0
+		var fetchSuccess atomic.Int32
+		var fetchFailed atomic.Int32
+		var pullSuccess atomic.Int32
+		var pullFailed atomic.Int32
+		var skippedCount atomic.Int32
+		var dirtyCount atomic.Int32
+
+		multi, err := ui.NewMultiSpinner()
+		if err != nil {
+			log.Error("Failed to initialize UI: %s", err)
+			return
+		}
+		defer multi.Stop()
+
+		var eg errgroup.Group
+		eg.SetLimit(10) // Concurrent sync limit
 
 		for _, project := range projects {
-			log.Info("Syncing project: %s", project.Name)
 			projectPath := filepath.Join(devPath, project.Name)
 
 			for _, r := range project.Repos {
-				repoPath, err := r.GetEffectivePath()
-				if err != nil {
-					log.Error("  Failed to determine path for %s: %s", r.URL, err)
-					fetchFailed++
-					pullFailed++
-					continue
-				}
-
-				fullRepoPath := filepath.Join(projectPath, repoPath)
-
-				// Check if repo exists
-				if !isRepoCloned(fullRepoPath) {
-					log.Verbose(isVerbose, "  Skipping %s (not cloned)", repoPath)
-					skippedCount++
-					continue
-				}
-
-				if dryRun {
-					log.Info("  [DRY RUN] Would sync: %s", repoPath)
-					fetchSuccess++
-					pullSuccess++
-					continue
-				}
-
-				log.Info("  Syncing %s...", repoPath)
-
-				// Fetch
-				if err := fetchRepo(fullRepoPath); err != nil {
-					log.Error("    Fetch failed: %s", err)
-					fetchFailed++
-				} else {
-					log.Verbose(isVerbose, "    Fetched successfully")
-					fetchSuccess++
-				}
-
-				// Check for uncommitted changes before pull
-				isDirty, err := repo.IsDirty(fullRepoPath)
-				if err != nil {
-					log.Error("    Failed to check status: %s", err)
-					pullFailed++
-					continue
-				}
-
-				if isDirty {
-					log.Warn("    Skipping pull (has uncommitted changes)")
-					dirtyCount++
-					continue
-				}
-
-				// Pull
-				if err := repo.PullLatestCode(fullRepoPath); err != nil {
-					if errors.Is(err, git.NoErrAlreadyUpToDate) {
-						log.Verbose(isVerbose, "    Already up to date")
-						pullSuccess++
-						continue
+				repoObj := r // capture loop variable
+				eg.Go(func() error {
+					repoPath, err := repoObj.GetEffectivePath()
+					if err != nil {
+						fetchFailed.Add(1)
+						pullFailed.Add(1)
+						return nil
 					}
-					log.Error("    Pull failed: %s", err)
-					pullFailed++
-					continue
-				}
 
-				log.Success("    Synced %s", repoPath)
-				pullSuccess++
+					fullRepoPath := filepath.Join(projectPath, repoPath)
+
+					// Check if repo exists
+					if !isRepoCloned(fullRepoPath) {
+						if isVerbose {
+							spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
+							spinner.Warning()
+						}
+						skippedCount.Add(1)
+						return nil
+					}
+
+					if dryRun {
+						spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would sync: %s", repoPath))
+						spinner.Success()
+						fetchSuccess.Add(1)
+						pullSuccess.Add(1)
+						return nil
+					}
+
+					spinner := multi.AddSpinner(fmt.Sprintf("Syncing %s...", repoPath))
+
+					// Fetch
+					spinner.UpdateText(fmt.Sprintf("Fetching %s...", repoPath))
+					if err := fetchRepo(fullRepoPath); err != nil {
+						spinner.Fail(fmt.Sprintf("Fetch failed for %s: %s", repoPath, err))
+						fetchFailed.Add(1)
+						// don't pull if fetch failed, but log it as pull failed too
+						pullFailed.Add(1)
+						return nil
+					}
+					fetchSuccess.Add(1)
+
+					// Check for uncommitted changes before pull
+					spinner.UpdateText(fmt.Sprintf("Checking %s...", repoPath))
+					isDirty, err := repo.IsDirty(fullRepoPath)
+					if err != nil {
+						spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoPath, err))
+						pullFailed.Add(1)
+						return nil
+					}
+
+					if isDirty {
+						spinner.Warning(fmt.Sprintf("Skipped pull for %s (has uncommitted changes)", repoPath))
+						dirtyCount.Add(1)
+						return nil
+					}
+
+					// Pull
+					spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoPath))
+					if err := repo.PullLatestCode(fullRepoPath); err != nil {
+						if errors.Is(err, git.NoErrAlreadyUpToDate) {
+							spinner.Info(fmt.Sprintf("Synced %s (already up to date)", repoPath))
+							pullSuccess.Add(1)
+							return nil
+						}
+						spinner.Fail(fmt.Sprintf("Pull failed for %s: %s", repoPath, err))
+						pullFailed.Add(1)
+						return nil
+					}
+
+					spinner.Success(fmt.Sprintf("Synced %s", repoPath))
+					pullSuccess.Add(1)
+					return nil
+				})
 			}
 		}
 
+		_ = eg.Wait()
+		multi.Stop() // explicitly flush
+
 		log.Info("")
 		log.Info("Sync complete:")
-		log.Info("  Fetch: %d successful, %d failed", fetchSuccess, fetchFailed)
+		log.Info("  Fetch: %d successful, %d failed", fetchSuccess.Load(), fetchFailed.Load())
 		log.Info(
 			"  Pull:  %d successful, %d failed, %d dirty, %d skipped",
-			pullSuccess,
-			pullFailed,
-			dirtyCount,
-			skippedCount,
+			pullSuccess.Load(),
+			pullFailed.Load(),
+			dirtyCount.Load(),
+			skippedCount.Load(),
 		)
 
-		if dirtyCount > 0 {
+		if dirtyCount.Load() > 0 {
 			log.Warn("Some repositories were not pulled due to uncommitted changes.")
 		}
 	},

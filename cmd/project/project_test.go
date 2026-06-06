@@ -416,7 +416,7 @@ func TestFetchCmd_DryRun(t *testing.T) {
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Fetch complete: 1 successful")
 }
 
 func TestPullCmd_DryRun(t *testing.T) {
@@ -458,7 +458,7 @@ func TestPullCmd_DryRun(t *testing.T) {
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Pull complete: 1 successful")
 }
 
 func TestSyncCmd_DryRun(t *testing.T) {
@@ -500,7 +500,7 @@ func TestSyncCmd_DryRun(t *testing.T) {
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Fetch: 1 successful")
 }
 
 func TestListCmd_VerboseOutput(t *testing.T) {

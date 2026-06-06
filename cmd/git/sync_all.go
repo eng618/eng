@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // SyncAllCmd defines the cobra command for syncing all git repositories.
@@ -49,54 +52,74 @@ var SyncAllCmd = &cobra.Command{
 
 		log.Info("Found %d git repositories", len(repos))
 
-		successCount := 0
-		failureCount := 0
+		var successCount atomic.Int32
+		var failureCount atomic.Int32
+
+		multi, err := ui.NewMultiSpinner()
+		if err != nil {
+			log.Error("Failed to initialize UI: %s", err)
+			return
+		}
+		defer multi.Stop()
+
+		var eg errgroup.Group
+		eg.SetLimit(10) // Concurrent sync limit
 
 		for _, repoPath := range repos {
-			repoName := filepath.Base(repoPath)
-			log.Info("Processing repository: %s", repoName)
+			rPath := repoPath // capture loop variable
+			eg.Go(func() error {
+				repoName := filepath.Base(rPath)
 
-			if dryRun {
-				log.Info("  [DRY RUN] Would sync repository at: %s", repoPath)
-				successCount++
-				continue
-			}
+				if dryRun {
+					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would sync repository at: %s", rPath))
+					spinner.Success()
+					successCount.Add(1)
+					return nil
+				}
 
-			// Check if repository is dirty
-			isDirty, err := repo.IsDirty(repoPath)
-			if err != nil {
-				log.Error("  Failed to check repository status: %s", err)
-				failureCount++
-				continue
-			}
+				spinner := multi.AddSpinner(fmt.Sprintf("Processing %s...", repoName))
 
-			if isDirty {
-				log.Warn("  Repository has uncommitted changes, skipping...")
-				failureCount++
-				continue
-			}
+				// Check if repository is dirty
+				isDirty, err := repo.IsDirty(rPath)
+				if err != nil {
+					spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoName, err))
+					failureCount.Add(1)
+					return nil
+				}
 
-			// Ensure we're on default branch
-			if err := repo.EnsureOnDefaultBranch(repoPath); err != nil {
-				log.Error("  Failed to ensure on default branch: %s", err)
-				failureCount++
-				continue
-			}
+				if isDirty {
+					spinner.Warning(fmt.Sprintf("Repository %s has uncommitted changes, skipping...", repoName))
+					failureCount.Add(1)
+					return nil
+				}
 
-			// Pull latest code
-			if err := repo.PullLatestCode(repoPath); err != nil {
-				log.Error("  Failed to pull latest code: %s", err)
-				failureCount++
-				continue
-			}
+				// Ensure we're on default branch
+				if err := repo.EnsureOnDefaultBranch(rPath); err != nil {
+					spinner.Fail(fmt.Sprintf("Not on default branch for %s: %s", repoName, err))
+					failureCount.Add(1)
+					return nil
+				}
 
-			log.Success("  Successfully synced %s", repoName)
-			successCount++
+				// Pull latest code
+				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoName))
+				if err := repo.PullLatestCode(rPath); err != nil {
+					spinner.Fail(fmt.Sprintf("Failed to pull latest code for %s: %s", repoName, err))
+					failureCount.Add(1)
+					return nil
+				}
+
+				spinner.Success(fmt.Sprintf("Successfully synced %s", repoName))
+				successCount.Add(1)
+				return nil
+			})
 		}
 
-		log.Info("Sync completed: %d successful, %d failed", successCount, failureCount)
+		_ = eg.Wait()
+		multi.Stop()
 
-		if failureCount > 0 {
+		log.Info("Sync completed: %d successful, %d failed", successCount.Load(), failureCount.Load())
+
+		if failureCount.Load() > 0 {
 			log.Warn("Some repositories failed to sync. Check the output above for details.")
 		} else {
 			log.Success("All git repositories synced successfully")
