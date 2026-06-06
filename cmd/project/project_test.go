@@ -13,6 +13,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // setupTestEnvironment creates a temporary workspace and config for testing.
@@ -373,7 +374,7 @@ func TestCloneRepository_InvalidURL(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "test-repo")
 
 	// Try to clone with invalid URL - should fail with helpful error
-	err = cloneRepository("not-a-valid-url", destPath)
+	err = repo.Clone("not-a-valid-url", destPath)
 	assert.Error(t, err)
 }
 
