@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -178,7 +179,7 @@ func TestGetMainBranch(t *testing.T) {
 				}
 			}()
 
-			branch, err := GetMainBranch(tmpDir)
+			branch, err := GetMainBranch(context.Background(), tmpDir)
 			if err != nil {
 				t.Errorf("GetMainBranch() error = %v", err)
 				return
@@ -233,7 +234,7 @@ func TestGetDevelopBranch(t *testing.T) {
 				}
 			}()
 
-			branch, err := GetDevelopBranch(tmpDir)
+			branch, err := GetDevelopBranch(context.Background(), tmpDir)
 			if err != nil {
 				t.Errorf("GetDevelopBranch() error = %v", err)
 				return
@@ -255,7 +256,7 @@ func TestGetCurrentBranch(t *testing.T) {
 	}()
 
 	// Test getting current branch when on main
-	branch, err := GetCurrentBranch(tmpDir)
+	branch, err := GetCurrentBranch(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("GetCurrentBranch() error = %v", err)
 		return
@@ -271,7 +272,7 @@ func TestGetCurrentBranch(t *testing.T) {
 		t.Fatalf("Failed to checkout develop: %v", err)
 	}
 
-	branch, err = GetCurrentBranch(tmpDir)
+	branch, err = GetCurrentBranch(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("GetCurrentBranch() error = %v", err)
 		return
@@ -316,7 +317,7 @@ func TestBranchExists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := branchExists(tmpDir, tt.branchName)
+			result := branchExists(context.Background(), tmpDir, tt.branchName)
 			if result != tt.expected {
 				t.Errorf("branchExists() = %v, want %v", result, tt.expected)
 			}
@@ -331,7 +332,7 @@ func TestIsDirty(t *testing.T) {
 	}()
 
 	// Test clean repository
-	dirty, err := IsDirty(tmpDir)
+	dirty, err := IsDirty(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("IsDirty() error = %v", err)
 		return
@@ -347,7 +348,7 @@ func TestIsDirty(t *testing.T) {
 	}
 
 	// Test dirty repository
-	dirty, err = IsDirty(tmpDir)
+	dirty, err = IsDirty(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("IsDirty() error = %v", err)
 		return
@@ -371,7 +372,7 @@ func TestEnsureOnDefaultBranch(t *testing.T) {
 	}
 
 	// Verify we're on develop
-	currentBranch, err := GetCurrentBranch(tmpDir)
+	currentBranch, err := GetCurrentBranch(context.Background(), tmpDir)
 	if err != nil {
 		t.Fatalf("Failed to get current branch: %v", err)
 	}
@@ -380,14 +381,14 @@ func TestEnsureOnDefaultBranch(t *testing.T) {
 	}
 
 	// Run EnsureOnDefaultBranch
-	err = EnsureOnDefaultBranch(tmpDir)
+	err = EnsureOnDefaultBranch(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("EnsureOnDefaultBranch() error = %v", err)
 		return
 	}
 
 	// Verify we're now on main
-	currentBranch, err = GetCurrentBranch(tmpDir)
+	currentBranch, err = GetCurrentBranch(context.Background(), tmpDir)
 	if err != nil {
 		t.Errorf("Failed to get current branch after EnsureOnDefaultBranch: %v", err)
 		return
@@ -465,7 +466,7 @@ func TestGetMainBranch_Comprehensive(t *testing.T) {
 				}
 			}
 
-			result, err := GetMainBranch(repoPath)
+			result, err := GetMainBranch(context.Background(), repoPath)
 			if err != nil {
 				t.Fatalf("GetMainBranch failed: %v", err)
 			}
@@ -537,7 +538,7 @@ func TestGetDevelopBranch_Comprehensive(t *testing.T) {
 				}
 			}
 
-			result, err := GetDevelopBranch(repoPath)
+			result, err := GetDevelopBranch(context.Background(), repoPath)
 			if err != nil {
 				t.Fatalf("GetDevelopBranch failed: %v", err)
 			}
@@ -604,7 +605,7 @@ func TestBranchExists_Comprehensive(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := branchExists(repoPath, tt.branchName)
+			result := branchExists(context.Background(), repoPath, tt.branchName)
 			if result != tt.expected {
 				t.Errorf("branchExists(%s) = %v, want %v", tt.branchName, result, tt.expected)
 			}

@@ -49,7 +49,7 @@ var StatusAllCmd = &cobra.Command{
 			repoName := filepath.Base(repoPath)
 
 			// Check if repository is dirty
-			isDirty, err := repo.IsDirty(repoPath)
+			isDirty, err := repo.IsDirty(cmd.Context(), repoPath)
 			if err != nil {
 				log.Error("  %s: Failed to check status - %s", repoName, err)
 				continue

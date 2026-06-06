@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -84,7 +85,12 @@ Example:
 		}
 		defer multi.Stop()
 
-		var eg errgroup.Group
+		cmdCtx := cmd.Context()
+		if cmdCtx == nil {
+			cmdCtx = context.Background()
+		}
+		eg, ctx := errgroup.WithContext(cmdCtx)
+
 		eg.SetLimit(10) // Concurrent pull limit
 
 		for _, project := range projects {
@@ -119,7 +125,7 @@ Example:
 					}
 
 					// Check for uncommitted changes
-					isDirty, err := repo.IsDirty(fullRepoPath)
+					isDirty, err := repo.IsDirty(ctx, fullRepoPath)
 					if err != nil {
 						spinner := multi.AddSpinner(fmt.Sprintf("Checking %s...", repoPath))
 						spinner.Fail(fmt.Sprintf("Failed to check status of %s: %s", repoPath, err))
@@ -135,7 +141,7 @@ Example:
 					}
 
 					spinner := multi.AddSpinner(fmt.Sprintf("Pulling %s...", repoPath))
-					if err := repo.PullLatestCode(fullRepoPath); err != nil {
+					if err := repo.PullLatestCode(ctx, fullRepoPath); err != nil {
 						// Check if it's just "already up to date"
 						if errors.Is(err, git.NoErrAlreadyUpToDate) {
 							spinner.Info(fmt.Sprintf("%s is already up to date", repoPath))

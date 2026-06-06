@@ -41,7 +41,7 @@ var doctorCmd = &cobra.Command{
 			project = viper.GetString("gitlab.project")
 		}
 		if host == "" || project == "" {
-			if h, p, err := gitrepo.GetGitLabHostAndProjectPath("."); err == nil {
+			if h, p, err := gitrepo.GetGitLabHostAndProjectPath(cmd.Context(), "."); err == nil {
 				if host == "" {
 					host = h
 				}

@@ -21,7 +21,7 @@ var InstallCmd = &cobra.Command{
   - Initialize git submodules
   - Configure git to hide untracked files`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := dotfiles.Install(cmdutil.IsVerbose(cmd)); err != nil {
+		if err := dotfiles.Install(cmd.Context(), cmdutil.IsVerbose(cmd)); err != nil {
 			return fmt.Errorf("dotfiles installation failed: %w", err)
 		}
 		return nil

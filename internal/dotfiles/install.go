@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,7 +20,7 @@ import (
 )
 
 // Install orchestrates the complete dotfiles installation workflow.
-func Install(verbose bool) error {
+func Install(ctx context.Context, verbose bool) error {
 	log.Start("Starting dotfiles installation")
 
 	// Step 1: Get configuration values first so we can make context-aware setup decisions.
@@ -48,7 +49,7 @@ func Install(verbose bool) error {
 			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
 				return err
 			}
-			if err := updateBareRepoWorktree(bareRepoPath, worktreePath, verbose); err != nil {
+			if err := updateBareRepoWorktree(ctx, bareRepoPath, worktreePath, verbose); err != nil {
 				return err
 			}
 			return nil
@@ -56,7 +57,7 @@ func Install(verbose bool) error {
 			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
 				return err
 			}
-			if err := freshInstall(bareRepoPath, repoURL, branch); err != nil {
+			if err := freshInstall(ctx, bareRepoPath, repoURL, branch); err != nil {
 				return err
 			}
 			// Fall through to backup and checkout for fresh install
@@ -66,7 +67,7 @@ func Install(verbose bool) error {
 		if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
 			return err
 		}
-		if err := cloneBareRepo(repoURL, branch, bareRepoPath); err != nil {
+		if err := cloneBareRepo(ctx, repoURL, branch, bareRepoPath); err != nil {
 			return err
 		}
 	}
@@ -78,7 +79,7 @@ func Install(verbose bool) error {
 	}
 
 	// Step 6: Checkout files
-	if err := repo.CheckoutWorktree(bareRepoPath, worktreePath); err != nil {
+	if err := repo.CheckoutWorktree(ctx, bareRepoPath, worktreePath); err != nil {
 		if hasConflicts {
 			log.Error("Checkout failed. Conflicting files have been backed up to: %s", backupPath)
 			log.Message("You can restore files from the backup if needed")
@@ -88,7 +89,7 @@ func Install(verbose bool) error {
 
 	// Step 7: Initialize submodules
 	auth, _ := getSSHAuth() // best effort
-	if err := repo.InitSubmodules(bareRepoPath, worktreePath, auth); err != nil {
+	if err := repo.InitSubmodules(ctx, bareRepoPath, worktreePath, auth); err != nil {
 		log.Warn("Failed to initialize submodules: %v", err)
 		log.Message(
 			"You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive",
@@ -98,7 +99,7 @@ func Install(verbose bool) error {
 	}
 
 	// Step 8: Configure git
-	if err := repo.ConfigureBareRepo(bareRepoPath); err != nil {
+	if err := repo.ConfigureBareRepo(ctx, bareRepoPath); err != nil {
 		log.Warn("Failed to configure git: %v", err)
 	}
 
@@ -137,10 +138,10 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 }
 
 // updateBareRepoWorktree fetches and pulls the latest changes in the bare repository to the worktree.
-func updateBareRepoWorktree(bareRepoPath, homeDir string, isVerbose bool) error {
+func updateBareRepoWorktree(ctx context.Context, bareRepoPath, homeDir string, isVerbose bool) error {
 	log.Start("Updating existing repository and worktree")
 
-	if err := SyncRepo(bareRepoPath, homeDir, isVerbose); err != nil {
+	if err := SyncRepo(ctx, bareRepoPath, homeDir, isVerbose); err != nil {
 		return fmt.Errorf("failed to sync repository: %w", err)
 	}
 
@@ -149,7 +150,7 @@ func updateBareRepoWorktree(bareRepoPath, homeDir string, isVerbose bool) error 
 }
 
 // freshInstall deletes the existing repository and clones a fresh copy.
-func freshInstall(bareRepoPath, repoURL, branch string) error {
+func freshInstall(ctx context.Context, bareRepoPath, repoURL, branch string) error {
 	log.Start("Removing existing repository")
 
 	if err := os.RemoveAll(bareRepoPath); err != nil {
@@ -158,11 +159,11 @@ func freshInstall(bareRepoPath, repoURL, branch string) error {
 
 	log.Success("Existing repository removed")
 
-	return cloneBareRepo(repoURL, branch, bareRepoPath)
+	return cloneBareRepo(ctx, repoURL, branch, bareRepoPath)
 }
 
 // cloneBareRepo clones the dotfiles repository as a bare repository.
-func cloneBareRepo(repoURL, branch, bareRepoPath string) error {
+func cloneBareRepo(ctx context.Context, repoURL, branch, bareRepoPath string) error {
 	log.Start("Cloning repository from: %s (branch: %s)", repoURL, branch)
 
 	var auth *ssh.PublicKeys
@@ -174,7 +175,7 @@ func cloneBareRepo(repoURL, branch, bareRepoPath string) error {
 		}
 	}
 
-	if err := repo.BareClone(repoURL, branch, bareRepoPath, auth); err != nil {
+	if err := repo.BareClone(ctx, repoURL, branch, bareRepoPath, auth); err != nil {
 		return err
 	}
 

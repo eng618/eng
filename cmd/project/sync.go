@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -88,7 +89,12 @@ Example:
 		}
 		defer multi.Stop()
 
-		var eg errgroup.Group
+		cmdCtx := cmd.Context()
+		if cmdCtx == nil {
+			cmdCtx = context.Background()
+		}
+		eg, ctx := errgroup.WithContext(cmdCtx)
+
 		eg.SetLimit(10) // Concurrent sync limit
 
 		for _, project := range projects {
@@ -139,7 +145,7 @@ Example:
 
 					// Check for uncommitted changes before pull
 					spinner.UpdateText(fmt.Sprintf("Checking %s...", repoPath))
-					isDirty, err := repo.IsDirty(fullRepoPath)
+					isDirty, err := repo.IsDirty(ctx, fullRepoPath)
 					if err != nil {
 						spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoPath, err))
 						pullFailed.Add(1)
@@ -154,7 +160,7 @@ Example:
 
 					// Pull
 					spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoPath))
-					if err := repo.PullLatestCode(fullRepoPath); err != nil {
+					if err := repo.PullLatestCode(ctx, fullRepoPath); err != nil {
 						if errors.Is(err, git.NoErrAlreadyUpToDate) {
 							spinner.Info(fmt.Sprintf("Synced %s (already up to date)", repoPath))
 							pullSuccess.Add(1)

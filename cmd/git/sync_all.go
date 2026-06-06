@@ -80,7 +80,7 @@ var SyncAllCmd = &cobra.Command{
 				spinner := multi.AddSpinner(fmt.Sprintf("Processing %s...", repoName))
 
 				// Check if repository is dirty
-				isDirty, err := repo.IsDirty(rPath)
+				isDirty, err := repo.IsDirty(cmd.Context(), rPath)
 				if err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoName, err))
 					failureCount.Add(1)
@@ -94,7 +94,7 @@ var SyncAllCmd = &cobra.Command{
 				}
 
 				// Ensure we're on default branch
-				if err := repo.EnsureOnDefaultBranch(rPath); err != nil {
+				if err := repo.EnsureOnDefaultBranch(cmd.Context(), rPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Not on default branch for %s: %s", repoName, err))
 					failureCount.Add(1)
 					return nil
@@ -102,7 +102,7 @@ var SyncAllCmd = &cobra.Command{
 
 				// Pull latest code
 				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoName))
-				if err := repo.PullLatestCode(rPath); err != nil {
+				if err := repo.PullLatestCode(cmd.Context(), rPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to pull latest code for %s: %s", repoName, err))
 					failureCount.Add(1)
 					return nil

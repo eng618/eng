@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,8 +17,8 @@ import (
 )
 
 // BareClone clones a git repository as a bare repository.
-func BareClone(repoURL, branch, bareRepoPath string, auth *ssh.PublicKeys) error {
-	_, err := git.PlainClone(bareRepoPath, true, &git.CloneOptions{
+func BareClone(ctx context.Context, repoURL, branch, bareRepoPath string, auth *ssh.PublicKeys) error {
+	_, err := git.PlainCloneContext(ctx, bareRepoPath, true, &git.CloneOptions{
 		URL:           repoURL,
 		Auth:          auth,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
@@ -31,7 +32,7 @@ func BareClone(repoURL, branch, bareRepoPath string, auth *ssh.PublicKeys) error
 }
 
 // CheckoutWorktree checks out the tree from a bare repository to a worktree directory.
-func CheckoutWorktree(bareRepoPath, worktreeDir string) error {
+func CheckoutWorktree(ctx context.Context, bareRepoPath, worktreeDir string) error {
 	repo, err := git.PlainOpen(bareRepoPath)
 	if err != nil {
 		return fmt.Errorf("failed to open repository: %w", err)
@@ -78,7 +79,7 @@ func CheckoutWorktree(bareRepoPath, worktreeDir string) error {
 }
 
 // InitSubmodules initializes and updates git submodules for a bare repository.
-func InitSubmodules(bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) error {
+func InitSubmodules(ctx context.Context, bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) error {
 	repo, err := git.PlainOpen(bareRepoPath)
 	if err != nil {
 		return err
@@ -87,7 +88,7 @@ func InitSubmodules(bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) erro
 	w, err := repo.Worktree()
 	if err != nil {
 		// Fall back to git command line
-		cmd := exec.Command( // #nosec G204
+		cmd := exec.CommandContext(ctx, // #nosec G204
 			"git",
 			"--git-dir="+bareRepoPath,
 			"--work-tree="+worktreeDir,
@@ -124,7 +125,7 @@ func InitSubmodules(bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) erro
 }
 
 // ConfigureBareRepo sets the bare repository to not show untracked files.
-func ConfigureBareRepo(bareRepoPath string) error {
+func ConfigureBareRepo(ctx context.Context, bareRepoPath string) error {
 	repo, err := git.PlainOpen(bareRepoPath)
 	if err != nil {
 		return err

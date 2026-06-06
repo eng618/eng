@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestSyncCmd_FetchThenPull(t *testing.T) {
 
 	// Override fetchRepo to record call and simulate success
 	originalFetchRepo := dotfiles.FetchRepo
-	dotfiles.FetchRepo = func(repoPath, worktreePath string) error {
+	dotfiles.FetchRepo = func(ctx context.Context, repoPath, worktreePath string) error {
 		calls = append(calls, "fetch")
 		return nil
 	}
@@ -34,7 +35,7 @@ func TestSyncCmd_FetchThenPull(t *testing.T) {
 	// Override pullRebaseRepo to record call and simulate failure then success
 	count := 0
 	originalPullRebaseRepo := dotfiles.PullRebaseRepo
-	dotfiles.PullRebaseRepo = func(repoPath, worktreePath string) error {
+	dotfiles.PullRebaseRepo = func(ctx context.Context, repoPath, worktreePath string) error {
 		calls = append(calls, "pull")
 		count++
 		if count == 1 {

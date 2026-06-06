@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,8 +13,8 @@ import (
 
 // Clone clones a git repository to the specified path.
 // It uses go-git for the clone operation and provides informative error messages.
-func Clone(url, destPath string) error {
-	_, err := git.PlainClone(destPath, false, &git.CloneOptions{
+func Clone(ctx context.Context, url, destPath string) error {
+	_, err := git.PlainCloneContext(ctx, destPath, false, &git.CloneOptions{
 		URL:      url,
 		Progress: log.Writer(),
 	})

@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -26,7 +27,7 @@ func TestFetchCmd_SuccessAndFailure(t *testing.T) {
 
 	called := 0
 	originalFetchRepo := dotfiles.FetchRepo
-	dotfiles.FetchRepo = func(repo, worktree string) error {
+	dotfiles.FetchRepo = func(ctx context.Context, repo, worktree string) error {
 		called++
 		if called == 1 {
 			return errors.New("simulated fetch failure")

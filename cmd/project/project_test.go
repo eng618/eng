@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -378,7 +379,7 @@ func TestCloneRepository_InvalidURL(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "test-repo")
 
 	// Try to clone with invalid URL - should fail with helpful error
-	err = repo.Clone("not-a-valid-url", destPath)
+	err = repo.Clone(context.Background(), "not-a-valid-url", destPath)
 	assert.Error(t, err)
 }
 

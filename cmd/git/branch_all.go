@@ -49,14 +49,14 @@ var BranchAllCmd = &cobra.Command{
 			repoName := filepath.Base(repoPath)
 
 			// Get current branch
-			branch, err := repo.GetCurrentBranch(repoPath)
+			branch, err := repo.GetCurrentBranch(cmd.Context(), repoPath)
 			if err != nil {
 				log.Error("  %s: Failed to get current branch - %s", repoName, err)
 				continue
 			}
 
 			// Get main branch to compare
-			mainBranch, err := repo.GetMainBranch(repoPath)
+			mainBranch, err := repo.GetMainBranch(cmd.Context(), repoPath)
 			if err != nil {
 				log.Warn("  %s: Could not determine main branch - %s", repoName, err)
 				mainBranch = "main" // fallback

@@ -22,6 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"context"
 	"errors"
 	"os"
 
@@ -66,10 +67,10 @@ var rootCmd = &cobra.Command{
 This is personal cli to facilitate my workflow. An maintain my development machine.`,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
+// ExecuteContext adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := rootCmd.Execute()
+func ExecuteContext(ctx context.Context) {
+	err := rootCmd.ExecuteContext(ctx)
 	cobra.CheckErr(err)
 }
 

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"os/exec"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 // IsDirty checks if the repository at the given path has uncommitted changes.
 // It takes the repository path `repoPath` as input and returns a boolean indicating
 // whether the repository is dirty and an error if any occurs.
-func IsDirty(repoPath string) (bool, error) {
+func IsDirty(ctx context.Context, repoPath string) (bool, error) {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return false, err
@@ -35,9 +36,9 @@ func IsDirty(repoPath string) (bool, error) {
 // PullLatestCode pulls the latest changes from the current branch of the repository.
 // It takes the repository path `repoPath` as input and returns an error if the operation fails.
 // The function automatically detects the current branch and pulls from the corresponding remote.
-func PullLatestCode(repoPath string) error {
+func PullLatestCode(ctx context.Context, repoPath string) error {
 	// Get current branch
-	currentBranch, err := GetCurrentBranch(repoPath)
+	currentBranch, err := GetCurrentBranch(ctx, repoPath)
 	if err != nil {
 		return err
 	}
@@ -65,15 +66,15 @@ func PullLatestCode(repoPath string) error {
 // EnsureOnDefaultBranch ensures that the repository is on the default branch (main or master).
 // It dynamically detects the default branch and switches to it if necessary.
 // It takes the repository path `repoPath` as input and returns an error if the operation fails.
-func EnsureOnDefaultBranch(repoPath string) error {
+func EnsureOnDefaultBranch(ctx context.Context, repoPath string) error {
 	// Get the main branch name for this repository
-	mainBranch, err := GetMainBranch(repoPath)
+	mainBranch, err := GetMainBranch(ctx, repoPath)
 	if err != nil {
 		return err
 	}
 
 	// Get current branch
-	currentBranch, err := GetCurrentBranch(repoPath)
+	currentBranch, err := GetCurrentBranch(ctx, repoPath)
 	if err != nil {
 		return err
 	}
@@ -113,8 +114,8 @@ func EnsureOnDefaultBranch(repoPath string) error {
 // FetchBareRepo fetches updates for a bare repository.
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
-func FetchBareRepo(repoPath, workTree string) error {
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
+func FetchBareRepo(ctx context.Context, repoPath, workTree string) error {
+	cmd := exec.CommandContext(ctx, "git", "--git-dir="+repoPath, "--work-tree="+workTree, "fetch", "--all", "--prune")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 
@@ -130,9 +131,9 @@ func FetchBareRepo(repoPath, workTree string) error {
 // PullRebaseBareRepo performs a pull with rebase operation for a bare repository.
 // It takes the repository path `repoPath` and work tree `workTree` as inputs and
 // returns an error if the operation fails.
-func PullRebaseBareRepo(repoPath, workTree string) error {
+func PullRebaseBareRepo(ctx context.Context, repoPath, workTree string) error {
 	// Get the current branch for the bare repository
-	cmd := exec.Command("git", "--git-dir="+repoPath, "branch", "--show-current")
+	cmd := exec.CommandContext(ctx, "git", "--git-dir="+repoPath, "branch", "--show-current")
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("Failed to get current branch: %v", err)
@@ -148,7 +149,7 @@ func PullRebaseBareRepo(repoPath, workTree string) error {
 	log.Info("Pulling branch: %s", currentBranch)
 
 	// Pull with explicit remote and branch
-	cmd = exec.Command( // #nosec G204
+	cmd = exec.CommandContext(ctx, // #nosec G204
 		"git",
 		"--git-dir="+repoPath,
 		"--work-tree="+workTree,
@@ -173,19 +174,19 @@ func PullRebaseBareRepo(repoPath, workTree string) error {
 
 // GetMainBranch returns the main branch name for the repository (main or master).
 // It checks for both main and master branches and returns the one that exists.
-func GetMainBranch(repoPath string) (string, error) {
+func GetMainBranch(ctx context.Context, repoPath string) (string, error) {
 	// First check if main branch exists
-	if branchExists(repoPath, "main") {
+	if branchExists(ctx, repoPath, "main") {
 		return "main", nil
 	}
 
 	// Then check if master branch exists
-	if branchExists(repoPath, "master") {
+	if branchExists(ctx, repoPath, "master") {
 		return "master", nil
 	}
 
 	// If neither exists, try to get the default branch from remote
-	defaultBranch, err := getRemoteDefaultBranch(repoPath)
+	defaultBranch, err := getRemoteDefaultBranch(ctx, repoPath)
 	if err == nil && defaultBranch != "" {
 		return defaultBranch, nil
 	}
@@ -197,11 +198,11 @@ func GetMainBranch(repoPath string) (string, error) {
 
 // GetDevelopBranch returns the development branch name for the repository (develop, dev, or development).
 // It checks for common development branch names and returns the one that exists.
-func GetDevelopBranch(repoPath string) (string, error) {
+func GetDevelopBranch(ctx context.Context, repoPath string) (string, error) {
 	developBranches := []string{"develop", "dev", "development"}
 
 	for _, branch := range developBranches {
-		if branchExists(repoPath, branch) {
+		if branchExists(ctx, repoPath, branch) {
 			return branch, nil
 		}
 	}
@@ -211,8 +212,8 @@ func GetDevelopBranch(repoPath string) (string, error) {
 }
 
 // GetCurrentBranch returns the current branch name for the repository.
-func GetCurrentBranch(repoPath string) (string, error) {
-	cmd := exec.Command("git", "-C", repoPath, "branch", "--show-current")
+func GetCurrentBranch(ctx context.Context, repoPath string) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "branch", "--show-current")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -221,15 +222,15 @@ func GetCurrentBranch(repoPath string) (string, error) {
 }
 
 // branchExists checks if a branch exists in the repository.
-func branchExists(repoPath, branchName string) bool {
-	cmd := exec.Command("git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branchName)
+func branchExists(ctx context.Context, repoPath, branchName string) bool {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branchName)
 	err := cmd.Run()
 	return err == nil
 }
 
 // getRemoteDefaultBranch tries to get the default branch from the remote.
-func getRemoteDefaultBranch(repoPath string) (string, error) {
-	cmd := exec.Command("git", "-C", repoPath, "symbolic-ref", "refs/remotes/origin/HEAD")
+func getRemoteDefaultBranch(ctx context.Context, repoPath string) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "symbolic-ref", "refs/remotes/origin/HEAD")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -250,7 +251,7 @@ func getRemoteDefaultBranch(repoPath string) (string, error) {
 // If force is true, it will discard any local changes and force the checkout.
 // If all is true, it will checkout all files from the index/HEAD.
 // Returns an error if the operation fails.
-func CheckoutBareRepo(repoPath, workTree string, force, all bool) error {
+func CheckoutBareRepo(ctx context.Context, repoPath, workTree string, force, all bool) error {
 	args := []string{"--git-dir=" + repoPath, "--work-tree=" + workTree, "checkout"}
 
 	if force {
@@ -261,7 +262,7 @@ func CheckoutBareRepo(repoPath, workTree string, force, all bool) error {
 		args = append(args, ".")
 	}
 
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 

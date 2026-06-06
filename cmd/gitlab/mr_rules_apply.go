@@ -56,7 +56,7 @@ var mrRulesApplyCmd = &cobra.Command{
 		host := hostOpt
 		project := projectOpt
 		if host == "" || project == "" {
-			if h, p, err := gitrepo.GetGitLabHostAndProjectPath("."); err == nil {
+			if h, p, err := gitrepo.GetGitLabHostAndProjectPath(cmd.Context(), "."); err == nil {
 				if host == "" {
 					host = h
 				}

@@ -26,7 +26,7 @@ var SyncCmd = &cobra.Command{
 		log.Verbose(isVerbose, "Repository path: %s", repoPath)
 		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		if err = dotfiles.SyncRepo(repoPath, worktreePath, isVerbose); err != nil {
+		if err = dotfiles.SyncRepo(cmd.Context(), repoPath, worktreePath, isVerbose); err != nil {
 			log.Error("Sync failed: %v", err)
 			return
 		}

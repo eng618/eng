@@ -34,6 +34,6 @@ Example:
 			ProjectFilter: projectFilter,
 		}
 
-		project.Setup(opts)
+		project.Setup(cmd.Context(), opts)
 	},
 }

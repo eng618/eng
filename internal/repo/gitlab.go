@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"os/exec"
@@ -10,16 +11,16 @@ import (
 
 // GetGitLabHostAndProjectPath attempts to detect GitLab host and project path from the current repo remote.
 // It returns host (e.g., gitlab.com) and project path (e.g., group/subgroup/repo).
-func GetGitLabHostAndProjectPath(repoPath string) (string, string, error) {
-	remoteURL, err := getOriginURL(repoPath)
+func GetGitLabHostAndProjectPath(ctx context.Context, repoPath string) (string, string, error) {
+	remoteURL, err := getOriginURL(ctx, repoPath)
 	if err != nil || remoteURL == "" {
 		return "", "", errors.New("no git remote origin url found")
 	}
 	return parseGitLabRemote(remoteURL)
 }
 
-func getOriginURL(repoPath string) (string, error) {
-	cmd := exec.Command("git", "-C", repoPath, "config", "--get", "remote.origin.url")
+func getOriginURL(ctx context.Context, repoPath string) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "config", "--get", "remote.origin.url")
 	b, err := cmd.Output()
 	if err != nil {
 		return "", err

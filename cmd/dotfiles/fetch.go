@@ -21,7 +21,7 @@ var FetchCmd = &cobra.Command{
 			return
 		}
 
-		err = dotfiles.FetchRepo(repoPath, worktreePath)
+		err = dotfiles.FetchRepo(cmd.Context(), repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to fetch dotfiles: %s", err)
 			return

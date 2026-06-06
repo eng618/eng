@@ -94,7 +94,7 @@ var PushAllCmd = &cobra.Command{
 			}
 
 			// Check if repository is dirty (only warn, don't skip)
-			isDirty, err := repo.IsDirty(repoPath)
+			isDirty, err := repo.IsDirty(cmd.Context(), repoPath)
 			if err != nil {
 				log.Error("  Failed to check repository status: %s", err)
 				failureCount++

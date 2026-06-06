@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -27,7 +28,7 @@ type SetupStats struct {
 }
 
 // Setup ensures project directories exist and clones missing repositories.
-func Setup(opts SetupOptions) {
+func Setup(ctx context.Context, opts SetupOptions) {
 	log.Start("Setting up project repositories")
 
 	devPath := viper.GetString("git.dev_path")
@@ -56,7 +57,7 @@ func Setup(opts SetupOptions) {
 
 	stats := &SetupStats{}
 	for _, p := range projects {
-		setupProject(p, devPath, opts, stats)
+		setupProject(ctx, p, devPath, opts, stats)
 	}
 	printSummary(stats, opts.DryRun)
 }
@@ -76,7 +77,7 @@ func filterProjects(projects []config.Project, filter string) []config.Project {
 	return []config.Project{}
 }
 
-func setupProject(p config.Project, devPath string, opts SetupOptions, stats *SetupStats) {
+func setupProject(ctx context.Context, p config.Project, devPath string, opts SetupOptions, stats *SetupStats) {
 	log.Info("Processing project: %s", p.Name)
 
 	projectPath := filepath.Join(devPath, p.Name)
@@ -92,11 +93,17 @@ func setupProject(p config.Project, devPath string, opts SetupOptions, stats *Se
 	}
 
 	for _, projectRepo := range p.Repos {
-		setupRepo(projectRepo, projectPath, opts, stats)
+		setupRepo(ctx, projectRepo, projectPath, opts, stats)
 	}
 }
 
-func setupRepo(projectRepo config.ProjectRepo, projectPath string, opts SetupOptions, stats *SetupStats) {
+func setupRepo(
+	ctx context.Context,
+	projectRepo config.ProjectRepo,
+	projectPath string,
+	opts SetupOptions,
+	stats *SetupStats,
+) {
 	stats.TotalRepos++
 
 	repoPath, err := projectRepo.GetEffectivePath()
@@ -122,7 +129,7 @@ func setupRepo(projectRepo config.ProjectRepo, projectPath string, opts SetupOpt
 
 	log.Info("  Cloning %s...", repoPath)
 
-	if err := repo.Clone(projectRepo.URL, fullRepoPath); err != nil {
+	if err := repo.Clone(ctx, projectRepo.URL, fullRepoPath); err != nil {
 		log.Error("  Failed to clone %s: %s", projectRepo.URL, err)
 		stats.FailedCount++
 		return
