@@ -1,7 +1,6 @@
 package project
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +13,12 @@ import (
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
+
+func init() {
+	ui.DisableProgress = true
+}
 
 // setupTestEnvironment creates a temporary workspace and config for testing.
 func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, cleanup func()) {
@@ -52,7 +56,7 @@ func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, clean
 }
 
 func TestProjectCmd_Help(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -67,7 +71,7 @@ func TestProjectCmd_Help(t *testing.T) {
 }
 
 func TestProjectCmd_Info(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -93,7 +97,7 @@ func TestProjectCmd_Info(t *testing.T) {
 }
 
 func TestListCmd_EmptyProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -110,7 +114,7 @@ func TestListCmd_EmptyProjects(t *testing.T) {
 }
 
 func TestListCmd_WithProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -146,7 +150,7 @@ func TestListCmd_WithProjects(t *testing.T) {
 }
 
 func TestSetupCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -163,7 +167,7 @@ func TestSetupCmd_NoDevPath(t *testing.T) {
 }
 
 func TestSetupCmd_NoProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -180,7 +184,7 @@ func TestSetupCmd_NoProjects(t *testing.T) {
 }
 
 func TestSetupCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -218,7 +222,7 @@ func TestSetupCmd_DryRun(t *testing.T) {
 }
 
 func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -252,7 +256,7 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 }
 
 func TestSetupCmd_SkipsExistingRepos(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -290,7 +294,7 @@ func TestSetupCmd_SkipsExistingRepos(t *testing.T) {
 }
 
 func TestFetchCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -306,7 +310,7 @@ func TestFetchCmd_NoDevPath(t *testing.T) {
 }
 
 func TestPullCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -322,7 +326,7 @@ func TestPullCmd_NoDevPath(t *testing.T) {
 }
 
 func TestSyncCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -379,7 +383,7 @@ func TestCloneRepository_InvalidURL(t *testing.T) {
 }
 
 func TestFetchCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -421,7 +425,7 @@ func TestFetchCmd_DryRun(t *testing.T) {
 }
 
 func TestPullCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -463,7 +467,7 @@ func TestPullCmd_DryRun(t *testing.T) {
 }
 
 func TestSyncCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -505,7 +509,7 @@ func TestSyncCmd_DryRun(t *testing.T) {
 }
 
 func TestListCmd_VerboseOutput(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -549,7 +553,7 @@ func TestListCmd_VerboseOutput(t *testing.T) {
 }
 
 func TestRemoveCmd_NoProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 

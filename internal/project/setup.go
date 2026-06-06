@@ -18,6 +18,14 @@ type SetupOptions struct {
 	ProjectFilter string
 }
 
+// SetupStats tracks the results of the setup operation.
+type SetupStats struct {
+	TotalRepos   int
+	ClonedCount  int
+	SkippedCount int
+	FailedCount  int
+}
+
 // Setup ensures project directories exist and clones missing repositories.
 func Setup(opts SetupOptions) {
 	log.Start("Setting up project repositories")
@@ -41,98 +49,103 @@ func Setup(opts SetupOptions) {
 		return
 	}
 
-	// Filter by project if specified
-	if opts.ProjectFilter != "" {
-		filtered := make([]config.Project, 0)
-		for _, p := range projects {
-			if p.Name == opts.ProjectFilter {
-				filtered = append(filtered, p)
-				break
-			}
-		}
-		if len(filtered) == 0 {
-			log.Error("Project '%s' not found in configuration", opts.ProjectFilter)
-			return
-		}
-		projects = filtered
+	projects = filterProjects(projects, opts.ProjectFilter)
+	if len(projects) == 0 {
+		return
 	}
 
-	totalRepos := 0
-	clonedCount := 0
-	skippedCount := 0
-	failedCount := 0
+	stats := &SetupStats{}
+	for _, p := range projects {
+		setupProject(p, devPath, opts, stats)
+	}
+	printSummary(stats, opts.DryRun)
+}
+
+func filterProjects(projects []config.Project, filter string) []config.Project {
+	if filter == "" {
+		return projects
+	}
 
 	for _, p := range projects {
-		log.Info("Processing project: %s", p.Name)
-
-		projectPath := filepath.Join(devPath, p.Name)
-
-		// Ensure project directory exists
-		if opts.DryRun {
-			log.Info("  [DRY RUN] Would ensure directory exists: %s", projectPath)
-		} else {
-			if err := os.MkdirAll(projectPath, 0o755); err != nil {
-				log.Error("  Failed to create project directory: %s", err)
-				continue
-			}
-			log.Verbose(opts.IsVerbose, "  Project directory ready: %s", projectPath)
-		}
-
-		for _, projectRepo := range p.Repos {
-			totalRepos++
-
-			repoPath, err := projectRepo.GetEffectivePath()
-			if err != nil {
-				log.Error("  Failed to determine path for %s: %s", projectRepo.URL, err)
-				failedCount++
-				continue
-			}
-
-			fullRepoPath := filepath.Join(projectPath, repoPath)
-
-			// Check if repo already exists
-			if _, err := os.Stat(filepath.Join(fullRepoPath, ".git")); err == nil {
-				log.Verbose(opts.IsVerbose, "  Repository already exists: %s", repoPath)
-				skippedCount++
-				continue
-			}
-
-			if opts.DryRun {
-				log.Info("  [DRY RUN] Would clone %s to %s", projectRepo.URL, fullRepoPath)
-				clonedCount++
-				continue
-			}
-
-			log.Info("  Cloning %s...", repoPath)
-
-			// Clone the repository
-			if err := repo.Clone(projectRepo.URL, fullRepoPath); err != nil {
-				log.Error("  Failed to clone %s: %s", projectRepo.URL, err)
-				failedCount++
-				continue
-			}
-
-			log.Success("  Cloned %s", repoPath)
-			clonedCount++
+		if p.Name == filter {
+			return []config.Project{p}
 		}
 	}
 
+	log.Error("Project '%s' not found in configuration", filter)
+	return []config.Project{}
+}
+
+func setupProject(p config.Project, devPath string, opts SetupOptions, stats *SetupStats) {
+	log.Info("Processing project: %s", p.Name)
+
+	projectPath := filepath.Join(devPath, p.Name)
+
+	if opts.DryRun {
+		log.Info("  [DRY RUN] Would ensure directory exists: %s", projectPath)
+	} else {
+		if err := os.MkdirAll(projectPath, 0o755); err != nil {
+			log.Error("  Failed to create project directory: %s", err)
+			return
+		}
+		log.Verbose(opts.IsVerbose, "  Project directory ready: %s", projectPath)
+	}
+
+	for _, projectRepo := range p.Repos {
+		setupRepo(projectRepo, projectPath, opts, stats)
+	}
+}
+
+func setupRepo(projectRepo config.ProjectRepo, projectPath string, opts SetupOptions, stats *SetupStats) {
+	stats.TotalRepos++
+
+	repoPath, err := projectRepo.GetEffectivePath()
+	if err != nil {
+		log.Error("  Failed to determine path for %s: %s", projectRepo.URL, err)
+		stats.FailedCount++
+		return
+	}
+
+	fullRepoPath := filepath.Join(projectPath, repoPath)
+
+	if _, err := os.Stat(filepath.Join(fullRepoPath, ".git")); err == nil {
+		log.Verbose(opts.IsVerbose, "  Repository already exists: %s", repoPath)
+		stats.SkippedCount++
+		return
+	}
+
+	if opts.DryRun {
+		log.Info("  [DRY RUN] Would clone %s to %s", projectRepo.URL, fullRepoPath)
+		stats.ClonedCount++
+		return
+	}
+
+	log.Info("  Cloning %s...", repoPath)
+
+	if err := repo.Clone(projectRepo.URL, fullRepoPath); err != nil {
+		log.Error("  Failed to clone %s: %s", projectRepo.URL, err)
+		stats.FailedCount++
+		return
+	}
+
+	log.Success("  Cloned %s", repoPath)
+	stats.ClonedCount++
+}
+
+func printSummary(stats *SetupStats, dryRun bool) {
 	log.Info("")
 	log.Info("Setup complete:")
-	log.Info("  Total repositories: %d", totalRepos)
-	log.Info("  Cloned: %d", clonedCount)
-	log.Info("  Already present: %d", skippedCount)
-	if failedCount > 0 {
-		log.Warn("  Failed: %d", failedCount)
-	}
-
-	if failedCount > 0 {
+	log.Info("  Total repositories: %d", stats.TotalRepos)
+	log.Info("  Cloned: %d", stats.ClonedCount)
+	log.Info("  Already present: %d", stats.SkippedCount)
+	if stats.FailedCount > 0 {
+		log.Warn("  Failed: %d", stats.FailedCount)
 		log.Warn("Some repositories failed to clone. Check the output above for details.")
 		log.Info("Common issues:")
 		log.Info("  - SSH key not configured for the repository host")
 		log.Info("  - Repository URL is incorrect")
 		log.Info("  - Network connectivity issues")
-	} else if !opts.DryRun && clonedCount > 0 {
+	} else if !dryRun && stats.ClonedCount > 0 {
 		log.Success("All project repositories set up successfully!")
 	}
 }
