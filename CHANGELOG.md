@@ -1,5 +1,25 @@
 <a name="unreleased"></a>
 
+## [1.13.0](https://github.com/eng618/eng/compare/v1.12.0...v1.13.0) (2026-06-06)
+
+
+### Features
+
+* Migrate to NativeWind v5 and upgrade design system boilerplate with global CSS configuration ([44b2e8d](https://github.com/eng618/eng/commit/44b2e8d73fa7978df297e7798b1341ceed640ecc))
+* Propagate context throughout application ([6c238e6](https://github.com/eng618/eng/commit/6c238e69d6ea015969dfc4ecdd526ac7def980f3))
+
+
+### Bug Fixes
+
+* **codemod:** Handle file operation errors properly ([0d5b429](https://github.com/eng618/eng/commit/0d5b42902fe768a7955fe1740d664b41d5a04b5f))
+* **log:** Remove log.Fatal and replace with error handling ([e428a83](https://github.com/eng618/eng/commit/e428a835d0f9d328ac64be45f862f097c46f4530))
+* Resolve task validate failures and data race in tests ([a2fea58](https://github.com/eng618/eng/commit/a2fea5838d78214dae19d8b7c6936a48c2f42766))
+
+
+### Miscellaneous
+
+* Update tailwindcss and dependency versions in codemod commands ([5a4eda0](https://github.com/eng618/eng/commit/5a4eda089e5896b08975ac2fe3768c7462aebd1e))
+
 ## [1.12.0](https://github.com/eng618/eng/compare/v1.11.4...v1.12.0) (2026-06-02)
 
 
