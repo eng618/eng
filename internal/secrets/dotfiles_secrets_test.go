@@ -1,4 +1,4 @@
-package utils
+package secrets
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 func TestLoadDotfilesSecretsManifest(t *testing.T) {

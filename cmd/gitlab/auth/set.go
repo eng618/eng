@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/log"
 )
 
 var (
@@ -50,7 +50,7 @@ var setCmd = &cobra.Command{
 			if strings.TrimSpace(setTokenItem) == "" {
 				return errors.New("--token-item is required when providing a token")
 			}
-			if _, err := utils.SaveOrUpdateBitwardenSecret(
+			if _, err := bitwarden.SaveOrUpdateBitwardenSecret(
 				setTokenItem,
 				strings.TrimSpace(tokenToSave),
 				setNotes,

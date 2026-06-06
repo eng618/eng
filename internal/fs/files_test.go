@@ -1,12 +1,12 @@
 // Package utils_test contains unit tests for the utils package.
-package utils_test
+package fs_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/eng618/eng/internal/utils"
+	fs "github.com/eng618/eng/internal/fs"
 )
 
 func TestSyncDirectory_CopiesFilesAndSubdirs(t *testing.T) {
@@ -31,7 +31,7 @@ func TestSyncDirectory_CopiesFilesAndSubdirs(t *testing.T) {
 	}
 
 	// Run SyncDirectory
-	if err := utils.SyncDirectory(srcDir, destDir, false); err != nil {
+	if err := fs.SyncDirectory(srcDir, destDir, false); err != nil {
 		t.Fatalf("SyncDirectory failed: %v", err)
 	}
 

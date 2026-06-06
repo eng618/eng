@@ -3,9 +3,9 @@ package dotfiles
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // SyncCmd defines the cobra command for syncing the dotfiles repository.
@@ -17,7 +17,7 @@ var SyncCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Syncing dotfiles")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		repoPath, worktreePath, err := getDotfilesConfig()
 		if err != nil || repoPath == "" {

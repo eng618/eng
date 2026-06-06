@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // RepoURL checks for the dotfiles repository URL in the configuration and returns it.

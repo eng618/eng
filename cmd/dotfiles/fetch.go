@@ -3,8 +3,8 @@ package dotfiles
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // FetchCmd defines the cobra command for fetching the dotfiles repository.
@@ -34,7 +34,7 @@ var FetchCmd = &cobra.Command{
 }
 
 // fetchRepo is a package-level variable so tests can override the implementation.
-// By default it calls repo.FetchBareRepo.
+// By default it calls git.FetchBareRepo.
 var fetchRepo = func(repoPath, worktreePath string) error {
 	return repo.FetchBareRepo(repoPath, worktreePath)
 }

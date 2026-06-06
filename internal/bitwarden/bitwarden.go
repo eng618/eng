@@ -1,4 +1,4 @@
-package utils
+package bitwarden
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // BitwardenItem represents a Bitwarden vault item.

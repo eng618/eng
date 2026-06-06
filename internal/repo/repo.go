@@ -7,7 +7,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // IsDirty checks if the repository at the given path has uncommitted changes.

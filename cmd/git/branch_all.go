@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // BranchAllCmd defines the cobra command for showing current branch of all git repositories.
@@ -19,7 +19,7 @@ var BranchAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking current branch of all git repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		devPath, err := getWorkingPath(cmd)
 		if err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // Email checks for the user's email in the configuration and prompts the user to confirm it.

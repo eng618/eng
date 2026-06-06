@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // setupTestEnvironment creates a temporary workspace and config for testing.
@@ -228,7 +228,7 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 	testProjects := []config.Project{
 		{
 			Name:  "ExistingProject",
-			Repos: []config.ProjectRepo{{URL: "git@github.com:org/repo.git"}},
+			Repos: []config.ProjectRepo{{URL: "git@github.com:org/git.git"}},
 		},
 	}
 	err := config.SaveProjects(testProjects)

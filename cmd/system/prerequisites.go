@@ -9,8 +9,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/log"
 )
 
 // EnsurePrerequisites checks and installs core prerequisites needed for setup flows.
@@ -216,14 +216,14 @@ func ensureGitHubSSH(verbose bool) error {
 // setupSSHFromBitwarden attempts to retrieve SSH keys from Bitwarden vault and set them up locally.
 func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 	// Ensure Bitwarden session is unlocked (prompts user interactively if needed)
-	session, err := utils.EnsureBitwardenSession()
+	session, err := bitwarden.EnsureBitwardenSession()
 	if err != nil {
 		return fmt.Errorf("failed to access Bitwarden: %w", err)
 	}
 	_ = session // Session is set in environment by EnsureBitwardenSession
 
 	// Find SSH keys in vault
-	sshKeys, err := utils.FindSSHKeysInVault()
+	sshKeys, err := bitwarden.FindSSHKeysInVault()
 	if err != nil {
 		return fmt.Errorf("failed to search for SSH keys in Bitwarden: %w", err)
 	}
@@ -232,13 +232,13 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 		return fmt.Errorf("no SSH keys found in Bitwarden vault")
 	}
 
-	var selectedKey *utils.BitwardenItem
+	var selectedKey *bitwarden.BitwardenItem
 
 	// If multiple keys found, let user choose
 	if len(sshKeys) > 1 {
 		log.Message("Multiple SSH keys found in Bitwarden vault:")
 		var options []string
-		keyMap := make(map[string]*utils.BitwardenItem)
+		keyMap := make(map[string]*bitwarden.BitwardenItem)
 
 		for _, key := range sshKeys {
 			option := fmt.Sprintf("%s (ID: %s)", key.Name, key.ID)
@@ -262,7 +262,7 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 	}
 
 	// Extract the SSH key
-	sshKey, err := utils.ExtractSSHKeyFromItem(selectedKey)
+	sshKey, err := bitwarden.ExtractSSHKeyFromItem(selectedKey)
 	if err != nil {
 		return fmt.Errorf("failed to extract SSH key: %w", err)
 	}

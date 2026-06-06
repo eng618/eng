@@ -776,7 +776,7 @@ func TestConfigTypeValidation(t *testing.T) {
 		testValues := map[string]string{
 			"user-email":              "test@example.com",
 			"dotfiles.repoPath":       "/path/to/repo",
-			"dotfiles.repo_url":       "https://github.com/user/repo.git",
+			"dotfiles.repo_url":       "https://github.com/user/git.git",
 			"dotfiles.branch":         "main",
 			"dotfiles.bare_repo_path": "/bare/repo/path",
 			"git.devPath":             "/dev/path",

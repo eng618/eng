@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 // FetchAllCmd defines the cobra command for fetching all git repositories.
@@ -19,7 +19,7 @@ var FetchAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Fetching all git repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 
 		devPath, err := getWorkingPath(cmd)

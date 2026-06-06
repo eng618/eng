@@ -11,8 +11,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 type PortInfo struct {
@@ -188,7 +188,7 @@ Requires appropriate tools to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := utils.IsVerbose(cmd) // Get verbosity flag
+		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
 
 		var portStr string
 		var selectedPort PortInfo

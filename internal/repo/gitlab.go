@@ -28,14 +28,14 @@ func getOriginURL(repoPath string) (string, error) {
 }
 
 func parseGitLabRemote(remote string) (string, string, error) {
-	// Support SSH: git@gitlab.com:group/sub/repo.git
+	// Support SSH: git@gitlab.com:group/sub/git.git
 	sshPattern := regexp.MustCompile(`^(?:git|ssh)@([^:]+):(.+?)(?:\.git)?$`)
 	if matches := sshPattern.FindStringSubmatch(remote); len(matches) == 3 {
 		host := matches[1]
 		path := strings.TrimSuffix(matches[2], ".git")
 		return host, path, nil
 	}
-	// Support HTTPS: https://gitlab.com/group/sub/repo.git
+	// Support HTTPS: https://gitlab.com/group/sub/git.git
 	if strings.HasPrefix(remote, "http://") || strings.HasPrefix(remote, "https://") {
 		u, err := url.Parse(remote)
 		if err != nil {

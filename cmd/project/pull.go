@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // PullCmd defines the cobra command for pulling all project repositories.
@@ -31,7 +31,7 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Pulling project repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
 		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 

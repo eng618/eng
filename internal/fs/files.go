@@ -1,11 +1,11 @@
-package utils
+package fs
 
 import (
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // SyncDirectory synchronizes the contents of the source directory (srcDir) with the destination directory (destDir).

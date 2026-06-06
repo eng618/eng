@@ -1,4 +1,4 @@
-package utils
+package secrets
 
 import (
 	"bufio"
@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 const dotfilesSecretsRetries = 4
@@ -516,22 +517,22 @@ func parseBWSRateLimitDelay(output []byte) time.Duration {
 	return time.Second
 }
 
-func maybeStartSpinner(enabled bool, msg string) *Spinner {
+func maybeStartSpinner(enabled bool, msg string) *ui.Spinner {
 	if !enabled {
 		return nil
 	}
-	sp := NewSpinner(msg)
+	sp := ui.NewSpinner(msg)
 	sp.Start()
 	return sp
 }
 
-func updateSpinner(sp *Spinner, msg string) {
+func updateSpinner(sp *ui.Spinner, msg string) {
 	if sp != nil {
 		sp.UpdateMessage(msg)
 	}
 }
 
-func stopSpinner(sp *Spinner) {
+func stopSpinner(sp *ui.Spinner) {
 	if sp != nil {
 		sp.Stop()
 	}

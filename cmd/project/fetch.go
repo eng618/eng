@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // FetchCmd defines the cobra command for fetching all project repositories.
@@ -27,7 +27,7 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Fetching project repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
 		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 

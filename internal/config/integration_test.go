@@ -160,7 +160,7 @@ func TestConfigFileFormats(t *testing.T) {
 
 			// Set test data
 			viper.Set("user-email", "format@example.com")
-			viper.Set("dotfiles.repo_url", "https://github.com/user/repo.git")
+			viper.Set("dotfiles.repo_url", "https://github.com/user/git.git")
 
 			// Write config
 			err := viper.WriteConfig()
@@ -175,7 +175,7 @@ func TestConfigFileFormats(t *testing.T) {
 
 			// Verify data
 			assert.Equal(t, "format@example.com", viper.GetString("user-email"))
-			assert.Equal(t, "https://github.com/user/repo.git", viper.GetString("dotfiles.repo_url"))
+			assert.Equal(t, "https://github.com/user/git.git", viper.GetString("dotfiles.repo_url"))
 		})
 	}
 }

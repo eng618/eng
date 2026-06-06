@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 // Project represents a collection of related repositories.
@@ -156,23 +156,23 @@ func RemoveRepoFromProject(projectName, repoURL string) error {
 }
 
 // RepoNameFromURL extracts the repository name from a git URL.
-// Supports both SSH (git@host:path/repo.git) and HTTPS (https://host/path/repo.git) formats.
+// Supports both SSH (git@host:path/git.git) and HTTPS (https://host/path/git.git) formats.
 func RepoNameFromURL(repoURL string) (string, error) {
-	// SSH format: git@host:path/repo.git or ssh://git@host/path/repo.git
+	// SSH format: git@host:path/git.git or ssh://git@host/path/git.git
 	sshPattern := regexp.MustCompile(`^(?:git|ssh)@[^:]+:(.+?)(?:\.git)?$`)
 	if matches := sshPattern.FindStringSubmatch(repoURL); len(matches) == 2 {
 		path := strings.TrimSuffix(matches[1], ".git")
 		return filepath.Base(path), nil
 	}
 
-	// SSH with protocol: ssh://git@host/path/repo.git
+	// SSH with protocol: ssh://git@host/path/git.git
 	sshProtoPattern := regexp.MustCompile(`^ssh://[^/]+/(.+?)(?:\.git)?$`)
 	if matches := sshProtoPattern.FindStringSubmatch(repoURL); len(matches) == 2 {
 		path := strings.TrimSuffix(matches[1], ".git")
 		return filepath.Base(path), nil
 	}
 
-	// HTTPS format: https://host/path/repo.git
+	// HTTPS format: https://host/path/git.git
 	if strings.HasPrefix(repoURL, "http://") || strings.HasPrefix(repoURL, "https://") {
 		u, err := url.Parse(repoURL)
 		if err != nil {
@@ -186,7 +186,7 @@ func RepoNameFromURL(repoURL string) (string, error) {
 	return "", fmt.Errorf("unsupported URL format: %s", repoURL)
 }
 
-// GetEffectivePath returns the effective path for a repo.
+// GetEffectivePath returns the effective path for a git.
 // If Path is set, it uses that; otherwise, it derives from the URL.
 func (r *ProjectRepo) GetEffectivePath() (string, error) {
 	if r.Path != "" {

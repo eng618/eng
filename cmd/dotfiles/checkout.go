@@ -3,9 +3,9 @@ package dotfiles
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // CheckoutCmd defines the cobra command for checking out files in the dotfiles repository.
@@ -17,7 +17,7 @@ var CheckoutCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking out dotfiles")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		all, _ := cmd.Flags().GetBool("all")
 		force, _ := cmd.Flags().GetBool("force")
 

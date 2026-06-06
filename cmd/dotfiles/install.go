@@ -16,9 +16,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/cmd/system"
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 var InstallCmd = &cobra.Command{
@@ -33,7 +33,7 @@ var InstallCmd = &cobra.Command{
   - Initialize git submodules
   - Configure git to hide untracked files`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := installDotfiles(utils.IsVerbose(cmd)); err != nil {
+		if err := installDotfiles(cmdutil.IsVerbose(cmd)); err != nil {
 			return fmt.Errorf("dotfiles installation failed: %w", err)
 		}
 		return nil

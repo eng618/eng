@@ -50,7 +50,7 @@ These items address structural debt and optimize the CLI's performance for scale
 ### 2.1 Refactor `internal/utils` into Domain Packages
 
 - **Status**: `[ ]`
-- **Task**: Break apart the `internal/utils` grab-bag package into dedicated, single-responsibility domain packages (e.g., `internal/git`, `internal/bitwarden`, `internal/config`, `internal/ui`).
+- **Task**: Break apart the `internal/utils` grab-bag package into dedicated, single-responsibility domain packages (e.g., `internal/repo`, `internal/bitwarden`, `internal/config`, `internal/ui`).
 - **Impact**: High (improves maintainability and separation of concerns)
 - **Effort**: Medium
 - **Location**: `internal/utils/*`

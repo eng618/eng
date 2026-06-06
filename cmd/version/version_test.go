@@ -10,7 +10,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 func TestPrintVersionInfo(t *testing.T) {

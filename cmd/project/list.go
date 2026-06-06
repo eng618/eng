@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // ListCmd defines the cobra command for listing configured projects.
@@ -29,7 +29,7 @@ Example:
   eng project list -v            # Show detailed repository information
   eng project list -p MyProject  # Show only the specified project`,
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
 
 		devPath := viper.GetString("git.dev_path")
