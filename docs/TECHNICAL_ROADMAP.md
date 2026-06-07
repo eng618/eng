@@ -49,7 +49,7 @@ These items address structural debt and optimize the CLI's performance for scale
 
 ### 2.1 Refactor `internal/utils` into Domain Packages
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Break apart the `internal/utils` grab-bag package into dedicated, single-responsibility domain packages (e.g., `internal/repo`, `internal/bitwarden`, `internal/config`, `internal/ui`).
 - **Impact**: High (improves maintainability and separation of concerns)
 - **Effort**: Medium
@@ -57,7 +57,7 @@ These items address structural debt and optimize the CLI's performance for scale
 
 ### 2.2 Parallelize Multi-Repository Operations
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Introduce `golang.org/x/sync/errgroup` to perform `git fetch` and `git pull` operations concurrently across projects and repositories.
 - **Impact**: High (drastically reduces latency for syncing large numbers of repos)
 - **Effort**: Medium
@@ -65,7 +65,7 @@ These items address structural debt and optimize the CLI's performance for scale
 
 ### 2.3 Extract Business Logic from Cobra Commands
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Move business logic out of Cobra's `Run`/`RunE` functions and into independent, testable service functions. The Cobra layer should only handle flag parsing, I/O routing, and service initialization.
 - **Impact**: High (enables unit testing)
 - **Effort**: High
@@ -73,11 +73,20 @@ These items address structural debt and optimize the CLI's performance for scale
 
 ### 2.4 Implement Context Propagation
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Replace `exec.Command` with `exec.CommandContext` and pass a `context.Context` from the root command down to all network-bound or long-running operations. This allows users to cancel operations gracefully.
 - **Impact**: Medium
 - **Effort**: Medium
 - **Location**: `internal/utils/repo/repo.go`, `internal/utils/bitwarden.go`
+
+
+### 2.5 Replace `os/exec` with `go-git` where practical
+
+- **Status**: `[x]`
+- **Task**: Transition simple git system calls to use the native `go-git` library for better cross-platform compatibility and resilience.
+- **Impact**: Medium
+- **Effort**: Low
+- **Location**: `internal/repo/*`, `internal/dotfiles/*`
 
 ---
 
@@ -111,7 +120,7 @@ These items ensure the long-term health and stability of the project.
 
 ### 3.4 Implement a TUI for Multi-Repo Syncing
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Integrate a Text User Interface library like `bubbletea` or `pterm` to display rich parallel progress bars when fetching or syncing multiple repositories.
 - **Impact**: Low (UX improvement)
 - **Effort**: Medium
