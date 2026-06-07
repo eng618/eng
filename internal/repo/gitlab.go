@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
 )
 
 // GetGitLabHostAndProjectPath attempts to detect GitLab host and project path from the current repo remote.
@@ -20,12 +21,19 @@ func GetGitLabHostAndProjectPath(ctx context.Context, repoPath string) (string, 
 }
 
 func getOriginURL(ctx context.Context, repoPath string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "config", "--get", "remote.origin.url")
-	b, err := cmd.Output()
+	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(b)), nil
+	cfg, err := r.Config()
+	if err != nil {
+		return "", err
+	}
+	remote, ok := cfg.Remotes["origin"]
+	if !ok || len(remote.URLs) == 0 {
+		return "", errors.New("no git remote origin url found")
+	}
+	return remote.URLs[0], nil
 }
 
 func parseGitLabRemote(remote string) (string, string, error) {

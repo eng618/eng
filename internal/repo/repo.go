@@ -213,32 +213,40 @@ func GetDevelopBranch(ctx context.Context, repoPath string) (string, error) {
 
 // GetCurrentBranch returns the current branch name for the repository.
 func GetCurrentBranch(ctx context.Context, repoPath string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "branch", "--show-current")
-	output, err := cmd.Output()
+	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(output)), nil
+	ref, err := r.Head()
+	if err != nil {
+		return "", err
+	}
+	return ref.Name().Short(), nil
 }
 
 // branchExists checks if a branch exists in the repository.
 func branchExists(ctx context.Context, repoPath, branchName string) bool {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branchName)
-	err := cmd.Run()
+	r, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return false
+	}
+	_, err = r.Reference(plumbing.ReferenceName("refs/heads/"+branchName), true)
 	return err == nil
 }
 
 // getRemoteDefaultBranch tries to get the default branch from the remote.
 func getRemoteDefaultBranch(ctx context.Context, repoPath string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "symbolic-ref", "refs/remotes/origin/HEAD")
-	output, err := cmd.Output()
+	r, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return "", err
+	}
+	ref, err := r.Reference(plumbing.ReferenceName("refs/remotes/origin/HEAD"), false)
 	if err != nil {
 		return "", err
 	}
 
-	// Parse the output to get just the branch name
-	ref := strings.TrimSpace(string(output))
-	parts := strings.Split(ref, "/")
+	target := ref.Target().Short()
+	parts := strings.Split(target, "/")
 	if len(parts) > 0 {
 		return parts[len(parts)-1], nil
 	}
