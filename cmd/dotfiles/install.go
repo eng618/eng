@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/dotfiles"
 )
 
@@ -21,7 +22,20 @@ var InstallCmd = &cobra.Command{
   - Initialize git submodules
   - Configure git to hide untracked files`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := dotfiles.Install(cmd.Context(), cmdutil.IsVerbose(cmd)); err != nil {
+		repoURL, branch, bareRepoPath, worktreePath, err := config.VerifyDotfilesConfig()
+		if err != nil {
+			return fmt.Errorf("configuration verification failed: %w", err)
+		}
+
+		opts := dotfiles.InstallOptions{
+			RepoURL:      repoURL,
+			Branch:       branch,
+			BareRepoPath: bareRepoPath,
+			WorktreePath: worktreePath,
+			Verbose:      cmdutil.IsVerbose(cmd),
+		}
+
+		if err := dotfiles.Install(cmd.Context(), opts); err != nil {
 			return fmt.Errorf("dotfiles installation failed: %w", err)
 		}
 		return nil

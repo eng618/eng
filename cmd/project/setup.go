@@ -1,10 +1,15 @@
 package project
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/project"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	internalProject "github.com/eng618/eng/internal/project"
 )
 
 // SetupCmd defines the cobra command for setting up project repositories.
@@ -25,15 +30,20 @@ Example:
   eng project setup -p MyProject     # Setup only the specified project
   eng project setup --dry-run        # Preview what would be done`,
 	Run: func(cmd *cobra.Command, args []string) {
-		dryRun, _ := cmd.Parent().PersistentFlags().GetBool("dry-run")
-		projectFilter, _ := cmd.Parent().PersistentFlags().GetString("project")
-
-		opts := project.SetupOptions{
-			DryRun:        dryRun,
-			IsVerbose:     cmdutil.IsVerbose(cmd),
-			ProjectFilter: projectFilter,
+		devPath := viper.GetString("git.dev_path")
+		if devPath == "" {
+			log.Error("Development folder path is not set. Use 'eng config git-dev-path' to set it.")
+			return
 		}
 
-		project.Setup(cmd.Context(), opts)
+		opts := internalProject.SetupOptions{
+			DryRun:        viper.GetBool("dry_run"),
+			IsVerbose:     cmdutil.IsVerbose(cmd),
+			ProjectFilter: viper.GetString("project_filter"),
+			DevPath:       os.ExpandEnv(devPath),
+			Projects:      config.GetProjects(),
+		}
+
+		internalProject.Setup(cmd.Context(), opts)
 	},
 }

@@ -74,6 +74,9 @@ func init() {
 	ProjectCmd.PersistentFlags().StringP("project", "p", "", "Filter operations to a specific project")
 	ProjectCmd.PersistentFlags().Bool("dry-run", false, "Perform a dry run without making actual changes")
 
+	_ = viper.BindPFlag("project_filter", ProjectCmd.PersistentFlags().Lookup("project"))
+	_ = viper.BindPFlag("dry_run", ProjectCmd.PersistentFlags().Lookup("dry-run"))
+
 	// Register subcommands
 	ProjectCmd.AddCommand(SetupCmd)
 	ProjectCmd.AddCommand(ListCmd)

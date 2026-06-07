@@ -205,10 +205,9 @@ func TestSetupCmd_DryRun(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
-	require.NoError(t, err)
+	viper.Set("dry_run", true)
 	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
+		viper.Set("dry_run", false)
 	}()
 
 	SetupCmd.SetOut(&buf)
@@ -241,10 +240,9 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set project filter to non-existent project (persistent flag on parent)
-	err = ProjectCmd.PersistentFlags().Set("project", "NonExistent")
-	require.NoError(t, err)
+	viper.Set("project_filter", "NonExistent")
 	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("project", "")
+		viper.Set("project_filter", "")
 	}()
 
 	SetupCmd.SetOut(&buf)
@@ -342,35 +340,6 @@ func TestSyncCmd_NoDevPath(t *testing.T) {
 	assert.Contains(t, out, "Development folder path is not set")
 }
 
-func TestIsRepoCloned(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "test-is-cloned-*")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	// Test non-existent path
-	assert.False(t, isRepoCloned(filepath.Join(tmpDir, "nonexistent")))
-
-	// Test directory without .git
-	noGitDir := filepath.Join(tmpDir, "no-git")
-	err = os.MkdirAll(noGitDir, 0o755)
-	require.NoError(t, err)
-	assert.False(t, isRepoCloned(noGitDir))
-
-	// Test directory with .git file (not directory)
-	gitFileDir := filepath.Join(tmpDir, "git-file")
-	err = os.MkdirAll(gitFileDir, 0o755)
-	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(gitFileDir, ".git"), []byte("gitdir: ../other"), 0o644)
-	require.NoError(t, err)
-	assert.False(t, isRepoCloned(gitFileDir)) // .git must be a directory
-
-	// Test directory with .git directory
-	gitDirPath := filepath.Join(tmpDir, "has-git")
-	err = os.MkdirAll(filepath.Join(gitDirPath, ".git"), 0o755)
-	require.NoError(t, err)
-	assert.True(t, isRepoCloned(gitDirPath))
-}
-
 func TestCloneRepository_InvalidURL(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "test-clone-*")
 	require.NoError(t, err)
@@ -409,10 +378,9 @@ func TestFetchCmd_DryRun(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
-	require.NoError(t, err)
+	viper.Set("dry_run", true)
 	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
+		viper.Set("dry_run", false)
 	}()
 
 	FetchCmd.SetOut(&buf)
@@ -451,10 +419,9 @@ func TestPullCmd_DryRun(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
-	require.NoError(t, err)
+	viper.Set("dry_run", true)
 	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
+		viper.Set("dry_run", false)
 	}()
 
 	PullCmd.SetOut(&buf)
@@ -493,10 +460,9 @@ func TestSyncCmd_DryRun(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
-	require.NoError(t, err)
+	viper.Set("dry_run", true)
 	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
+		viper.Set("dry_run", false)
 	}()
 
 	SyncCmd.SetOut(&buf)

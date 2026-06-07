@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
@@ -17,6 +15,8 @@ type SetupOptions struct {
 	DryRun        bool
 	IsVerbose     bool
 	ProjectFilter string
+	DevPath       string
+	Projects      []config.Project
 }
 
 // SetupStats tracks the results of the setup operation.
@@ -31,20 +31,11 @@ type SetupStats struct {
 func Setup(ctx context.Context, opts SetupOptions) {
 	log.Start("Setting up project repositories")
 
-	devPath := viper.GetString("git.dev_path")
-	if devPath == "" {
-		log.Error("Development folder path is not set. Use 'eng config git-dev-path' to set it.")
-		return
-	}
-	devPath = os.ExpandEnv(devPath)
-
-	log.Verbose(opts.IsVerbose, "Development path: %s", devPath)
-
 	if opts.DryRun {
 		log.Info("Dry run mode - no actual changes will be made")
 	}
 
-	projects := config.GetProjects()
+	projects := opts.Projects
 	if len(projects) == 0 {
 		log.Warn("No projects configured. Use 'eng project add' to add a project.")
 		return
@@ -57,7 +48,7 @@ func Setup(ctx context.Context, opts SetupOptions) {
 
 	stats := &SetupStats{}
 	for _, p := range projects {
-		setupProject(ctx, p, devPath, opts, stats)
+		setupProject(ctx, p, opts.DevPath, opts, stats)
 	}
 	printSummary(stats, opts.DryRun)
 }

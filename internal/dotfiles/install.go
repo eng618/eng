@@ -14,20 +14,28 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 
 	"github.com/eng618/eng/cmd/system"
-	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 )
 
+// InstallOptions holds configuration for installing dotfiles.
+type InstallOptions struct {
+	RepoURL      string
+	Branch       string
+	BareRepoPath string
+	WorktreePath string
+	Verbose      bool
+}
+
 // Install orchestrates the complete dotfiles installation workflow.
-func Install(ctx context.Context, verbose bool) error {
+func Install(ctx context.Context, opts InstallOptions) error {
 	log.Start("Starting dotfiles installation")
 
-	// Step 1: Get configuration values first so we can make context-aware setup decisions.
-	repoURL, branch, bareRepoPath, worktreePath, err := config.VerifyDotfilesConfig()
-	if err != nil {
-		return err
-	}
+	repoURL := opts.RepoURL
+	branch := opts.Branch
+	bareRepoPath := opts.BareRepoPath
+	worktreePath := opts.WorktreePath
+	verbose := opts.Verbose
 
 	// Step 2: Check prerequisites
 	if err := system.EnsurePrerequisites(verbose); err != nil {
