@@ -13,7 +13,7 @@ run: # Options for analysis running
 
 output: # Output configuration options
   formats: # Define output formats for issues
-    - format: colored-line-number # Human-readable text output
+    - format: text # Human-readable text output
       path: stdout # Output to standard output
     - format: json # Machine-readable JSON for CI integration
       path: ./linter-output.json # Output to standard output
@@ -86,6 +86,7 @@ issues: # Issues configuration
   uniq-by-line: true # Group issues by line to reduce noise
 
 severity: # Severity configuration
+  default: warning # Default severity for issues
   rules: # Custom severity rules per linter
     - linters: [gosec] # If enabled, treat security issues as errors
       severity: error
