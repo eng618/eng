@@ -44,24 +44,23 @@ func PullLatestCode(ctx context.Context, repoPath string) error {
 		return err
 	}
 
-	r, err := git.PlainOpen(repoPath)
+	cmd, cancel := execGitCommand(ctx, repoPath, "pull", "--rebase", "--autostash", "origin", currentBranch)
+	defer cancel()
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		if strings.Contains(string(out), "up to date") {
+			return git.NoErrAlreadyUpToDate
+		}
+		return fmt.Errorf("git pull failed: %w\n%s", err, string(out))
 	}
 
-	w, err := r.Worktree()
-	if err != nil {
-		return err
+	// Check if already up to date in out
+	if strings.Contains(string(out), "Already up to date.") {
+		return git.NoErrAlreadyUpToDate
 	}
 
-	refName := plumbing.NewBranchReferenceName(currentBranch)
-	err = w.Pull(&git.PullOptions{
-		RemoteName:    "origin",
-		ReferenceName: refName,
-		Progress:      log.Writer(),
-	})
-
-	return err
+	return nil
 }
 
 // EnsureOnDefaultBranch ensures that the repository is on the default branch (main or master).
@@ -286,10 +285,12 @@ func CheckoutBareRepo(ctx context.Context, repoPath, workTree string, force, all
 
 // FetchAllPrune performs git fetch --all --prune for the given repository path.
 func FetchAllPrune(ctx context.Context, repoPath string) error {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "fetch", "--all", "--prune")
+	cmd, cancel := execGitCommand(ctx, repoPath, "fetch", "--all", "--prune")
+	defer cancel()
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(out))
+		return fmt.Errorf("git fetch failed: %w\n%s", err, string(out))
 	}
 	return nil
 }

@@ -93,12 +93,7 @@ var SyncAllCmd = &cobra.Command{
 					return nil
 				}
 
-				// Ensure we're on default branch
-				if err := repo.EnsureOnDefaultBranch(cmd.Context(), rPath); err != nil {
-					spinner.Fail(fmt.Sprintf("Not on default branch for %s: %s", repoName, err))
-					failureCount.Add(1)
-					return nil
-				}
+				// Removed EnsureOnDefaultBranch to respect the developer's current branch.
 
 				// Pull latest code
 				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoName))

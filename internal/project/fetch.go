@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync/atomic"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 
@@ -46,9 +46,9 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 		return
 	}
 
-	var successCount atomic.Int32
-	var failedCount atomic.Int32
-	var skippedCount atomic.Int32
+	var mu sync.Mutex
+	var successCount, failedCount, skippedCount int
+	var failedRepos, skippedRepos []string
 
 	multi, err := ui.NewMultiSpinner()
 	if err != nil {
@@ -72,7 +72,10 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 			eg.Go(func() error {
 				repoPath, err := r.GetEffectivePath()
 				if err != nil {
-					failedCount.Add(1)
+					mu.Lock()
+					failedCount++
+					failedRepos = append(failedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
@@ -84,26 +87,36 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 						spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
 						spinner.Warning()
 					}
-					skippedCount.Add(1)
+					mu.Lock()
+					skippedCount++
+					skippedRepos = append(skippedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
 				if opts.DryRun {
 					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would fetch: %s", repoPath))
 					spinner.Success()
-					successCount.Add(1)
+					mu.Lock()
+					successCount++
+					mu.Unlock()
 					return nil
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoPath))
 				if err := opts.RepoClient.FetchAllPrune(egCtx, fullRepoPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoPath, err))
-					failedCount.Add(1)
+					mu.Lock()
+					failedCount++
+					failedRepos = append(failedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
 				spinner.Success(fmt.Sprintf("Fetched %s", repoPath))
-				successCount.Add(1)
+				mu.Lock()
+				successCount++
+				mu.Unlock()
 				return nil
 			})
 		}
@@ -113,12 +126,20 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 	multi.Stop() // explicitly stop to flush output before summary logs
 
 	log.Info("")
-	log.Info(
-		"Fetch complete: %d successful, %d skipped, %d failed",
-		successCount.Load(),
-		skippedCount.Load(),
-		failedCount.Load(),
-	)
+	log.Info("Fetch complete: %d successful, %d skipped, %d failed", successCount, skippedCount, failedCount)
+
+	if len(skippedRepos) > 0 {
+		log.Warn("Skipped repositories (not cloned):")
+		for _, r := range skippedRepos {
+			log.Warn("  - %s", r)
+		}
+	}
+	if len(failedRepos) > 0 {
+		log.Error("Failed repositories (require manual resolution):")
+		for _, r := range failedRepos {
+			log.Error("  - %s", r)
+		}
+	}
 }
 
 func isRepoCloned(repoPath string) bool {

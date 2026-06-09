@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"sync/atomic"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"golang.org/x/sync/errgroup"
@@ -47,10 +47,9 @@ func Pull(ctx context.Context, opts PullOptions) {
 		return
 	}
 
-	var successCount atomic.Int32
-	var failedCount atomic.Int32
-	var skippedCount atomic.Int32
-	var dirtyCount atomic.Int32
+	var mu sync.Mutex
+	var successCount, failedCount, skippedCount, dirtyCount int
+	var failedRepos, skippedRepos, dirtyRepos []string
 
 	multi, err := ui.NewMultiSpinner()
 	if err != nil {
@@ -73,7 +72,10 @@ func Pull(ctx context.Context, opts PullOptions) {
 			eg.Go(func() error {
 				repoPath, err := repoObj.GetEffectivePath()
 				if err != nil {
-					failedCount.Add(1)
+					mu.Lock()
+					failedCount++
+					failedRepos = append(failedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
@@ -85,14 +87,19 @@ func Pull(ctx context.Context, opts PullOptions) {
 						spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
 						spinner.Warning()
 					}
-					skippedCount.Add(1)
+					mu.Lock()
+					skippedCount++
+					skippedRepos = append(skippedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
 				if opts.DryRun {
 					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would pull: %s", repoPath))
 					spinner.Success()
-					successCount.Add(1)
+					mu.Lock()
+					successCount++
+					mu.Unlock()
 					return nil
 				}
 
@@ -101,14 +108,20 @@ func Pull(ctx context.Context, opts PullOptions) {
 				if err != nil {
 					spinner := multi.AddSpinner(fmt.Sprintf("Checking %s...", repoPath))
 					spinner.Fail(fmt.Sprintf("Failed to check status of %s: %s", repoPath, err))
-					failedCount.Add(1)
+					mu.Lock()
+					failedCount++
+					failedRepos = append(failedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
 				if isDirty {
 					spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (has uncommitted changes)", repoPath))
 					spinner.Warning()
-					dirtyCount.Add(1)
+					mu.Lock()
+					dirtyCount++
+					dirtyRepos = append(dirtyRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
@@ -117,16 +130,23 @@ func Pull(ctx context.Context, opts PullOptions) {
 					// Check if it's just "already up to date"
 					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						spinner.Info(fmt.Sprintf("%s is already up to date", repoPath))
-						successCount.Add(1)
+						mu.Lock()
+						successCount++
+						mu.Unlock()
 						return nil
 					}
 					spinner.Fail(fmt.Sprintf("Failed to pull %s: %s", repoPath, err))
-					failedCount.Add(1)
+					mu.Lock()
+					failedCount++
+					failedRepos = append(failedRepos, repoPath)
+					mu.Unlock()
 					return nil
 				}
 
 				spinner.Success(fmt.Sprintf("Pulled %s", repoPath))
-				successCount.Add(1)
+				mu.Lock()
+				successCount++
+				mu.Unlock()
 				return nil
 			})
 		}
@@ -138,14 +158,28 @@ func Pull(ctx context.Context, opts PullOptions) {
 	log.Info("")
 	log.Info(
 		"Pull complete: %d successful, %d skipped, %d dirty, %d failed",
-		successCount.Load(),
-		skippedCount.Load(),
-		dirtyCount.Load(),
-		failedCount.Load(),
+		successCount,
+		skippedCount,
+		dirtyCount,
+		failedCount,
 	)
 
-	if dirtyCount.Load() > 0 {
-		log.Warn("Some repositories were skipped due to uncommitted changes.")
-		log.Info("Commit or stash your changes, then run again.")
+	if len(dirtyRepos) > 0 {
+		log.Warn("Dirty repositories (skipped, require manual commit/stash):")
+		for _, r := range dirtyRepos {
+			log.Warn("  - %s", r)
+		}
+	}
+	if len(skippedRepos) > 0 {
+		log.Warn("Skipped repositories (not cloned):")
+		for _, r := range skippedRepos {
+			log.Warn("  - %s", r)
+		}
+	}
+	if len(failedRepos) > 0 {
+		log.Error("Failed repositories (require manual resolution):")
+		for _, r := range failedRepos {
+			log.Error("  - %s", r)
+		}
 	}
 }

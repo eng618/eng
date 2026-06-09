@@ -25,6 +25,7 @@ type SetupStats struct {
 	ClonedCount  int
 	SkippedCount int
 	FailedCount  int
+	FailedRepos  []string
 }
 
 // Setup ensures project directories exist and clones missing repositories.
@@ -104,6 +105,7 @@ func setupRepo(
 	if err != nil {
 		log.Error("  Failed to determine path for %s: %s", projectRepo.URL, err)
 		stats.FailedCount++
+		stats.FailedRepos = append(stats.FailedRepos, repoPath)
 		return
 	}
 
@@ -126,6 +128,7 @@ func setupRepo(
 	if err := opts.RepoClient.Clone(ctx, projectRepo.URL, fullRepoPath); err != nil {
 		log.Error("  Failed to clone %s: %s", projectRepo.URL, err)
 		stats.FailedCount++
+		stats.FailedRepos = append(stats.FailedRepos, repoPath)
 		return
 	}
 
@@ -140,8 +143,11 @@ func printSummary(stats *SetupStats, dryRun bool) {
 	log.Info("  Cloned: %d", stats.ClonedCount)
 	log.Info("  Already present: %d", stats.SkippedCount)
 	if stats.FailedCount > 0 {
-		log.Warn("  Failed: %d", stats.FailedCount)
-		log.Warn("Some repositories failed to clone. Check the output above for details.")
+		log.Error("  Failed: %d", stats.FailedCount)
+		log.Error("Some repositories failed to clone (require manual resolution):")
+		for _, r := range stats.FailedRepos {
+			log.Error("  - %s", r)
+		}
 		log.Info("Common issues:")
 		log.Info("  - SSH key not configured for the repository host")
 		log.Info("  - Repository URL is incorrect")

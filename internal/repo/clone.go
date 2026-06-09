@@ -2,29 +2,24 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/go-git/go-git/v5"
-
-	"github.com/eng618/eng/internal/log"
 )
 
 // Clone clones a git repository to the specified path.
-// It uses go-git for the clone operation and provides informative error messages.
+// It uses os/exec for the clone operation and provides informative error messages.
 func Clone(ctx context.Context, url, destPath string) error {
-	_, err := git.PlainCloneContext(ctx, destPath, false, &git.CloneOptions{
-		URL:      url,
-		Progress: log.Writer(),
-	})
+	cmd, cancel := execGitCommand(ctx, "", "clone", "--progress", url, destPath)
+	defer cancel()
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		errStr := strings.ToLower(err.Error())
+		errStr := strings.ToLower(string(out))
 		// Provide more helpful error messages for common issues
 		switch {
-		case errors.Is(err, git.ErrRepositoryAlreadyExists):
+		case strings.Contains(errStr, "already exists"):
 			return fmt.Errorf("repository already exists at %s", destPath)
-		case strings.Contains(errStr, "authentication"):
+		case strings.Contains(errStr, "authentication") || strings.Contains(errStr, "permission denied"):
 			return fmt.Errorf(
 				"authentication failed - ensure your SSH keys are configured or use HTTPS with credentials: %w",
 				err,
@@ -40,7 +35,7 @@ func Clone(ctx context.Context, url, destPath string) error {
 				err,
 			)
 		default:
-			return err
+			return fmt.Errorf("git clone failed: %w\n%s", err, string(out))
 		}
 	}
 
