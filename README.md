@@ -104,11 +104,23 @@ eng system setup ssh
 
 ### Dotfiles Secrets
 
-`eng dotfiles secrets` turns the manifest-driven `bws` backup and restore flow into a first-class CLI feature.
+`eng` supports two flows for managing dotfiles secrets via Bitwarden Secrets Manager (BWS):
 
-By default it looks for the manifest at `$HOME/bin/secrets/server.manifest` using the configured dotfiles
-worktree, and restores files relative to that worktree. The Bitwarden Secrets Manager project UUID can come
-from `--project-id`, `BWS_PROJECT_ID`, or the manifest comment header.
+#### 1. Template-Driven (New)
+
+The modern approach uses Go's `text/template` engine. Add `.tmpl` to the end of any file containing secrets in your dotfiles repository (e.g., `.zshrc.tmpl`). Inside the template, use the `{{ bws "key" }}` tag to inject secrets.
+
+```sh
+# Sync and automatically render all `.tmpl` files in your dotfiles
+eng dotfiles sync
+
+# Securely edit a template file directly and auto-render on save
+eng dotfile edit .zshrc
+```
+
+#### 2. Manifest-Driven (Legacy)
+
+The manifest-driven flow manages flat `.env` files using a manifest (typically `$HOME/bin/secrets/server.manifest`).
 
 ```sh
 # Backup managed env values into Bitwarden Secrets Manager
@@ -121,12 +133,7 @@ eng dotfiles secrets restore
 eng dotfiles secrets doctor
 ```
 
-`eng system setup dotfiles` now runs `eng dotfiles secrets restore` automatically after install when:
-
-- the manifest exists at the configured dotfiles worktree (`bin/secrets/server.manifest`)
-- `BWS_ACCESS_TOKEN` is set
-
-If those prerequisites are not met, the restore step is skipped safely.
+`eng system setup dotfiles` runs `eng dotfiles secrets restore` automatically if the manifest exists and `BWS_ACCESS_TOKEN` is set.
 
 ### Available Commands
 

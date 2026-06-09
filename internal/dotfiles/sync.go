@@ -5,6 +5,7 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/secrets"
 )
 
 // SyncRepo performs the fetch and pull-rebase operations for a bare repository.
@@ -19,6 +20,11 @@ func SyncRepo(ctx context.Context, repoPath, worktreePath string, isVerbose bool
 	log.Info("Pulling dotfiles with rebase")
 	if err := PullRebaseRepo(ctx, repoPath, worktreePath); err != nil {
 		return err
+	}
+
+	log.Info("Rendering secrets templates")
+	if err := secrets.RenderTemplates(worktreePath, "", isVerbose, true); err != nil {
+		log.Warn("Secret templates could not be rendered: %v", err)
 	}
 
 	return nil

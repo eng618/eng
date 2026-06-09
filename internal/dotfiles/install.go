@@ -16,6 +16,7 @@ import (
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/secrets"
 )
 
 // InstallOptions holds configuration for installing dotfiles.
@@ -111,7 +112,13 @@ func Install(ctx context.Context, opts InstallOptions) error {
 		log.Warn("Failed to configure git: %v", err)
 	}
 
-	// Step 9: Print instructions
+	// Step 9: Render templates
+	log.Info("Rendering secrets templates")
+	if err := secrets.RenderTemplates(worktreePath, "", verbose, true); err != nil {
+		log.Warn("Secret templates could not be rendered: %v", err)
+	}
+
+	// Step 10: Print instructions
 	printCompletionInstructions(bareRepoPath, hasConflicts, backupPath)
 
 	log.Success("Dotfiles installation completed successfully")
