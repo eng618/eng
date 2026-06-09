@@ -12,15 +12,15 @@
 //   - **Theming**: The `EngTheme()` function supplies a consistent, adaptive
 //     light/dark mode HSL color palette across all interactive prompts.
 //   - **Prompts**: Standardized functions for user interaction:
-//       - `Confirm(message string, defaultVal bool)`: Yes/No prompts.
-//       - `Input(message string, defaultVal string)`: Text input.
-//       - `Select(message string, options []string, defaultVal string)`: Single selection.
-//       - `MultiSelect(message string, options []string)`: Multiple selection.
-//       - `Password(message string)`: Secret text input.
+//   - `Confirm(message string, defaultVal bool)`: Yes/No prompts.
+//   - `Input(message string, defaultVal string)`: Text input.
+//   - `Select(message string, options []string, defaultVal string)`: Single selection.
+//   - `MultiSelect(message string, options []string)`: Multiple selection.
+//   - `Password(message string)`: Secret text input.
 //   - **Spinners**: Beautiful and thread-safe progress spinners.
-//       - `Spinner`: Single operation status and progress.
-//       - `MultiSpinner`: For displaying multiple concurrent operations
-//         (e.g., parallel git pulls, downloading files, system updates).
+//   - `Spinner`: Single operation status and progress.
+//   - `MultiSpinner`: For displaying multiple concurrent operations
+//     (e.g., parallel git pulls, downloading files, system updates).
 //
 // # Testing
 //
