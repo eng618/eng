@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 var SetupCmd = &cobra.Command{
@@ -219,14 +219,12 @@ func runSetup(cmd *cobra.Command, verbose bool) error {
 }
 
 func promptSetupStepAction(step setupStep) (string, error) {
-	selected := setupActionContinue
-	prompt := &survey.Select{
-		Message: fmt.Sprintf("Next step: %s\nPurpose: %s\nChoose an action:", step.Name, step.Purpose),
-		Options: []string{setupActionContinue, setupActionSkip, setupActionExit},
-		Default: setupActionContinue,
-	}
-
-	if err := askOne(prompt, &selected); err != nil {
+	selected, err := ui.Select(
+		fmt.Sprintf("Next step: %s\nPurpose: %s\nChoose an action:", step.Name, step.Purpose),
+		[]string{setupActionContinue, setupActionSkip, setupActionExit},
+		setupActionContinue,
+	)
+	if err != nil {
 		return "", err
 	}
 
@@ -449,12 +447,8 @@ func setupSoftware(verbose bool) {
 
 	// Prompt for optional software
 	if len(optionalOptions) > 0 {
-		var selected []string
-		prompt := &survey.MultiSelect{
-			Message: "Select additional software to install:",
-			Options: optionalOptions,
-		}
-		if err := askOne(prompt, &selected); err != nil {
+		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions)
+		if err != nil {
 			log.Error("Selection canceled: %v", err)
 			return
 		}

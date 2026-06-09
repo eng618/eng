@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -197,21 +196,13 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		// Show initial message
 		log.Message("Select cleanup operations to run (auto-select all in %d seconds):", cleanupTimeout)
 
-		// Use survey multi-select with timeout
-		prompt := &survey.MultiSelect{
-			Message: "Select cleanup operations to run:",
-			Options: operations,
-			Default: operations, // Pre-select all
-		}
-
 		// Channel to receive survey result
 		resultCh := make(chan []string, 1)
 		errorCh := make(chan error, 1)
 
 		// Run survey in goroutine
 		go func() {
-			var result []string
-			err := survey.AskOne(prompt, &result)
+			result, err := ui.MultiSelect("Select cleanup operations to run:", operations)
 			if err != nil {
 				errorCh <- err
 			} else {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"

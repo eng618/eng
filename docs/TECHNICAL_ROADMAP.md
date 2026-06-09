@@ -79,7 +79,6 @@ These items address structural debt and optimize the CLI's performance for scale
 - **Effort**: Medium
 - **Location**: `internal/utils/repo/repo.go`, `internal/utils/bitwarden.go`
 
-
 ### 2.5 Replace `os/exec` with `go-git` where practical
 
 - **Status**: `[x]`
@@ -125,3 +124,64 @@ These items ensure the long-term health and stability of the project.
 - **Impact**: Low (UX improvement)
 - **Effort**: Medium
 - **Location**: `cmd/project/sync.go`, `cmd/git/*`
+
+## 4. Phase 4: Enhancing External Tooling & UX
+
+These items focus on bringing the application's CLI interactions up to modern standards by introducing beautiful interactive terminal user interfaces (TUIs) and better parallel operation visualization.
+
+### 4.1 Replace `AlecAivazis/survey` with `charmbracelet/huh`
+
+- **Status**: `[x]`
+- **Task**: Replace the outdated `survey` package with Charm's `huh` library for all user prompts. `huh` is built on Bubble Tea and offers superior theming, validation, and layout capabilities.
+- **Impact**: High (modernizes the CLI feel, making configuration and prompts feel premium)
+- **Effort**: Medium
+- **Location**:
+  - `cmd/system/*` (setup, proxy, update, kill_process, gpg_setup, etc.)
+  - `cmd/files/*` (find_and_delete, find_non_movie_folders)
+  - `cmd/project/*` (add, remove)
+  - `cmd/config/*`
+  - `cmd/dotfiles/*`
+
+### 4.2 Expand `MultiSpinner` to File and System Commands
+
+- **Status**: `[x]`
+- **Task**: The new `ui.MultiSpinner` added during Phase 3 Git refactors is highly effective for visualizing concurrent or sequential long-running tasks. We will integrate it into other heavy commands.
+- **Impact**: Medium (drastically improves the user experience during long wait times)
+- **Effort**: Medium
+- **Location**:
+  - `cmd/files/find_and_delete.go`: Use a MultiSpinner for parallel file deletion (e.g., showing 4 worker threads deleting files concurrently).
+  - `cmd/files/find_non_movie_folders.go`: Show concurrent directory scanning progress.
+  - `cmd/system/update.go`: Use MultiSpinner for `apt-get`, `brew`, `asdf`, and cleanup steps instead of single blocking spinners.
+  - `cmd/dotfiles/copy_changes.go`: Show concurrent diffs and copies.
+
+## 5. Phase 5: Advanced TUI Enhancements & Wizards
+
+Based on recent code exploration, these areas of the application can be enhanced with richer interactive terminal UIs using Bubble Tea or `huh`:
+
+### 5.1 Interactive File Selection
+
+- **Status**: `[ ]`
+- **Task**: Replace static printed lists of files with interactive `huh.MultiSelect` or Bubble Tea tables to allow users to visually check/uncheck files before deleting them.
+- **Location**:
+  - `cmd/files/find_and_delete.go`
+  - `cmd/files/find_non_movie_folders.go`
+
+### 5.2 Interactive Process Management
+
+- **Status**: `[ ]`
+- **Task**: Upgrade the `kill` command to list running processes in an interactive, filterable table instead of relying on basic text prompts or manual PID entry.
+- **Location**: `cmd/system/kill_process.go`
+
+### 5.3 Setup Wizard Modernization
+
+- **Status**: `[ ]`
+- **Task**: Convert the sequential system setup prompts into a beautiful, multi-page wizard using `huh.NewForm()` with clear steps and theming.
+- **Location**: `cmd/system/setup.go`, `cmd/system/gpg_setup.go`
+
+### 5.4 Multi-Spinner System Updates
+
+- **Status**: `[ ]`
+- **Task**: Integrate `ui.MultiSpinner` to display concurrent progress for system updates, dotfiles syncing, and cleaning tasks.
+- **Location**:
+  - `cmd/system/update.go`
+  - `cmd/dotfiles/copy_changes.go`

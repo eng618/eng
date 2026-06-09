@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/bitwarden"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // EnsurePrerequisites checks and installs core prerequisites needed for setup flows.
@@ -48,12 +48,7 @@ func ensureHomebrew(verbose bool) error {
 	log.Warn("Homebrew is not installed")
 	log.Message("Homebrew is required to install Git and Bash")
 
-	var confirm bool
-	prompt := &survey.Confirm{
-		Message: "Would you like to install Homebrew now?",
-		Default: true,
-	}
-	err = askOne(prompt, &confirm)
+	confirm, err := ui.Confirm("Would you like to install Homebrew now?", true)
 	cobra.CheckErr(err)
 
 	if !confirm {
@@ -246,12 +241,8 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 			keyMap[option] = &key
 		}
 
-		var selected string
-		prompt := &survey.Select{
-			Message: "Select the SSH key to use for GitHub:",
-			Options: options,
-		}
-		if err := askOne(prompt, &selected); err != nil {
+		selected, err := ui.Select("Select the SSH key to use for GitHub:", options, "")
+		if err != nil {
 			return fmt.Errorf("key selection canceled: %w", err)
 		}
 

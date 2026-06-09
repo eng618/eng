@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -149,11 +148,7 @@ It lists the files within the identified folders and prompts for confirmation be
 // askForConfirmation prompts the user for a yes/no confirmation using survey.
 func askForConfirmation(prompt string) bool {
 	confirm := false
-	promptConfirm := &survey.Confirm{
-		Message: prompt,
-		Default: false, // Default to No for safety
-	}
-	err := survey.AskOne(promptConfirm, &confirm)
+	confirm, err := ui.Confirm(prompt, false)
 	if err != nil {
 		// Handle error, e.g., log it and return false for safety
 		log.Error("Error during confirmation prompt: %v", err)

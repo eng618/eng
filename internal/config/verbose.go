@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // Verbose checks for the verbose setting in the configuration and prompts the user to confirm it.
@@ -22,12 +22,10 @@ func Verbose() bool {
 	verbose := viper.GetBool("verbose")
 
 	// Verify this is the correct verbose setting they are expecting to use.
-	var vConfirm bool
-	prompt := &survey.Confirm{
-		Message: fmt.Sprintf("Confirm verbose mode: %s?", color.CyanString(fmt.Sprintf("%t", verbose))),
-		Default: verbose,
-	}
-	err := survey.AskOne(prompt, &vConfirm)
+	vConfirm, err := ui.Confirm(
+		fmt.Sprintf("Confirm verbose mode: %s?", color.CyanString(fmt.Sprintf("%t", verbose))),
+		verbose,
+	)
 	cobra.CheckErr(err)
 
 	if !vConfirm {
@@ -56,12 +54,7 @@ func GetVerbose() {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateVerbose() {
-	var verbose bool
-	prompt := &survey.Confirm{
-		Message: "Enable verbose mode?",
-		Default: false,
-	}
-	err := survey.AskOne(prompt, &verbose)
+	verbose, err := ui.Confirm("Enable verbose mode?", false)
 	cobra.CheckErr(err)
 
 	viper.Set("verbose", verbose)

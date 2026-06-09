@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 var SetupGPGCmd = &cobra.Command{
@@ -57,12 +57,8 @@ func setupGPG(verbose bool) error {
 	}
 
 	// Step 5: Optional - Remove master key (subkey-only workflow)
-	removeKey := false
-	prompt := &survey.Confirm{
-		Message: "Remove master key and keep only subkeys for enhanced security?",
-		Default: true,
-	}
-	if err := askOne(prompt, &removeKey); err != nil {
+	removeKey, err := ui.Confirm("Remove master key and keep only subkeys for enhanced security?", true)
+	if err != nil {
 		log.Warn("Could not prompt for master key removal: %v", err)
 	}
 
@@ -128,12 +124,11 @@ func importGPGKeys(verbose bool) (string, error) {
 	log.Message("  • Subkeys file (e.g., eng618.secsub.gpg)")
 	log.Message("")
 
-	var secretKeyPath string
-	secretPrompt := &survey.Input{
-		Message: "Path to secret key file",
-		Default: filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
-	}
-	if err := askOne(secretPrompt, &secretKeyPath); err != nil {
+	secretKeyPath, err := ui.Input(
+		"Path to secret key file",
+		filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
+	)
+	if err != nil {
 		return "", fmt.Errorf("canceled: %w", err)
 	}
 
@@ -153,18 +148,13 @@ func importGPGKeys(verbose bool) (string, error) {
 	log.Success("Secret key imported")
 
 	// Optional: Import subkeys
-	importSubkeys := false
-	subkeysPrompt := &survey.Confirm{
-		Message: "Import subkeys file?",
-		Default: true,
-	}
-	if err := askOne(subkeysPrompt, &importSubkeys); err == nil && importSubkeys {
-		var subkeysPath string
-		subkeysPathPrompt := &survey.Input{
-			Message: "Path to subkeys file",
-			Default: filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
-		}
-		if err := askOne(subkeysPathPrompt, &subkeysPath); err == nil {
+	importSubkeys, err := ui.Confirm("Import subkeys file?", true)
+	if err == nil && importSubkeys {
+		subkeysPath, err := ui.Input(
+			"Path to subkeys file",
+			filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
+		)
+		if err == nil {
 			if _, err := os.Stat(subkeysPath); err == nil {
 				log.Start("Importing subkeys...")
 				cmd := execCommand("gpg", "--import", subkeysPath)
@@ -180,11 +170,8 @@ func importGPGKeys(verbose bool) (string, error) {
 	}
 
 	// Get key ID from user or list keys
-	var keyID string
-	keyIDPrompt := &survey.Input{
-		Message: "Enter your GPG key ID (long format, e.g., 7C180F0FCB31441B)",
-	}
-	if err := askOne(keyIDPrompt, &keyID); err != nil {
+	keyID, err := ui.Input("Enter your GPG key ID (long format, e.g., 7C180F0FCB31441B)", "")
+	if err != nil {
 		return "", fmt.Errorf("canceled: %w", err)
 	}
 
@@ -338,12 +325,8 @@ func uploadPublicKeyOption(keyID string, verbose bool) error {
 	log.Message("Upload it to keyservers so others can verify your signatures.")
 	log.Message("")
 
-	uploadKey := false
-	prompt := &survey.Confirm{
-		Message: "Upload public key to keyserver?",
-		Default: true,
-	}
-	if err := askOne(prompt, &uploadKey); err != nil {
+	uploadKey, err := ui.Confirm("Upload public key to keyserver?", true)
+	if err != nil {
 		return nil // Non-fatal if user cancels
 	}
 
@@ -374,12 +357,8 @@ func uploadPublicKeyOption(keyID string, verbose bool) error {
 	}
 
 	// Optional: Upload to GitHub
-	uploadGitHub := false
-	githubPrompt := &survey.Confirm{
-		Message: "Also upload public key to GitHub?",
-		Default: true,
-	}
-	if err := askOne(githubPrompt, &uploadGitHub); err == nil && uploadGitHub {
+	uploadGitHub, err := ui.Confirm("Also upload public key to GitHub?", true)
+	if err == nil && uploadGitHub {
 		// Check if gh is available
 		if _, err := lookPath("gh"); err == nil {
 			log.Start("Uploading public key to GitHub...")

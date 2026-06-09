@@ -6,6 +6,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // AddCmd defines the cobra command for adding projects or repositories.
@@ -45,11 +46,8 @@ Example:
 			if !found {
 				// Project doesn't exist, confirm creation
 				var confirmCreate bool
-				prompt := &survey.Confirm{
-					Message: "Project '" + projectFilter + "' doesn't exist. Create it?",
-					Default: true,
-				}
-				if err := survey.AskOne(prompt, &confirmCreate); err != nil {
+				confirmCreate, err := ui.Confirm("Project '"+projectFilter+"' doesn't exist. Create it?", true)
+				if err != nil {
 					log.Error("Prompt failed: %s", err)
 					return
 				}
@@ -145,11 +143,8 @@ Example:
 
 		// Ask if they want to add more
 		var addMore bool
-		morePrompt := &survey.Confirm{
-			Message: "Add another repository?",
-			Default: false,
-		}
-		if err := survey.AskOne(morePrompt, &addMore); err != nil {
+		addMore, err = ui.Confirm("Add another repository?", false)
+		if err != nil {
 			log.Error("Prompt failed: %s", err)
 			return
 		}

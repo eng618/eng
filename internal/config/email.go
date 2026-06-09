@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // Email checks for the user's email in the configuration and prompts the user to confirm it.
@@ -25,12 +26,7 @@ func Email() string {
 		updateEmail()
 	} else {
 		// Verify this is the correct email they are expecting to use.
-		var eConfirm bool
-		prompt := &survey.Confirm{
-			Message: fmt.Sprintf("Confirm email: %s?", color.CyanString(email)),
-		}
-		prompt.Default = true
-		err := survey.AskOne(prompt, &eConfirm)
+		eConfirm, err := ui.Confirm(fmt.Sprintf("Confirm email: %s?", color.CyanString(email)), true)
 		cobra.CheckErr(err)
 
 		if !eConfirm {

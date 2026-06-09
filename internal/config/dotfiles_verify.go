@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // VerifyDotfilesConfig checks for Repo URL, Branch, and Bare Repo Path.
@@ -40,13 +40,8 @@ func VerifyDotfilesConfig() (string, string, string, string, error) {
 		fmt.Sprintf("Worktree: %s", color.CyanString(worktreePath)),
 	}
 
-	var selected []string
-	prompt := &survey.MultiSelect{
-		Message: "Which values would you like to update? (Select none if all are correct)",
-		Options: options,
-	}
-
-	if err := survey.AskOne(prompt, &selected); err != nil {
+	selected, err := ui.MultiSelect("Which values would you like to update? (Select none if all are correct)", options)
+	if err != nil {
 		return "", "", "", "", fmt.Errorf("selection failed: %w", err)
 	}
 

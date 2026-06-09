@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // ProxyConfig represents a single proxy configuration.
@@ -268,26 +268,34 @@ func SetProxyEnvVars(proxyValue string) {
 func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	proxies, _ := GetProxyConfigs()
 
+	// Validate using custom loops because ui.Input doesn't support validators out of the box yet
+	var err error
 	var title string
-	prompt := &survey.Input{
-		Message: "Enter a title for this proxy configuration:",
+	for {
+		title, err = ui.Input("Enter a title for this proxy configuration:", "")
+		cobra.CheckErr(err)
+		if err := validateTitle(title); err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		break
 	}
-	err := survey.AskOne(prompt, &title, survey.WithValidator(validateTitle))
-	cobra.CheckErr(err)
 
 	var value string
-	prompt2 := &survey.Input{
-		Message: "Enter the proxy address (e.g., http://proxy:port):",
+	for {
+		value, err = ui.Input("Enter the proxy address (e.g., http://proxy:port):", "")
+		cobra.CheckErr(err)
+		if err := validateProxyURL(value); err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		break
 	}
-	err = survey.AskOne(prompt2, &value, survey.WithValidator(validateProxyURL))
-	cobra.CheckErr(err)
 
-	var noProxy string
-	prompt3 := &survey.Input{
-		Message: "Enter additional no_proxy values (comma-separated, leave empty for defaults only):",
-		Help:    "These values will be appended to the default no_proxy list: localhost,127.0.0.1,::1,.local",
-	}
-	err = survey.AskOne(prompt3, &noProxy)
+	noProxy, err := ui.Input(
+		"Enter additional no_proxy values (comma-separated, leave empty for defaults only): (appended to localhost,127.0.0.1,::1,.local)",
+		"",
+	)
 	cobra.CheckErr(err)
 
 	// Normalize proxy value and no_proxy list
@@ -339,15 +347,17 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 		options = append(options, FormatProxyOption(proxy))
 	}
 
-	var selectedIndex int
-	prompt := &survey.Select{
-		Message: "Select a proxy configuration:",
-		Options: options,
-		Help:    "Use arrow keys to navigate, and Enter to select.",
-	}
-	err := survey.AskOne(prompt, &selectedIndex)
+	selectedStr, err := ui.Select("Select a proxy configuration:", options, "")
 	if err != nil {
 		return -1, err
+	}
+
+	var selectedIndex int
+	for i, opt := range options {
+		if opt == selectedStr {
+			selectedIndex = i
+			break
+		}
 	}
 
 	return selectedIndex, nil

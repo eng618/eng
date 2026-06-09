@@ -5,12 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // RepoURL checks for the dotfiles repository URL in the configuration and returns it.
@@ -25,11 +25,7 @@ func RepoURL() string {
 
 // UpdateRepoURL prompts the user to input their dotfiles repository URL.
 func UpdateRepoURL() {
-	var url string
-	prompt := &survey.Input{
-		Message: "What is your dotfiles repository URL? (e.g., https://github.com/username/dotfiles.git)",
-	}
-	err := survey.AskOne(prompt, &url)
+	url, err := ui.Input("What is your dotfiles repository URL? (e.g., https://github.com/username/dotfiles.git)", "")
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.repo_url", url)
@@ -48,13 +44,7 @@ func Branch() string {
 
 // UpdateBranch prompts the user to select their dotfiles branch.
 func UpdateBranch() {
-	var branch string
-	prompt := &survey.Select{
-		Message: "Which branch should be used for dotfiles?",
-		Options: []string{"main", "work", "server"},
-		Default: "main",
-	}
-	err := survey.AskOne(prompt, &branch)
+	branch, err := ui.Select("Which branch should be used for dotfiles?", []string{"main", "work", "server"}, "main")
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.branch", branch)
@@ -78,12 +68,7 @@ func UpdateBareRepoPath() {
 
 	defaultPath := filepath.Join(homeDir, ".eng-cfg")
 
-	var path string
-	prompt := &survey.Input{
-		Message: "Where should the bare repository be stored?",
-		Default: defaultPath,
-	}
-	err = survey.AskOne(prompt, &path)
+	path, err := ui.Input("Where should the bare repository be stored?", defaultPath)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.bare_repo_path", path)
@@ -105,12 +90,7 @@ func UpdateWorktreePath() {
 	homeDir, err := os.UserHomeDir()
 	cobra.CheckErr(err)
 
-	var path string
-	prompt := &survey.Input{
-		Message: "What is your worktree path (usually home)?",
-		Default: homeDir,
-	}
-	err = survey.AskOne(prompt, &path)
+	path, err := ui.Input("What is your worktree path (usually home)?", homeDir)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.worktree_path", path)

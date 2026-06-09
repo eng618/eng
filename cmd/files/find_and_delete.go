@@ -9,7 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -86,11 +85,8 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				"System files (.DS_Store)",
 			}
 			var selected []string
-			prompt := &survey.MultiSelect{
-				Message: "Select file types to find and delete:",
-				Options: options,
-			}
-			if err := survey.AskOne(prompt, &selected); err != nil {
+			selected, err := ui.MultiSelect("Select file types to find and delete:", options)
+			if err != nil {
 				log.Error("Error collecting selection: %v", err)
 				return
 			}
@@ -217,12 +213,11 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		}
 
 		// Confirm deletion
-		confirm := false
-		promptConfirm := &survey.Confirm{
-			Message: fmt.Sprintf("Delete %d file(s) (%.2f MB)?", len(matches), float64(totalSize)/(1024*1024)),
-			Default: false,
-		}
-		if err := survey.AskOne(promptConfirm, &confirm); err != nil {
+		confirm, err := ui.Confirm(
+			fmt.Sprintf("Delete %d file(s) (%.2f MB)?", len(matches), float64(totalSize)/(1024*1024)),
+			false,
+		)
+		if err != nil {
 			log.Error("Error during confirmation prompt: %v", err)
 			return
 		}

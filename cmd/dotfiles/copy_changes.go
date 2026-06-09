@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // CopyChangesCmd defines the cobra command for copying modified dotfiles to the local git repository.
@@ -83,11 +83,7 @@ var CopyChangesCmd = &cobra.Command{
 
 		// Ask to reset
 		var resetConfirm bool
-		prompt := &survey.Confirm{
-			Message: "Do you want to reset the local copies in the worktree?",
-		}
-		prompt.Default = true
-		err = survey.AskOne(prompt, &resetConfirm)
+		resetConfirm, err = ui.Confirm("Do you want to reset the local copies in the worktree?", true)
 		if err != nil {
 			log.Error("Failed to get user confirmation: %s", err)
 			return

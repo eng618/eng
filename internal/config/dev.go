@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // GitDevPath checks for the development folder path in the configuration and prompts the user to confirm it.
@@ -26,12 +27,10 @@ func GitDevPath() string {
 		updateGitDevPath()
 	} else {
 		// Verify this is the correct dev path they are expecting to use.
-		var dConfirm bool
-		prompt := &survey.Confirm{
-			Message: fmt.Sprintf("Confirm development folder path: %s?", color.CyanString(devPath)),
-		}
-		prompt.Default = true
-		err := survey.AskOne(prompt, &dConfirm)
+		dConfirm, err := ui.Confirm(
+			fmt.Sprintf("Confirm development folder path: %s?", color.CyanString(devPath)),
+			true,
+		)
 		cobra.CheckErr(err)
 
 		if !dConfirm {
