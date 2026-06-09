@@ -10,8 +10,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 var SetupGPGCmd = &cobra.Command{
@@ -23,10 +23,11 @@ var SetupGPGCmd = &cobra.Command{
   - Set ultimate trust on the key
   - Configure Git to use your GPG key for signing
   - Optionally remove the master key (keeping only subkeys for security)`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := setupGPG(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("GPG setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := setupGPG(cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("gpg setup failed: %w", err)
 		}
+		return nil
 	},
 }
 

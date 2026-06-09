@@ -4,8 +4,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // AddCmd defines the cobra command for adding projects or repositories.
@@ -89,7 +89,7 @@ Example:
 		var repoURL string
 		urlPrompt := &survey.Input{
 			Message: "Enter repository URL (SSH or HTTPS):",
-			Help:    "Examples: git@github.com:org/repo.git or https://github.com/org/repo.git",
+			Help:    "Examples: git@github.com:org/git.git or https://github.com/org/git.git",
 		}
 		if err := survey.AskOne(urlPrompt, &repoURL, survey.WithValidator(survey.Required)); err != nil {
 			log.Error("Prompt failed: %s", err)

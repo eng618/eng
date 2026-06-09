@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 // ProjectCmd serves as the base command for all project management operations.
@@ -34,7 +34,7 @@ Example structure:
       auth/`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		if showInfo {
 			log.Info("Current project management configuration:")
@@ -73,6 +73,9 @@ func init() {
 	ProjectCmd.Flags().BoolP("info", "i", false, "Show current project management configuration")
 	ProjectCmd.PersistentFlags().StringP("project", "p", "", "Filter operations to a specific project")
 	ProjectCmd.PersistentFlags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+
+	_ = viper.BindPFlag("project_filter", ProjectCmd.PersistentFlags().Lookup("project"))
+	_ = viper.BindPFlag("dry_run", ProjectCmd.PersistentFlags().Lookup("dry-run"))
 
 	// Register subcommands
 	ProjectCmd.AddCommand(SetupCmd)
