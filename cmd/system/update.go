@@ -8,9 +8,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // UpdateCmd represents the system update command.
@@ -23,7 +22,7 @@ var UpdateCmd = &cobra.Command{
 	Short:   "Update the system",
 	Long:    `This command updates the system. It supports Ubuntu and WSL Linux systems and logs a message for unsupported systems.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		autoApprove, _ := cmd.Flags().GetBool("yes")
 		cleanupTimeout, _ := cmd.Flags().GetInt("cleanup-timeout")
 		log.Verbose(isVerbose, "Checking system type...")
@@ -62,7 +61,7 @@ var BrewCmd = &cobra.Command{
 	Short: "Update Homebrew packages only",
 	Long:  `This command updates only Homebrew packages, skipping system updates.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		updateBrew(isVerbose)
 	},
 }
@@ -259,7 +258,7 @@ func runCleanupOperation(isVerbose bool, command, operationName string) {
 	log.Verbose(isVerbose, "Running: %s", command)
 
 	// Create progress bar for this operation
-	progress := ui.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
+	progress := utils.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
 
 	cleanupCmd := execCommand("bash", "-c", command)
 	cleanupCmd.Stdout = log.Writer()

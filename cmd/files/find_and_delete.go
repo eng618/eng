@@ -12,9 +12,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // FileTypeCategory represents a category of file types with their extensions.
@@ -43,7 +42,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		dir := args[0]
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			log.Error("Provided directory does not exist: %s", dir)
@@ -184,7 +183,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		}
 
 		log.Start("Scanning for files...")
-		spinner := ui.NewProgressSpinner("Scanning directories...")
+		spinner := utils.NewProgressSpinner("Scanning directories...")
 		matches, totalSize, walkErr := ScanFiles(dir, matchFn, spinner)
 
 		if walkErr != nil {
@@ -352,7 +351,7 @@ func deleteFiles(files []string, isVerbose bool) (deleted, errors int64) {
 	return deletedCount.Load(), errorCount.Load()
 }
 
-func ScanFiles(dir string, matchFn func(name string) bool, spinner *ui.Spinner) ([]string, int64, error) {
+func ScanFiles(dir string, matchFn func(name string) bool, spinner *utils.Spinner) ([]string, int64, error) {
 	var matches []string
 	var totalSize int64
 	var filesProcessed, totalFiles atomic.Int64

@@ -1,14 +1,11 @@
 package dotfiles
 
 import (
-	"context"
 	"errors"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/eng618/eng/internal/dotfiles"
 )
 
 func TestSyncCmd_MissingConfig(t *testing.T) {
@@ -25,17 +22,14 @@ func TestSyncCmd_FetchThenPull(t *testing.T) {
 	calls := []string{}
 
 	// Override fetchRepo to record call and simulate success
-	originalFetchRepo := dotfiles.FetchRepo
-	dotfiles.FetchRepo = func(ctx context.Context, repoPath, worktreePath string) error {
+	fetchRepo = func(repoPath, worktreePath string) error {
 		calls = append(calls, "fetch")
 		return nil
 	}
-	defer func() { dotfiles.FetchRepo = originalFetchRepo }()
 
 	// Override pullRebaseRepo to record call and simulate failure then success
 	count := 0
-	originalPullRebaseRepo := dotfiles.PullRebaseRepo
-	dotfiles.PullRebaseRepo = func(ctx context.Context, repoPath, worktreePath string) error {
+	pullRebaseRepo = func(repoPath, worktreePath string) error {
 		calls = append(calls, "pull")
 		count++
 		if count == 1 {
@@ -43,7 +37,6 @@ func TestSyncCmd_FetchThenPull(t *testing.T) {
 		}
 		return nil
 	}
-	defer func() { dotfiles.PullRebaseRepo = originalPullRebaseRepo }()
 
 	cmd := &cobra.Command{}
 	// First run: fetch ok, pull fails

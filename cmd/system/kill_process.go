@@ -10,8 +10,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 type ProcessInfo struct {
@@ -107,7 +107,7 @@ Requires 'ps' and 'kill' commands to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
+		isVerbose := utils.IsVerbose(cmd) // Get verbosity flag
 
 		var pidStr string
 		var selectedProcess ProcessInfo
