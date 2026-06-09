@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.14.0](https://github.com/eng618/eng/compare/v1.13.0...v1.14.0) (2026-06-09)
+
+
+### Features
+
+* Replace AlecAivazis/survey with charmbracelet/huh and introduce a unified UI theme for CLI prompts ([4e256bf](https://github.com/eng618/eng/commit/4e256bf54a0e9a11b3a288e2195eb27789255d6a))
+
+
+### Bug Fixes
+
+* Indentation and formatting in ui package documentation ([6ade026](https://github.com/eng618/eng/commit/6ade026c9bd46ab14f0f92934d22ccf5a4ca2985))
+
 ## [1.13.0](https://github.com/eng618/eng/compare/v1.12.0...v1.13.0) (2026-06-06)
 
 
