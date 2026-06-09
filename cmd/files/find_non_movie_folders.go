@@ -10,9 +10,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
@@ -31,7 +30,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		log.Start("Scanning for non-movie folders...")
 
 		directory := args[0]
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		// Validate directory exists
 		if _, err := os.Stat(directory); os.IsNotExist(err) {
@@ -40,7 +39,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		}
 
 		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
-		spinner := ui.NewProgressSpinner("Scanning directories...")
+		spinner := utils.NewProgressSpinner("Scanning directories...")
 
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, spinner, func(done, total int) {
 			progress := 0.0
@@ -178,7 +177,7 @@ func askForConfirmation(prompt string) bool {
 func findNonMovieFolders(
 	isVerbose bool,
 	rootDir string,
-	spinner *ui.Spinner,
+	spinner *utils.Spinner,
 	progress func(done, total int),
 ) ([]string, error) {
 	var nonMovieFolders []string
