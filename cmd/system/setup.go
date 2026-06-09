@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 var SetupCmd = &cobra.Command{
@@ -28,10 +28,11 @@ Running this command without subcommands will run all setup steps:
 - Software installation
 - GPG keys setup (interactive)
 - GPG permissions fix`,
-	Run: func(cmd *cobra.Command, _args []string) {
-		if err := runSetup(cmd, utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, _args []string) error {
+		if err := runSetup(cmd, cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -62,7 +63,7 @@ var SetupASDFCmd = &cobra.Command{
 	Short: "Setup asdf plugins from $HOME/.tool-versions",
 	Long:  `Reads $HOME/.tool-versions and installs asdf plugins listed there.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		setupASDF(utils.IsVerbose(cmd))
+		setupASDF(cmdutil.IsVerbose(cmd))
 	},
 }
 
@@ -78,10 +79,11 @@ var SetupDotfilesCmd = &cobra.Command{
   - Initialize git submodules
 	- Configure git to hide untracked files
 	- Restore dotfiles secrets when manifest and BWS token are available`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := setupDotfiles(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Dotfiles setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := setupDotfiles(cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("dotfiles setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -90,7 +92,7 @@ var SetupOhMyZshCmd = &cobra.Command{
 	Short: "Install Oh My Zsh",
 	Long:  `Downloads and installs Oh My Zsh. Skips if already installed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		setupOhMyZsh(utils.IsVerbose(cmd))
+		setupOhMyZsh(cmdutil.IsVerbose(cmd))
 	},
 }
 
@@ -102,10 +104,11 @@ var SetupSSHCmd = &cobra.Command{
   - Attempt to retrieve SSH keys from Bitwarden vault
   - Generate new SSH keys if none found
   - Configure SSH config for GitHub`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := setupSSH(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("SSH setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := setupSSH(cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("ssh setup failed: %w", err)
 		}
+		return nil
 	},
 }
 

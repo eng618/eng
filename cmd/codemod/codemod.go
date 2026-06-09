@@ -2,10 +2,14 @@
 package codemod
 
 import (
+	"embed"
 	"os/exec"
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed assets/*
+var AssetsFS embed.FS
 
 // execCommand is a variable holding the exec.Command function, allowing for test overrides.
 var execCommand = exec.Command
@@ -23,6 +27,7 @@ func init() {
 	CodemodCmd.AddCommand(LintSetupCmd)
 	CodemodCmd.AddCommand(CopilotSetupCmd)
 	CodemodCmd.AddCommand(PrettierCmd)
-
+	CodemodCmd.AddCommand(NativeCmd)
+	CodemodCmd.AddCommand(WebCmd)
 	LintSetupCmd.Flags().BoolVarP(&echo, "echo", "e", false, "Use echo linting setup")
 }
