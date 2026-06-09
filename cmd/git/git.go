@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // GitCmd serves as the base command for all git repository management operations.
@@ -21,7 +21,7 @@ var GitCmd = &cobra.Command{
 	Long:  `This command is used to facilitate the management of multiple git repositories in your development folder.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		if showInfo {
 			log.Info("Current git repository management configuration:")

@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // CopyChangesCmd defines the cobra command for copying modified dotfiles to the local git repository.
@@ -25,7 +25,7 @@ var CopyChangesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Copying modified dotfiles")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		repoPath, worktreePath, err := getDotfilesConfig()
 		if err != nil || repoPath == "" {

@@ -16,8 +16,8 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // Build-time variables
@@ -34,12 +34,11 @@ var (
 const (
 	githubRepoOwner = "eng618"
 	githubRepoName  = "eng"
+	githubAPIURL    = "https://api.github.com/repos/%s/%s/releases/latest"
 	requestTimeout  = 5 * time.Second // Timeout for the GitHub API request.
 	brewCmd         = "brew"          // Command for Homebrew
 	brewPkgName     = "eng"           // Package name in Homebrew
 )
-
-var githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
 
 // Flag variable for the --update flag.
 var updateFlag bool
@@ -70,7 +69,7 @@ you can use the --update flag to attempt an automatic upgrade.`,
 
 		printVersionInfo()
 
-		sp := ui.NewSpinner("Checking for latest version...")
+		sp := utils.NewSpinner("Checking for latest version...")
 		sp.Start()
 		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName, isVerbose)
 		sp.Stop() // Stop spinner before printing results or attempting update
