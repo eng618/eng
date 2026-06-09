@@ -14,10 +14,14 @@ type ListOptions struct {
 	ProjectFilter string
 	DevPath       string
 	Projects      []config.Project
+	RepoClient    RepoClient
 }
 
 // List displays project names, repository counts, and clone status.
 func List(opts ListOptions) {
+	if opts.RepoClient == nil {
+		opts.RepoClient = &defaultRepoClient{}
+	}
 	devPath := opts.DevPath
 	if devPath == "" {
 		log.Warn("Development folder path is not set. Use 'eng config git-dev-path' to set it.")

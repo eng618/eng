@@ -7,7 +7,6 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
 )
 
 // SetupOptions holds the configuration for setting up projects.
@@ -17,6 +16,7 @@ type SetupOptions struct {
 	ProjectFilter string
 	DevPath       string
 	Projects      []config.Project
+	RepoClient    RepoClient
 }
 
 // SetupStats tracks the results of the setup operation.
@@ -29,6 +29,9 @@ type SetupStats struct {
 
 // Setup ensures project directories exist and clones missing repositories.
 func Setup(ctx context.Context, opts SetupOptions) {
+	if opts.RepoClient == nil {
+		opts.RepoClient = &defaultRepoClient{}
+	}
 	log.Start("Setting up project repositories")
 
 	if opts.DryRun {
@@ -120,7 +123,7 @@ func setupRepo(
 
 	log.Info("  Cloning %s...", repoPath)
 
-	if err := repo.Clone(ctx, projectRepo.URL, fullRepoPath); err != nil {
+	if err := opts.RepoClient.Clone(ctx, projectRepo.URL, fullRepoPath); err != nil {
 		log.Error("  Failed to clone %s: %s", projectRepo.URL, err)
 		stats.FailedCount++
 		return

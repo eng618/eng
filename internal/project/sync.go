@@ -12,7 +12,6 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -23,10 +22,14 @@ type SyncOptions struct {
 	ProjectFilter string
 	DevPath       string
 	Projects      []config.Project
+	RepoClient    RepoClient
 }
 
 // Sync fetches and pulls all repositories in configured projects.
 func Sync(ctx context.Context, opts SyncOptions) {
+	if opts.RepoClient == nil {
+		opts.RepoClient = &defaultRepoClient{}
+	}
 	log.Start("Syncing project repositories")
 
 	if opts.DryRun {
@@ -102,7 +105,7 @@ func Sync(ctx context.Context, opts SyncOptions) {
 
 				// Fetch
 				spinner.UpdateText(fmt.Sprintf("Fetching %s...", repoPath))
-				if err := fetchRepo(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.FetchAllPrune(egCtx, fullRepoPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Fetch failed for %s: %s", repoPath, err))
 					fetchFailed.Add(1)
 					// don't pull if fetch failed, but log it as pull failed too
@@ -113,7 +116,7 @@ func Sync(ctx context.Context, opts SyncOptions) {
 
 				// Check for uncommitted changes before pull
 				spinner.UpdateText(fmt.Sprintf("Checking %s...", repoPath))
-				isDirty, err := repo.IsDirty(egCtx, fullRepoPath)
+				isDirty, err := opts.RepoClient.IsDirty(egCtx, fullRepoPath)
 				if err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoPath, err))
 					pullFailed.Add(1)
@@ -128,7 +131,7 @@ func Sync(ctx context.Context, opts SyncOptions) {
 
 				// Pull
 				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoPath))
-				if err := repo.PullLatestCode(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.PullLatestCode(egCtx, fullRepoPath); err != nil {
 					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						spinner.Info(fmt.Sprintf("Synced %s (already up to date)", repoPath))
 						pullSuccess.Add(1)

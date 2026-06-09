@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sync/atomic"
 
@@ -22,10 +21,14 @@ type FetchOptions struct {
 	ProjectFilter string
 	DevPath       string
 	Projects      []config.Project
+	RepoClient    RepoClient
 }
 
 // Fetch ensures project repositories are fetched.
 func Fetch(ctx context.Context, opts FetchOptions) {
+	if opts.RepoClient == nil {
+		opts.RepoClient = &defaultRepoClient{}
+	}
 	log.Start("Fetching project repositories")
 
 	if opts.DryRun {
@@ -93,7 +96,7 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoPath))
-				if err := fetchRepo(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.FetchAllPrune(egCtx, fullRepoPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoPath, err))
 					failedCount.Add(1)
 					return nil
@@ -121,13 +124,4 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 func isRepoCloned(repoPath string) bool {
 	info, err := os.Stat(filepath.Join(repoPath, ".git"))
 	return err == nil && info.IsDir()
-}
-
-func fetchRepo(ctx context.Context, repoPath string) error {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "fetch", "--all", "--prune")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(out))
-	}
-	return nil
 }

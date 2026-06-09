@@ -12,7 +12,6 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -23,10 +22,14 @@ type PullOptions struct {
 	ProjectFilter string
 	DevPath       string
 	Projects      []config.Project
+	RepoClient    RepoClient
 }
 
 // Pull updates from remote for all repositories in configured projects.
 func Pull(ctx context.Context, opts PullOptions) {
+	if opts.RepoClient == nil {
+		opts.RepoClient = &defaultRepoClient{}
+	}
 	log.Start("Pulling project repositories")
 
 	if opts.DryRun {
@@ -94,7 +97,7 @@ func Pull(ctx context.Context, opts PullOptions) {
 				}
 
 				// Check for uncommitted changes
-				isDirty, err := repo.IsDirty(egCtx, fullRepoPath)
+				isDirty, err := opts.RepoClient.IsDirty(egCtx, fullRepoPath)
 				if err != nil {
 					spinner := multi.AddSpinner(fmt.Sprintf("Checking %s...", repoPath))
 					spinner.Fail(fmt.Sprintf("Failed to check status of %s: %s", repoPath, err))
@@ -110,7 +113,7 @@ func Pull(ctx context.Context, opts PullOptions) {
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Pulling %s...", repoPath))
-				if err := repo.PullLatestCode(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.PullLatestCode(egCtx, fullRepoPath); err != nil {
 					// Check if it's just "already up to date"
 					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						spinner.Info(fmt.Sprintf("%s is already up to date", repoPath))

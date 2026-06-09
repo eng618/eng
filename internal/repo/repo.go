@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -280,5 +281,15 @@ func CheckoutBareRepo(ctx context.Context, repoPath, workTree string, force, all
 		return err
 	}
 
+	return nil
+}
+
+// FetchAllPrune performs git fetch --all --prune for the given repository path.
+func FetchAllPrune(ctx context.Context, repoPath string) error {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "fetch", "--all", "--prune")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, string(out))
+	}
 	return nil
 }
