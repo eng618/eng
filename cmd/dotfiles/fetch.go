@@ -3,11 +3,12 @@ package dotfiles
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/dotfiles"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // FetchCmd defines the cobra command for fetching the dotfiles repository.
+// It only fetches remote changes without merging them.
 var FetchCmd = &cobra.Command{
 	Use:   "fetch",
 	Short: "fetch your local bare repository",
@@ -21,7 +22,8 @@ var FetchCmd = &cobra.Command{
 			return
 		}
 
-		err = dotfiles.FetchRepo(cmd.Context(), repoPath, worktreePath)
+		// Use an injectable function so tests can replace it and avoid running real git.
+		err = fetchRepo(repoPath, worktreePath)
 		if err != nil {
 			log.Error("Failed to fetch dotfiles: %s", err)
 			return
@@ -29,4 +31,10 @@ var FetchCmd = &cobra.Command{
 
 		log.Success("Dotfiles fetched successfully")
 	},
+}
+
+// fetchRepo is a package-level variable so tests can override the implementation.
+// By default it calls repo.FetchBareRepo.
+var fetchRepo = func(repoPath, worktreePath string) error {
+	return repo.FetchBareRepo(repoPath, worktreePath)
 }

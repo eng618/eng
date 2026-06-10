@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // StashAllCmd defines the cobra command for stashing changes in all git repositories.
@@ -19,7 +19,7 @@ var StashAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Stashing changes in all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		message, _ := cmd.Flags().GetString("message")
 

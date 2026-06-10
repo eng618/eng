@@ -4,9 +4,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // AddCmd defines the cobra command for adding projects or repositories.
@@ -46,8 +45,11 @@ Example:
 			if !found {
 				// Project doesn't exist, confirm creation
 				var confirmCreate bool
-				confirmCreate, err := ui.Confirm("Project '"+projectFilter+"' doesn't exist. Create it?", true)
-				if err != nil {
+				prompt := &survey.Confirm{
+					Message: "Project '" + projectFilter + "' doesn't exist. Create it?",
+					Default: true,
+				}
+				if err := survey.AskOne(prompt, &confirmCreate); err != nil {
 					log.Error("Prompt failed: %s", err)
 					return
 				}
@@ -87,7 +89,7 @@ Example:
 		var repoURL string
 		urlPrompt := &survey.Input{
 			Message: "Enter repository URL (SSH or HTTPS):",
-			Help:    "Examples: git@github.com:org/git.git or https://github.com/org/git.git",
+			Help:    "Examples: git@github.com:org/repo.git or https://github.com/org/repo.git",
 		}
 		if err := survey.AskOne(urlPrompt, &repoURL, survey.WithValidator(survey.Required)); err != nil {
 			log.Error("Prompt failed: %s", err)
@@ -143,8 +145,11 @@ Example:
 
 		// Ask if they want to add more
 		var addMore bool
-		addMore, err = ui.Confirm("Add another repository?", false)
-		if err != nil {
+		morePrompt := &survey.Confirm{
+			Message: "Add another repository?",
+			Default: false,
+		}
+		if err := survey.AskOne(morePrompt, &addMore); err != nil {
 			log.Error("Prompt failed: %s", err)
 			return
 		}

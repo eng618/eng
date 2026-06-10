@@ -22,7 +22,6 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"context"
 	"errors"
 	"os"
 
@@ -39,9 +38,9 @@ import (
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/version"
-	"github.com/eng618/eng/internal/cmdutil"
-	configUtils "github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	configUtils "github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 var cfgFile string
@@ -67,10 +66,10 @@ var rootCmd = &cobra.Command{
 This is personal cli to facilitate my workflow. An maintain my development machine.`,
 }
 
-// ExecuteContext adds all child commands to the root command and sets flags appropriately.
+// Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func ExecuteContext(ctx context.Context) {
-	err := rootCmd.ExecuteContext(ctx)
+func Execute() {
+	err := rootCmd.Execute()
 	cobra.CheckErr(err)
 }
 
@@ -128,7 +127,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		log.Verbose(cmdutil.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
+		log.Verbose(utils.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
 	} else if errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		// Config file not found, create it
 		configFilePath := viper.ConfigFileUsed()
@@ -142,7 +141,7 @@ func initConfig() {
 		if err := viper.SafeWriteConfigAs(configFilePath); err != nil {
 			log.Warn("Error creating config file %s: %v", configFilePath, err)
 		} else {
-			log.Verbose(cmdutil.IsVerbose(rootCmd), "Created new config file: %s", configFilePath)
+			log.Verbose(utils.IsVerbose(rootCmd), "Created new config file: %s", configFilePath)
 		}
 	} else {
 		// Config file was found but another error was produced
