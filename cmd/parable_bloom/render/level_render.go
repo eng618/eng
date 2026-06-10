@@ -112,6 +112,11 @@ func RenderLevelToWriter(w io.Writer, level *common.Level, style string, showCoo
 		}
 	}
 
+	DrawGrid(w, level, width, height, showCoords, grid)
+}
+
+// DrawGrid is a helper function to lower cyclomatic complexity of RenderLevelToWriter
+func DrawGrid(w io.Writer, level *common.Level, width, height int, showCoords bool, grid [][]string) {
 	// Print header
 	fmt.Fprintf(w, "Level %d: %s (grid %dx%d)\n", level.ID, level.Name, width, height)
 
