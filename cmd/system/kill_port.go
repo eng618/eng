@@ -22,7 +22,6 @@ type PortInfo struct {
 	User    string
 }
 
-
 func findPortTool() string {
 	if _, err := exec.LookPath("lsof"); err == nil {
 		return "lsof"
