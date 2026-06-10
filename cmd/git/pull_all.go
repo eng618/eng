@@ -1,18 +1,14 @@
 package git
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
-	"sync/atomic"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // PullAllCmd defines the cobra command for pulling all git repositories.
@@ -24,7 +20,7 @@ var PullAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Pulling all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 
 		devPath, err := getWorkingPath(cmd)
@@ -52,68 +48,54 @@ var PullAllCmd = &cobra.Command{
 
 		log.Info("Found %d git repositories", len(repos))
 
-		var successCount atomic.Int32
-		var failureCount atomic.Int32
-
-		multi, err := ui.NewMultiSpinner()
-		if err != nil {
-			log.Error("Failed to initialize UI: %s", err)
-			return
-		}
-		defer multi.Stop()
-
-		var eg errgroup.Group
-		eg.SetLimit(10) // Concurrent pull limit
+		successCount := 0
+		failureCount := 0
 
 		for _, repoPath := range repos {
-			rPath := repoPath // capture loop variable
-			eg.Go(func() error {
-				repoName := filepath.Base(rPath)
+			repoName := filepath.Base(repoPath)
+			log.Info("Pulling repository: %s", repoName)
 
-				if dryRun {
-					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would pull repository at: %s", rPath))
-					spinner.Success()
-					successCount.Add(1)
-					return nil
-				}
+			if dryRun {
+				log.Info("  [DRY RUN] Would pull repository at: %s", repoPath)
+				successCount++
+				continue
+			}
 
-				spinner := multi.AddSpinner(fmt.Sprintf("Pulling %s...", repoName))
+			// Check if repository is dirty
+			isDirty, err := repo.IsDirty(repoPath)
+			if err != nil {
+				log.Error("  Failed to check repository status: %s", err)
+				failureCount++
+				continue
+			}
 
-				// Check if repository is dirty
-				isDirty, err := repo.IsDirty(cmd.Context(), rPath)
-				if err != nil {
-					spinner.Fail(fmt.Sprintf("Failed to check status for %s: %s", repoName, err))
-					failureCount.Add(1)
-					return nil
-				}
+			if isDirty {
+				log.Warn("  Repository has uncommitted changes, skipping...")
+				failureCount++
+				continue
+			}
 
-				if isDirty {
-					spinner.Warning(fmt.Sprintf("Repository %s has uncommitted changes, skipping...", repoName))
-					failureCount.Add(1)
-					return nil
-				}
+			// Ensure we're on default branch
+			if err := repo.EnsureOnDefaultBranch(repoPath); err != nil {
+				log.Error("  Failed to ensure on default branch: %s", err)
+				failureCount++
+				continue
+			}
 
-				// Removed EnsureOnDefaultBranch to respect the developer's current branch.
+			// Pull with rebase
+			if err := pullRepository(repoPath); err != nil {
+				log.Error("  Failed to pull %s: %s", repoName, err)
+				failureCount++
+				continue
+			}
 
-				// Pull with rebase
-				if err := pullRepository(rPath); err != nil {
-					spinner.Fail(fmt.Sprintf("Failed to pull %s: %s", repoName, err))
-					failureCount.Add(1)
-					return nil
-				}
-
-				spinner.Success(fmt.Sprintf("Successfully pulled %s", repoName))
-				successCount.Add(1)
-				return nil
-			})
+			log.Success("  Successfully pulled %s", repoName)
+			successCount++
 		}
 
-		_ = eg.Wait()
-		multi.Stop()
+		log.Info("Pull completed: %d successful, %d failed", successCount, failureCount)
 
-		log.Info("Pull completed: %d successful, %d failed", successCount.Load(), failureCount.Load())
-
-		if failureCount.Load() > 0 {
+		if failureCount > 0 {
 			log.Warn("Some repositories failed to pull. Check the output above for details.")
 		} else {
 			log.Success("All git repositories pulled successfully")
@@ -130,7 +112,9 @@ func pullRepository(repoPath string) error {
 	cmd := exec.Command("git", "-C", repoPath, "pull", "--rebase", "--autostash")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(output))
+		log.Error("Git pull output: %s", string(output))
+		return err
 	}
+	log.Info("Git pull output: %s", string(output))
 	return nil
 }

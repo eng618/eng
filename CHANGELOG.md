@@ -1,49 +1,5 @@
 <a name="unreleased"></a>
 
-## [1.14.0](https://github.com/eng618/eng/compare/v1.13.0...v1.14.0) (2026-06-09)
-
-
-### Features
-
-* Replace AlecAivazis/survey with charmbracelet/huh and introduce a unified UI theme for CLI prompts ([4e256bf](https://github.com/eng618/eng/commit/4e256bf54a0e9a11b3a288e2195eb27789255d6a))
-
-
-### Bug Fixes
-
-* Indentation and formatting in ui package documentation ([6ade026](https://github.com/eng618/eng/commit/6ade026c9bd46ab14f0f92934d22ccf5a4ca2985))
-
-## [1.13.0](https://github.com/eng618/eng/compare/v1.12.0...v1.13.0) (2026-06-06)
-
-
-### Features
-
-* Migrate to NativeWind v5 and upgrade design system boilerplate with global CSS configuration ([44b2e8d](https://github.com/eng618/eng/commit/44b2e8d73fa7978df297e7798b1341ceed640ecc))
-* Propagate context throughout application ([6c238e6](https://github.com/eng618/eng/commit/6c238e69d6ea015969dfc4ecdd526ac7def980f3))
-
-
-### Bug Fixes
-
-* **codemod:** Handle file operation errors properly ([0d5b429](https://github.com/eng618/eng/commit/0d5b42902fe768a7955fe1740d664b41d5a04b5f))
-* **log:** Remove log.Fatal and replace with error handling ([e428a83](https://github.com/eng618/eng/commit/e428a835d0f9d328ac64be45f862f097c46f4530))
-* Resolve task validate failures and data race in tests ([a2fea58](https://github.com/eng618/eng/commit/a2fea5838d78214dae19d8b7c6936a48c2f42766))
-
-
-### Miscellaneous
-
-* Update tailwindcss and dependency versions in codemod commands ([5a4eda0](https://github.com/eng618/eng/commit/5a4eda089e5896b08975ac2fe3768c7462aebd1e))
-
-## [1.12.0](https://github.com/eng618/eng/compare/v1.11.4...v1.12.0) (2026-06-02)
-
-
-### Features
-
-* Add native and web project bootstrapping commands to codemod CLI ([04e398b](https://github.com/eng618/eng/commit/04e398be0f196645b7424c3cdbc201719ff1d4d0))
-
-
-### Miscellaneous
-
-* Upgrade toolchain, apply code style improvements, and update dependencies ([befa78e](https://github.com/eng618/eng/commit/befa78e9c6fd153f11778b3f03f62b5e51257097))
-
 ## [1.11.4](https://github.com/eng618/eng/compare/v1.11.3...v1.11.4) (2026-05-27)
 
 

@@ -11,8 +11,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 type PortInfo struct {
@@ -21,6 +21,12 @@ type PortInfo struct {
 	Port    string
 	User    string
 }
+
+var (
+	lsofPortRegex  = regexp.MustCompile(`:(\d+)`)
+	ssPidRegex     = regexp.MustCompile(`pid=(\d+)`)
+	ssCommandRegex = regexp.MustCompile(`\("([^"]+)"`)
+)
 
 func findPortTool() string {
 	if _, err := exec.LookPath("lsof"); err == nil {
@@ -80,7 +86,8 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			pi.PID = fields[1]
 			pi.User = fields[2]
 			name := fields[8] // NAME field
-			if match := lsofPortRe.FindStringSubmatch(name); len(match) > 1 {
+
+			if match := lsofPortRegex.FindStringSubmatch(name); len(match) > 1 {
 				pi.Port = match[1]
 			}
 		case "ss":
@@ -96,11 +103,10 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			}
 			process := fields[len(fields)-1]
 			if strings.Contains(process, "pid=") {
-				if match := ssPidRe.FindStringSubmatch(process); len(match) > 1 {
+				if match := ssPidRegex.FindStringSubmatch(process); len(match) > 1 {
 					pi.PID = match[1]
 				}
-
-				if match := ssCmdRe.FindStringSubmatch(process); len(match) > 1 {
+				if match := ssCommandRegex.FindStringSubmatch(process); len(match) > 1 {
 					pi.Command = match[1]
 				}
 			}
@@ -170,7 +176,7 @@ var (
 	signal      string
 	filter      string
 
-	lsofPortRe = regexp.MustCompile(`:(\d+)$`)
+	lsofPortRe = regexp.MustCompile(`:(\d+)`)
 	ssPidRe    = regexp.MustCompile(`pid=(\d+)`)
 	ssCmdRe    = regexp.MustCompile(`\("([^"]+)"`)
 )
@@ -186,7 +192,7 @@ Requires appropriate tools to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
+		isVerbose := utils.IsVerbose(cmd) // Get verbosity flag
 
 		var portStr string
 		var selectedPort PortInfo

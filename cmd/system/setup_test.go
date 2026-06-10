@@ -7,10 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/eng618/eng/internal/ui"
 )
 
 func TestSetupASDF(t *testing.T) {
@@ -180,13 +179,11 @@ func TestSetupDotfiles_SkipsSecretsRestoreWithoutToken(t *testing.T) {
 
 func TestSetupSoftware(t *testing.T) {
 	origLookPath := lookPath
-	origUIMultiSelect := ui.MultiSelect
-	origUISelect := ui.Select
+	origAskOne := askOne
 	origExec := execCommand
 	defer func() {
 		lookPath = origLookPath
-		ui.MultiSelect = origUIMultiSelect
-		ui.Select = origUISelect
+		askOne = origAskOne
 		execCommand = origExec
 	}()
 
@@ -194,8 +191,10 @@ func TestSetupSoftware(t *testing.T) {
 		return "/usr/bin/" + path, nil
 	}
 	// Mock select prompt
-	ui.MultiSelect = func(msg string, opts []string) ([]string, error) {
-		return []string{}, nil
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		r := response.(*[]string)
+		*r = []string{} // No optional software selected
+		return nil
 	}
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		return exec.Command("echo", "success")
@@ -254,8 +253,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	origDotfiles := setupDotfilesStep
 	origSoftware := setupSoftwareStep
 	origGPG := setupGPGStep
-	origUIMultiSelect := ui.MultiSelect
-	origUISelect := ui.Select
+	origAskOne := askOne
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
 		setupOhMyZshStep = origZsh
@@ -263,8 +261,7 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 		setupDotfilesStep = origDotfiles
 		setupSoftwareStep = origSoftware
 		setupGPGStep = origGPG
-		ui.MultiSelect = origUIMultiSelect
-		ui.Select = origUISelect
+		askOne = origAskOne
 	}()
 
 	var ran []string
@@ -277,13 +274,15 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	setupGPGStep = func(_ bool) error { ran = append(ran, "gpg"); return nil }
 
 	promptIdx := 0
-	ui.Select = func(msg string, opts []string, def string) (string, error) {
-		resp := setupActionContinue
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		resp := response.(*string)
 		if promptIdx == 1 { // second step = Oh My Zsh → skip it
-			resp = setupActionSkip
+			*resp = setupActionSkip
+		} else {
+			*resp = setupActionContinue
 		}
 		promptIdx++
-		return resp, nil
+		return nil
 	}
 
 	cmd := &cobra.Command{}
@@ -320,13 +319,11 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 func TestRunSetup_Interactive_ExitEarly(t *testing.T) {
 	origPrereq := ensurePrerequisitesStep
 	origZsh := setupOhMyZshStep
-	origUIMultiSelect := ui.MultiSelect
-	origUISelect := ui.Select
+	origAskOne := askOne
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
 		setupOhMyZshStep = origZsh
-		ui.MultiSelect = origUIMultiSelect
-		ui.Select = origUISelect
+		askOne = origAskOne
 	}()
 
 	zshRan := false
@@ -334,13 +331,15 @@ func TestRunSetup_Interactive_ExitEarly(t *testing.T) {
 	setupOhMyZshStep = func(_ bool) { zshRan = true }
 
 	promptIdx := 0
-	ui.Select = func(msg string, opts []string, def string) (string, error) {
-		resp := setupActionContinue
+	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
+		resp := response.(*string)
 		if promptIdx == 1 { // second step = Oh My Zsh → exit
-			resp = setupActionExit
+			*resp = setupActionExit
+		} else {
+			*resp = setupActionContinue
 		}
 		promptIdx++
-		return resp, nil
+		return nil
 	}
 
 	cmd := &cobra.Command{}
