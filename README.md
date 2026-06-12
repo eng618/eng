@@ -157,6 +157,7 @@ For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
 
 - [Command Reference](docs/COMMANDS.md) — Complete documentation for all commands
 - [Architecture](docs/ARCHITECTURE.md) — Technical architecture and design
+- [Roadmap](docs/TECHNICAL_ROADMAP.md) — Technical improvements and UI/UX roadmap
 - [Releasing](docs/RELEASING.md) — Automated release and Homebrew publication process
 - [Changelog](CHANGELOG.md) — Version history and release notes
 

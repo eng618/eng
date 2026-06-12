@@ -1,10 +1,10 @@
-# Technical Roadmap & Action Plan
+# Technical Roadmap & Action Plan (UI/UX Focus)
 
-This document serves as the authoritative roadmap for technical improvements, modernization, and technical debt reduction for the `eng` CLI application. It is based on a comprehensive senior-level code review and is designed to be executed incrementally.
+This document serves as the authoritative roadmap for elevating the user experience (UX) and user interface (UI) of the `eng` CLI. With foundational architecture and basic TUIs in place, the next evolution focuses on premium aesthetics, cohesive theming, and advanced interactive workflows using the Charm ecosystem (Bubble Tea, Lipgloss, Huh).
+
+**Aesthetic Goal**: Follow a minimalist aesthetic leveraging the `gv-tech` brand tokens and design system ([GV Tech Theming Reference](https://design.garciaericn.com/docs/theming#token-reference)).
 
 ## Status Tracking Mechanism
-
-Use the following markers to track the status of each task:
 
 - `[ ]` Not Started
 - `[/]` In Progress
@@ -13,175 +13,69 @@ Use the following markers to track the status of each task:
 
 ---
 
-## 1. Critical & High Priority (Immediate Fixes & Quick Wins)
+## 1. Phase 6: Foundational Theming & Styling
 
-These items represent immediate reliability issues and simple fixes that provide significant value.
+Create a consistent visual language across the entire application that prioritizes general usability and consistency.
 
-### 1.1 Fix Unhandled Errors in File Operations
+### 1.1 Global Design System (Lipgloss)
+- **Status**: `[ ]`
+- **Task**: Introduce an `internal/ui/theme` package defining a global, branded color palette, typography (bolding/italics), and border styles using `charmbracelet/lipgloss`. Utilize the `gv-tech` brand tokens to ensure a minimalist, professional aesthetic.
+- **Impact**: High (Ensures the CLI looks consistent and recognizable).
 
-- **Status**: `[x]`
-- **Task**: Wrap all `os.WriteFile` and `os.MkdirAll` calls in the `codemod` package with proper error handling (`if err != nil { return err }`).
-- **Impact**: High (prevents silent failures during code generation)
-- **Effort**: Low (Under 1 hour)
-- **Location**: `cmd/codemod/native.go`, `cmd/codemod/web.go`
-
-### 1.2 Remove `log.Fatal` from Library Packages
-
-- **Status**: `[x]`
-- **Task**: Remove all `log.Fatal()` and `os.Exit(1)` calls from the `internal/` directory. Return `error` types to the caller so the top-level command can handle fatal exits gracefully.
-- **Impact**: Critical (improves reliability and testability)
-- **Effort**: Low
-- **Location**: `internal/utils/command.go`, `internal/utils/log/log.go`
-
-### 1.3 Auto-Format Codebase
-
-- **Status**: `[x]` Complete
-- **Task**: Run `golangci-lint run --fix` or `gci` to auto-correct imports and style formatting issues.
-- **Impact**: Low
-- **Effort**: Low
-- **Location**: Repository-wide
+### 1.2 Rich Command Output
+- **Status**: `[ ]`
+- **Task**: Replace standard `fmt.Printf` and plain text logging with Lipgloss-styled components (e.g., success banners, info boxes, warning callouts) aligned with the global theme.
+- **Impact**: Medium (Makes reading command output easier and more pleasant).
 
 ---
 
-## 2. Medium Priority (Architecture & Performance)
+## 2. Phase 7: Error UX & Actionable Feedback
 
-These items address structural debt and optimize the CLI's performance for scale.
+Transform how the CLI communicates failures to the user.
 
-### 2.1 Refactor `internal/utils` into Domain Packages
+### 2.1 Smart, Styled Error Handling
+- **Status**: `[ ]`
+- **Task**: Create a custom error formatter. When an error occurs, output a styled error box that not only explains *what* failed, but provides *actionable suggestions* on how to fix it (e.g., pointing to the exact `eng system setup` command needed).
+- **Impact**: High (Drastically reduces user frustration during setup or edge cases).
 
-- **Status**: `[x]`
-- **Task**: Break apart the `internal/utils` grab-bag package into dedicated, single-responsibility domain packages (e.g., `internal/repo`, `internal/bitwarden`, `internal/config`, `internal/ui`).
-- **Impact**: High (improves maintainability and separation of concerns)
-- **Effort**: Medium
-- **Location**: `internal/utils/*`
-
-### 2.2 Parallelize Multi-Repository Operations
-
-- **Status**: `[x]`
-- **Task**: Introduce `golang.org/x/sync/errgroup` to perform `git fetch` and `git pull` operations concurrently across projects and repositories.
-- **Impact**: High (drastically reduces latency for syncing large numbers of repos)
-- **Effort**: Medium
-- **Location**: `cmd/project/sync.go`, `cmd/git/fetch_all.go`
-
-### 2.3 Extract Business Logic from Cobra Commands
-
-- **Status**: `[x]`
-- **Task**: Move business logic out of Cobra's `Run`/`RunE` functions and into independent, testable service functions. The Cobra layer should only handle flag parsing, I/O routing, and service initialization.
-- **Impact**: High (enables unit testing)
-- **Effort**: High
-- **Location**: `cmd/*`
-
-### 2.4 Implement Context Propagation
-
-- **Status**: `[x]`
-- **Task**: Replace `exec.Command` with `exec.CommandContext` and pass a `context.Context` from the root command down to all network-bound or long-running operations. This allows users to cancel operations gracefully.
-- **Impact**: Medium
-- **Effort**: Medium
-- **Location**: `internal/utils/repo/repo.go`, `internal/utils/bitwarden.go`
-
-### 2.5 Replace `os/exec` with `go-git` where practical
-
-- **Status**: `[x]`
-- **Task**: Transition simple git system calls to use the native `go-git` library for better cross-platform compatibility and resilience.
-- **Impact**: Medium
-- **Effort**: Low
-- **Location**: `internal/repo/*`, `internal/dotfiles/*`
+### 2.2 Progressive Disclosure for Logs
+- **Status**: `[ ]`
+- **Task**: For verbose commands (like git syncs or system updates), show a clean summary by default. Log the verbose output to a file, and provide a command to view the logs, preventing the terminal from being overwhelmed with text.
+- **Impact**: Medium (Keeps the terminal clean while preserving debuggability).
 
 ---
 
-## 3. Low Priority (Testing & Developer Experience)
+## 3. Phase 8: Interactive Dashboards (Advanced TUIs)
 
-These items ensure the long-term health and stability of the project.
+Introduce full-screen, interactive applications for complex workflows.
 
-### 3.1 Increase Test Coverage
+### 3.1 Project & Git Dashboard
+- **Status**: `[ ]`
+- **Task**: Build an `eng dashboard` or interactive `eng project view` using `charmbracelet/bubbletea`. Show real-time statuses of repositories (branches, uncommitted changes, sync state) in a navigable, split-pane view.
+- **Impact**: High (Provides a "mission control" feel for managing multiple repositories).
 
-- **Status**: `[x]`
-- **Task**: Add table-driven unit tests for the newly extracted domain services (from task 2.3). Implement interfaces for external dependencies (like Git and FS) to allow mocking. Replace "no panic" pseudo-tests with actual assertions.
-- **Impact**: High
-- **Effort**: High
-- **Location**: `cmd/*`, `internal/*`
+### 3.2 Interactive Configuration Editor
+- **Status**: `[ ]`
+- **Task**: Create `eng config edit --interactive`. Instead of manually editing `.eng.yaml`, provide a beautiful TUI form (via `huh`) to toggle settings, set paths, and validate input dynamically.
+- **Impact**: Medium (Reduces misconfiguration errors).
 
-### 3.2 Inject Configuration Dependencies
+---
 
-- **Status**: `[x]`
-- **Task**: Replace internal, global `viper.GetString()` calls with explicit configuration structs passed to domain services.
-- **Impact**: Medium (improves testability)
-- **Effort**: Medium
-- **Location**: Across the codebase
+## 4. Phase 9: Onboarding & Discoverability
 
-### 3.3 Replace Brittle Flag Lookups
+Ensure new users (and existing users discovering new features) have a frictionless experience.
 
-- **Status**: `[x]`
-- **Task**: Remove brittle `cmd.Parent().PersistentFlags()` lookups in subcommands. Bind flags to Viper or a configuration struct during `PreRun`.
-- **Impact**: Low
-- **Effort**: Low
-- **Location**: `cmd/*`
+### 4.1 First-Run Onboarding Wizard
+- **Status**: `[ ]`
+- **Task**: Detect if `.eng.yaml` is missing or incomplete on first run. Instead of failing, automatically launch a welcoming, step-by-step TUI wizard to configure essential paths and preferences.
+- **Impact**: High (Creates a magical first impression).
 
-### 3.4 Implement a TUI for Multi-Repo Syncing
+### 4.2 Overhaul Cobra Help & Usage
+- **Status**: `[ ]`
+- **Task**: Customize Cobra's help templates to use colored headers, aligned columns, and examples. Consider integrating `charmbracelet/glamour` to render markdown-based command documentation directly in the terminal.
+- **Impact**: Medium (Improves discoverability of flags and subcommands).
 
-- **Status**: `[x]`
-- **Task**: Integrate a Text User Interface library like `bubbletea` or `pterm` to display rich parallel progress bars when fetching or syncing multiple repositories.
-- **Impact**: Low (UX improvement)
-- **Effort**: Medium
-- **Location**: `cmd/project/sync.go`, `cmd/git/*`
-
-## 4. Phase 4: Enhancing External Tooling & UX
-
-These items focus on bringing the application's CLI interactions up to modern standards by introducing beautiful interactive terminal user interfaces (TUIs) and better parallel operation visualization.
-
-### 4.1 Replace `AlecAivazis/survey` with `charmbracelet/huh`
-
-- **Status**: `[x]`
-- **Task**: Replace the outdated `survey` package with Charm's `huh` library for all user prompts. `huh` is built on Bubble Tea and offers superior theming, validation, and layout capabilities.
-- **Impact**: High (modernizes the CLI feel, making configuration and prompts feel premium)
-- **Effort**: Medium
-- **Location**:
-  - `cmd/system/*` (setup, proxy, update, kill_process, gpg_setup, etc.)
-  - `cmd/files/*` (find_and_delete, find_non_movie_folders)
-  - `cmd/project/*` (add, remove)
-  - `cmd/config/*`
-  - `cmd/dotfiles/*`
-
-### 4.2 Expand `MultiSpinner` to File and System Commands
-
-- **Status**: `[x]`
-- **Task**: The new `ui.MultiSpinner` added during Phase 3 Git refactors is highly effective for visualizing concurrent or sequential long-running tasks. We will integrate it into other heavy commands.
-- **Impact**: Medium (drastically improves the user experience during long wait times)
-- **Effort**: Medium
-- **Location**:
-  - `cmd/files/find_and_delete.go`: Use a MultiSpinner for parallel file deletion (e.g., showing 4 worker threads deleting files concurrently).
-  - `cmd/files/find_non_movie_folders.go`: Show concurrent directory scanning progress.
-  - `cmd/system/update.go`: Use MultiSpinner for `apt-get`, `brew`, `asdf`, and cleanup steps instead of single blocking spinners.
-  - `cmd/dotfiles/copy_changes.go`: Show concurrent diffs and copies.
-
-## 5. Phase 5: Advanced TUI Enhancements & Wizards
-
-Based on recent code exploration, these areas of the application can be enhanced with richer interactive terminal UIs using Bubble Tea or `huh`:
-
-### 5.1 Interactive File Selection
-
-- **Status**: `[x]`
-- **Task**: Replace static printed lists of files with interactive `huh.MultiSelect` or Bubble Tea tables to allow users to visually check/uncheck files before deleting them.
-- **Location**:
-  - `cmd/files/find_and_delete.go`
-  - `cmd/files/find_non_movie_folders.go`
-
-### 5.2 Interactive Process Management
-
-- **Status**: `[x]`
-- **Task**: Upgrade the `kill` command to list running processes in an interactive, filterable table instead of relying on basic text prompts or manual PID entry.
-- **Location**: `cmd/system/kill_process.go`
-
-### 5.3 Setup Wizard Modernization
-
-- **Status**: `[x]`
-- **Task**: Convert the sequential system setup prompts into a beautiful, multi-page wizard using `huh.NewForm()` with clear steps and theming.
-- **Location**: `cmd/system/setup.go`, `cmd/system/gpg_setup.go`
-
-### 5.4 Multi-Spinner System Updates
-
-- **Status**: `[x]`
-- **Task**: Integrate `ui.MultiSpinner` to display concurrent progress for system updates, dotfiles syncing, and cleaning tasks.
-- **Location**:
-  - `cmd/system/update.go`
-  - `cmd/dotfiles/copy_changes.go`
+### 4.3 Dynamic Auto-Completion
+- **Status**: `[ ]`
+- **Task**: Implement Cobra's `ValidArgsFunction` across commands to provide dynamic shell auto-completion for project names, dotfile templates, and git branches.
+- **Impact**: High (Massively speeds up daily usage).
