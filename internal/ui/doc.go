@@ -9,7 +9,7 @@
 //
 // # Available Features
 //
-//   - **Theming**: The `EngTheme()` function supplies a consistent, adaptive
+//   - **Theming**: The `theme.EngTheme()` function supplies a consistent, adaptive
 //     light/dark mode HSL color palette across all interactive prompts.
 //   - **Prompts**: Standardized functions for user interaction:
 //   - `Confirm(message string, defaultVal bool)`: Yes/No prompts.

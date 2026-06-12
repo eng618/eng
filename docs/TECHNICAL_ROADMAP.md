@@ -18,13 +18,13 @@ This document serves as the authoritative roadmap for elevating the user experie
 Create a consistent visual language across the entire application that prioritizes general usability and consistency.
 
 ### 1.1 Global Design System (Lipgloss)
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Introduce an `internal/ui/theme` package defining a global, branded color palette, typography (bolding/italics), and border styles using `charmbracelet/lipgloss`. Utilize the `gv-tech` brand tokens to ensure a minimalist, professional aesthetic.
 - **Impact**: High (Ensures the CLI looks consistent and recognizable).
 
 ### 1.2 Rich Command Output
-- **Status**: `[ ]`
-- **Task**: Replace standard `fmt.Printf` and plain text logging with Lipgloss-styled components (e.g., success banners, info boxes, warning callouts) aligned with the global theme.
+- **Status**: `[/]`
+- **Task**: Replace standard `fmt.Printf` and plain text logging with Lipgloss-styled components (e.g., success banners, info boxes, warning callouts) aligned with the global theme. (Partially completed in proxy and native commands).
 - **Impact**: Medium (Makes reading command output easier and more pleasant).
 
 ---

@@ -15,6 +15,7 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // ProxyConfig represents a single proxy configuration.
@@ -156,7 +157,7 @@ func PromptProxyValuesImpl(
 				Placeholder("localhost,127.0.0.1,::1,.local").
 				Value(&noProxy),
 		),
-	).WithTheme(ui.EngTheme())
+	).WithTheme(theme.EngTheme())
 
 	err = form.Run()
 	return title, value, noProxy, err

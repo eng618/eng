@@ -102,11 +102,11 @@ func TestInstall(t *testing.T) {
 			expectedErr: errors.New("prereq check failed"),
 		},
 		{
-			name:               "Failure - Existing Repo Action Select fails",
-			prereqsErr:         nil,
-			statErr:            nil,
-			existingRepoErr:    errors.New("prompt select failed"),
-			expectedErr:        errors.New("prompt select failed"),
+			name:            "Failure - Existing Repo Action Select fails",
+			prereqsErr:      nil,
+			statErr:         nil,
+			existingRepoErr: errors.New("prompt select failed"),
+			expectedErr:     errors.New("prompt select failed"),
 		},
 		{
 			name:               "Failure - Existing Repo Update fails",
@@ -368,7 +368,7 @@ func TestBackupConflicts(t *testing.T) {
 
 	fileName := "conflict.txt"
 	filePath := filepath.Join(bareDir, fileName)
-	err = os.WriteFile(filePath, []byte("repo content"), 0644)
+	err = os.WriteFile(filePath, []byte("repo content"), 0o644)
 	if err != nil {
 		t.Fatalf("failed to write file: %v", err)
 	}
@@ -390,7 +390,7 @@ func TestBackupConflicts(t *testing.T) {
 	}
 
 	worktreeFile := filepath.Join(worktreeDir, fileName)
-	err = os.WriteFile(worktreeFile, []byte("user content"), 0644)
+	err = os.WriteFile(worktreeFile, []byte("user content"), 0o644)
 	if err != nil {
 		t.Fatalf("failed to write worktree file: %v", err)
 	}

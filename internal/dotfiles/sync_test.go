@@ -16,31 +16,31 @@ func TestSyncRepo(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name                 string
-		fetchErr             error
-		pullRebaseErr        error
-		expectedErr          error
+		name                   string
+		fetchErr               error
+		pullRebaseErr          error
+		expectedErr            error
 		expectPullRebaseCalled bool
 	}{
 		{
-			name:                 "Success case",
-			fetchErr:             nil,
-			pullRebaseErr:        nil,
-			expectedErr:          nil,
+			name:                   "Success case",
+			fetchErr:               nil,
+			pullRebaseErr:          nil,
+			expectedErr:            nil,
 			expectPullRebaseCalled: true,
 		},
 		{
-			name:                 "Fetch fails",
-			fetchErr:             errors.New("fetch failed"),
-			pullRebaseErr:        nil,
-			expectedErr:          errors.New("fetch failed"),
+			name:                   "Fetch fails",
+			fetchErr:               errors.New("fetch failed"),
+			pullRebaseErr:          nil,
+			expectedErr:            errors.New("fetch failed"),
 			expectPullRebaseCalled: false,
 		},
 		{
-			name:                 "Pull rebase fails",
-			fetchErr:             nil,
-			pullRebaseErr:        errors.New("pull rebase failed"),
-			expectedErr:          errors.New("pull rebase failed"),
+			name:                   "Pull rebase fails",
+			fetchErr:               nil,
+			pullRebaseErr:          errors.New("pull rebase failed"),
+			expectedErr:            errors.New("pull rebase failed"),
 			expectPullRebaseCalled: true,
 		},
 	}

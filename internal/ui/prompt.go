@@ -1,7 +1,11 @@
 package ui
 
 import (
+	"errors"
+
 	"github.com/charmbracelet/huh"
+
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Wrapper functions for testing.
@@ -13,77 +17,82 @@ var (
 	Password    = PasswordImpl
 )
 
-// ConfirmImpl prompts the user with a yes/no question using Huh.
+// ConfirmImpl prompts the user with a yes/no question using the default theme.
 func ConfirmImpl(message string, defaultVal bool) (bool, error) {
-	var result bool
-	form := huh.NewForm(
+	var val bool
+	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title(message).
-				Value(&result).
-				Affirmative("Yes").
-				Negative("No"),
+				Value(&val).
+				Affirmative("Yes!").
+				Negative("No."),
 		),
-	).WithTheme(EngTheme())
-
-	err := form.Run()
+	).WithTheme(theme.EngTheme()).Run()
 	if err != nil {
-		return defaultVal, err // return default if aborted
+		if errors.Is(err, huh.ErrUserAborted) {
+			return false, err
+		}
+		return defaultVal, err
 	}
-	return result, nil
+	return val, nil
 }
 
-// InputImpl prompts the user for text input.
+// InputImpl prompts the user for text input using the default theme.
 func InputImpl(message, defaultVal string) (string, error) {
-	var result string
-	form := huh.NewForm(
+	var val string
+	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title(message).
-				Value(&result),
+				Value(&val).
+				Placeholder(defaultVal),
 		),
-	).WithTheme(EngTheme())
-
-	err := form.Run()
+	).WithTheme(theme.EngTheme()).Run()
 	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", err
+		}
 		return defaultVal, err
 	}
-	if result == "" {
+	if val == "" {
 		return defaultVal, nil
 	}
-	return result, nil
+	return val, nil
 }
 
-// SelectImpl prompts the user to select one option from a list.
+// SelectImpl prompts the user to select an option from a list using the default theme.
 func SelectImpl(message string, options []string, defaultVal string) (string, error) {
-	var result string
-	var huhOptions []huh.Option[string]
-	for _, opt := range options {
-		huhOptions = append(huhOptions, huh.NewOption(opt, opt))
+	var val string
+
+	huhOptions := make([]huh.Option[string], len(options))
+	for i, opt := range options {
+		huhOptions[i] = huh.NewOption(opt, opt)
 	}
 
-	form := huh.NewForm(
+	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title(message).
 				Options(huhOptions...).
-				Value(&result),
+				Value(&val),
 		),
-	).WithTheme(EngTheme())
-
-	err := form.Run()
-	return result, err
+	).WithTheme(theme.EngTheme()).Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", err
+		}
+		return defaultVal, err
+	}
+	return val, nil
 }
 
-// MultiSelectImpl prompts the user to select multiple options from a list.
+// MultiSelectImpl prompts the user to select multiple options from a list using the default theme.
 func MultiSelectImpl(message string, options, defaultSelected []string) ([]string, error) {
-	// Initialize result with defaultSelected if provided
-	result := make([]string, len(defaultSelected))
-	copy(result, defaultSelected)
+	var val []string
 
-	var huhOptions []huh.Option[string]
-	for _, opt := range options {
-		// Determine if this option should be selected by default
+	huhOptions := make([]huh.Option[string], len(options))
+	for i, opt := range options {
 		selected := false
 		for _, def := range defaultSelected {
 			if opt == def {
@@ -91,34 +100,42 @@ func MultiSelectImpl(message string, options, defaultSelected []string) ([]strin
 				break
 			}
 		}
-		huhOptions = append(huhOptions, huh.NewOption(opt, opt).Selected(selected))
+		huhOptions[i] = huh.NewOption(opt, opt).Selected(selected)
 	}
 
-	form := huh.NewForm(
+	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title(message).
 				Options(huhOptions...).
-				Value(&result),
+				Value(&val),
 		),
-	).WithTheme(EngTheme())
-
-	err := form.Run()
-	return result, err
+	).WithTheme(theme.EngTheme()).Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return nil, err
+		}
+		return nil, err
+	}
+	return val, nil
 }
 
-// PasswordImpl prompts the user for hidden text input.
+// PasswordImpl prompts the user for a secret text input using the default theme.
 func PasswordImpl(message string) (string, error) {
-	var result string
-	form := huh.NewForm(
+	var val string
+	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title(message).
-				EchoMode(huh.EchoModePassword).
-				Value(&result),
+				Value(&val).
+				EchoMode(huh.EchoModePassword),
 		),
-	).WithTheme(EngTheme())
-
-	err := form.Run()
-	return result, err
+	).WithTheme(theme.EngTheme()).Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", err
+		}
+		return "", err
+	}
+	return val, nil
 }

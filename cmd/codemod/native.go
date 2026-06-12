@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var NativeCmd = &cobra.Command{
@@ -24,7 +25,7 @@ var NativeCmd = &cobra.Command{
 			return fmt.Errorf("directory %s already exists", projectName)
 		}
 
-		fmt.Printf("🚀 Bootstrapping Native project: %s...\n", projectName)
+		theme.InfoMessage(fmt.Sprintf("🚀 Bootstrapping Native project: %s...", projectName))
 
 		// Create Expo App
 		createCmd := execCommand("bunx", "create-expo-app@latest", projectName)
@@ -322,7 +323,7 @@ export default function Index() {
 			}
 		}
 
-		log.Info("Native project %s bootstrapped successfully!", projectName)
+		theme.SuccessMessage(fmt.Sprintf("Native project %s bootstrapped successfully!", projectName))
 		return nil
 	},
 }

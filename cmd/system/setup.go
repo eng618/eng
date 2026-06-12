@@ -15,6 +15,7 @@ import (
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var SetupCmd = &cobra.Command{
@@ -65,7 +66,7 @@ var (
 			))
 		}
 
-		form := huh.NewForm(groups...).WithTheme(ui.EngTheme())
+		form := huh.NewForm(groups...).WithTheme(theme.EngTheme())
 		if err := form.Run(); err != nil {
 			return nil, err
 		}
