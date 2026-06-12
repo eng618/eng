@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.15.0](https://github.com/eng618/eng/compare/v1.14.0...v1.15.0) (2026-06-12)
+
+
+### Features
+
+* Move UI theming into dedicated internal/ui/theme package and apply styles to proxy CLI output ([61e3fec](https://github.com/eng618/eng/commit/61e3fecf3dd12dea1d43fbcc7aeac60a310ba2d9))
+
+
+### Bug Fixes
+
+* Remove brittle parent flag lookups in favor of direct flag access via cobra.Command.Flags() ([38a5a05](https://github.com/eng618/eng/commit/38a5a0503903fa7827ca5c79a3bffe5b2525f8cc))
+
 ## [1.14.0](https://github.com/eng618/eng/compare/v1.13.0...v1.14.0) (2026-06-09)
 
 
