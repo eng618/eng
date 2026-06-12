@@ -95,7 +95,7 @@ These items ensure the long-term health and stability of the project.
 
 ### 3.1 Increase Test Coverage
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Add table-driven unit tests for the newly extracted domain services (from task 2.3). Implement interfaces for external dependencies (like Git and FS) to allow mocking. Replace "no panic" pseudo-tests with actual assertions.
 - **Impact**: High
 - **Effort**: High

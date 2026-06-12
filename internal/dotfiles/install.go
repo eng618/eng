@@ -27,6 +27,23 @@ type InstallOptions struct {
 	Verbose      bool
 }
 
+// Test hooks and mockable dependencies
+var (
+	EnsurePrerequisites    = system.EnsurePrerequisites
+	HandleExistingRepo     = handleExistingRepo
+	UpdateBareRepoWorktree = updateBareRepoWorktree
+	FreshInstall           = freshInstall
+	CloneBareRepo          = cloneBareRepo
+	BackupConflicts        = backupConflicts
+	CheckoutWorktree       = repo.CheckoutWorktree
+	InitSubmodules         = repo.InitSubmodules
+	ConfigureBareRepo      = repo.ConfigureBareRepo
+	Stat                   = os.Stat
+	EnsureSSH              = ensureSSHIfRequired
+	UISelect               = ui.Select
+	BareClone              = repo.BareClone
+)
+
 // Install orchestrates the complete dotfiles installation workflow.
 func Install(ctx context.Context, opts InstallOptions) error {
 	log.Start("Starting dotfiles installation")
@@ -38,13 +55,13 @@ func Install(ctx context.Context, opts InstallOptions) error {
 	verbose := opts.Verbose
 
 	// Step 2: Check prerequisites
-	if err := system.EnsurePrerequisites(verbose); err != nil {
+	if err := EnsurePrerequisites(verbose); err != nil {
 		return err
 	}
 
 	// Step 3: Handle existing bare repository
-	if _, err := os.Stat(bareRepoPath); err == nil {
-		action, err := handleExistingRepo(bareRepoPath)
+	if _, err := Stat(bareRepoPath); err == nil {
+		action, err := HandleExistingRepo(bareRepoPath)
 		if err != nil {
 			return err
 		}
@@ -54,40 +71,40 @@ func Install(ctx context.Context, opts InstallOptions) error {
 			log.Message("Skipping repository clone, using existing repository")
 			return nil
 		case "update":
-			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+			if err := EnsureSSH(repoURL, verbose); err != nil {
 				return err
 			}
-			if err := updateBareRepoWorktree(ctx, bareRepoPath, worktreePath, verbose); err != nil {
+			if err := UpdateBareRepoWorktree(ctx, bareRepoPath, worktreePath, verbose); err != nil {
 				return err
 			}
 			return nil
 		case "fresh":
-			if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+			if err := EnsureSSH(repoURL, verbose); err != nil {
 				return err
 			}
-			if err := freshInstall(ctx, bareRepoPath, repoURL, branch); err != nil {
+			if err := FreshInstall(ctx, bareRepoPath, repoURL, branch); err != nil {
 				return err
 			}
 			// Fall through to backup and checkout for fresh install
 		}
 	} else {
 		// Step 4: Clone bare repository
-		if err := ensureSSHIfRequired(repoURL, verbose); err != nil {
+		if err := EnsureSSH(repoURL, verbose); err != nil {
 			return err
 		}
-		if err := cloneBareRepo(ctx, repoURL, branch, bareRepoPath); err != nil {
+		if err := CloneBareRepo(ctx, repoURL, branch, bareRepoPath); err != nil {
 			return err
 		}
 	}
 
 	// Step 5: Backup conflicting files
-	backupPath, hasConflicts, err := backupConflicts(bareRepoPath, worktreePath)
+	backupPath, hasConflicts, err := BackupConflicts(bareRepoPath, worktreePath)
 	if err != nil {
 		return err
 	}
 
 	// Step 6: Checkout files
-	if err := repo.CheckoutWorktree(ctx, bareRepoPath, worktreePath); err != nil {
+	if err := CheckoutWorktree(ctx, bareRepoPath, worktreePath); err != nil {
 		if hasConflicts {
 			log.Error("Checkout failed. Conflicting files have been backed up to: %s", backupPath)
 			log.Message("You can restore files from the backup if needed")
@@ -97,7 +114,7 @@ func Install(ctx context.Context, opts InstallOptions) error {
 
 	// Step 7: Initialize submodules
 	auth, _ := getSSHAuth() // best effort
-	if err := repo.InitSubmodules(ctx, bareRepoPath, worktreePath, auth); err != nil {
+	if err := InitSubmodules(ctx, bareRepoPath, worktreePath, auth); err != nil {
 		log.Warn("Failed to initialize submodules: %v", err)
 		log.Message(
 			"You can manually initialize them later with: git --git-dir=%s --work-tree=%s submodule update --init --recursive",
@@ -107,7 +124,7 @@ func Install(ctx context.Context, opts InstallOptions) error {
 	}
 
 	// Step 8: Configure git
-	if err := repo.ConfigureBareRepo(ctx, bareRepoPath); err != nil {
+	if err := ConfigureBareRepo(ctx, bareRepoPath); err != nil {
 		log.Warn("Failed to configure git: %v", err)
 	}
 
@@ -128,7 +145,7 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 		"fresh - Delete and re-clone repository",
 	}
 
-	action, err := ui.Select("What would you like to do?", options, options[0])
+	action, err := UISelect("What would you like to do?", options, options[0])
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +196,7 @@ func cloneBareRepo(ctx context.Context, repoURL, branch, bareRepoPath string) er
 		}
 	}
 
-	if err := repo.BareClone(ctx, repoURL, branch, bareRepoPath, auth); err != nil {
+	if err := BareClone(ctx, repoURL, branch, bareRepoPath, auth); err != nil {
 		return err
 	}
 
