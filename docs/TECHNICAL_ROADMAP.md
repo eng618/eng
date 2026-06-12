@@ -111,7 +111,7 @@ These items ensure the long-term health and stability of the project.
 
 ### 3.3 Replace Brittle Flag Lookups
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Remove brittle `cmd.Parent().PersistentFlags()` lookups in subcommands. Bind flags to Viper or a configuration struct during `PreRun`.
 - **Impact**: Low
 - **Effort**: Low

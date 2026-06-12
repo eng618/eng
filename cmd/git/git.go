@@ -5,6 +5,7 @@ package git
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -64,15 +65,21 @@ func init() {
 	GitCmd.AddCommand(CleanAllCmd)
 }
 
+// getBoolFlag safely checks if a flag exists anywhere in the command's local,
+// persistent, or inherited flag sets and returns its boolean value.
+func getBoolFlag(cmd *cobra.Command, name string) bool {
+	if f := cmd.Flag(name); f != nil {
+		if val, err := strconv.ParseBool(f.Value.String()); err == nil {
+			return val
+		}
+	}
+	return false
+}
+
 // getWorkingPath returns either the current working directory (if --current flag is used)
 // or the configured development path from the config file.
 func getWorkingPath(cmd *cobra.Command) (string, error) {
-	// Check for the persistent flag on the root git command or inherited
-	useCurrent, _ := cmd.PersistentFlags().GetBool("current")
-	if !useCurrent {
-		// Try to get from local flags if not found in persistent flags
-		useCurrent, _ = cmd.Flags().GetBool("current")
-	}
+	useCurrent := getBoolFlag(cmd, "current")
 
 	if useCurrent {
 		devPath, err := os.Getwd()
