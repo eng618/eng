@@ -4,6 +4,8 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/eng618/eng/internal/ui"
 )
 
 func TestUpdateCmd_Ubuntu(t *testing.T) {
@@ -120,7 +122,11 @@ func TestUpdateRaspberryPi(t *testing.T) {
 
 func TestRunCleanup_AutoApprove(t *testing.T) {
 	origExec := execCommand
-	defer func() { execCommand = origExec }()
+	ui.DisableProgress = true
+	defer func() {
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {

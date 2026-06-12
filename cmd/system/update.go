@@ -230,19 +230,62 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 
 	log.Message("Running selected system cleanup operations...")
 
-	// Run selected operations with progress bars
+	multi, err := ui.NewMultiSpinner()
+	if err != nil {
+		log.Error("Failed to start multi-spinner: %v", err)
+		// Fallback to old behavior
+		for _, operation := range selectedOperations {
+			runCleanupOperationSequential(isVerbose, operation)
+		}
+		return
+	}
+	defer multi.Stop()
+
+	// Run selected operations sequentially within the multi-spinner to avoid apt locks
 	for _, operation := range selectedOperations {
+		var cmdStr, name string
 		switch operation {
 		case "apt-get autoremove --purge":
-			runCleanupOperation(isVerbose, "sudo apt-get autoremove --purge -y", "apt-get autoremove")
+			cmdStr, name = "sudo apt-get autoremove --purge -y", "apt-get autoremove"
 		case "apt-get autoclean":
-			runCleanupOperation(isVerbose, "sudo apt-get autoclean", "apt-get autoclean")
+			cmdStr, name = "sudo apt-get autoclean", "apt-get autoclean"
 		case "docker system prune":
-			runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
+			cmdStr, name = "docker system prune -f", "docker system prune"
 		}
+
+		spinner := multi.AddSpinner(fmt.Sprintf("Running %s...", name))
+		runCleanupOperationWithSpinner(isVerbose, cmdStr, name, spinner)
 	}
 
 	log.Success("System cleanup completed.")
+}
+
+func runCleanupOperationSequential(isVerbose bool, operation string) {
+	switch operation {
+	case "apt-get autoremove --purge":
+		runCleanupOperation(isVerbose, "sudo apt-get autoremove --purge -y", "apt-get autoremove")
+	case "apt-get autoclean":
+		runCleanupOperation(isVerbose, "sudo apt-get autoclean", "apt-get autoclean")
+	case "docker system prune":
+		runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
+	}
+}
+
+// runCleanupOperationWithSpinner runs a single cleanup operation using a provided spinner from a MultiSpinner
+func runCleanupOperationWithSpinner(isVerbose bool, command, operationName string, spinner ui.ProgressSpinner) {
+	log.Verbose(isVerbose, "Running: %s", command)
+
+	cleanupCmd := execCommand("bash", "-c", command)
+	cleanupCmd.Stdout = log.Writer()
+	cleanupCmd.Stderr = log.ErrorWriter()
+
+	if err := cleanupCmd.Run(); err != nil {
+		spinner.Fail(fmt.Sprintf("Error running %s: %s", operationName, err))
+		log.Verbose(isVerbose, "%s failed with error: %v", operationName, err)
+	} else {
+		spinner.Success(fmt.Sprintf("%s completed", operationName))
+		log.Verbose(isVerbose, "%s completed successfully", operationName)
+	}
 }
 
 // runCleanupOperation runs a single cleanup operation with a progress bar

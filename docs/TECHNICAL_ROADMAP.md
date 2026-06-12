@@ -168,19 +168,19 @@ Based on recent code exploration, these areas of the application can be enhanced
 
 ### 5.2 Interactive Process Management
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Upgrade the `kill` command to list running processes in an interactive, filterable table instead of relying on basic text prompts or manual PID entry.
 - **Location**: `cmd/system/kill_process.go`
 
 ### 5.3 Setup Wizard Modernization
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Convert the sequential system setup prompts into a beautiful, multi-page wizard using `huh.NewForm()` with clear steps and theming.
 - **Location**: `cmd/system/setup.go`, `cmd/system/gpg_setup.go`
 
 ### 5.4 Multi-Spinner System Updates
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Integrate `ui.MultiSpinner` to display concurrent progress for system updates, dotfiles syncing, and cleaning tasks.
 - **Location**:
   - `cmd/system/update.go`

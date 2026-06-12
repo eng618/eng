@@ -254,8 +254,8 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	origDotfiles := setupDotfilesStep
 	origSoftware := setupSoftwareStep
 	origGPG := setupGPGStep
-	origUIMultiSelect := ui.MultiSelect
-	origUISelect := ui.Select
+	origWizard := runSetupWizard
+	ui.DisableProgress = true
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
 		setupOhMyZshStep = origZsh
@@ -263,8 +263,8 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 		setupDotfilesStep = origDotfiles
 		setupSoftwareStep = origSoftware
 		setupGPGStep = origGPG
-		ui.MultiSelect = origUIMultiSelect
-		ui.Select = origUISelect
+		runSetupWizard = origWizard
+		ui.DisableProgress = false
 	}()
 
 	var ran []string
@@ -276,14 +276,13 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 	setupSoftwareStep = func(_ bool) { ran = append(ran, "software") }
 	setupGPGStep = func(_ bool) error { ran = append(ran, "gpg"); return nil }
 
-	promptIdx := 0
-	ui.Select = func(msg string, opts []string, def string) (string, error) {
-		resp := setupActionContinue
-		if promptIdx == 1 { // second step = Oh My Zsh → skip it
-			resp = setupActionSkip
+	runSetupWizard = func(steps []setupStep) ([]string, error) {
+		actions := make([]string, len(steps))
+		for i := range steps {
+			actions[i] = setupActionContinue
 		}
-		promptIdx++
-		return resp, nil
+		actions[1] = setupActionSkip // skip Oh My Zsh
+		return actions, nil
 	}
 
 	cmd := &cobra.Command{}
@@ -320,27 +319,26 @@ func TestRunSetup_Interactive_SkipStep(t *testing.T) {
 func TestRunSetup_Interactive_ExitEarly(t *testing.T) {
 	origPrereq := ensurePrerequisitesStep
 	origZsh := setupOhMyZshStep
-	origUIMultiSelect := ui.MultiSelect
-	origUISelect := ui.Select
+	origWizard := runSetupWizard
+	ui.DisableProgress = true
 	defer func() {
 		ensurePrerequisitesStep = origPrereq
 		setupOhMyZshStep = origZsh
-		ui.MultiSelect = origUIMultiSelect
-		ui.Select = origUISelect
+		runSetupWizard = origWizard
+		ui.DisableProgress = false
 	}()
 
 	zshRan := false
 	ensurePrerequisitesStep = func(_ bool) error { return nil }
 	setupOhMyZshStep = func(_ bool) { zshRan = true }
 
-	promptIdx := 0
-	ui.Select = func(msg string, opts []string, def string) (string, error) {
-		resp := setupActionContinue
-		if promptIdx == 1 { // second step = Oh My Zsh → exit
-			resp = setupActionExit
+	runSetupWizard = func(steps []setupStep) ([]string, error) {
+		actions := make([]string, len(steps))
+		for i := range steps {
+			actions[i] = setupActionContinue
 		}
-		promptIdx++
-		return resp, nil
+		actions[1] = setupActionExit // exit at Oh My Zsh
+		return actions, nil
 	}
 
 	cmd := &cobra.Command{}

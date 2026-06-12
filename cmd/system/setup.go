@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -44,6 +45,32 @@ var (
 	setupSoftwareStep       = setupSoftware
 	setupGPGStep            = setupGPG
 	setupGPGPermissionsStep = setupGPGPermissions
+
+	runSetupWizard = func(steps []setupStep) ([]string, error) {
+		var groups []*huh.Group
+		stepActions := make([]string, len(steps))
+
+		for i, step := range steps {
+			stepActions[i] = setupActionContinue // default
+			groups = append(groups, huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Step: "+step.Name).
+					Description(step.Purpose).
+					Options(
+						huh.NewOption(setupActionContinue, setupActionContinue),
+						huh.NewOption(setupActionSkip, setupActionSkip),
+						huh.NewOption(setupActionExit, setupActionExit),
+					).
+					Value(&stepActions[i]),
+			))
+		}
+
+		form := huh.NewForm(groups...).WithTheme(ui.EngTheme())
+		if err := form.Run(); err != nil {
+			return nil, err
+		}
+		return stepActions, nil
+	}
 )
 
 type setupStep struct {
@@ -192,43 +219,38 @@ func runSetup(cmd *cobra.Command, verbose bool) error {
 		},
 	}
 
-	for _, step := range steps {
-		if interactive {
-			action, promptErr := promptSetupStepAction(step)
-			if promptErr != nil {
-				log.Info("Interactive prompt canceled; exiting setup.")
-				return nil
-			}
-
-			switch action {
-			case setupActionSkip:
-				log.Info("Skipping setup step: %s", step.Name)
-				continue
-			case setupActionExit:
-				log.Info("Exiting setup before step: %s", step.Name)
-				return nil
-			}
+	if interactive {
+		stepActions, err := runSetupWizard(steps)
+		if err != nil {
+			log.Info("Setup wizard canceled.")
+			return nil
 		}
 
-		if err := step.Run(); err != nil {
-			return err
+		// Execute based on choices
+		for i, action := range stepActions {
+			switch action {
+			case setupActionSkip:
+				log.Info("Skipping setup step: %s", steps[i].Name)
+				continue
+			case setupActionExit:
+				log.Info("Setup exited early at step: %s", steps[i].Name)
+				return nil
+			case setupActionContinue:
+				if err := steps[i].Run(); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		// Non-interactive execution
+		for _, step := range steps {
+			if err := step.Run(); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
-}
-
-func promptSetupStepAction(step setupStep) (string, error) {
-	selected, err := ui.Select(
-		fmt.Sprintf("Next step: %s\nPurpose: %s\nChoose an action:", step.Name, step.Purpose),
-		[]string{setupActionContinue, setupActionSkip, setupActionExit},
-		setupActionContinue,
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return selected, nil
 }
 
 func setupGPGPermissions(verbose bool) {
