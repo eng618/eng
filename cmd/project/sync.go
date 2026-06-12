@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
@@ -28,20 +27,29 @@ Example:
   eng project sync -p MyProject     # Sync only the specified project
   eng project sync --dry-run        # Preview what would be synced`,
 	Run: func(cmd *cobra.Command, args []string) {
-		devPath := viper.GetString("git.dev_path")
+		gitCfg := config.GetGitConfig()
+		devPath := gitCfg.DevPath
 		if devPath == "" {
 			log.Error("Development folder path is not set. Use 'eng config git-dev-path' to set it.")
 			return
 		}
 
+		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		projectFilter, _ := cmd.Flags().GetString("project")
+
 		opts := internalProject.SyncOptions{
-			DryRun:        viper.GetBool("dry_run"),
+			DryRun:        dryRun,
 			IsVerbose:     cmdutil.IsVerbose(cmd),
-			ProjectFilter: viper.GetString("project_filter"),
+			ProjectFilter: projectFilter,
 			DevPath:       os.ExpandEnv(devPath),
 			Projects:      config.GetProjects(),
 		}
 
-		internalProject.Sync(cmd.Context(), opts)
+		ctx := cmd.Context()
+		if ctx == nil {
+			ctx = cmdutil.FallbackContext()
+		}
+
+		internalProject.Sync(ctx, opts)
 	},
 }

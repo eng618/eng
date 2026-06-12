@@ -1,14 +1,15 @@
 package cmdutil
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 )
 
@@ -57,7 +58,7 @@ func StartChildProcess(c *exec.Cmd) error {
 
 // IsVerbose checks if the "verbose" flag is set for the given Cobra command.
 // It first checks if the verbose flag is explicitly set on the command.
-// If not, it falls back to the config value using viper.
+// If not, it falls back to the config value.
 //
 // Parameters:
 //   - cmd: A pointer to a Cobra command from which the "verbose" flag is retrieved.
@@ -66,7 +67,7 @@ func StartChildProcess(c *exec.Cmd) error {
 //   - bool: True if the "verbose" flag is set to true, otherwise false.
 func IsVerbose(cmd *cobra.Command) bool {
 	// Check if the verbose flag is explicitly set on the command
-	if cmd.Flags().Changed("verbose") {
+	if cmd != nil && cmd.Flags().Changed("verbose") {
 		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
 			log.Error("failed to get verbose flag: %s", err)
@@ -75,6 +76,12 @@ func IsVerbose(cmd *cobra.Command) bool {
 		return verbose
 	}
 	// Fallback to config value if flag is not set
-	// Use viper to get the config value
-	return viper.GetBool("verbose")
+	return config.IsVerbose()
+}
+
+// FallbackContext returns a default background context.
+// It is intended to be used in test environments where cmd.Context() returns nil
+// because the command wasn't executed via Execute().
+func FallbackContext() context.Context {
+	return context.Background()
 }

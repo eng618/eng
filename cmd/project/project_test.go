@@ -203,17 +203,12 @@ func TestSetupCmd_DryRun(t *testing.T) {
 	}
 	err := config.SaveProjects(testProjects)
 	require.NoError(t, err)
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"setup", "--dry-run"})
 
-	// Set dry-run flag on parent command (persistent flag)
-	viper.Set("dry_run", true)
-	defer func() {
-		viper.Set("dry_run", false)
-	}()
-
-	SetupCmd.SetOut(&buf)
-	SetupCmd.SetErr(&buf)
-
-	SetupCmd.Run(SetupCmd, []string{})
+	err = ProjectCmd.Execute()
+	require.NoError(t, err)
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
@@ -239,14 +234,10 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 	err := config.SaveProjects(testProjects)
 	require.NoError(t, err)
 
-	// Set project filter to non-existent project (persistent flag on parent)
-	viper.Set("project_filter", "NonExistent")
-	defer func() {
-		viper.Set("project_filter", "")
-	}()
-
 	SetupCmd.SetOut(&buf)
 	SetupCmd.SetErr(&buf)
+	_ = SetupCmd.Flags().Set("project", "NonExistent")
+	defer SetupCmd.Flags().Set("project", "")
 
 	SetupCmd.Run(SetupCmd, []string{})
 
@@ -377,16 +368,12 @@ func TestFetchCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	viper.Set("dry_run", true)
-	defer func() {
-		viper.Set("dry_run", false)
-	}()
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"fetch", "--dry-run"})
 
-	FetchCmd.SetOut(&buf)
-	FetchCmd.SetErr(&buf)
-
-	FetchCmd.Run(FetchCmd, []string{})
+	err = ProjectCmd.Execute()
+	require.NoError(t, err)
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
@@ -418,16 +405,12 @@ func TestPullCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	viper.Set("dry_run", true)
-	defer func() {
-		viper.Set("dry_run", false)
-	}()
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"pull", "--dry-run"})
 
-	PullCmd.SetOut(&buf)
-	PullCmd.SetErr(&buf)
-
-	PullCmd.Run(PullCmd, []string{})
+	err = ProjectCmd.Execute()
+	require.NoError(t, err)
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
@@ -459,16 +442,12 @@ func TestSyncCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	viper.Set("dry_run", true)
-	defer func() {
-		viper.Set("dry_run", false)
-	}()
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"sync", "--dry-run"})
 
-	SyncCmd.SetOut(&buf)
-	SyncCmd.SetErr(&buf)
-
-	SyncCmd.Run(SyncCmd, []string{})
+	err = ProjectCmd.Execute()
+	require.NoError(t, err)
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")

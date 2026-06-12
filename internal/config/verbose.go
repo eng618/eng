@@ -12,6 +12,11 @@ import (
 	"github.com/eng618/eng/internal/ui"
 )
 
+// IsVerbose returns whether verbose mode is enabled globally via config or environment.
+func IsVerbose() bool {
+	return viper.GetBool("verbose")
+}
+
 // Verbose checks for the verbose setting in the configuration and prompts the user to confirm it.
 // If the verbose setting is not found or the user does not confirm it, the function will call updateVerbose() to update the setting.
 // It logs the start and success of the verbose checking process and returns the confirmed verbose setting as a bool.
@@ -35,18 +40,6 @@ func Verbose() bool {
 
 	log.Success("Confirmed verbose setting")
 	return verbose
-}
-
-// GetVerbose retrieves the verbose setting from the configuration.
-// If the verbose setting is not found in the configuration, it prompts the user to update it.
-// Logs the process of checking and finding the verbose setting.
-func GetVerbose() {
-	log.Start("Checking for verbose setting.")
-
-	// Check for verbose defined in configs
-	verbose := viper.GetBool("verbose")
-
-	log.Success("Found verbose setting to be: %t", verbose)
 }
 
 // updateVerbose prompts the user to choose their verbose setting, updates the

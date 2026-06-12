@@ -2,7 +2,6 @@ package project
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
@@ -26,10 +25,13 @@ Example:
   eng project list -v            # Show detailed repository information
   eng project list -p MyProject  # Show only the specified project`,
 	Run: func(cmd *cobra.Command, args []string) {
+		gitCfg := config.GetGitConfig()
+		projectFilter, _ := cmd.Flags().GetString("project")
+
 		opts := internalProject.ListOptions{
 			IsVerbose:     cmdutil.IsVerbose(cmd),
-			ProjectFilter: viper.GetString("project_filter"),
-			DevPath:       viper.GetString("git.dev_path"),
+			ProjectFilter: projectFilter,
+			DevPath:       gitCfg.DevPath,
 			Projects:      config.GetProjects(),
 		}
 

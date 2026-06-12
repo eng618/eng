@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 )
@@ -35,7 +35,8 @@ var CopyChangesCmd = &cobra.Command{
 		log.Verbose(isVerbose, "Repository path: %s", repoPath)
 		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		devPath := os.ExpandEnv(viper.GetString("git.dev_path"))
+		gitCfg := config.GetGitConfig()
+		devPath := os.ExpandEnv(gitCfg.DevPath)
 		if devPath == "" {
 			log.Error("Development folder path is not set in configuration")
 			return

@@ -103,7 +103,7 @@ These items ensure the long-term health and stability of the project.
 
 ### 3.2 Inject Configuration Dependencies
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Replace internal, global `viper.GetString()` calls with explicit configuration structs passed to domain services.
 - **Impact**: Medium (improves testability)
 - **Effort**: Medium

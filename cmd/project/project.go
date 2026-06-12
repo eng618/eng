@@ -4,9 +4,9 @@ package project
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 )
 
@@ -38,7 +38,8 @@ Example structure:
 
 		if showInfo {
 			log.Info("Current project management configuration:")
-			devPath := viper.GetString("git.dev_path")
+			gitCfg := config.GetGitConfig()
+			devPath := gitCfg.DevPath
 
 			if devPath == "" {
 				log.Warn("  Development Path: Not Set")
@@ -48,8 +49,8 @@ Example structure:
 			}
 
 			// Show configured projects
-			var projects []map[string]interface{}
-			if err := viper.UnmarshalKey("projects", &projects); err == nil && len(projects) > 0 {
+			projects := config.GetProjects()
+			if len(projects) > 0 {
 				log.Info("  Configured Projects: %d", len(projects))
 			} else {
 				log.Info("  Configured Projects: 0")
@@ -73,9 +74,6 @@ func init() {
 	ProjectCmd.Flags().BoolP("info", "i", false, "Show current project management configuration")
 	ProjectCmd.PersistentFlags().StringP("project", "p", "", "Filter operations to a specific project")
 	ProjectCmd.PersistentFlags().Bool("dry-run", false, "Perform a dry run without making actual changes")
-
-	_ = viper.BindPFlag("project_filter", ProjectCmd.PersistentFlags().Lookup("project"))
-	_ = viper.BindPFlag("dry_run", ProjectCmd.PersistentFlags().Lookup("dry-run"))
 
 	// Register subcommands
 	ProjectCmd.AddCommand(SetupCmd)

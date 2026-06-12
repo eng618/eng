@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 )
 
@@ -65,9 +65,10 @@ func init() {
 
 // getDotfilesConfig retrieves the repository and worktree paths from configuration.
 func getDotfilesConfig() (string, string, error) {
-	repoPath := os.ExpandEnv(viper.GetString("dotfiles.bare_repo_path"))
+	dotfilesCfg := config.GetDotfilesConfig()
+	repoPath := os.ExpandEnv(dotfilesCfg.BareRepoPath)
 
-	worktreePath := viper.GetString("dotfiles.worktree_path")
+	worktreePath := dotfilesCfg.WorktreePath
 	if worktreePath == "" {
 		worktreePath = os.Getenv("HOME")
 	}
