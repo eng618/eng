@@ -10,7 +10,11 @@ import (
 
 func TestUpdateCmd_Ubuntu(t *testing.T) {
 	origExec := execCommand
-	defer func() { execCommand = origExec }()
+	ui.DisableProgress = true
+	defer func() {
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
 
 	called := []string{}
 	execCommand = func(name string, args ...string) *exec.Cmd {

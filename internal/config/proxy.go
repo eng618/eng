@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -121,6 +122,49 @@ func SaveProxyConfigsImpl(proxies []ProxyConfig) error {
 // SaveProxyConfigs is a variable that holds the function to save proxy configurations
 // This can be overridden in tests.
 var SaveProxyConfigs = SaveProxyConfigsImpl
+
+// PromptProxyValuesFunc defines the function type for prompting for proxy values.
+type PromptProxyValuesFunc func(initialTitle, initialValue, initialNoProxy string) (title, value, noProxy string, err error)
+
+// PromptProxyValuesImpl uses huh.NewForm to collect proxy details interactively.
+func PromptProxyValuesImpl(
+	initialTitle, initialValue, initialNoProxy string,
+) (title, value, noProxy string, err error) {
+	title = initialTitle
+	value = initialValue
+	noProxy = initialNoProxy
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Title").
+				Description("A unique name for this proxy configuration (e.g., Corp, Home).").
+				Value(&title).
+				Validate(func(s string) error {
+					return validateTitle(s)
+				}),
+			huh.NewInput().
+				Title("Proxy Address").
+				Description("The address of the proxy (e.g., http://proxy:port).").
+				Value(&value).
+				Validate(func(s string) error {
+					return validateProxyURL(s)
+				}),
+			huh.NewInput().
+				Title("No Proxy").
+				Description("Additional no_proxy values (comma-separated). Appended to defaults.").
+				Placeholder("localhost,127.0.0.1,::1,.local").
+				Value(&noProxy),
+		),
+	).WithTheme(ui.EngTheme())
+
+	err = form.Run()
+	return title, value, noProxy, err
+}
+
+// PromptProxyValues is a variable that holds the function to prompt for proxy values.
+// This can be overridden in tests.
+var PromptProxyValues = PromptProxyValuesImpl
 
 // EnableProxy enables the proxy at the given index and disables all others.
 func EnableProxy(index int, proxies []ProxyConfig) ([]ProxyConfig, error) {
@@ -268,35 +312,14 @@ func SetProxyEnvVars(proxyValue string) {
 func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	proxies, _ := GetProxyConfigs()
 
-	// Validate using custom loops because ui.Input doesn't support validators out of the box yet
-	var err error
-	var title string
-	for {
-		title, err = ui.Input("Enter a title for this proxy configuration:", "")
-		cobra.CheckErr(err)
-		if err := validateTitle(title); err != nil {
-			log.Error(err.Error())
-			continue
+	title, value, noProxy, err := PromptProxyValues("", "", "")
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			log.Info("Operation canceled.")
+			return proxies, -1
 		}
-		break
-	}
-
-	var value string
-	for {
-		value, err = ui.Input("Enter the proxy address (e.g., http://proxy:port):", "")
 		cobra.CheckErr(err)
-		if err := validateProxyURL(value); err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		break
 	}
-
-	noProxy, err := ui.Input(
-		"Enter additional no_proxy values (comma-separated, leave empty for defaults only): (appended to localhost,127.0.0.1,::1,.local)",
-		"",
-	)
-	cobra.CheckErr(err)
 
 	// Normalize proxy value and no_proxy list
 	value = NormalizeProxyURLString(value)
@@ -305,7 +328,7 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 	// Check if we're updating an existing proxy
 	index := -1
 	for i, proxy := range proxies {
-		if proxy.Title == title {
+		if strings.EqualFold(proxy.Title, title) {
 			index = i
 			break
 		}
@@ -315,6 +338,7 @@ func AddOrUpdateProxy() ([]ProxyConfig, int) {
 		// Update existing proxy
 		proxies[index].Value = value
 		proxies[index].NoProxy = noProxy
+		proxies[index].Title = title // preserve casing
 	} else {
 		// Add new proxy
 		newProxy := ProxyConfig{

@@ -174,7 +174,7 @@ func updateAsdf(isVerbose bool) {
 // runCleanup performs system cleanup operations for Ubuntu/Linux systems.
 // It runs apt-get autoremove --purge, apt-get autoclean, and optionally docker system prune.
 // If autoApprove is true, cleanup runs automatically without prompting.
-// If autoApprove is false, the user is prompted with a multi-select survey that auto-selects all after cleanupTimeout seconds.
+// If autoApprove is false, the user is prompted with a multi-select form that auto-selects all after cleanupTimeout seconds.
 // Docker system prune is only executed if Docker is installed on the system.
 func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 	// Define available cleanup operations
@@ -196,11 +196,11 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		// Show initial message
 		log.Message("Select cleanup operations to run (auto-select all in %d seconds):", cleanupTimeout)
 
-		// Channel to receive survey result
+		// Channel to receive form result
 		resultCh := make(chan []string, 1)
 		errorCh := make(chan error, 1)
 
-		// Run survey in goroutine
+		// Run MultiSelect in goroutine
 		go func() {
 			result, err := ui.MultiSelect("Select cleanup operations to run:", operations)
 			if err != nil {
@@ -215,7 +215,7 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		case selected := <-resultCh:
 			selectedOperations = selected
 		case err := <-errorCh:
-			log.Error("Error with survey prompt: %v", err)
+			log.Error("Error with selection prompt: %v", err)
 			selectedOperations = operations // Default to all on error
 		case <-time.After(time.Duration(cleanupTimeout) * time.Second):
 			log.Message("Timeout reached, running all cleanup operations...")
@@ -271,7 +271,7 @@ func runCleanupOperationSequential(isVerbose bool, operation string) {
 	}
 }
 
-// runCleanupOperationWithSpinner runs a single cleanup operation using a provided spinner from a MultiSpinner
+// runCleanupOperationWithSpinner runs a single cleanup operation using a provided spinner from a MultiSpinner.
 func runCleanupOperationWithSpinner(isVerbose bool, command, operationName string, spinner ui.ProgressSpinner) {
 	log.Verbose(isVerbose, "Running: %s", command)
 

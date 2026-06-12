@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 const (
@@ -305,16 +305,20 @@ var toggleCmd = &cobra.Command{
 					}
 					options = append(options, "Create new…")
 
-					var sel int
-					prompt := &survey.Select{
-						Message: "Select a proxy to enable or create new:",
-						Options: options,
-						Help:    "Use arrow keys to navigate, and Enter to select.",
-					}
-					if err := survey.AskOne(prompt, &sel); err != nil {
+					selected, err := ui.Select("Select a proxy to enable or create new:", options, "")
+					if err != nil {
 						log.Error("Selection canceled: %v", err)
 						return
 					}
+
+					sel := -1
+					for i, opt := range options {
+						if opt == selected {
+							sel = i
+							break
+						}
+					}
+
 					if sel == len(options)-1 {
 						var idx int
 						proxies, idx = config.AddOrUpdateProxy()
