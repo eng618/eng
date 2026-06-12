@@ -75,32 +75,51 @@ func renderEnv(compact, showLowercase bool) {
 		printEnvVar("HTTPS_PROXY", os.Getenv("HTTPS_PROXY"))
 		printEnvVar("GLOBAL_AGENT_HTTP_PROXY", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
 		printEnvVar("NO_PROXY", os.Getenv("NO_PROXY"))
-		
+
 		fmt.Println(theme.PrimaryText.Bold(true).Render("\nLowercase environment variables:"))
 		printEnvVar("http_proxy", os.Getenv("http_proxy"))
 		printEnvVar("https_proxy", os.Getenv("https_proxy"))
 		printEnvVar("no_proxy", os.Getenv("no_proxy"))
 		return
 	}
-	
+
 	all := os.Getenv("ALL_PROXY")
 	http := os.Getenv("HTTP_PROXY")
 	https := os.Getenv("HTTPS_PROXY")
 	global := os.Getenv("GLOBAL_AGENT_HTTP_PROXY")
 	noProxy := os.Getenv("NO_PROXY")
-	
+
 	same := all == http && http == https && https == global
 	prefix := theme.MutedText.Render("Env:")
 	if same {
-		fmt.Printf("%s ALL/HTTP/HTTPS/GLOBAL=%s, NO_PROXY=%s\n", prefix, theme.SuccessText.Render(all), theme.SuccessText.Render(noProxy))
+		fmt.Printf(
+			"%s ALL/HTTP/HTTPS/GLOBAL=%s, NO_PROXY=%s\n",
+			prefix,
+			theme.SuccessText.Render(all),
+			theme.SuccessText.Render(noProxy),
+		)
 	} else {
-		fmt.Printf("%s ALL=%s HTTP=%s HTTPS=%s GLOBAL=%s NO_PROXY=%s\n", prefix, theme.SuccessText.Render(all), theme.SuccessText.Render(http), theme.SuccessText.Render(https), theme.SuccessText.Render(global), theme.SuccessText.Render(noProxy))
+		fmt.Printf(
+			"%s ALL=%s HTTP=%s HTTPS=%s GLOBAL=%s NO_PROXY=%s\n",
+			prefix,
+			theme.SuccessText.Render(all),
+			theme.SuccessText.Render(http),
+			theme.SuccessText.Render(https),
+			theme.SuccessText.Render(global),
+			theme.SuccessText.Render(noProxy),
+		)
 	}
 	if showLowercase {
 		lhttp := os.Getenv("http_proxy")
 		lhttps := os.Getenv("https_proxy")
 		lno := os.Getenv("no_proxy")
-		fmt.Printf("%s http=%s https=%s no=%s\n", theme.MutedText.Render("Env (lowercase):"), theme.SuccessText.Render(lhttp), theme.SuccessText.Render(lhttps), theme.SuccessText.Render(lno))
+		fmt.Printf(
+			"%s http=%s https=%s no=%s\n",
+			theme.MutedText.Render("Env (lowercase):"),
+			theme.SuccessText.Render(lhttp),
+			theme.SuccessText.Render(lhttps),
+			theme.SuccessText.Render(lno),
+		)
 	}
 }
 
@@ -123,7 +142,7 @@ func renderActive(compact bool, proxies []config.ProxyConfig, activeIndex int) {
 		}
 		return
 	}
-	
+
 	noneStr := theme.MutedText.Render("none")
 	if compact {
 		fmt.Printf("\n%s %s\n", theme.PrimaryText.Render("Active:"), noneStr)
@@ -138,7 +157,11 @@ func renderNote(compact bool) {
 	}
 	fmt.Println()
 	theme.InfoMessage("Environment variable changes only affect the current process.")
-	fmt.Println(theme.MutedText.Render("  For system-wide changes, you may need to restart your terminal or source your profile."))
+	fmt.Println(
+		theme.MutedText.Render(
+			"  For system-wide changes, you may need to restart your terminal or source your profile.",
+		),
+	)
 	fmt.Println(theme.MutedText.Render("  To apply in your current shell, you can run:"))
 	fmt.Println(theme.BaseText.Render("    eval $(eng system proxy --export)"))
 }
