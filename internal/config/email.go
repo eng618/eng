@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -59,11 +58,7 @@ func GetEmail() {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateEmail() {
-	var e string
-	prompt := &survey.Input{
-		Message: "What is your email?",
-	}
-	err := survey.AskOne(prompt, &e)
+	e, err := ui.Input("What is your email?", "")
 	cobra.CheckErr(err)
 
 	viper.Set("user-email", e)

@@ -85,7 +85,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				"System files (.DS_Store)",
 			}
 			var selected []string
-			selected, err := ui.MultiSelect("Select file types to find and delete:", options)
+			selected, err := ui.MultiSelect("Select file types to find and delete:", options, nil)
 			if err != nil {
 				log.Error("Error collecting selection: %v", err)
 				return
@@ -203,26 +203,20 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			return
 		}
 
-		log.Message("\nFound %d file(s) (%.2f MB total):", len(matches), float64(totalSize)/(1024*1024))
-		for _, m := range matches {
-			if isVerbose {
-				log.Message("  - %s", m)
-			} else {
-				log.Message("  - %s", filepath.Base(m))
-			}
-		}
+		log.Message("\nFound %d file(s) (%.2f MB total).", len(matches), float64(totalSize)/(1024*1024))
 
-		// Confirm deletion
-		confirm, err := ui.Confirm(
-			fmt.Sprintf("Delete %d file(s) (%.2f MB)?", len(matches), float64(totalSize)/(1024*1024)),
-			false,
+		// Use MultiSelect to confirm deletion, with all files selected by default
+		selectedToDelete, err := ui.MultiSelect(
+			fmt.Sprintf("Select files to delete (%.2f MB total selected by default):", float64(totalSize)/(1024*1024)),
+			matches,
+			matches, // Pre-select all
 		)
 		if err != nil {
 			log.Error("Error during confirmation prompt: %v", err)
 			return
 		}
-		if !confirm {
-			log.Info("Deletion canceled by user.")
+		if len(selectedToDelete) == 0 {
+			log.Info("Deletion canceled or no files selected.")
 			return
 		}
 
@@ -230,7 +224,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		var deleted, errors atomic.Int64
 		var wg sync.WaitGroup
 		workerCount := 4 // Adjust based on system capabilities
-		fileChan := make(chan string, len(matches))
+		fileChan := make(chan string, len(selectedToDelete))
 
 		// Start workers
 		for i := 0; i < workerCount; i++ {
@@ -257,7 +251,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		}
 
 		// Feed files to workers
-		for _, f := range matches {
+		for _, f := range selectedToDelete {
 			fileChan <- f
 		}
 		close(fileChan)

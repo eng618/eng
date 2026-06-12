@@ -1,7 +1,6 @@
 package project
 
 import (
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
@@ -61,21 +60,21 @@ Example:
 			options := append([]string{"[Create new project]"}, existingNames...)
 
 			var selection string
-			prompt := &survey.Select{
-				Message: "Select a project or create a new one:",
-				Options: options,
-			}
-			if err := survey.AskOne(prompt, &selection); err != nil {
+			var err error
+			selection, err = ui.Select("Select a project or create a new one:", options, "")
+			if err != nil {
 				log.Error("Prompt failed: %s", err)
 				return
 			}
 
 			if selection == "[Create new project]" {
-				namePrompt := &survey.Input{
-					Message: "Enter new project name:",
-				}
-				if err := survey.AskOne(namePrompt, &projectName, survey.WithValidator(survey.Required)); err != nil {
+				projectName, err = ui.Input("Enter new project name:", "")
+				if err != nil {
 					log.Error("Prompt failed: %s", err)
+					return
+				}
+				if projectName == "" {
+					log.Error("Project name is required")
 					return
 				}
 			} else {
@@ -85,12 +84,14 @@ Example:
 
 		// Get repository URL
 		var repoURL string
-		urlPrompt := &survey.Input{
-			Message: "Enter repository URL (SSH or HTTPS):",
-			Help:    "Examples: git@github.com:org/git.git or https://github.com/org/git.git",
-		}
-		if err := survey.AskOne(urlPrompt, &repoURL, survey.WithValidator(survey.Required)); err != nil {
+		var err error
+		repoURL, err = ui.Input("Enter repository URL (SSH or HTTPS): (e.g., git@github.com:org/repo.git)", "")
+		if err != nil {
 			log.Error("Prompt failed: %s", err)
+			return
+		}
+		if repoURL == "" {
+			log.Error("Repository URL is required")
 			return
 		}
 
@@ -103,12 +104,8 @@ Example:
 
 		// Ask for optional custom path
 		var customPath string
-		pathPrompt := &survey.Input{
-			Message: "Custom directory name (leave empty for default):",
-			Default: "",
-			Help:    "Default: " + defaultPath,
-		}
-		if err := survey.AskOne(pathPrompt, &customPath); err != nil {
+		customPath, err = ui.Input("Custom directory name (leave empty for default '"+defaultPath+"'):", "")
+		if err != nil {
 			log.Error("Prompt failed: %s", err)
 			return
 		}

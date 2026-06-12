@@ -76,11 +76,22 @@ func SelectImpl(message string, options []string, defaultVal string) (string, er
 }
 
 // MultiSelectImpl prompts the user to select multiple options from a list.
-func MultiSelectImpl(message string, options []string) ([]string, error) {
-	var result []string
+func MultiSelectImpl(message string, options, defaultSelected []string) ([]string, error) {
+	// Initialize result with defaultSelected if provided
+	result := make([]string, len(defaultSelected))
+	copy(result, defaultSelected)
+
 	var huhOptions []huh.Option[string]
 	for _, opt := range options {
-		huhOptions = append(huhOptions, huh.NewOption(opt, opt))
+		// Determine if this option should be selected by default
+		selected := false
+		for _, def := range defaultSelected {
+			if opt == def {
+				selected = true
+				break
+			}
+		}
+		huhOptions = append(huhOptions, huh.NewOption(opt, opt).Selected(selected))
 	}
 
 	form := huh.NewForm(

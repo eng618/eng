@@ -113,8 +113,18 @@ It lists the files within the identified folders and prompts for confirmation be
 
 		log.Message("") // Add a blank line for readability
 
-		if !askForConfirmation("Do you want to delete these folders and their contents?") {
-			log.Info("Deletion canceled by user.")
+		// Use MultiSelect to confirm deletion, with all folders selected by default
+		selectedToDelete, err := ui.MultiSelect(
+			"Select folders to delete:",
+			nonMovieFolders,
+			nonMovieFolders, // Pre-select all
+		)
+		if err != nil {
+			log.Error("Error during confirmation prompt: %v", err)
+			return
+		}
+		if len(selectedToDelete) == 0 {
+			log.Info("Deletion canceled or no folders selected.")
 			return
 		}
 
@@ -123,7 +133,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		skippedCount := 0
 		errorMessages := []string{}
 
-		for _, folder := range nonMovieFolders {
+		for _, folder := range selectedToDelete {
 			log.Warn("Attempting to delete: %s", folder)
 			if err := os.RemoveAll(folder); err != nil {
 				errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
@@ -143,18 +153,6 @@ It lists the files within the identified folders and prompts for confirmation be
 
 		log.Success("Processing complete. Deleted %d folder(s), skipped %d due to errors.", deletedCount, skippedCount)
 	},
-}
-
-// askForConfirmation prompts the user for a yes/no confirmation using survey.
-func askForConfirmation(prompt string) bool {
-	confirm := false
-	confirm, err := ui.Confirm(prompt, false)
-	if err != nil {
-		// Handle error, e.g., log it and return false for safety
-		log.Error("Error during confirmation prompt: %v", err)
-		return false
-	}
-	return confirm
 }
 
 // findNonMovieFolders scans the immediate subdirectories of rootDir.

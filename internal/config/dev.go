@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -47,12 +46,7 @@ func GitDevPath() string {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateGitDevPath() {
-	var d string
-	prompt := &survey.Input{
-		Message: "What is your development folder path?",
-		Default: os.ExpandEnv("$HOME/Development"),
-	}
-	err := survey.AskOne(prompt, &d)
+	d, err := ui.Input("What is your development folder path?", os.ExpandEnv("$HOME/Development"))
 	cobra.CheckErr(err)
 
 	viper.Set("git.dev_path", d)

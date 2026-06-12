@@ -469,7 +469,7 @@ func setupSoftware(verbose bool) {
 
 	// Prompt for optional software
 	if len(optionalOptions) > 0 {
-		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions)
+		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions, nil)
 		if err != nil {
 			log.Error("Selection canceled: %v", err)
 			return

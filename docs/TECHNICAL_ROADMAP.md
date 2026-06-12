@@ -160,7 +160,7 @@ Based on recent code exploration, these areas of the application can be enhanced
 
 ### 5.1 Interactive File Selection
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Replace static printed lists of files with interactive `huh.MultiSelect` or Bubble Tea tables to allow users to visually check/uncheck files before deleting them.
 - **Location**:
   - `cmd/files/find_and_delete.go`

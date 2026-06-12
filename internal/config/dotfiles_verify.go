@@ -40,7 +40,11 @@ func VerifyDotfilesConfig() (string, string, string, string, error) {
 		fmt.Sprintf("Worktree: %s", color.CyanString(worktreePath)),
 	}
 
-	selected, err := ui.MultiSelect("Which values would you like to update? (Select none if all are correct)", options)
+	selected, err := ui.MultiSelect(
+		"Which values would you like to update? (Select none if all are correct)",
+		options,
+		nil,
+	)
 	if err != nil {
 		return "", "", "", "", fmt.Errorf("selection failed: %w", err)
 	}

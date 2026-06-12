@@ -3,7 +3,6 @@ package project
 import (
 	"strconv"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
@@ -55,11 +54,9 @@ Example:
 			}
 		} else {
 			// Interactive project selection
-			prompt := &survey.Select{
-				Message: "Select a project:",
-				Options: existingNames,
-			}
-			if err := survey.AskOne(prompt, &projectName); err != nil {
+			var err error
+			projectName, err = ui.Select("Select a project:", existingNames, "")
+			if err != nil {
 				log.Error("Prompt failed: %s", err)
 				return
 			}
@@ -83,11 +80,9 @@ Example:
 		}
 
 		var selection string
-		selectPrompt := &survey.Select{
-			Message: "What would you like to remove?",
-			Options: options,
-		}
-		if err := survey.AskOne(selectPrompt, &selection); err != nil {
+		var err error
+		selection, err = ui.Select("What would you like to remove?", options, "")
+		if err != nil {
 			log.Error("Prompt failed: %s", err)
 			return
 		}

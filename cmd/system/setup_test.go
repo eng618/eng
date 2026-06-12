@@ -194,7 +194,7 @@ func TestSetupSoftware(t *testing.T) {
 		return "/usr/bin/" + path, nil
 	}
 	// Mock select prompt
-	ui.MultiSelect = func(msg string, opts []string) ([]string, error) {
+	ui.MultiSelect = func(msg string, opts, def []string) ([]string, error) {
 		return []string{}, nil
 	}
 	execCommand = func(name string, args ...string) *exec.Cmd {

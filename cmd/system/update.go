@@ -202,7 +202,7 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 
 		// Run MultiSelect in goroutine
 		go func() {
-			result, err := ui.MultiSelect("Select cleanup operations to run:", operations)
+			result, err := ui.MultiSelect("Select cleanup operations to run:", operations, nil)
 			if err != nil {
 				errorCh <- err
 			} else {

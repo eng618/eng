@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
@@ -16,6 +15,7 @@ import (
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // InstallOptions holds configuration for installing dotfiles.
@@ -122,18 +122,14 @@ func Install(ctx context.Context, opts InstallOptions) error {
 func handleExistingRepo(bareRepoPath string) (string, error) {
 	log.Warn("Bare repository already exists at: %s", bareRepoPath)
 
-	var action string
-	prompt := &survey.Select{
-		Message: "What would you like to do?",
-		Options: []string{
-			"skip - Use existing repository without changes",
-			"update - Fetch and pull latest changes",
-			"fresh - Delete and re-clone repository",
-		},
-		Default: "skip - Use existing repository without changes",
+	options := []string{
+		"skip - Use existing repository without changes",
+		"update - Fetch and pull latest changes",
+		"fresh - Delete and re-clone repository",
 	}
 
-	if err := survey.AskOne(prompt, &action); err != nil {
+	action, err := ui.Select("What would you like to do?", options, options[0])
+	if err != nil {
 		return "", err
 	}
 
