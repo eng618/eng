@@ -61,7 +61,7 @@ Introduce full-screen, interactive applications for complex workflows.
 
 ### 3.2 Interactive Configuration Editor
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Create `eng config edit --interactive`. Instead of manually editing `.eng.yaml`, provide a beautiful TUI form (via `huh`) to toggle settings, set paths, and validate input dynamically.
 - **Impact**: Medium (Reduces misconfiguration errors).
 
