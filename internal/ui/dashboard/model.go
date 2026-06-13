@@ -2,7 +2,15 @@ package dashboard
 
 import (
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/eng618/eng/internal/config"
+)
+
+type PaneFocus int
+
+const (
+	FocusLeft PaneFocus = iota
+	FocusRight
 )
 
 // RepoStatus holds the asynchronously loaded status of a repository.
@@ -23,12 +31,25 @@ func (i ProjectItem) Title() string       { return i.Project.Name }
 func (i ProjectItem) Description() string { return "Select to view repositories" }
 func (i ProjectItem) FilterValue() string { return i.Project.Name }
 
+type ActionItem struct {
+	Action   string
+	RepoName string
+	FullPath string
+}
+
 // Model is the Bubble Tea model for the dashboard.
 type Model struct {
 	list         list.Model
 	projects     []config.Project
 	repoStatuses map[string]RepoStatus // Keyed by project.Name + repo.URL
 	devPath      string
+
+	focusedPane       PaneFocus
+	selectedRepoIndex int
+
+	actionState   string // empty if idle, otherwise the loading message
+	actionQueue   []ActionItem
+	spinner       spinner.Model
 
 	windowWidth  int
 	windowHeight int
@@ -48,11 +69,18 @@ func NewModel(projects []config.Project, devPath string) Model {
 	l.SetFilteringEnabled(true)
 	l.Styles.Title = listTitleStyle
 
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = spinnerStyle
+
 	m := Model{
-		list:         l,
-		projects:     projects,
-		repoStatuses: make(map[string]RepoStatus),
-		devPath:      devPath,
+		list:              l,
+		projects:          projects,
+		repoStatuses:      make(map[string]RepoStatus),
+		devPath:           devPath,
+		focusedPane:       FocusLeft,
+		selectedRepoIndex: 0,
+		spinner:           s,
 	}
 	return m
 }

@@ -12,13 +12,48 @@ func (m Model) View() string {
 		return "Initializing Dashboard..."
 	}
 
+	leftStyle := inactivePaneStyle
+	rightStyle := inactivePaneStyle
+
+	if m.focusedPane == FocusLeft {
+		leftStyle = activePaneStyle
+	} else {
+		rightStyle = activePaneStyle
+	}
+
+	leftWidth := (m.windowWidth / 3) - 4
+	rightWidth := m.windowWidth - leftWidth - 8
+
+	leftStyle = leftStyle.Width(leftWidth).Height(m.windowHeight - 4)
+	rightStyle = rightStyle.Width(rightWidth).Height(m.windowHeight - 4)
+
 	// Render Left Pane
-	leftContent := leftPaneStyle.Render(m.list.View())
+	leftContent := leftStyle.Render(m.list.View())
 
 	// Render Right Pane
-	rightContent := rightPaneStyle.Render(m.renderRightPane())
+	rightContent := rightStyle.Render(m.renderRightPane())
 
-	return appStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent))
+	// Combine panes
+	mainView := appStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent))
+
+	if m.actionState != "" {
+		// Render Modal Overlay
+		modalContent := lipgloss.JoinVertical(lipgloss.Center,
+			m.spinner.View(),
+			"",
+			projectNameStyle.Render(m.actionState),
+		)
+		
+		modal := modalStyle.Render(modalContent)
+
+		// Place the modal in the center of the main view
+		return overlayStyle.
+			Width(m.windowWidth).
+			Height(m.windowHeight).
+			Render(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, modal, lipgloss.WithWhitespaceChars(" ")))
+	}
+
+	return mainView
 }
 
 func (m Model) renderRightPane() string {
@@ -38,8 +73,14 @@ func (m Model) renderRightPane() string {
 		return b.String()
 	}
 
-	for _, r := range p.Repos {
-		b.WriteString(repoNameStyle.Render(fmt.Sprintf("repo: %s", r.URL)))
+	for i, r := range p.Repos {
+		// Highlight if focused on right pane and this is the selected repo
+		repoTitle := fmt.Sprintf("repo: %s", r.URL)
+		if m.focusedPane == FocusRight && i == m.selectedRepoIndex {
+			b.WriteString(selectedRepoStyle.Render(repoTitle))
+		} else {
+			b.WriteString(repoNameStyle.Render(repoTitle))
+		}
 		b.WriteString("\n")
 
 		key := p.Name + r.URL
@@ -76,6 +117,12 @@ func (m Model) renderRightPane() string {
 		}
 
 		b.WriteString("\n")
+	}
+
+	if m.focusedPane == FocusRight {
+		b.WriteString(statusMutedStyle.Render("\n[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"))
+	} else {
+		b.WriteString(statusMutedStyle.Render("\n[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"))
 	}
 
 	return b.String()

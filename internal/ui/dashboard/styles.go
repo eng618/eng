@@ -25,15 +25,26 @@ var (
 		BottomRight: "╯",
 	}
 
-	leftPaneStyle = lipgloss.NewStyle().
+	inactivePaneStyle = lipgloss.NewStyle().
 		Border(paneBorder).
 		BorderForeground(theme.Muted).
 		Padding(1)
 
-	rightPaneStyle = lipgloss.NewStyle().
+	activePaneStyle = lipgloss.NewStyle().
 		Border(paneBorder).
-		BorderForeground(theme.Muted).
+		BorderForeground(theme.Primary).
 		Padding(1)
+
+	modalStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(theme.Primary).
+		Padding(1, 4).
+		Align(lipgloss.Center)
+
+	overlayStyle = lipgloss.NewStyle().
+		Align(lipgloss.Center)
+
+	spinnerStyle = lipgloss.NewStyle().Foreground(theme.Primary)
 
 	projectNameStyle = lipgloss.NewStyle().
 		Foreground(theme.Primary).
@@ -42,6 +53,12 @@ var (
 	repoNameStyle = lipgloss.NewStyle().
 		Foreground(theme.Foreground).
 		Bold(true)
+
+	selectedRepoStyle = lipgloss.NewStyle().
+		Background(theme.Muted).
+		Foreground(theme.Foreground).
+		Bold(true).
+		Padding(0, 1)
 
 	statusSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
 	statusErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)

@@ -134,6 +134,7 @@ If those prerequisites are not met, the restore step is skipped safely.
 | --------------- | ------------------------------------------------------------------ |
 | `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status) |
 | `eng project`   | Manage project-based repository collections                        |
+| `eng dashboard` | Interactive TUI command center for monitoring and managing projects|
 | `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)           |
 | `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)   |
 | `eng files`     | File utilities (find-and-delete, find-non-movie-folders)           |
