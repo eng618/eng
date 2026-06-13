@@ -13,6 +13,7 @@ import (
 	"github.com/eng618/eng/internal/bitwarden"
 	"github.com/eng618/eng/internal/log"
 	gitrepo "github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // doctorCmd validates glab availability, token validity, and project access.
@@ -28,7 +29,10 @@ var doctorCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check glab is installed
 		if _, err := exec.LookPath("glab"); err != nil {
-			return fmt.Errorf("glab CLI not found in PATH; install from https://gitlab.com/gitlab-org/cli")
+			return theme.NewActionableError(
+				errors.New("glab CLI not found in PATH"),
+				"Install the glab CLI from https://gitlab.com/gitlab-org/cli to enable this command.",
+			)
 		}
 
 		// Resolve host and project similar to mr-rules apply

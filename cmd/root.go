@@ -42,6 +42,7 @@ import (
 	"github.com/eng618/eng/internal/cmdutil"
 	configUtils "github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var cfgFile string
@@ -70,8 +71,16 @@ This is personal cli to facilitate my workflow. An maintain my development machi
 // ExecuteContext adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func ExecuteContext(ctx context.Context) {
+	// Silence default error printing so we can use our custom error handler
+	rootCmd.SilenceErrors = true
+	// Silence usage printing on errors to avoid noisy output
+	rootCmd.SilenceUsage = true
+
 	err := rootCmd.ExecuteContext(ctx)
-	cobra.CheckErr(err)
+	if err != nil {
+		theme.HandleError(err)
+		os.Exit(1)
+	}
 }
 
 func init() {
