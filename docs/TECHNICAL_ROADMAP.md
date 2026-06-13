@@ -55,7 +55,7 @@ Introduce full-screen, interactive applications for complex workflows.
 
 ### 3.1 Project & Git Dashboard
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Build an `eng dashboard` or interactive `eng project view` using `charmbracelet/bubbletea`. Show real-time statuses of repositories (branches, uncommitted changes, sync state) in a navigable, split-pane view.
 - **Impact**: High (Provides a "mission control" feel for managing multiple repositories).
 
