@@ -38,12 +38,24 @@ func (m Model) View() string {
 
 	if m.actionState != "" {
 		// Render Modal Overlay
+		var logLines string
+		if len(m.actionLogs) > 0 {
+			// Show up to the last 8 lines
+			startIdx := 0
+			if len(m.actionLogs) > 8 {
+				startIdx = len(m.actionLogs) - 8
+			}
+			logLines = strings.Join(m.actionLogs[startIdx:], "\n")
+		}
+
 		modalContent := lipgloss.JoinVertical(lipgloss.Center,
 			m.spinner.View(),
 			"",
 			projectNameStyle.Render(m.actionState),
+			"",
+			logLines,
 		)
-		
+
 		modal := modalStyle.Render(modalContent)
 
 		// Place the modal in the center of the main view
@@ -120,9 +132,15 @@ func (m Model) renderRightPane() string {
 	}
 
 	if m.focusedPane == FocusRight {
-		b.WriteString(statusMutedStyle.Render("\n[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"))
+		b.WriteString(
+			statusMutedStyle.Render("\n[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"),
+		)
 	} else {
-		b.WriteString(statusMutedStyle.Render("\n[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"))
+		b.WriteString(
+			statusMutedStyle.Render(
+				"\n[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All",
+			),
+		)
 	}
 
 	return b.String()

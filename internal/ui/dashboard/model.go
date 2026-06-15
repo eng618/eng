@@ -3,6 +3,7 @@ package dashboard
 import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+
 	"github.com/eng618/eng/internal/config"
 )
 
@@ -47,9 +48,10 @@ type Model struct {
 	focusedPane       PaneFocus
 	selectedRepoIndex int
 
-	actionState   string // empty if idle, otherwise the loading message
-	actionQueue   []ActionItem
-	spinner       spinner.Model
+	actionState string // empty if idle, otherwise the loading message
+	actionQueue []ActionItem
+	actionLogs  []string
+	spinner     spinner.Model
 
 	windowWidth  int
 	windowHeight int

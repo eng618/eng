@@ -1,8 +1,10 @@
 package dashboard
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 )
 
@@ -35,7 +38,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
-		
+
 		leftWidth := (msg.Width / 3) - 4
 		m.list.SetSize(leftWidth, msg.Height-4)
 		m.ready = true
@@ -84,7 +87,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Handle actions based on focus
 			return handleAction(m, msg.String())
 		}
-		
+
 		if m.focusedPane == FocusLeft {
 			previousIndex := m.list.Index()
 			m.list, cmd = m.list.Update(msg)
@@ -112,6 +115,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 
+	case logLineMsg:
+		m.actionLogs = append(m.actionLogs, msg.line)
+		cmds = append(cmds, readLogCmd(msg.scanner))
+
 	case statusMsg:
 		key := msg.ProjectName + msg.RepoURL
 		m.repoStatuses[key] = msg.Status
@@ -132,6 +139,7 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	p := item.Project
 
 	m.actionQueue = []ActionItem{}
+	m.actionLogs = []string{}
 
 	if m.focusedPane == FocusRight {
 		if len(p.Repos) == 0 {
@@ -167,6 +175,23 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(m.spinner.Tick, cmd)
 }
 
+type logLineMsg struct {
+	line    string
+	scanner *bufio.Scanner
+}
+
+func readLogCmd(scanner *bufio.Scanner) tea.Cmd {
+	return func() tea.Msg {
+		if scanner.Scan() {
+			return logLineMsg{
+				line:    scanner.Text(),
+				scanner: scanner,
+			}
+		}
+		return actionDoneMsg{err: scanner.Err()}
+	}
+}
+
 func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 	if len(m.actionQueue) == 0 {
 		return m, func() tea.Msg { return actionDoneMsg{} }
@@ -176,77 +201,74 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 	m.actionQueue = m.actionQueue[1:]
 
 	var actionName string
-	var runFunc func(ctx context.Context, repoPath string) error
-
 	switch item.Action {
 	case "f":
 		actionName = "Fetching"
-		runFunc = func(ctx context.Context, repoPath string) error {
-			cmd := exec.Command("git", "fetch", "--all", "--prune")
-			cmd.Dir = repoPath
-			_, err := cmd.CombinedOutput()
-			return err
-		}
 	case "p":
 		actionName = "Pulling"
-		runFunc = func(ctx context.Context, repoPath string) error {
-			cmd := exec.Command("git", "pull")
-			cmd.Dir = repoPath
-			_, err := cmd.CombinedOutput()
-			return err
-		}
 	case "s":
 		actionName = "Syncing"
-		runFunc = func(ctx context.Context, repoPath string) error {
-			cmd := exec.Command("git", "stash")
-			cmd.Dir = repoPath
-			cmd.Run()
-
-			cmd = exec.Command("git", "pull", "--rebase")
-			cmd.Dir = repoPath
-			_, err := cmd.CombinedOutput()
-
-			cmd = exec.Command("git", "stash", "pop")
-			cmd.Dir = repoPath
-			cmd.Run()
-			return err
-		}
 	case "c":
 		actionName = "Setting up"
-		runFunc = func(ctx context.Context, repoPath string) error {
-			parentDir := filepath.Dir(repoPath)
-			os.MkdirAll(parentDir, 0755)
-			cmd := exec.Command("git", "clone", item.RepoName, repoPath)
-			_, err := cmd.CombinedOutput()
-			return err
-		}
 	case "o":
 		actionName = "Opening"
-		runFunc = func(ctx context.Context, repoPath string) error {
-			cmd := exec.Command("open", repoPath)
-			return cmd.Start()
-		}
-	default:
-		return m, func() tea.Msg { return actionDoneMsg{} }
 	}
 
 	m.actionState = fmt.Sprintf("%s %s...", actionName, item.RepoName)
 
-	return m, func() tea.Msg {
-		cloned := isRepoCloned(item.FullPath)
-		if item.Action == "c" && cloned {
-			return actionDoneMsg{}
-		}
-		if item.Action != "c" && !cloned {
-			return actionDoneMsg{}
-		}
+	cloned := isRepoCloned(item.FullPath)
+	if item.Action == "c" && cloned {
+		return m, func() tea.Msg { return actionDoneMsg{} }
+	}
+	if item.Action != "c" && !cloned {
+		return m, func() tea.Msg { return actionDoneMsg{} }
+	}
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		// Intercept internal log output
+		log.SetWriters(pw, pw)
+		defer log.ResetWriters()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		err := runFunc(ctx, item.FullPath)
-		return actionDoneMsg{err: err}
-	}
+		var err error
+
+		switch item.Action {
+		case "f":
+			err = repo.FetchAllPrune(ctx, item.FullPath)
+		case "p":
+			err = repo.PullLatestCode(ctx, item.FullPath)
+		case "s":
+			err = repo.FetchAllPrune(ctx, item.FullPath)
+			if err == nil {
+				err = repo.PullLatestCode(ctx, item.FullPath)
+			}
+		case "c":
+			parentDir := filepath.Dir(item.FullPath)
+			os.MkdirAll(parentDir, 0o755)
+			cmd := exec.Command("git", "clone", item.RepoName, item.FullPath)
+			cmd.Stdout = pw
+			cmd.Stderr = pw
+			err = cmd.Run()
+		case "o":
+			cmd := exec.Command("open", item.FullPath)
+			cmd.Stdout = pw
+			cmd.Stderr = pw
+			err = cmd.Start()
+		}
+
+		if err != nil {
+			pw.CloseWithError(err)
+		} else {
+			pw.Close()
+		}
+	}()
+
+	scanner := bufio.NewScanner(pr)
+	return m, readLogCmd(scanner)
 }
 
 // loadSelectedProjectStatusesCmd generates tea.Cmds to fetch the status of each repo in the currently selected project.
@@ -255,7 +277,7 @@ func (m *Model) loadSelectedProjectStatusesCmd() tea.Cmd {
 	if !ok {
 		return nil
 	}
-	
+
 	p := item.Project
 	var cmds []tea.Cmd
 
@@ -278,7 +300,7 @@ func (m *Model) loadSelectedProjectStatusesCmd() tea.Cmd {
 			})
 		}
 	}
-	
+
 	return tea.Batch(cmds...)
 }
 
@@ -300,7 +322,7 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 	}
 
 	fullPath := filepath.Join(devPath, projectName, repoPath)
-	
+
 	// Wait, isRepoCloned is internal to project package, we might need a quick hack or to use os.Stat
 	// Let's just use os.Stat directly to avoid cross-package unexported dependency.
 	isCloned := isRepoCloned(fullPath)
@@ -315,7 +337,7 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 		if err == nil {
 			status.IsDirty = dirty
 		}
-		
+
 		branch, err := repo.GetCurrentBranch(ctx, fullPath)
 		if err == nil {
 			status.Branch = branch

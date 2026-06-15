@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -10,9 +11,9 @@ var (
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	listTitleStyle = lipgloss.NewStyle().
-		Foreground(theme.Foreground).
-		Background(theme.Primary).
-		Padding(0, 1)
+			Foreground(theme.Foreground).
+			Background(theme.Primary).
+			Padding(0, 1)
 
 	paneBorder = lipgloss.Border{
 		Top:         "─",
@@ -26,39 +27,39 @@ var (
 	}
 
 	inactivePaneStyle = lipgloss.NewStyle().
-		Border(paneBorder).
-		BorderForeground(theme.Muted).
-		Padding(1)
+				Border(paneBorder).
+				BorderForeground(theme.Muted).
+				Padding(1)
 
 	activePaneStyle = lipgloss.NewStyle().
-		Border(paneBorder).
-		BorderForeground(theme.Primary).
-		Padding(1)
+			Border(paneBorder).
+			BorderForeground(theme.Primary).
+			Padding(1)
 
 	modalStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(theme.Primary).
-		Padding(1, 4).
-		Align(lipgloss.Center)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(theme.Primary).
+			Padding(1, 4).
+			Align(lipgloss.Center)
 
 	overlayStyle = lipgloss.NewStyle().
-		Align(lipgloss.Center)
+			Align(lipgloss.Center)
 
 	spinnerStyle = lipgloss.NewStyle().Foreground(theme.Primary)
 
 	projectNameStyle = lipgloss.NewStyle().
-		Foreground(theme.Primary).
-		Bold(true)
+				Foreground(theme.Primary).
+				Bold(true)
 
 	repoNameStyle = lipgloss.NewStyle().
-		Foreground(theme.Foreground).
-		Bold(true)
+			Foreground(theme.Foreground).
+			Bold(true)
 
 	selectedRepoStyle = lipgloss.NewStyle().
-		Background(theme.Muted).
-		Foreground(theme.Foreground).
-		Bold(true).
-		Padding(0, 1)
+				Background(theme.Muted).
+				Foreground(theme.Foreground).
+				Bold(true).
+				Padding(0, 1)
 
 	statusSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
 	statusErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)

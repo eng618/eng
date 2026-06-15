@@ -35,7 +35,7 @@ func RunInteractiveEditor() error {
 		glHost = "gitlab.com"
 	}
 	glProject := viper.GetString("gitlab.project")
-	
+
 	glTokenMethod := "Raw Token"
 	if viper.GetString("gitlab.tokenItem") != "" {
 		glTokenMethod = "Bitwarden Item"
@@ -60,7 +60,7 @@ func RunInteractiveEditor() error {
 				Description("Show detailed debug logs by default.").
 				Value(&verbose),
 		),
-		
+
 		// Group 2: Dotfiles Settings
 		huh.NewGroup(
 			huh.NewInput().
@@ -109,7 +109,7 @@ func RunInteractiveEditor() error {
 		).WithHideFunc(func() bool {
 			return glTokenMethod != "Bitwarden Item"
 		}),
-		
+
 		huh.NewGroup(
 			huh.NewInput().
 				Title("GitLab Personal Access Token").
@@ -133,15 +133,15 @@ func RunInteractiveEditor() error {
 	viper.Set("email", email)
 	viper.Set("verbose", verbose)
 	viper.Set("git.dev_path", gitDevPath)
-	
+
 	viper.Set("dotfiles.repo_url", dfRepoURL)
 	viper.Set("dotfiles.branch", dfBranch)
 	viper.Set("dotfiles.bare_repo_path", dfBare)
 	viper.Set("dotfiles.worktree_path", dfWorktree)
-	
+
 	viper.Set("gitlab.host", glHost)
 	viper.Set("gitlab.project", glProject)
-	
+
 	if glTokenMethod == "Bitwarden Item" {
 		viper.Set("gitlab.tokenItem", glTokenItem)
 		viper.Set("gitlab.token", "")
