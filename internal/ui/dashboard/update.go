@@ -248,11 +248,13 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 			}
 		case "c":
 			parentDir := filepath.Dir(item.FullPath)
-			os.MkdirAll(parentDir, 0o755)
-			cmd := exec.Command("git", "clone", item.RepoName, item.FullPath)
-			cmd.Stdout = pw
-			cmd.Stderr = pw
-			err = cmd.Run()
+			err = os.MkdirAll(parentDir, 0o755)
+			if err == nil {
+				cmd := exec.Command("git", "clone", item.RepoName, item.FullPath)
+				cmd.Stdout = pw
+				cmd.Stderr = pw
+				err = cmd.Run()
+			}
 		case "o":
 			cmd := exec.Command("open", item.FullPath)
 			cmd.Stdout = pw
