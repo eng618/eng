@@ -1,5 +1,26 @@
 <a name="unreleased"></a>
 
+## [1.16.0](https://github.com/eng618/eng/compare/v1.15.0...v1.16.0) (2026-06-15)
+
+
+### Features
+
+* Add interactive git management actions to dashboard and update UI with focus navigation and status overlays ([3e9bd20](https://github.com/eng618/eng/commit/3e9bd20ba7beca4586487bcad19e36bdc2dfacd9))
+* Add interactive TUI configuration editor via eng config edit command ([4e45e72](https://github.com/eng618/eng/commit/4e45e7282e5e9d3aa272e8c3036c473547baac58))
+* Capture and display real-time process logs in the dashboard modal ([abe23b2](https://github.com/eng618/eng/commit/abe23b2fc0b57d15ffa1eb19b7dc8977829b0642))
+* Implement interactive project and repository status dashboard using bubbletea ([49b5d90](https://github.com/eng618/eng/commit/49b5d9065989b091eefe4f523d47a9b5b76c8742))
+* Implement styled error handling with actionable suggestions and integrate into CLI root and auth doctor ([9dcd4f8](https://github.com/eng618/eng/commit/9dcd4f81448a172ed764866e3c7239919f015d7d))
+
+
+### Bug Fixes
+
+* Prevent git clone attempt when directory creation fails in dashboard update ([79bf3c5](https://github.com/eng618/eng/commit/79bf3c55c00aff5a6f3293a59a550fb137d37d4c))
+
+
+### Miscellaneous
+
+* Update project dependencies to latest versions ([c079ed5](https://github.com/eng618/eng/commit/c079ed5b0519f613c2dd54f92cd8ac70e994be81))
+
 ## [1.15.0](https://github.com/eng618/eng/compare/v1.14.0...v1.15.0) (2026-06-12)
 
 
