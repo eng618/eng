@@ -73,11 +73,32 @@ func (m Model) View() string {
 			logLines = strings.Join(m.actionLogs[startIdx:], "\n")
 		}
 
+		var progressLine string
+		if m.totalActions > 0 {
+			pct := float64(m.completedActions) / float64(m.totalActions)
+			if pct > 1.0 {
+				pct = 1.0
+			}
+			progressBar := renderProgressBar(30, pct)
+			progressInfo := fmt.Sprintf(
+				"%d of %d repositories processed (%d%%)",
+				m.completedActions,
+				m.totalActions,
+				int(pct*100),
+			)
+			progressLine = lipgloss.JoinVertical(lipgloss.Center,
+				progressBar,
+				progressInfoStyle.Render(progressInfo),
+				"",
+			)
+		}
+
 		modalContent := lipgloss.JoinVertical(lipgloss.Center,
 			m.spinner.View(),
 			"",
 			projectNameStyle.Render(m.actionState),
 			"",
+			progressLine,
 			logLines,
 		)
 
@@ -335,4 +356,22 @@ func (m Model) renderHelpModal() string {
 	b.WriteString(statusMutedStyle.Render("Press any key to close"))
 
 	return b.String()
+}
+
+func renderProgressBar(width int, percentage float64) string {
+	if width <= 0 {
+		return ""
+	}
+	filledLength := int(percentage * float64(width))
+	if filledLength > width {
+		filledLength = width
+	}
+	if filledLength < 0 {
+		filledLength = 0
+	}
+
+	filled := strings.Repeat("█", filledLength)
+	empty := strings.Repeat("░", width-filledLength)
+
+	return progressBarFilledStyle.Render(filled) + progressBarTrackStyle.Render(empty)
 }

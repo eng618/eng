@@ -77,4 +77,8 @@ var (
 	notificationWarnStyle    = lipgloss.NewStyle().
 					Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"}).
 					Bold(true)
+
+	progressBarFilledStyle = lipgloss.NewStyle().Foreground(theme.Primary)
+	progressBarTrackStyle  = lipgloss.NewStyle().Foreground(theme.MutedForeground)
+	progressInfoStyle      = lipgloss.NewStyle().Foreground(theme.MutedForeground)
 )

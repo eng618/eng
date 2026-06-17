@@ -72,6 +72,10 @@ type Model struct {
 	hasError          bool
 	lastError         error
 
+	// Progress tracking fields
+	totalActions     int
+	completedActions int
+
 	showHelp bool
 
 	windowWidth  int

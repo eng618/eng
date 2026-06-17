@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -144,7 +145,20 @@ func TestDashboardViewportScrolling(t *testing.T) {
 
 func updateModel(m Model, msg tea.Msg) (Model, tea.Cmd) {
 	updated, cmd := m.Update(msg)
-	return updated.(Model), cmd
+	m = updated.(Model)
+	if cmd != nil {
+		go func(c tea.Cmd) {
+			for c != nil {
+				res := c()
+				if logMsg, ok := res.(logLineMsg); ok {
+					c = readLogCmd(logMsg.scanner)
+				} else {
+					break
+				}
+			}
+		}(cmd)
+	}
+	return m, cmd
 }
 
 func TestDashboardMinimumSizeFallback(t *testing.T) {
@@ -271,4 +285,26 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("Expected tea.Cmd to be returned")
 	}
+
+	// Test 8: Batch progress calculation
+	m.focusedPane = FocusLeft                                                 // project wide
+	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}}) // Fetch all
+	if m.totalActions != 2 {
+		t.Errorf("Expected totalActions to be 2, got %d", m.totalActions)
+	}
+	if m.completedActions != 0 {
+		t.Errorf("Expected completedActions to start at 0, got %d", m.completedActions)
+	}
+
+	// Wait for the first background goroutine to exit (it skips and exits immediately)
+	time.Sleep(50 * time.Millisecond)
+
+	// Simulate one action done
+	m, _ = updateModel(m, actionDoneMsg{})
+	if m.completedActions != 1 {
+		t.Errorf("Expected completedActions to increment to 1, got %d", m.completedActions)
+	}
+
+	// Wait for the second background goroutine to exit too
+	time.Sleep(50 * time.Millisecond)
 }

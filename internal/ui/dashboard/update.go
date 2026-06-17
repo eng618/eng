@@ -150,6 +150,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.hasError = true
 			m.lastError = msg.err
 		}
+		m.completedActions++
 
 		if len(m.actionQueue) > 0 {
 			var cmd tea.Cmd
@@ -323,6 +324,9 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	if len(m.actionQueue) == 0 {
 		return m, nil
 	}
+
+	m.totalActions = len(m.actionQueue)
+	m.completedActions = 0
 
 	var cmd tea.Cmd
 	m, cmd = m.popAndRunNextAction()
