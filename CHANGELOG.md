@@ -1,5 +1,23 @@
 <a name="unreleased"></a>
 
+## [1.18.0](https://github.com/eng618/eng/compare/v1.17.0...v1.18.0) (2026-06-17)
+
+
+### Features
+
+* Add keyboard shortcut to interactively add projects or repositories to the dashboard ([9b0fdfe](https://github.com/eng618/eng/commit/9b0fdfe5edf127d7c175e865623e302c66c33c4d))
+* Add progress tracking and UI visualization for batch repository actions ([33cd014](https://github.com/eng618/eng/commit/33cd014e0382ad4fba6f2682c02fda2806db9370))
+
+
+### Bug Fixes
+
+* Implement thread-safe logging, update repo path resolution, and improve async command execution in dashboard UI ([761edcd](https://github.com/eng618/eng/commit/761edcd633a3ae56b1a216382525824895dd2af6))
+
+
+### Miscellaneous
+
+* Update Go runtime to 1.24.13 and bump Trivy to 0.69.3 in Codacy configuration ([f01d39a](https://github.com/eng618/eng/commit/f01d39a01ed02d42b8e6563eec79a4009eee3513))
+
 ## [1.17.0](https://github.com/eng618/eng/compare/v1.16.0...v1.17.0) (2026-06-17)
 
 
