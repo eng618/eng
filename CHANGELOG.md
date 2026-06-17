@@ -1,5 +1,19 @@
 <a name="unreleased"></a>
 
+## [1.17.0](https://github.com/eng618/eng/compare/v1.16.0...v1.17.0) (2026-06-17)
+
+
+### Features
+
+* Add editor integration, keyboard shortcut help overlay, and configurable editor path ([6d7f6f8](https://github.com/eng618/eng/commit/6d7f6f8a7bc9a00823efeb1e9eaaaca71dc7abd8))
+* Add transient toast notifications to dashboard and implement minimum terminal size warning ([bf5620a](https://github.com/eng618/eng/commit/bf5620a50e27fff2e755a90cc6ad97c24f9c9d71))
+* Implement responsive layout, viewport scrolling, and minimum size fallback for dashboard ([fe42b5e](https://github.com/eng618/eng/commit/fe42b5e5fa23117473bba22dfe8988d0489d29b7))
+
+
+### Miscellaneous
+
+* Bump go-toml and fuzzy dependencies to latest versions ([74dadcc](https://github.com/eng618/eng/commit/74dadcca8c9aac6bf301b2663966a520ae9df1bf))
+
 ## [1.16.0](https://github.com/eng618/eng/compare/v1.15.0...v1.16.0) (2026-06-15)
 
 
