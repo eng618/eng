@@ -12,11 +12,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/bitwarden"
-	"github.com/eng618/eng/internal/cmdutil"
-	gitlabcfg "github.com/eng618/eng/internal/config/gitlab"
-	"github.com/eng618/eng/internal/log"
-	gitrepo "github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/utils"
+	gitlabcfg "github.com/eng618/eng/internal/utils/config/gitlab"
+	"github.com/eng618/eng/internal/utils/log"
+	gitrepo "github.com/eng618/eng/internal/utils/repo"
 )
 
 var (
@@ -56,7 +55,7 @@ var mrRulesApplyCmd = &cobra.Command{
 		host := hostOpt
 		project := projectOpt
 		if host == "" || project == "" {
-			if h, p, err := gitrepo.GetGitLabHostAndProjectPath(cmd.Context(), "."); err == nil {
+			if h, p, err := gitrepo.GetGitLabHostAndProjectPath("."); err == nil {
 				if host == "" {
 					host = h
 				}
@@ -86,14 +85,14 @@ var mrRulesApplyCmd = &cobra.Command{
 			}
 			if itemName != "" {
 				// Ensure BW session and fetch item password as token
-				sess, err := bitwarden.EnsureBitwardenSession()
+				sess, err := utils.EnsureBitwardenSession()
 				if err != nil {
 					return err
 				}
 				if sess != "" {
 					env = append(env, "BW_SESSION="+sess)
 				}
-				item, err := bitwarden.GetBitwardenItem(itemName)
+				item, err := utils.GetBitwardenItem(itemName)
 				if err != nil {
 					return fmt.Errorf("failed to read Bitwarden item '%s': %w", itemName, err)
 				}
@@ -136,7 +135,7 @@ var mrRulesApplyCmd = &cobra.Command{
 
 		cmdExec := exec.Command("glab", apiArgs...)
 		cmdExec.Env = env
-		return cmdutil.StartChildProcess(cmdExec)
+		return utils.StartChildProcess(cmdExec)
 	},
 }
 

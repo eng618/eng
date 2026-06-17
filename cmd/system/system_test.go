@@ -39,15 +39,13 @@ func TestSystemCmdSubcommands(t *testing.T) {
 }
 
 func TestSystemCmdRun(t *testing.T) {
-	SystemCmd.SetOut(new(bytes.Buffer))
-	SystemCmd.SetErr(new(bytes.Buffer))
-	defer func() {
-		SystemCmd.SetOut(nil)
-		SystemCmd.SetErr(nil)
-	}()
+	// Create a new cobra.Command to use as context
+	testCmd := &cobra.Command{Use: "system"}
+	testCmd.SetOut(new(bytes.Buffer))
+	testCmd.SetErr(new(bytes.Buffer))
 
 	// Ensure Run function doesn't panic
 	assert.NotPanics(t, func() {
-		SystemCmd.Run(SystemCmd, []string{})
+		SystemCmd.Run(testCmd, []string{})
 	})
 }

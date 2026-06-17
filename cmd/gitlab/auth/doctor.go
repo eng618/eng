@@ -10,10 +10,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/bitwarden"
-	"github.com/eng618/eng/internal/log"
-	gitrepo "github.com/eng618/eng/internal/repo"
-	"github.com/eng618/eng/internal/ui/theme"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	gitrepo "github.com/eng618/eng/internal/utils/repo"
 )
 
 // doctorCmd validates glab availability, token validity, and project access.
@@ -29,10 +28,7 @@ var doctorCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check glab is installed
 		if _, err := exec.LookPath("glab"); err != nil {
-			return theme.NewActionableError(
-				errors.New("glab CLI not found in PATH"),
-				"Install the glab CLI from https://gitlab.com/gitlab-org/cli to enable this command.",
-			)
+			return fmt.Errorf("glab CLI not found in PATH; install from https://gitlab.com/gitlab-org/cli")
 		}
 
 		// Resolve host and project similar to mr-rules apply
@@ -45,7 +41,7 @@ var doctorCmd = &cobra.Command{
 			project = viper.GetString("gitlab.project")
 		}
 		if host == "" || project == "" {
-			if h, p, err := gitrepo.GetGitLabHostAndProjectPath(cmd.Context(), "."); err == nil {
+			if h, p, err := gitrepo.GetGitLabHostAndProjectPath("."); err == nil {
 				if host == "" {
 					host = h
 				}
@@ -61,12 +57,12 @@ var doctorCmd = &cobra.Command{
 		if os.Getenv("GITLAB_TOKEN") == "" {
 			itemName := viper.GetString("gitlab.tokenItem")
 			if itemName != "" {
-				sess, err := bitwarden.EnsureBitwardenSession()
+				sess, err := utils.EnsureBitwardenSession()
 				if err != nil {
 					log.Warn("Bitwarden session not available: %v", err)
 				} else if sess != "" {
 					env = append(env, "BW_SESSION="+sess)
-					if item, err := bitwarden.GetBitwardenItem(itemName); err == nil {
+					if item, err := utils.GetBitwardenItem(itemName); err == nil {
 						// prefer login.password; fallback to field named token
 						if item.Login != nil && item.Login.Password != "" {
 							env = append(env, "GITLAB_TOKEN="+item.Login.Password)

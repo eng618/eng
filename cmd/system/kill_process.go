@@ -7,13 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 type ProcessInfo struct {
@@ -60,94 +58,38 @@ func parseProcessOutput(output, filter string) ([]ProcessInfo, error) {
 	return processes, nil
 }
 
-type processTableModel struct {
-	table    table.Model
-	selected ProcessInfo
-	canceled bool
-}
-
-func (m processTableModel) Init() tea.Cmd { return nil }
-
-func (m processTableModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc", "q", "ctrl+c":
-			m.canceled = true
-			return m, tea.Quit
-		case "enter":
-			row := m.table.SelectedRow()
-			if len(row) > 0 {
-				m.selected = ProcessInfo{
-					PID:     row[0],
-					User:    row[1],
-					Command: row[2],
-				}
-			}
-			return m, tea.Quit
-		}
-	}
-	m.table, cmd = m.table.Update(msg)
-	return m, cmd
-}
-
-func (m processTableModel) View() string {
-	return "\n" + m.table.View() + "\n\n  enter: select • q/esc: cancel\n"
-}
-
 func selectProcess(processes []ProcessInfo) (ProcessInfo, error) {
 	if len(processes) == 0 {
 		return ProcessInfo{}, errors.New("no processes found")
 	}
 
-	columns := []table.Column{
-		{Title: "PID", Width: 10},
-		{Title: "User", Width: 15},
-		{Title: "Command", Width: 80},
+	options := make([]string, len(processes)+1)
+	for i, p := range processes {
+		options[i] = fmt.Sprintf("%s (PID %s, User %s)", p.Command, p.PID, p.User)
 	}
+	options[len(processes)] = "Cancel"
 
-	var rows []table.Row
-	for _, p := range processes {
-		rows = append(rows, table.Row{p.PID, p.User, p.Command})
+	var selected string
+	prompt := &survey.Select{
+		Message: "Select process to kill:",
+		Options: options,
 	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(15),
-	)
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-	t.SetStyles(s)
-
-	m := processTableModel{table: t}
-	p := tea.NewProgram(m)
-	finalModel, err := p.Run()
+	err := survey.AskOne(prompt, &selected)
 	if err != nil {
-		return ProcessInfo{}, fmt.Errorf("failed to run TUI: %w", err)
+		return ProcessInfo{}, err
 	}
 
-	tm := finalModel.(processTableModel)
-	if tm.canceled {
+	if selected == "Cancel" {
 		return ProcessInfo{}, errors.New("operation canceled")
 	}
 
-	if tm.selected.PID == "" {
-		return ProcessInfo{}, errors.New("no process selected")
+	for i, option := range options[:len(processes)] {
+		if option == selected {
+			return processes[i], nil
+		}
 	}
 
-	return tm.selected, nil
+	return ProcessInfo{}, errors.New("selection failed")
 }
 
 var (
@@ -165,7 +107,7 @@ Requires 'ps' and 'kill' commands to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
+		isVerbose := utils.IsVerbose(cmd) // Get verbosity flag
 
 		var pidStr string
 		var selectedProcess ProcessInfo

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // PushAllCmd defines the cobra command for pushing all git repositories.
@@ -21,7 +21,7 @@ var PushAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Pushing all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		force, _ := cmd.Flags().GetBool("force")
 
@@ -94,7 +94,7 @@ var PushAllCmd = &cobra.Command{
 			}
 
 			// Check if repository is dirty (only warn, don't skip)
-			isDirty, err := repo.IsDirty(cmd.Context(), repoPath)
+			isDirty, err := repo.IsDirty(repoPath)
 			if err != nil {
 				log.Error("  Failed to check repository status: %s", err)
 				failureCount++

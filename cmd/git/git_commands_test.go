@@ -291,7 +291,7 @@ func getCurrentBranch(repoPath string) (string, error) {
 }
 
 func TestPersistentFlagInheritance(t *testing.T) {
-	// Test that persistent flags are properly inherited by subcommands and accessible via Flags()
+	// Test that persistent flags are properly inherited by subcommands
 
 	// Create a test parent command with persistent flag
 	parentCmd := &cobra.Command{
@@ -310,10 +310,18 @@ func TestPersistentFlagInheritance(t *testing.T) {
 	// Add subcommand to parent
 	parentCmd.AddCommand(subCmd)
 
-	// Test that the subcommand can access the parent's persistent flag via getBoolFlag()
-	flagValue := getBoolFlag(subCmd, "current")
+	// Test that the subcommand can access the parent's persistent flag
+	flagValue, err := subCmd.PersistentFlags().GetBool("current")
+	if err != nil {
+		// Try getting from parent
+		if parent := subCmd.Parent(); parent != nil {
+			flagValue, err = parent.PersistentFlags().GetBool("current")
+		}
+	}
 
-	if !flagValue {
+	if err != nil {
+		t.Errorf("Subcommand cannot access --current flag: %v", err)
+	} else if !flagValue {
 		t.Errorf("Subcommand --current flag should be true, got %v", flagValue)
 	}
 }
