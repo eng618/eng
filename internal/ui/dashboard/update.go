@@ -12,8 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
 	"github.com/go-git/go-git/v5"
 
 	"github.com/eng618/eng/internal/config"
@@ -131,6 +133,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m = resModel.(Model)
 			m.clampScrollOffset()
 			return m, cmd
+		case "a":
+			cmd := m.addProjectOrRepoCmd()
+			return m, cmd
 		}
 
 		if m.focusedPane == FocusLeft {
@@ -144,6 +149,66 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.loadSelectedProjectStatusesCmd())
 			}
 		}
+
+	case configUpdateFinishedMsg:
+		if msg.err != nil {
+			if errors.Is(msg.err, huh.ErrUserAborted) {
+				m.notificationID++
+				m.notification = "Add canceled."
+				m.notificationStyle = notificationWarnStyle
+				m.notificationType = NotifyWarn
+				return m, m.delayClearNotificationCmd(m.notificationID)
+			}
+			m.notificationID++
+			m.notification = fmt.Sprintf("Error adding repository: %s", msg.err.Error())
+			m.notificationStyle = notificationErrorStyle
+			m.notificationType = NotifyError
+			return m, m.delayClearNotificationCmd(m.notificationID)
+		}
+
+		m.projects = msg.projects
+		items := make([]list.Item, len(m.projects))
+		for i, p := range m.projects {
+			items[i] = ProjectItem{Project: p}
+		}
+		m.list.SetItems(items)
+
+		// Focus the target project
+		for idx, item := range m.list.Items() {
+			if projItem, ok := item.(ProjectItem); ok && projItem.Project.Name == msg.targetProject {
+				m.list.Select(idx)
+				break
+			}
+		}
+
+		// Focus the new repository
+		m.selectedRepoIndex = 0
+		m.repoScrollOffset = 0
+		project := config.GetProjectByName(msg.targetProject)
+		if project != nil {
+			for idx, r := range project.Repos {
+				if r.URL == msg.addedRepo {
+					m.selectedRepoIndex = idx
+					break
+				}
+			}
+		}
+
+		m.clampScrollOffset()
+
+		m.notificationID++
+		prettyName, err := config.RepoNameFromURL(msg.addedRepo)
+		if err != nil {
+			prettyName = msg.addedRepo
+		}
+		m.notification = fmt.Sprintf("Added repo '%s' to project '%s'", prettyName, msg.targetProject)
+		m.notificationStyle = notificationSuccessStyle
+		m.notificationType = NotifySuccess
+
+		return m, tea.Batch(
+			m.delayClearNotificationCmd(m.notificationID),
+			m.loadSelectedProjectStatusesCmd(),
+		)
 
 	case actionDoneMsg:
 		if msg.err != nil {
@@ -616,10 +681,64 @@ func resolveEditorCommand(editorConfig, targetPath string) *exec.Cmd {
 	}
 
 	parts := strings.Fields(cmdStr)
-	if len(parts) == 0 {
-		parts = []string{"vim"}
+	execCmd := exec.Command(parts[0], parts[1:]...)
+	execCmd.Args = append(execCmd.Args, targetPath)
+
+	return execCmd
+}
+
+func findAddedDiff(oldProjs, newProjs []config.Project) (targetProject, addedRepo string) {
+	oldRepos := make(map[string]bool)
+	for _, p := range oldProjs {
+		for _, r := range p.Repos {
+			oldRepos[p.Name+":"+r.URL] = true
+		}
 	}
 
-	args := append(parts[1:], targetPath)
-	return exec.Command(parts[0], args...)
+	for _, p := range newProjs {
+		for _, r := range p.Repos {
+			if !oldRepos[p.Name+":"+r.URL] {
+				return p.Name, r.URL
+			}
+		}
+	}
+	return "", ""
+}
+
+func (m Model) addProjectOrRepoCmd() tea.Cmd {
+	var preSelectedProject string
+	if m.focusedPane == FocusRight {
+		if item, ok := m.list.SelectedItem().(ProjectItem); ok {
+			preSelectedProject = item.Project.Name
+		}
+	}
+
+	self, err := os.Executable()
+	if err != nil {
+		self = "eng"
+	}
+
+	var args []string
+	args = append(args, "project", "add")
+	if preSelectedProject != "" {
+		args = append(args, "-p", preSelectedProject)
+	}
+
+	execCmd := exec.Command(self, args...)
+
+	// Capture the project list state before execution
+	oldProjects := config.GetProjects()
+
+	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
+		if err != nil {
+			return configUpdateFinishedMsg{err: err}
+		}
+		newProjects := config.GetProjects()
+		targetProj, addedURL := findAddedDiff(oldProjects, newProjects)
+		return configUpdateFinishedMsg{
+			projects:      newProjects,
+			addedRepo:     addedURL,
+			targetProject: targetProj,
+		}
+	})
 }

@@ -191,9 +191,9 @@ func (m Model) renderRightPane() string {
 		b.WriteString(m.notificationStyle.Render(footerText))
 	} else {
 		if m.focusedPane == FocusRight {
-			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e] Editor  [?] Help  [Esc] Back"
+			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e] Editor  [a] Add Repo  [?] Help  [Esc] Back"
 		} else {
-			footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All  [?] Help"
+			footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All  [a] Add Project/Repo  [?] Help"
 		}
 		footerText = truncate(footerText, innerRightWidth)
 		b.WriteString(statusMutedStyle.Render("\n" + footerText))
@@ -355,7 +355,8 @@ func (m Model) renderHelpModal() string {
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("s     "), descStyle.Render("Sync repository (or all)"))
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("c     "), descStyle.Render("Clone/Setup repository (or all)"))
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("o     "), descStyle.Render("Open in Finder / File Explorer"))
-	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("e     "), descStyle.Render("Open in Configured Editor"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("e     "), descStyle.Render("Open in Configured Editor"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("a     "), descStyle.Render("Add project or repository"))
 
 	b.WriteString(statusMutedStyle.Render("Press any key to close"))
 

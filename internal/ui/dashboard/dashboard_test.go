@@ -322,4 +322,48 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 
 	// Wait for the second background goroutine to exit too
 	time.Sleep(50 * time.Millisecond)
+
+	// Test 9: Add command keybinding and message update handling
+	m.actionState = ""
+	m.actionQueue = nil
+	m, cmd = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	if cmd == nil {
+		t.Error("Expected tea.Cmd to be returned when pressing 'a'")
+	}
+
+	newProjects := []config.Project{
+		{
+			Name: "TestProject",
+			Repos: []config.ProjectRepo{
+				{URL: "https://github.com/test/cloned-repo"},
+				{URL: "https://github.com/test/not-cloned-repo"},
+			},
+		},
+		{
+			Name: "NewProject",
+			Repos: []config.ProjectRepo{
+				{URL: "https://github.com/test/added-repo"},
+			},
+		},
+	}
+
+	// Dispatch simulated successful configUpdateFinishedMsg
+	m, _ = updateModel(m, configUpdateFinishedMsg{
+		projects:      newProjects,
+		addedRepo:     "https://github.com/test/added-repo",
+		targetProject: "NewProject",
+	})
+
+	if m.notification == "" {
+		t.Error("Expected notification to be set after adding project")
+	}
+	if !strings.Contains(m.notification, "Added repo") {
+		t.Errorf("Expected 'Added repo' notification, got: %q", m.notification)
+	}
+
+	// Verify it auto-selected NewProject
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok || item.Project.Name != "NewProject" {
+		t.Errorf("Expected selected project to be 'NewProject', got: %v", m.list.SelectedItem())
+	}
 }

@@ -47,6 +47,13 @@ type ActionItem struct {
 	FullPath string
 }
 
+type configUpdateFinishedMsg struct {
+	projects      []config.Project
+	addedRepo     string
+	targetProject string
+	err           error
+}
+
 // Model is the Bubble Tea model for the dashboard.
 type Model struct {
 	list         list.Model
