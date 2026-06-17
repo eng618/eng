@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -147,18 +148,32 @@ func updateModel(m Model, msg tea.Msg) (Model, tea.Cmd) {
 	updated, cmd := m.Update(msg)
 	m = updated.(Model)
 	if cmd != nil {
-		go func(c tea.Cmd) {
-			for c != nil {
-				res := c()
-				if logMsg, ok := res.(logLineMsg); ok {
-					c = readLogCmd(logMsg.scanner)
-				} else {
-					break
-				}
-			}
-		}(cmd)
+		go executeCmd(cmd)
 	}
 	return m, cmd
+}
+
+func executeCmd(cmd tea.Cmd) {
+	if cmd == nil {
+		return
+	}
+	msg := cmd()
+	if msg == nil {
+		return
+	}
+	switch m := msg.(type) {
+	case tea.BatchMsg:
+		for _, subCmd := range m {
+			executeCmd(subCmd)
+		}
+	case logLineMsg:
+		// Drain the scanner asynchronously in the background to prevent writing blockages
+		go func(scanner *bufio.Scanner) {
+			for scanner.Scan() {
+				// drain
+			}
+		}(m.scanner)
+	}
 }
 
 func TestDashboardMinimumSizeFallback(t *testing.T) {

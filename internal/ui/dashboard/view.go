@@ -227,7 +227,11 @@ func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
 	for i, r := range p.Repos {
 		var repoLines []string
 
-		repoTitle := fmt.Sprintf("repo: %s", r.URL)
+		repoName, err := r.GetEffectivePath()
+		if err != nil {
+			repoName = r.URL
+		}
+		repoTitle := fmt.Sprintf("repo: %s", repoName)
 		repoTitle = truncate(repoTitle, innerRightWidth)
 
 		var titleLine string

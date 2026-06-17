@@ -288,17 +288,22 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 		relPath, _ := repoDef.GetEffectivePath()
 		fullPath := filepath.Join(m.devPath, p.Name, relPath)
 
+		repoName, err := repoDef.GetEffectivePath()
+		if err != nil {
+			repoName = repoDef.URL
+		}
+
 		cloned := isRepoCloned(fullPath)
 		if action == "c" && cloned {
 			m.notificationID++
-			m.notification = fmt.Sprintf("Already cloned: %s", repoDef.URL)
+			m.notification = fmt.Sprintf("Already cloned: %s", repoName)
 			m.notificationStyle = notificationWarnStyle
 			m.notificationType = NotifyWarn
 			return m, m.delayClearNotificationCmd(m.notificationID)
 		}
 		if action != "c" && !cloned {
 			m.notificationID++
-			m.notification = fmt.Sprintf("Not cloned: %s", repoDef.URL)
+			m.notification = fmt.Sprintf("Not cloned: %s", repoName)
 			m.notificationStyle = notificationErrorStyle
 			m.notificationType = NotifyError
 			return m, m.delayClearNotificationCmd(m.notificationID)
@@ -373,7 +378,12 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 		actionName = "Opening"
 	}
 
-	m.actionState = fmt.Sprintf("%s %s...", actionName, item.RepoName)
+	prettyName, err := config.RepoNameFromURL(item.RepoName)
+	if err != nil {
+		prettyName = item.RepoName
+	}
+
+	m.actionState = fmt.Sprintf("%s %s...", actionName, prettyName)
 
 	pr, pw := io.Pipe()
 
@@ -389,25 +399,25 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 
 		cloned := isRepoCloned(item.FullPath)
 		if item.Action == "c" && cloned {
-			log.Warn("Already cloned: %s", item.RepoName)
+			log.Warn("Already cloned: %s", prettyName)
 			pw.Close()
 			return
 		}
 		if item.Action != "c" && !cloned {
-			log.Warn("Skipping: %s (not cloned)", item.RepoName)
+			log.Warn("Skipping: %s (not cloned)", prettyName)
 			pw.Close()
 			return
 		}
 
 		switch item.Action {
 		case "f":
-			log.Info("Fetching %s...", item.RepoName)
+			log.Info("Fetching %s...", prettyName)
 			err = repo.FetchAllPrune(ctx, item.FullPath)
 			if err == nil {
 				log.Success("Fetch completed successfully!")
 			}
 		case "p":
-			log.Info("Pulling %s...", item.RepoName)
+			log.Info("Pulling %s...", prettyName)
 			err = repo.PullLatestCode(ctx, item.FullPath)
 			if errors.Is(err, git.NoErrAlreadyUpToDate) {
 				log.Info("Already up to date.")
@@ -416,7 +426,7 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 				log.Success("Pull completed successfully!")
 			}
 		case "s":
-			log.Info("Syncing %s...", item.RepoName)
+			log.Info("Syncing %s...", prettyName)
 			log.Info("1/2 Fetching...")
 			err = repo.FetchAllPrune(ctx, item.FullPath)
 			if err == nil {
@@ -431,7 +441,7 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 				log.Success("Sync completed successfully!")
 			}
 		case "c":
-			log.Info("Cloning %s...", item.RepoName)
+			log.Info("Cloning %s...", prettyName)
 			parentDir := filepath.Dir(item.FullPath)
 			err = os.MkdirAll(parentDir, 0o755)
 			if err == nil {
