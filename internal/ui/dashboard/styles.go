@@ -42,6 +42,12 @@ var (
 			Padding(1, 4).
 			Align(lipgloss.Center)
 
+	helpModalStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(theme.Primary).
+			Padding(1, 4).
+			Align(lipgloss.Left)
+
 	overlayStyle = lipgloss.NewStyle().
 			Align(lipgloss.Center)
 
@@ -68,5 +74,7 @@ var (
 
 	notificationSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary).Bold(true)
 	notificationErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive).Bold(true)
-	notificationWarnStyle    = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"}).Bold(true)
+	notificationWarnStyle    = lipgloss.NewStyle().
+					Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"}).
+					Bold(true)
 )

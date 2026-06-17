@@ -3,11 +3,13 @@ package dashboard
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -66,6 +68,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
+		if m.showHelp {
+			m.showHelp = false
+			return m, nil
+		}
+
 		if m.actionState != "" {
 			// Ignore other keys while loading
 			var cmd tea.Cmd
@@ -105,6 +112,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.clampScrollOffset()
 				return m, nil
 			}
+		case "?":
+			m.showHelp = true
+			return m, nil
+		case "e":
+			cmd, err := m.openInEditorCmd()
+			if err != nil {
+				m.notificationID++
+				m.notification = fmt.Sprintf("Editor error: %v", err)
+				m.notificationStyle = notificationErrorStyle
+				m.notificationType = NotifyError
+				return m, m.delayClearNotificationCmd(m.notificationID)
+			}
+			return m, cmd
 		case "f", "p", "o", "c", "s":
 			// Handle actions based on focus
 			resModel, cmd := handleAction(m, msg.String())
@@ -161,6 +181,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clearNotificationMsg:
 		if msg.id == m.notificationID {
 			m.notification = ""
+		}
+
+	case editorFinishedMsg:
+		if msg.err != nil {
+			m.notificationID++
+			m.notification = fmt.Sprintf("Editor exited with error: %v", msg.err)
+			m.notificationStyle = notificationErrorStyle
+			m.notificationType = NotifyError
+			return m, m.delayClearNotificationCmd(m.notificationID)
 		}
 
 	case spinner.TickMsg:
@@ -376,7 +405,7 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 		case "p":
 			log.Info("Pulling %s...", item.RepoName)
 			err = repo.PullLatestCode(ctx, item.FullPath)
-			if err == git.NoErrAlreadyUpToDate {
+			if errors.Is(err, git.NoErrAlreadyUpToDate) {
 				log.Info("Already up to date.")
 				err = nil
 			} else if err == nil {
@@ -389,7 +418,7 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 			if err == nil {
 				log.Info("2/2 Pulling...")
 				err = repo.PullLatestCode(ctx, item.FullPath)
-				if err == git.NoErrAlreadyUpToDate {
+				if errors.Is(err, git.NoErrAlreadyUpToDate) {
 					log.Info("Already up to date.")
 					err = nil
 				}
@@ -517,4 +546,66 @@ func isRepoCloned(repoPath string) bool {
 	gitDir := filepath.Join(repoPath, ".git")
 	info, err := os.Stat(gitDir)
 	return err == nil && info.IsDir()
+}
+
+type editorFinishedMsg struct {
+	err error
+}
+
+func (m Model) openInEditorCmd() (tea.Cmd, error) {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
+		return nil, fmt.Errorf("no project selected")
+	}
+	p := item.Project
+
+	var targetPath string
+	if m.focusedPane == FocusRight {
+		if len(p.Repos) == 0 {
+			return nil, fmt.Errorf("no repository selected")
+		}
+		repoDef := p.Repos[m.selectedRepoIndex]
+		relPath, _ := repoDef.GetEffectivePath()
+		targetPath = filepath.Join(m.devPath, p.Name, relPath)
+
+		if !isRepoCloned(targetPath) {
+			return nil, fmt.Errorf("repository not cloned yet")
+		}
+	} else {
+		targetPath = filepath.Join(m.devPath, p.Name)
+		_ = os.MkdirAll(targetPath, 0o755)
+	}
+
+	execCmd := resolveEditorCommand(m.editor, targetPath)
+
+	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
+		return editorFinishedMsg{err: err}
+	}), nil
+}
+
+func resolveEditorCommand(editorConfig, targetPath string) *exec.Cmd {
+	cmdStr := editorConfig
+	if cmdStr == "" {
+		cmdStr = os.Getenv("VISUAL")
+		if cmdStr == "" {
+			cmdStr = os.Getenv("EDITOR")
+		}
+	}
+
+	if cmdStr == "" {
+		_, err := exec.LookPath("code")
+		if err == nil {
+			cmdStr = "code"
+		} else {
+			cmdStr = "vim"
+		}
+	}
+
+	parts := strings.Fields(cmdStr)
+	if len(parts) == 0 {
+		parts = []string{"vim"}
+	}
+
+	args := append(parts[1:], targetPath)
+	return exec.Command(parts[0], args...)
 }

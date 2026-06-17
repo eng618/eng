@@ -5,12 +5,14 @@ import "github.com/spf13/viper"
 // GitConfig holds all git-related configuration.
 type GitConfig struct {
 	DevPath string `mapstructure:"dev_path"`
+	Editor  string `mapstructure:"editor"`
 }
 
 // GetGitConfig retrieves the git configuration from Viper.
 func GetGitConfig() GitConfig {
 	return GitConfig{
 		DevPath: viper.GetString("git.dev_path"),
+		Editor:  viper.GetString("git.editor"),
 	}
 }
 

@@ -27,7 +27,7 @@ func Run() error {
 	}
 	gitDevPath = os.ExpandEnv(gitDevPath)
 
-	m := NewModel(projects, gitDevPath)
+	m := NewModel(projects, gitDevPath, config.GetGitConfig().Editor)
 
 	// Use alternate screen buffer
 	p := tea.NewProgram(m, tea.WithAltScreen())

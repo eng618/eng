@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 func (m Model) View() string {
@@ -14,6 +16,15 @@ func (m Model) View() string {
 
 	if m.windowWidth < 60 || m.windowHeight < 12 {
 		return m.renderFallbackScreen()
+	}
+
+	if m.showHelp {
+		modalContent := m.renderHelpModal()
+		modal := helpModalStyle.Render(modalContent)
+		return overlayStyle.
+			Width(m.windowWidth).
+			Height(m.windowHeight).
+			Render(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, modal, lipgloss.WithWhitespaceChars(" ")))
 	}
 
 	leftStyle := inactivePaneStyle
@@ -145,21 +156,23 @@ func (m Model) renderRightPane() string {
 	var footerText string
 	if m.notification != "" {
 		var prefix string
-		if m.notificationType == NotifySuccess {
+		switch m.notificationType {
+		case NotifySuccess:
 			prefix = "✓ "
-		} else if m.notificationType == NotifyError {
+		case NotifyError:
 			prefix = "✗ "
-		} else if m.notificationType == NotifyWarn {
+		case NotifyWarn:
 			prefix = "⚠ "
 		}
 		footerText = prefix + m.notification
 		footerText = truncate(footerText, innerRightWidth)
-		b.WriteString("\n" + m.notificationStyle.Render(footerText))
+		b.WriteString("\n")
+		b.WriteString(m.notificationStyle.Render(footerText))
 	} else {
 		if m.focusedPane == FocusRight {
-			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"
+			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e] Editor  [?] Help  [Esc] Back"
 		} else {
-			footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"
+			footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All  [?] Help"
 		}
 		footerText = truncate(footerText, innerRightWidth)
 		b.WriteString(statusMutedStyle.Render("\n" + footerText))
@@ -291,4 +304,35 @@ func (m Model) renderFallbackScreen() string {
 		modalStyle.Render(msg),
 		lipgloss.WithWhitespaceChars(" "),
 	)
+}
+
+func (m Model) renderHelpModal() string {
+	var b strings.Builder
+	b.WriteString(projectNameStyle.Render("Keyboard Shortcuts"))
+	b.WriteString("\n\n")
+
+	keyStyle := lipgloss.NewStyle().Foreground(theme.Primary).Bold(true)
+	descStyle := lipgloss.NewStyle().Foreground(theme.Foreground)
+
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("?     "), descStyle.Render("Toggle Help Menu"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("q/Ctrl+C"), descStyle.Render("Quit Application"))
+
+	b.WriteString(statusMutedStyle.Render("Navigation:"))
+	b.WriteString("\n\n")
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("h/Left"), descStyle.Render("Focus Projects Pane (Left)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("l/Right"), descStyle.Render("Focus Repositories Pane (Right)"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("j/k/Up/Down"), descStyle.Render("Navigate Lists"))
+
+	b.WriteString(statusMutedStyle.Render("Actions (Context-aware):"))
+	b.WriteString("\n\n")
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("f     "), descStyle.Render("Fetch repository (or all)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("p     "), descStyle.Render("Pull repository (or all)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("s     "), descStyle.Render("Sync repository (or all)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("c     "), descStyle.Render("Clone/Setup repository (or all)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("o     "), descStyle.Render("Open in Finder / File Explorer"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("e     "), descStyle.Render("Open in Configured Editor"))
+
+	b.WriteString(statusMutedStyle.Render("Press any key to close"))
+
+	return b.String()
 }

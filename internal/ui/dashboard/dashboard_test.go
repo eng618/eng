@@ -26,7 +26,7 @@ func TestDashboardResponsiveLayout(t *testing.T) {
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev")
+	m := NewModel(projects, "/tmp/dev", "")
 
 	// 2. Simulate terminal window resize
 	width := 120
@@ -85,7 +85,7 @@ func TestDashboardViewportScrolling(t *testing.T) {
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev")
+	m := NewModel(projects, "/tmp/dev", "")
 
 	// Resize window to height 20
 	// innerRightHeight = 20 - 6 = 14.
@@ -157,7 +157,7 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev")
+	m := NewModel(projects, "/tmp/dev", "")
 
 	// 1. Resize terminal below the threshold (e.g. 50 width, 10 height)
 	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 50, Height: 10})
@@ -198,11 +198,11 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 
 	// Create the .git directory in the cloned repo
 	clonedPath := filepath.Join(tempDev, "TestProject", "cloned-repo")
-	if err := os.MkdirAll(filepath.Join(clonedPath, ".git"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(clonedPath, ".git"), 0o755); err != nil {
 		t.Fatalf("failed to create mock git dir: %v", err)
 	}
 
-	m := NewModel(projects, tempDev)
+	m := NewModel(projects, tempDev, "code")
 	m.focusedPane = FocusRight
 	m.ready = true
 	m.windowWidth = 100
@@ -247,5 +247,28 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	m, _ = updateModel(m, clearNotificationMsg{id: notifID}) // old ID
 	if m.notification != "New notification" {
 		t.Error("Expected notification to NOT be cleared by outdated clearNotificationMsg")
+	}
+
+	// Test 5: Help toggle "?"
+	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	if !m.showHelp {
+		t.Error("Expected showHelp to be true after pressing '?'")
+	}
+
+	// Test 6: Pressing any key closes help
+	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	if m.showHelp {
+		t.Error("Expected showHelp to be false after pressing any key when active")
+	}
+
+	// Test 7: Editor resolution check
+	m.focusedPane = FocusRight
+	m.selectedRepoIndex = 0 // cloned-repo
+	cmd, err := m.openInEditorCmd()
+	if err != nil {
+		t.Fatalf("Expected no error launching editor, got: %v", err)
+	}
+	if cmd == nil {
+		t.Fatal("Expected tea.Cmd to be returned")
 	}
 }

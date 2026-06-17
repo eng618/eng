@@ -53,6 +53,7 @@ type Model struct {
 	projects     []config.Project
 	repoStatuses map[string]RepoStatus // Keyed by project.Name + repo.URL
 	devPath      string
+	editor       string
 
 	focusedPane       PaneFocus
 	selectedRepoIndex int
@@ -71,13 +72,15 @@ type Model struct {
 	hasError          bool
 	lastError         error
 
+	showHelp bool
+
 	windowWidth  int
 	windowHeight int
 	ready        bool
 }
 
 // NewModel initializes the dashboard model with configured projects.
-func NewModel(projects []config.Project, devPath string) Model {
+func NewModel(projects []config.Project, devPath, editor string) Model {
 	items := make([]list.Item, len(projects))
 	for i, p := range projects {
 		items[i] = ProjectItem{Project: p}
@@ -101,6 +104,7 @@ func NewModel(projects []config.Project, devPath string) Model {
 		projects:          projects,
 		repoStatuses:      make(map[string]RepoStatus),
 		devPath:           devPath,
+		editor:            editor,
 		focusedPane:       FocusLeft,
 		selectedRepoIndex: 0,
 		spinner:           s,
