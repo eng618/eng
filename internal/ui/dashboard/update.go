@@ -39,8 +39,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
-		leftWidth := (msg.Width / 3) - 4
-		m.list.SetSize(leftWidth, msg.Height-4)
+		totalPanesWidth := msg.Width - 4
+		leftPaneOuterWidth := totalPanesWidth / 4
+		if leftPaneOuterWidth < 20 {
+			leftPaneOuterWidth = 20
+		}
+		if leftPaneOuterWidth > 30 {
+			leftPaneOuterWidth = 30
+		}
+
+		leftStyleWidth := leftPaneOuterWidth - 2
+		listWidth := leftStyleWidth - 2
+		if listWidth < 1 {
+			listWidth = 1
+		}
+		listHeight := msg.Height - 6
+		if listHeight < 1 {
+			listHeight = 1
+		}
+		m.list.SetSize(listWidth, listHeight)
 		m.ready = true
 
 	case tea.KeyMsg:
@@ -61,11 +78,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focusedPane == FocusLeft {
 				m.focusedPane = FocusRight
 				m.selectedRepoIndex = 0
+				m.clampScrollOffset()
 				return m, nil
 			}
 		case "esc", "h", "left":
 			if m.focusedPane == FocusRight {
 				m.focusedPane = FocusLeft
+				m.clampScrollOffset()
 				return m, nil
 			}
 		case "j", "down":
@@ -74,6 +93,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok && m.selectedRepoIndex < len(item.Project.Repos)-1 {
 					m.selectedRepoIndex++
 				}
+				m.clampScrollOffset()
 				return m, nil
 			}
 		case "k", "up":
@@ -81,11 +101,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.selectedRepoIndex > 0 {
 					m.selectedRepoIndex--
 				}
+				m.clampScrollOffset()
 				return m, nil
 			}
 		case "f", "p", "o", "c":
 			// Handle actions based on focus
-			return handleAction(m, msg.String())
+			resModel, cmd := handleAction(m, msg.String())
+			m = resModel.(Model)
+			m.clampScrollOffset()
+			return m, cmd
 		}
 
 		if m.focusedPane == FocusLeft {
@@ -94,6 +118,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 
 			if m.list.Index() != previousIndex {
+				m.selectedRepoIndex = 0
+				m.repoScrollOffset = 0
 				cmds = append(cmds, m.loadSelectedProjectStatusesCmd())
 			}
 		}
@@ -124,7 +150,49 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.repoStatuses[key] = msg.Status
 	}
 
+	m.clampScrollOffset()
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) clampScrollOffset() {
+	allLines, repoStarts, repoEnds := m.getRepoLines()
+	if len(allLines) == 0 {
+		m.repoScrollOffset = 0
+		return
+	}
+
+	innerRightHeight := m.windowHeight - 6
+	if innerRightHeight < 5 {
+		m.repoScrollOffset = 0
+		return
+	}
+	H_repos := innerRightHeight - 4
+
+	if m.selectedRepoIndex < 0 || m.selectedRepoIndex >= len(repoStarts) {
+		m.selectedRepoIndex = 0
+	}
+
+	startLine := repoStarts[m.selectedRepoIndex]
+	endLine := repoEnds[m.selectedRepoIndex]
+
+	// Adjust scroll offset to make sure the selected repo is visible
+	if startLine < m.repoScrollOffset {
+		m.repoScrollOffset = startLine
+	} else if endLine >= m.repoScrollOffset+H_repos {
+		m.repoScrollOffset = endLine - H_repos + 1
+	}
+
+	// Clamp scroll offset to valid range
+	maxScroll := len(allLines) - H_repos
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if m.repoScrollOffset > maxScroll {
+		m.repoScrollOffset = maxScroll
+	}
+	if m.repoScrollOffset < 0 {
+		m.repoScrollOffset = 0
+	}
 }
 
 type actionDoneMsg struct {

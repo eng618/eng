@@ -29,7 +29,7 @@ type ProjectItem struct {
 }
 
 func (i ProjectItem) Title() string       { return i.Project.Name }
-func (i ProjectItem) Description() string { return "Select to view repositories" }
+func (i ProjectItem) Description() string { return "" }
 func (i ProjectItem) FilterValue() string { return i.Project.Name }
 
 type ActionItem struct {
@@ -47,6 +47,7 @@ type Model struct {
 
 	focusedPane       PaneFocus
 	selectedRepoIndex int
+	repoScrollOffset  int
 
 	actionState string // empty if idle, otherwise the loading message
 	actionQueue []ActionItem
@@ -65,10 +66,13 @@ func NewModel(projects []config.Project, devPath string) Model {
 		items[i] = ProjectItem{Project: p}
 	}
 
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	d := list.NewDefaultDelegate()
+	d.ShowDescription = false
+	l := list.New(items, d, 0, 0)
 	l.Title = "Projects"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
+	l.SetShowHelp(false)
 	l.Styles.Title = listTitleStyle
 
 	s := spinner.New()

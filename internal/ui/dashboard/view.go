@@ -12,6 +12,10 @@ func (m Model) View() string {
 		return "Initializing Dashboard..."
 	}
 
+	if m.windowWidth < 60 || m.windowHeight < 12 {
+		return m.renderFallbackScreen()
+	}
+
 	leftStyle := inactivePaneStyle
 	rightStyle := inactivePaneStyle
 
@@ -21,17 +25,27 @@ func (m Model) View() string {
 		rightStyle = activePaneStyle
 	}
 
-	leftWidth := (m.windowWidth / 3) - 4
-	rightWidth := m.windowWidth - leftWidth - 8
+	totalPanesWidth := m.windowWidth - 4
+	leftPaneOuterWidth := totalPanesWidth / 4
+	if leftPaneOuterWidth < 20 {
+		leftPaneOuterWidth = 20
+	}
+	if leftPaneOuterWidth > 30 {
+		leftPaneOuterWidth = 30
+	}
+	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
 
-	leftStyle = leftStyle.Width(leftWidth).Height(m.windowHeight - 4)
-	rightStyle = rightStyle.Width(rightWidth).Height(m.windowHeight - 4)
+	leftStyleWidth := leftPaneOuterWidth - 2
+	rightStyleWidth := rightPaneOuterWidth - 2
+
+	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 4)
+	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 4)
 
 	// Render Left Pane
-	leftContent := leftStyle.Render(m.list.View())
+	leftContent := leftStyle.Render(limitLines(m.list.View(), m.windowHeight-6))
 
 	// Render Right Pane
-	rightContent := rightStyle.Render(m.renderRightPane())
+	rightContent := rightStyle.Render(limitLines(m.renderRightPane(), m.windowHeight-6))
 
 	// Combine panes
 	mainView := appStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent))
@@ -77,71 +91,192 @@ func (m Model) renderRightPane() string {
 
 	var b strings.Builder
 
-	b.WriteString(projectNameStyle.Render(fmt.Sprintf("Project: %s", p.Name)))
+	totalPanesWidth := m.windowWidth - 4
+	leftPaneOuterWidth := totalPanesWidth / 4
+	if leftPaneOuterWidth < 20 {
+		leftPaneOuterWidth = 20
+	}
+	if leftPaneOuterWidth > 30 {
+		leftPaneOuterWidth = 30
+	}
+	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
+	rightStyleWidth := rightPaneOuterWidth - 2
+	innerRightWidth := rightStyleWidth - 2
+
+	projectName := fmt.Sprintf("Project: %s", p.Name)
+	projectName = truncate(projectName, innerRightWidth)
+	b.WriteString(projectNameStyle.Render(projectName))
 	b.WriteString("\n\n")
 
 	if len(p.Repos) == 0 {
-		b.WriteString(statusMutedStyle.Render("No repositories configured for this project."))
+		noReposStr := truncate("No repositories configured for this project.", innerRightWidth)
+		b.WriteString(statusMutedStyle.Render(noReposStr))
 		return b.String()
 	}
 
-	for i, r := range p.Repos {
-		// Highlight if focused on right pane and this is the selected repo
-		repoTitle := fmt.Sprintf("repo: %s", r.URL)
-		if m.focusedPane == FocusRight && i == m.selectedRepoIndex {
-			b.WriteString(selectedRepoStyle.Render(repoTitle))
-		} else {
-			b.WriteString(repoNameStyle.Render(repoTitle))
-		}
+	innerRightHeight := m.windowHeight - 6
+	if innerRightHeight < 5 {
+		return "Terminal too small"
+	}
+	H_repos := innerRightHeight - 4
+
+	allLines, _, _ := m.getRepoLines()
+
+	// Slice allLines based on m.repoScrollOffset and H_repos
+	start := m.repoScrollOffset
+	end := start + H_repos
+	if end > len(allLines) {
+		end = len(allLines)
+	}
+
+	for i := start; i < end; i++ {
+		b.WriteString(allLines[i])
 		b.WriteString("\n")
+	}
+
+	// Pad with empty lines if needed to keep the help/footer sticky at the bottom
+	renderedCount := end - start
+	if renderedCount < H_repos {
+		for i := 0; i < H_repos-renderedCount; i++ {
+			b.WriteString("\n")
+		}
+	}
+
+	var footerText string
+	if m.focusedPane == FocusRight {
+		footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"
+	} else {
+		footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"
+	}
+
+	footerText = truncate(footerText, innerRightWidth)
+
+	b.WriteString(statusMutedStyle.Render("\n" + footerText))
+
+	return b.String()
+}
+
+func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
+		return nil, nil, nil
+	}
+	p := item.Project
+
+	totalPanesWidth := m.windowWidth - 4
+	leftPaneOuterWidth := totalPanesWidth / 4
+	if leftPaneOuterWidth < 20 {
+		leftPaneOuterWidth = 20
+	}
+	if leftPaneOuterWidth > 30 {
+		leftPaneOuterWidth = 30
+	}
+	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
+	rightStyleWidth := rightPaneOuterWidth - 2
+	innerRightWidth := rightStyleWidth - 2
+
+	repoStarts = make([]int, len(p.Repos))
+	repoEnds = make([]int, len(p.Repos))
+
+	for i, r := range p.Repos {
+		var repoLines []string
+
+		repoTitle := fmt.Sprintf("repo: %s", r.URL)
+		repoTitle = truncate(repoTitle, innerRightWidth)
+
+		var titleLine string
+		if m.focusedPane == FocusRight && i == m.selectedRepoIndex {
+			titleLine = selectedRepoStyle.Render(repoTitle)
+		} else {
+			titleLine = repoNameStyle.Render(repoTitle)
+		}
+		repoLines = append(repoLines, titleLine)
 
 		key := p.Name + r.URL
 		status, exists := m.repoStatuses[key]
 
 		if !exists || status.Loading {
-			b.WriteString(statusMutedStyle.Render("  [ Checking status... ]\n\n"))
-			continue
-		}
-
-		if status.Error != nil {
-			b.WriteString(statusErrorStyle.Render(fmt.Sprintf("  ✗ Error: %s\n\n", status.Error.Error())))
-			continue
-		}
-
-		if !status.IsCloned {
-			b.WriteString(statusErrorStyle.Render("  ✗ Missing (Not Cloned)\n\n"))
-			continue
-		}
-
-		b.WriteString(statusSuccessStyle.Render("  ✓ Cloned"))
-		b.WriteString("\n")
-
-		branchColor := statusMutedStyle
-		if status.Branch == "main" || status.Branch == "master" {
-			branchColor = statusSuccessStyle
-		}
-		b.WriteString(fmt.Sprintf("  branch: %s\n", branchColor.Render(status.Branch)))
-
-		if status.IsDirty {
-			b.WriteString(statusWarningStyle.Render("  status: Uncommitted changes!\n"))
+			checkingStr := truncate("  [ Checking status... ]", innerRightWidth)
+			repoLines = append(repoLines, statusMutedStyle.Render(checkingStr))
+			repoLines = append(repoLines, "")
+		} else if status.Error != nil {
+			errStr := fmt.Sprintf("  ✗ Error: %s", status.Error.Error())
+			errStr = truncate(errStr, innerRightWidth)
+			repoLines = append(repoLines, statusErrorStyle.Render(errStr))
+			repoLines = append(repoLines, "")
+		} else if !status.IsCloned {
+			missingStr := truncate("  ✗ Missing (Not Cloned)", innerRightWidth)
+			repoLines = append(repoLines, statusErrorStyle.Render(missingStr))
+			repoLines = append(repoLines, "")
 		} else {
-			b.WriteString(statusSuccessStyle.Render("  status: Clean\n"))
+			clonedStr := truncate("  ✓ Cloned", innerRightWidth)
+			repoLines = append(repoLines, statusSuccessStyle.Render(clonedStr))
+
+			branchColor := statusMutedStyle
+			if status.Branch == "main" || status.Branch == "master" {
+				branchColor = statusSuccessStyle
+			}
+			branchName := truncate(status.Branch, innerRightWidth-10) // 10 chars for "  branch: "
+			repoLines = append(repoLines, fmt.Sprintf("  branch: %s", branchColor.Render(branchName)))
+
+			statusText := "  status: Clean"
+			if status.IsDirty {
+				statusText = "  status: Uncommitted changes!"
+			}
+			statusText = truncate(statusText, innerRightWidth)
+			if status.IsDirty {
+				repoLines = append(repoLines, statusWarningStyle.Render(statusText))
+			} else {
+				repoLines = append(repoLines, statusSuccessStyle.Render(statusText))
+			}
+			repoLines = append(repoLines, "")
 		}
 
-		b.WriteString("\n")
+		repoStarts[i] = len(allLines)
+		allLines = append(allLines, repoLines...)
+		repoEnds[i] = len(allLines) - 1
 	}
 
-	if m.focusedPane == FocusRight {
-		b.WriteString(
-			statusMutedStyle.Render("\n[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"),
-		)
-	} else {
-		b.WriteString(
-			statusMutedStyle.Render(
-				"\n[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All",
-			),
-		)
-	}
+	return allLines, repoStarts, repoEnds
+}
 
-	return b.String()
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	if maxLen < 3 {
+		if maxLen < 0 {
+			return ""
+		}
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
+}
+
+func limitLines(s string, maxLines int) string {
+	if maxLines <= 0 {
+		return ""
+	}
+	lines := strings.Split(s, "\n")
+	if len(lines) <= maxLines {
+		return s
+	}
+	return strings.Join(lines[:maxLines], "\n")
+}
+
+func (m Model) renderFallbackScreen() string {
+	msg := fmt.Sprintf(
+		"Terminal Too Small\n\nWidth: %d/60, Height: %d/12\n\nPlease resize your window or\npress [q] or [Ctrl+C] to quit.",
+		m.windowWidth,
+		m.windowHeight,
+	)
+
+	return lipgloss.Place(
+		m.windowWidth,
+		m.windowHeight,
+		lipgloss.Center,
+		lipgloss.Center,
+		modalStyle.Render(msg),
+		lipgloss.WithWhitespaceChars(" "),
+	)
 }
