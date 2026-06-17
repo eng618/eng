@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
@@ -30,7 +30,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		log.Start("Scanning for non-movie folders...")
 
 		directory := args[0]
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		// Validate directory exists
 		if _, err := os.Stat(directory); os.IsNotExist(err) {
@@ -39,7 +39,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		}
 
 		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
-		spinner := utils.NewProgressSpinner("Scanning directories...")
+		spinner := ui.NewProgressSpinner("Scanning directories...")
 
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, spinner, func(done, total int) {
 			progress := 0.0
@@ -113,8 +113,18 @@ It lists the files within the identified folders and prompts for confirmation be
 
 		log.Message("") // Add a blank line for readability
 
-		if !askForConfirmation("Do you want to delete these folders and their contents?") {
-			log.Info("Deletion canceled by user.")
+		// Use MultiSelect to confirm deletion, with all folders selected by default
+		selectedToDelete, err := ui.MultiSelect(
+			"Select folders to delete:",
+			nonMovieFolders,
+			nonMovieFolders, // Pre-select all
+		)
+		if err != nil {
+			log.Error("Error during confirmation prompt: %v", err)
+			return
+		}
+		if len(selectedToDelete) == 0 {
+			log.Info("Deletion canceled or no folders selected.")
 			return
 		}
 
@@ -123,7 +133,7 @@ It lists the files within the identified folders and prompts for confirmation be
 		skippedCount := 0
 		errorMessages := []string{}
 
-		for _, folder := range nonMovieFolders {
+		for _, folder := range selectedToDelete {
 			log.Warn("Attempting to delete: %s", folder)
 			if err := os.RemoveAll(folder); err != nil {
 				errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
@@ -145,22 +155,6 @@ It lists the files within the identified folders and prompts for confirmation be
 	},
 }
 
-// askForConfirmation prompts the user for a yes/no confirmation using survey.
-func askForConfirmation(prompt string) bool {
-	confirm := false
-	promptConfirm := &survey.Confirm{
-		Message: prompt,
-		Default: false, // Default to No for safety
-	}
-	err := survey.AskOne(promptConfirm, &confirm)
-	if err != nil {
-		// Handle error, e.g., log it and return false for safety
-		log.Error("Error during confirmation prompt: %v", err)
-		return false
-	}
-	return confirm
-}
-
 // findNonMovieFolders scans the immediate subdirectories of rootDir.
 // It returns a slice of paths to subdirectories that do not contain any files
 // matching common video extensions (recursively within each subdirectory).
@@ -177,7 +171,7 @@ func askForConfirmation(prompt string) bool {
 func findNonMovieFolders(
 	isVerbose bool,
 	rootDir string,
-	spinner *utils.Spinner,
+	spinner *ui.Spinner,
 	progress func(done, total int),
 ) ([]string, error) {
 	var nonMovieFolders []string

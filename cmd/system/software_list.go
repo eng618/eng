@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
 )
 
 type Software struct {

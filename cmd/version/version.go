@@ -16,8 +16,8 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // Build-time variables
@@ -70,7 +70,7 @@ you can use the --update flag to attempt an automatic upgrade.`,
 
 		printVersionInfo()
 
-		sp := utils.NewSpinner("Checking for latest version...")
+		sp := ui.NewSpinner("Checking for latest version...")
 		sp.Start()
 		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName, isVerbose)
 		sp.Stop() // Stop spinner before printing results or attempting update

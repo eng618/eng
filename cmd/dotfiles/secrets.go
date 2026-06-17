@@ -5,9 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	configUtils "github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	configUtils "github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/secrets"
 )
 
 var (
@@ -31,7 +32,7 @@ var SecretsBackupCmd = &cobra.Command{
 	Use:   "backup",
 	Short: "Backup managed dotfiles env values into Bitwarden Secrets Manager",
 	RunE: func(cmd *cobra.Command, _args []string) error {
-		return utils.BackupDotfilesSecrets(dotfilesSecretsOptions(cmd))
+		return secrets.BackupDotfilesSecrets(dotfilesSecretsOptions(cmd))
 	},
 }
 
@@ -40,7 +41,7 @@ var SecretsRestoreCmd = &cobra.Command{
 	Use:   "restore",
 	Short: "Restore managed dotfiles env files from Bitwarden Secrets Manager",
 	RunE: func(cmd *cobra.Command, _args []string) error {
-		return utils.RestoreDotfilesSecrets(dotfilesSecretsOptions(cmd))
+		return secrets.RestoreDotfilesSecrets(dotfilesSecretsOptions(cmd))
 	},
 }
 
@@ -49,7 +50,7 @@ var SecretsDoctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Validate manifest templates and Bitwarden Secrets Manager values",
 	RunE: func(cmd *cobra.Command, _args []string) error {
-		return utils.DoctorDotfilesSecrets(dotfilesSecretsOptions(cmd))
+		return secrets.DoctorDotfilesSecrets(dotfilesSecretsOptions(cmd))
 	},
 }
 
@@ -66,22 +67,22 @@ func init() {
 	SecretsCmd.AddCommand(SecretsDoctorCmd)
 }
 
-func dotfilesSecretsOptions(cmd *cobra.Command) utils.DotfilesSecretsOptions {
+func dotfilesSecretsOptions(cmd *cobra.Command) secrets.DotfilesSecretsOptions {
 	manifestPath := dotfilesSecretsManifestPath
 	if manifestPath == "" {
 		manifestPath = filepath.Join(configUtils.WorktreePath(), "bin", "secrets", "server.manifest")
 	}
 
-	log.Verbose(utils.IsVerbose(cmd), "Using dotfiles secrets manifest: %s", manifestPath)
+	log.Verbose(cmdutil.IsVerbose(cmd), "Using dotfiles secrets manifest: %s", manifestPath)
 	if dotfilesSecretsRootPath != "" {
-		log.Verbose(utils.IsVerbose(cmd), "Using dotfiles secrets root override: %s", dotfilesSecretsRootPath)
+		log.Verbose(cmdutil.IsVerbose(cmd), "Using dotfiles secrets root override: %s", dotfilesSecretsRootPath)
 	}
 
-	return utils.DotfilesSecretsOptions{
+	return secrets.DotfilesSecretsOptions{
 		ManifestPath: manifestPath,
 		RootPath:     dotfilesSecretsRootPath,
 		ProjectID:    dotfilesSecretsProjectID,
-		Verbose:      utils.IsVerbose(cmd),
+		Verbose:      cmdutil.IsVerbose(cmd),
 		UseSpinner:   true,
 	}
 }

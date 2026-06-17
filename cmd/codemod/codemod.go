@@ -2,10 +2,14 @@
 package codemod
 
 import (
+	"embed"
 	"os/exec"
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed assets/*
+var AssetsFS embed.FS
 
 // execCommand is a variable holding the exec.Command function, allowing for test overrides.
 var execCommand = exec.Command

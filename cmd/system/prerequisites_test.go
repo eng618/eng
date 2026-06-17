@@ -5,17 +5,19 @@ import (
 	"os"
 	"testing"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/eng618/eng/internal/ui"
 )
 
 func TestEnsurePrerequisites_Success(t *testing.T) {
 	// Backup original values
 	origLookPath := lookPath
-	origAskOne := askOne
+	origUIConfirm := ui.Confirm
+	origUISelect := ui.Select
 	origStat := stat
 	defer func() {
 		lookPath = origLookPath
-		askOne = origAskOne
+		ui.Confirm = origUIConfirm
+		ui.Select = origUISelect
 		stat = origStat
 	}()
 
@@ -35,10 +37,12 @@ func TestEnsurePrerequisites_Success(t *testing.T) {
 
 func TestEnsureHomebrew_NotInstalled_Declined(t *testing.T) {
 	origLookPath := lookPath
-	origAskOne := askOne
+	origUIConfirm := ui.Confirm
+	origUISelect := ui.Select
 	defer func() {
 		lookPath = origLookPath
-		askOne = origAskOne
+		ui.Confirm = origUIConfirm
+		ui.Select = origUISelect
 	}()
 
 	// Mock brew not found
@@ -50,10 +54,8 @@ func TestEnsureHomebrew_NotInstalled_Declined(t *testing.T) {
 	}
 
 	// Mock user declining installation
-	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
-		r := response.(*bool)
-		*r = false
-		return nil
+	ui.Confirm = func(msg string, defVal bool) (bool, error) {
+		return false, nil
 	}
 
 	err := ensureHomebrew(false)

@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
-	"github.com/eng618/eng/internal/utils/repo"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // BranchAllCmd defines the cobra command for showing current branch of all git repositories.
@@ -19,7 +19,7 @@ var BranchAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking current branch of all git repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		devPath, err := getWorkingPath(cmd)
 		if err != nil {
@@ -49,14 +49,14 @@ var BranchAllCmd = &cobra.Command{
 			repoName := filepath.Base(repoPath)
 
 			// Get current branch
-			branch, err := repo.GetCurrentBranch(repoPath)
+			branch, err := repo.GetCurrentBranch(cmd.Context(), repoPath)
 			if err != nil {
 				log.Error("  %s: Failed to get current branch - %s", repoName, err)
 				continue
 			}
 
 			// Get main branch to compare
-			mainBranch, err := repo.GetMainBranch(repoPath)
+			mainBranch, err := repo.GetMainBranch(cmd.Context(), repoPath)
 			if err != nil {
 				log.Warn("  %s: Could not determine main branch - %s", repoName, err)
 				mainBranch = "main" // fallback

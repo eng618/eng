@@ -95,6 +95,38 @@ Projects are stored in your development folder with each project having its own 
 
 ---
 
+## Dashboard
+
+The `eng dashboard` provides an interactive, terminal-based Command Center for monitoring and managing your projects and their repositories.
+
+> [!NOTE]
+> **Minimum Terminal Dimensions**: The dashboard requires a terminal size of at least 60 columns wide and 12 lines high. If your window is resized below these dimensions, the interface automatically collapses into a friendly warning screen until the terminal is expanded.
+
+### Usage
+
+```sh
+eng dashboard
+```
+
+### Keybindings
+
+- **Navigation**:
+  - `Enter` or `l`: Focus the right pane to select individual repositories within a project.
+  - `Esc` or `h`: Focus the left pane to navigate projects.
+  - `j` / `k` (or `Up`/`Down`): Navigate through the lists.
+- **Actions**:
+  - `f` - Fetch: Runs `git fetch --all --prune`
+  - `p` - Pull: Runs `git pull`
+  - `s` - Sync: Runs stash, pull rebase, and stash pop.
+  - `c` - Clone: Clones a missing repository.
+  - `o` - Open: Opens the selected project or repository in Finder/File Explorer.
+  - `e` - Edit: Opens the selected project or repository in your configured text editor.
+  - `?` - Help: Toggles the keyboard shortcut help overlay.
+
+_Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e` and `o` actions). Actions triggered from the right pane target only the specifically selected repository.
+
+---
+
 ## Dotfiles Management
 
 Manage your dotfiles with a bare git repository approach. This allows you to version control your home directory configuration files without the overhead of a traditional git repository.

@@ -3,11 +3,11 @@ package project
 import (
 	"strconv"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // RemoveCmd defines the cobra command for removing projects or repositories.
@@ -54,11 +54,9 @@ Example:
 			}
 		} else {
 			// Interactive project selection
-			prompt := &survey.Select{
-				Message: "Select a project:",
-				Options: existingNames,
-			}
-			if err := survey.AskOne(prompt, &projectName); err != nil {
+			var err error
+			projectName, err = ui.Select("Select a project:", existingNames, "")
+			if err != nil {
 				log.Error("Prompt failed: %s", err)
 				return
 			}
@@ -82,11 +80,9 @@ Example:
 		}
 
 		var selection string
-		selectPrompt := &survey.Select{
-			Message: "What would you like to remove?",
-			Options: options,
-		}
-		if err := survey.AskOne(selectPrompt, &selection); err != nil {
+		var err error
+		selection, err = ui.Select("What would you like to remove?", options, "")
+		if err != nil {
 			log.Error("Prompt failed: %s", err)
 			return
 		}
@@ -94,13 +90,11 @@ Example:
 		if selection == "[Remove entire project]" {
 			// Confirm project removal
 			var confirm bool
-			confirmPrompt := &survey.Confirm{
-				Message: "Remove project '" + projectName + "' with " + strconv.Itoa(
-					len(project.Repos),
-				) + " repositories?",
-				Default: false,
-			}
-			if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
+			confirm, err := ui.Confirm(
+				"Remove project '"+projectName+"' with "+strconv.Itoa(len(project.Repos))+" repositories?",
+				false,
+			)
+			if err != nil {
 				log.Error("Prompt failed: %s", err)
 				return
 			}
@@ -135,11 +129,8 @@ Example:
 
 			// Confirm repo removal
 			var confirm bool
-			confirmPrompt := &survey.Confirm{
-				Message: "Remove repository '" + selection + "' from project '" + projectName + "'?",
-				Default: false,
-			}
-			if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
+			confirm, err := ui.Confirm("Remove repository '"+selection+"' from project '"+projectName+"'?", false)
+			if err != nil {
 				log.Error("Prompt failed: %s", err)
 				return
 			}
