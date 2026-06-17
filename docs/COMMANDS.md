@@ -99,6 +99,9 @@ Projects are stored in your development folder with each project having its own 
 
 The `eng dashboard` provides an interactive, terminal-based Command Center for monitoring and managing your projects and their repositories.
 
+> [!NOTE]
+> **Minimum Terminal Dimensions**: The dashboard requires a terminal size of at least 60 columns wide and 12 lines high. If your window is resized below these dimensions, the interface automatically collapses into a friendly warning screen until the terminal is expanded.
+
 ### Usage
 
 ```sh

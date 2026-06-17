@@ -3,6 +3,7 @@ package dashboard
 import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/eng618/eng/internal/config"
 )
@@ -12,6 +13,14 @@ type PaneFocus int
 const (
 	FocusLeft PaneFocus = iota
 	FocusRight
+)
+
+type NotificationType int
+
+const (
+	NotifySuccess NotificationType = iota
+	NotifyError
+	NotifyWarn
 )
 
 // RepoStatus holds the asynchronously loaded status of a repository.
@@ -53,6 +62,14 @@ type Model struct {
 	actionQueue []ActionItem
 	actionLogs  []string
 	spinner     spinner.Model
+
+	// Toast notification fields
+	notification      string
+	notificationStyle lipgloss.Style
+	notificationType  NotificationType
+	notificationID    int
+	hasError          bool
+	lastError         error
 
 	windowWidth  int
 	windowHeight int

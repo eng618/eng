@@ -143,15 +143,27 @@ func (m Model) renderRightPane() string {
 	}
 
 	var footerText string
-	if m.focusedPane == FocusRight {
-		footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"
+	if m.notification != "" {
+		var prefix string
+		if m.notificationType == NotifySuccess {
+			prefix = "✓ "
+		} else if m.notificationType == NotifyError {
+			prefix = "✗ "
+		} else if m.notificationType == NotifyWarn {
+			prefix = "⚠ "
+		}
+		footerText = prefix + m.notification
+		footerText = truncate(footerText, innerRightWidth)
+		b.WriteString("\n" + m.notificationStyle.Render(footerText))
 	} else {
-		footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"
+		if m.focusedPane == FocusRight {
+			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [Esc] Back"
+		} else {
+			footerText = "[Enter/l] Focus Repositories  [f] Fetch All  [p] Pull All  [s] Sync All  [c] Setup All"
+		}
+		footerText = truncate(footerText, innerRightWidth)
+		b.WriteString(statusMutedStyle.Render("\n" + footerText))
 	}
-
-	footerText = truncate(footerText, innerRightWidth)
-
-	b.WriteString(statusMutedStyle.Render("\n" + footerText))
 
 	return b.String()
 }

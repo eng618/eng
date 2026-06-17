@@ -65,4 +65,8 @@ var (
 	statusErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)
 	statusWarningStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"})
 	statusMutedStyle   = lipgloss.NewStyle().Foreground(theme.MutedForeground)
+
+	notificationSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary).Bold(true)
+	notificationErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive).Bold(true)
+	notificationWarnStyle    = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"}).Bold(true)
 )

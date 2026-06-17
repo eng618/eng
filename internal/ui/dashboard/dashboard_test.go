@@ -2,6 +2,8 @@ package dashboard
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -177,5 +179,73 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 	viewStr = m.View()
 	if strings.Contains(viewStr, "Terminal Too Small") {
 		t.Error("Expected standard dashboard layout to render when dimensions are valid, but fallback screen was shown")
+	}
+}
+
+func TestDashboardCommandsAndNotifications(t *testing.T) {
+	tempDev := t.TempDir()
+
+	// Set up a project with one cloned and one not cloned repo
+	projects := []config.Project{
+		{
+			Name: "TestProject",
+			Repos: []config.ProjectRepo{
+				{URL: "https://github.com/test/cloned-repo"},
+				{URL: "https://github.com/test/not-cloned-repo"},
+			},
+		},
+	}
+
+	// Create the .git directory in the cloned repo
+	clonedPath := filepath.Join(tempDev, "TestProject", "cloned-repo")
+	if err := os.MkdirAll(filepath.Join(clonedPath, ".git"), 0755); err != nil {
+		t.Fatalf("failed to create mock git dir: %v", err)
+	}
+
+	m := NewModel(projects, tempDev)
+	m.focusedPane = FocusRight
+	m.ready = true
+	m.windowWidth = 100
+	m.windowHeight = 20
+
+	// Test 1: Clone (c) on already cloned repo
+	m.selectedRepoIndex = 0 // cloned-repo
+	m, cmd := updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	if cmd == nil {
+		t.Error("Expected a command for delay clearing notification")
+	}
+	if !strings.Contains(m.notification, "Already cloned") {
+		t.Errorf("Expected 'Already cloned' notification, got: %q", m.notification)
+	}
+	if m.notificationType != NotifyWarn {
+		t.Errorf("Expected notification type NotifyWarn, got: %v", m.notificationType)
+	}
+
+	// Test 2: Pull (p) on not cloned repo
+	m.selectedRepoIndex = 1 // not-cloned-repo
+	m, cmd = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	if cmd == nil {
+		t.Error("Expected a command for delay clearing notification")
+	}
+	if !strings.Contains(m.notification, "Not cloned") {
+		t.Errorf("Expected 'Not cloned' notification, got: %q", m.notification)
+	}
+	if m.notificationType != NotifyError {
+		t.Errorf("Expected notification type NotifyError, got: %v", m.notificationType)
+	}
+
+	// Test 3: Clear notification message clears the correct notification
+	notifID := m.notificationID
+	m, _ = updateModel(m, clearNotificationMsg{id: notifID})
+	if m.notification != "" {
+		t.Error("Expected notification to be cleared on clearNotificationMsg")
+	}
+
+	// Test 4: Clear notification message with old ID does NOT clear current notification
+	m.notification = "New notification"
+	m.notificationID = 999
+	m, _ = updateModel(m, clearNotificationMsg{id: notifID}) // old ID
+	if m.notification != "New notification" {
+		t.Error("Expected notification to NOT be cleared by outdated clearNotificationMsg")
 	}
 }

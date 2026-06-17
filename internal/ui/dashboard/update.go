@@ -12,6 +12,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/go-git/go-git/v5"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
@@ -104,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.clampScrollOffset()
 				return m, nil
 			}
-		case "f", "p", "o", "c":
+		case "f", "p", "o", "c", "s":
 			// Handle actions based on focus
 			resModel, cmd := handleAction(m, msg.String())
 			m = resModel.(Model)
@@ -125,6 +126,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case actionDoneMsg:
+		if msg.err != nil {
+			m.hasError = true
+			m.lastError = msg.err
+		}
+
 		if len(m.actionQueue) > 0 {
 			var cmd tea.Cmd
 			m, cmd = m.popAndRunNextAction()
@@ -132,6 +138,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.actionState = ""
 			cmds = append(cmds, m.loadSelectedProjectStatusesCmd())
+
+			m.notificationID++
+			if m.hasError {
+				if m.lastError != nil {
+					m.notification = fmt.Sprintf("Completed with errors: %v", m.lastError)
+				} else {
+					m.notification = "Completed with errors"
+				}
+				m.notificationStyle = notificationErrorStyle
+				m.notificationType = NotifyError
+			} else {
+				m.notification = "Action completed successfully"
+				m.notificationStyle = notificationSuccessStyle
+				m.notificationType = NotifySuccess
+			}
+			cmds = append(cmds, m.delayClearNotificationCmd(m.notificationID))
+			m.hasError = false
+			m.lastError = nil
+		}
+
+	case clearNotificationMsg:
+		if msg.id == m.notificationID {
+			m.notification = ""
 		}
 
 	case spinner.TickMsg:
@@ -199,6 +228,16 @@ type actionDoneMsg struct {
 	err error
 }
 
+type clearNotificationMsg struct {
+	id int
+}
+
+func (m Model) delayClearNotificationCmd(id int) tea.Cmd {
+	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+		return clearNotificationMsg{id: id}
+	})
+}
+
 func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	item, ok := m.list.SelectedItem().(ProjectItem)
 	if !ok {
@@ -208,6 +247,8 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 
 	m.actionQueue = []ActionItem{}
 	m.actionLogs = []string{}
+	m.hasError = false
+	m.lastError = nil
 
 	if m.focusedPane == FocusRight {
 		if len(p.Repos) == 0 {
@@ -216,6 +257,23 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 		repoDef := p.Repos[m.selectedRepoIndex]
 		relPath, _ := repoDef.GetEffectivePath()
 		fullPath := filepath.Join(m.devPath, p.Name, relPath)
+
+		cloned := isRepoCloned(fullPath)
+		if action == "c" && cloned {
+			m.notificationID++
+			m.notification = fmt.Sprintf("Already cloned: %s", repoDef.URL)
+			m.notificationStyle = notificationWarnStyle
+			m.notificationType = NotifyWarn
+			return m, m.delayClearNotificationCmd(m.notificationID)
+		}
+		if action != "c" && !cloned {
+			m.notificationID++
+			m.notification = fmt.Sprintf("Not cloned: %s", repoDef.URL)
+			m.notificationStyle = notificationErrorStyle
+			m.notificationType = NotifyError
+			return m, m.delayClearNotificationCmd(m.notificationID)
+		}
+
 		m.actionQueue = append(m.actionQueue, ActionItem{
 			Action:   action,
 			RepoName: repoDef.URL,
@@ -284,14 +342,6 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 
 	m.actionState = fmt.Sprintf("%s %s...", actionName, item.RepoName)
 
-	cloned := isRepoCloned(item.FullPath)
-	if item.Action == "c" && cloned {
-		return m, func() tea.Msg { return actionDoneMsg{} }
-	}
-	if item.Action != "c" && !cloned {
-		return m, func() tea.Msg { return actionDoneMsg{} }
-	}
-
 	pr, pw := io.Pipe()
 
 	go func() {
@@ -304,33 +354,75 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 
 		var err error
 
+		cloned := isRepoCloned(item.FullPath)
+		if item.Action == "c" && cloned {
+			log.Warn("Already cloned: %s", item.RepoName)
+			pw.Close()
+			return
+		}
+		if item.Action != "c" && !cloned {
+			log.Warn("Skipping: %s (not cloned)", item.RepoName)
+			pw.Close()
+			return
+		}
+
 		switch item.Action {
 		case "f":
-			err = repo.FetchAllPrune(ctx, item.FullPath)
-		case "p":
-			err = repo.PullLatestCode(ctx, item.FullPath)
-		case "s":
+			log.Info("Fetching %s...", item.RepoName)
 			err = repo.FetchAllPrune(ctx, item.FullPath)
 			if err == nil {
+				log.Success("Fetch completed successfully!")
+			}
+		case "p":
+			log.Info("Pulling %s...", item.RepoName)
+			err = repo.PullLatestCode(ctx, item.FullPath)
+			if err == git.NoErrAlreadyUpToDate {
+				log.Info("Already up to date.")
+				err = nil
+			} else if err == nil {
+				log.Success("Pull completed successfully!")
+			}
+		case "s":
+			log.Info("Syncing %s...", item.RepoName)
+			log.Info("1/2 Fetching...")
+			err = repo.FetchAllPrune(ctx, item.FullPath)
+			if err == nil {
+				log.Info("2/2 Pulling...")
 				err = repo.PullLatestCode(ctx, item.FullPath)
+				if err == git.NoErrAlreadyUpToDate {
+					log.Info("Already up to date.")
+					err = nil
+				}
+			}
+			if err == nil {
+				log.Success("Sync completed successfully!")
 			}
 		case "c":
+			log.Info("Cloning %s...", item.RepoName)
 			parentDir := filepath.Dir(item.FullPath)
 			err = os.MkdirAll(parentDir, 0o755)
 			if err == nil {
-				cmd := exec.Command("git", "clone", item.RepoName, item.FullPath)
+				cmd := exec.CommandContext(ctx, "git", "clone", item.RepoName, item.FullPath)
 				cmd.Stdout = pw
 				cmd.Stderr = pw
 				err = cmd.Run()
 			}
+			if err == nil {
+				log.Success("Clone completed successfully!")
+			}
 		case "o":
-			cmd := exec.Command("open", item.FullPath)
+			log.Info("Opening %s...", item.FullPath)
+			cmd := exec.CommandContext(ctx, "open", item.FullPath)
 			cmd.Stdout = pw
 			cmd.Stderr = pw
-			err = cmd.Start()
+			err = cmd.Run()
+			if err == nil {
+				log.Success("Directory opened.")
+			}
 		}
 
 		if err != nil {
+			log.Error("Failed: %v", err)
 			pw.CloseWithError(err)
 		} else {
 			pw.Close()
