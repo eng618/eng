@@ -134,7 +134,6 @@ If those prerequisites are not met, the restore step is skipped safely.
 | --------------- | ------------------------------------------------------------------ |
 | `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status) |
 | `eng project`   | Manage project-based repository collections                        |
-| `eng dashboard` | Interactive TUI command center for monitoring and managing projects|
 | `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)           |
 | `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)   |
 | `eng files`     | File utilities (find-and-delete, find-non-movie-folders)           |
@@ -158,7 +157,6 @@ For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
 
 - [Command Reference](docs/COMMANDS.md) — Complete documentation for all commands
 - [Architecture](docs/ARCHITECTURE.md) — Technical architecture and design
-- [Roadmap](docs/TECHNICAL_ROADMAP.md) — Technical improvements and UI/UX roadmap
 - [Releasing](docs/RELEASING.md) — Automated release and Homebrew publication process
 - [Changelog](CHANGELOG.md) — Version history and release notes
 

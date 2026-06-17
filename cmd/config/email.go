@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // EmailCmd defines the command for setting the user's email in the configuration.

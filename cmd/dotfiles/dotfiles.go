@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // DotfilesCmd serves as the base command for all dotfiles related operations.
@@ -21,7 +21,7 @@ var DotfilesCmd = &cobra.Command{
 	Aliases: []string{"cfg"},
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		if showInfo {
 			log.Info("Current dotfiles configuration:")
@@ -65,10 +65,9 @@ func init() {
 
 // getDotfilesConfig retrieves the repository and worktree paths from configuration.
 func getDotfilesConfig() (string, string, error) {
-	dotfilesCfg := config.GetDotfilesConfig()
-	repoPath := os.ExpandEnv(dotfilesCfg.BareRepoPath)
+	repoPath := os.ExpandEnv(viper.GetString("dotfiles.bare_repo_path"))
 
-	worktreePath := dotfilesCfg.WorktreePath
+	worktreePath := viper.GetString("dotfiles.worktree_path")
 	if worktreePath == "" {
 		worktreePath = os.Getenv("HOME")
 	}

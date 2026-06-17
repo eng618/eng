@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // StatusAllCmd defines the cobra command for checking status of all git repositories.
@@ -19,7 +19,7 @@ var StatusAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Checking status of all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		devPath, err := getWorkingPath(cmd)
 		if err != nil {
@@ -49,7 +49,7 @@ var StatusAllCmd = &cobra.Command{
 			repoName := filepath.Base(repoPath)
 
 			// Check if repository is dirty
-			isDirty, err := repo.IsDirty(cmd.Context(), repoPath)
+			isDirty, err := repo.IsDirty(repoPath)
 			if err != nil {
 				log.Error("  %s: Failed to check status - %s", repoName, err)
 				continue

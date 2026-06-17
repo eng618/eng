@@ -9,11 +9,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 // FileTypeCategory represents a category of file types with their extensions.
@@ -42,7 +42,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		dir := args[0]
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			log.Error("Provided directory does not exist: %s", dir)
@@ -85,8 +85,11 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				"System files (.DS_Store)",
 			}
 			var selected []string
-			selected, err := ui.MultiSelect("Select file types to find and delete:", options, nil)
-			if err != nil {
+			prompt := &survey.MultiSelect{
+				Message: "Select file types to find and delete:",
+				Options: options,
+			}
+			if err := survey.AskOne(prompt, &selected); err != nil {
 				log.Error("Error collecting selection: %v", err)
 				return
 			}
@@ -180,7 +183,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		}
 
 		log.Start("Scanning for files...")
-		spinner := ui.NewProgressSpinner("Scanning directories...")
+		spinner := utils.NewProgressSpinner("Scanning directories...")
 		matches, totalSize, walkErr := ScanFiles(dir, matchFn, spinner)
 
 		if walkErr != nil {
@@ -203,20 +206,27 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			return
 		}
 
-		log.Message("\nFound %d file(s) (%.2f MB total).", len(matches), float64(totalSize)/(1024*1024))
+		log.Message("\nFound %d file(s) (%.2f MB total):", len(matches), float64(totalSize)/(1024*1024))
+		for _, m := range matches {
+			if isVerbose {
+				log.Message("  - %s", m)
+			} else {
+				log.Message("  - %s", filepath.Base(m))
+			}
+		}
 
-		// Use MultiSelect to confirm deletion, with all files selected by default
-		selectedToDelete, err := ui.MultiSelect(
-			fmt.Sprintf("Select files to delete (%.2f MB total selected by default):", float64(totalSize)/(1024*1024)),
-			matches,
-			matches, // Pre-select all
-		)
-		if err != nil {
+		// Confirm deletion
+		confirm := false
+		promptConfirm := &survey.Confirm{
+			Message: fmt.Sprintf("Delete %d file(s) (%.2f MB)?", len(matches), float64(totalSize)/(1024*1024)),
+			Default: false,
+		}
+		if err := survey.AskOne(promptConfirm, &confirm); err != nil {
 			log.Error("Error during confirmation prompt: %v", err)
 			return
 		}
-		if len(selectedToDelete) == 0 {
-			log.Info("Deletion canceled or no files selected.")
+		if !confirm {
+			log.Info("Deletion canceled by user.")
 			return
 		}
 
@@ -224,7 +234,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		var deleted, errors atomic.Int64
 		var wg sync.WaitGroup
 		workerCount := 4 // Adjust based on system capabilities
-		fileChan := make(chan string, len(selectedToDelete))
+		fileChan := make(chan string, len(matches))
 
 		// Start workers
 		for i := 0; i < workerCount; i++ {
@@ -251,7 +261,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		}
 
 		// Feed files to workers
-		for _, f := range selectedToDelete {
+		for _, f := range matches {
 			fileChan <- f
 		}
 		close(fileChan)
@@ -341,7 +351,7 @@ func deleteFiles(files []string, isVerbose bool) (deleted, errors int64) {
 	return deletedCount.Load(), errorCount.Load()
 }
 
-func ScanFiles(dir string, matchFn func(name string) bool, spinner *ui.Spinner) ([]string, int64, error) {
+func ScanFiles(dir string, matchFn func(name string) bool, spinner *utils.Spinner) ([]string, int64, error) {
 	var matches []string
 	var totalSize int64
 	var filesProcessed, totalFiles atomic.Int64

@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	gitlabcfg "github.com/eng618/eng/internal/config/gitlab"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	gitlabcfg "github.com/eng618/eng/internal/utils/config/gitlab"
+	"github.com/eng618/eng/internal/utils/log"
 )
 
 var (
@@ -108,13 +108,13 @@ func askBoolRadio(prompt string, def bool) bool {
 		defOpt = opts[1]
 	}
 	var sel string
-	sel, _ = ui.Select(prompt, opts, defOpt)
+	_ = survey.AskOne(&survey.Select{Message: prompt, Options: opts, Default: defOpt}, &sel)
 	return sel == "Yes"
 }
 
 func askSelectRadio(prompt string, options []string, def string) string {
 	var sel string
-	sel, _ = ui.Select(prompt, options, def)
+	_ = survey.AskOne(&survey.Select{Message: prompt, Options: options, Default: def}, &sel)
 	if sel == "" {
 		return def
 	}

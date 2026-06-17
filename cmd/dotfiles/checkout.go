@@ -1,13 +1,11 @@
 package dotfiles
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
-	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/utils"
+	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/utils/repo"
 )
 
 // CheckoutCmd defines the cobra command for checking out files in the dotfiles repository.
@@ -19,7 +17,7 @@ var CheckoutCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking out dotfiles")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
+		isVerbose := utils.IsVerbose(cmd)
 		all, _ := cmd.Flags().GetBool("all")
 		force, _ := cmd.Flags().GetBool("force")
 
@@ -44,7 +42,7 @@ var CheckoutCmd = &cobra.Command{
 		log.Info(operation)
 
 		// Use injectable function so tests can override and avoid executing git.
-		err = checkoutRepo(cmd.Context(), repoPath, worktreePath, force, all)
+		err = checkoutRepo(repoPath, worktreePath, force, all)
 		if err != nil {
 			log.Error("Failed to checkout dotfiles: %s", err)
 			return
@@ -60,6 +58,6 @@ func init() {
 }
 
 // checkoutRepo is injectable for tests to avoid executing git.
-var checkoutRepo = func(ctx context.Context, repoPath, worktreePath string, force, all bool) error {
-	return repo.CheckoutBareRepo(ctx, repoPath, worktreePath, force, all)
+var checkoutRepo = func(repoPath, worktreePath string, force, all bool) error {
+	return repo.CheckoutBareRepo(repoPath, worktreePath, force, all)
 }
