@@ -121,10 +121,12 @@ eng dashboard
   - `c` - Clone: Clones a missing repository.
   - `o` - Open: Opens the selected project or repository in Finder/File Explorer.
   - `e` - Edit: Opens the selected project or repository in your configured text editor.
+  - `E` - Edit Picker: Prompts to select an editor from available graphical/CLI options to open the target directory.
+  - `t` - Terminal: Opens a new terminal window/tab (supporting Ghostty, iTerm, and Terminal app) in the target directory.
   - `a` - Add: Launches interactive prompt to add new projects or repositories.
   - `?` - Help: Toggles the keyboard shortcut help overlay.
 
-_Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e` and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
+_Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e`, `E`, `t`, and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
 
 ### Status & Branch Tracking
 
