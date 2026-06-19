@@ -3,7 +3,9 @@ package repo
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -52,6 +54,32 @@ func PullLatestCode(ctx context.Context, repoPath string) error {
 		if strings.Contains(string(out), "up to date") {
 			return git.NoErrAlreadyUpToDate
 		}
+
+		// Check if a rebase was left in progress due to conflict
+		rebaseInProgress := false
+		cmdGitDir, cancelGitDir := execGitCommand(ctx, repoPath, "rev-parse", "--git-dir")
+		gitDirOut, errGitDir := cmdGitDir.Output()
+		cancelGitDir()
+		if errGitDir == nil {
+			gitDir := strings.TrimSpace(string(gitDirOut))
+			if !filepath.IsAbs(gitDir) {
+				gitDir = filepath.Join(repoPath, gitDir)
+			}
+			if _, statErr := os.Stat(filepath.Join(gitDir, "rebase-merge")); statErr == nil {
+				rebaseInProgress = true
+			} else if _, statErr := os.Stat(filepath.Join(gitDir, "rebase-apply")); statErr == nil {
+				rebaseInProgress = true
+			}
+		}
+
+		if rebaseInProgress {
+			// Abort the rebase
+			cmdAbort, cancelAbort := execGitCommand(ctx, repoPath, "rebase", "--abort")
+			_, _ = cmdAbort.CombinedOutput()
+			cancelAbort()
+			return fmt.Errorf("conflict detected: pull aborted. Please resolve conflicts manually in your terminal")
+		}
+
 		return fmt.Errorf("git pull failed: %w\n%s", err, string(out))
 	}
 

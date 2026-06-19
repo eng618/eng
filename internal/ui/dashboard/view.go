@@ -262,23 +262,82 @@ func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
 			clonedStr := truncate("  ✓ Cloned", innerRightWidth)
 			repoLines = append(repoLines, statusSuccessStyle.Render(clonedStr))
 
+			var branchText string
 			branchColor := statusMutedStyle
-			if status.Branch == "main" || status.Branch == "master" {
-				branchColor = statusSuccessStyle
-			}
-			branchName := truncate(status.Branch, innerRightWidth-10) // 10 chars for "  branch: "
-			repoLines = append(repoLines, fmt.Sprintf("  branch: %s", branchColor.Render(branchName)))
 
-			statusText := "  status: Clean"
-			if status.IsDirty {
-				statusText = "  status: Uncommitted changes!"
-			}
-			statusText = truncate(statusText, innerRightWidth)
-			if status.IsDirty {
-				repoLines = append(repoLines, statusWarningStyle.Render(statusText))
+			if status.IsDetached {
+				branchText = status.Branch
+				branchColor = statusWarningStyle
 			} else {
-				repoLines = append(repoLines, statusSuccessStyle.Render(statusText))
+				branchText = status.Branch
+				if status.HasUpstream {
+					var parts []string
+					if status.AheadCount > 0 {
+						parts = append(parts, fmt.Sprintf("↑%d", status.AheadCount))
+					}
+					if status.BehindCount > 0 {
+						parts = append(parts, fmt.Sprintf("↓%d", status.BehindCount))
+					}
+					if len(parts) > 0 {
+						branchText = fmt.Sprintf("%s %s", status.Branch, strings.Join(parts, " "))
+						if status.AheadCount > 0 && status.BehindCount > 0 {
+							branchColor = statusWarningStyle
+						} else if status.BehindCount > 0 {
+							branchColor = statusErrorStyle
+						} else {
+							branchColor = statusSuccessStyle
+						}
+					} else {
+						if status.Branch == "main" || status.Branch == "master" {
+							branchColor = statusSuccessStyle
+						}
+					}
+				} else {
+					branchText = fmt.Sprintf("%s (unpublished)", status.Branch)
+					branchColor = statusMutedStyle
+				}
 			}
+
+			branchNameLine := truncate(branchText, innerRightWidth-10) // 10 chars for "  branch: "
+			repoLines = append(repoLines, fmt.Sprintf("  branch: %s", branchColor.Render(branchNameLine)))
+
+			var statusText string
+			statusColor := statusSuccessStyle
+
+			switch {
+			case status.OngoingOp != "":
+				statusText = fmt.Sprintf("Ongoing %s!", status.OngoingOp)
+				statusColor = statusWarningStyle
+			case status.ConflictCount > 0:
+				statusText = fmt.Sprintf("Merge conflicts! (%d files)", status.ConflictCount)
+				statusColor = statusErrorStyle
+			case status.UnstagedCount > 0 || status.StagedCount > 0 || status.UntrackedCount > 0:
+				var parts []string
+				if status.UnstagedCount > 0 {
+					parts = append(parts, fmt.Sprintf("%d modified", status.UnstagedCount))
+					statusColor = statusWarningStyle
+				}
+				if status.StagedCount > 0 {
+					parts = append(parts, fmt.Sprintf("%d staged", status.StagedCount))
+					if status.UnstagedCount == 0 {
+						statusColor = statusSuccessStyle
+					}
+				}
+				if status.UntrackedCount > 0 {
+					parts = append(parts, fmt.Sprintf("%d untracked", status.UntrackedCount))
+					if status.UnstagedCount == 0 && status.StagedCount == 0 {
+						statusColor = statusMutedStyle
+					}
+				}
+				statusText = strings.Join(parts, ", ")
+			default:
+				statusText = "Clean"
+				statusColor = statusSuccessStyle
+			}
+
+			statusLine := fmt.Sprintf("  status: %s", statusText)
+			statusLine = truncate(statusLine, innerRightWidth)
+			repoLines = append(repoLines, statusColor.Render(statusLine))
 			repoLines = append(repoLines, "")
 		}
 

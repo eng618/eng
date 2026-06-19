@@ -25,11 +25,20 @@ const (
 
 // RepoStatus holds the asynchronously loaded status of a repository.
 type RepoStatus struct {
-	IsCloned bool
-	IsDirty  bool
-	Branch   string
-	Error    error
-	Loading  bool
+	IsCloned       bool
+	IsDirty        bool
+	Branch         string
+	IsDetached     bool
+	AheadCount     int
+	BehindCount    int
+	HasUpstream    bool
+	UnstagedCount  int
+	StagedCount    int
+	UntrackedCount int
+	ConflictCount  int
+	OngoingOp      string
+	Error          error
+	Loading        bool
 }
 
 // ProjectItem adapts config.Project to the list.Item interface.

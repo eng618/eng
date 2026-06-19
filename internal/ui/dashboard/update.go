@@ -603,14 +603,21 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 	}
 
 	if isCloned {
-		dirty, err := repo.IsDirty(ctx, fullPath)
+		info, err := repo.GetDetailedStatus(ctx, fullPath)
 		if err == nil {
-			status.IsDirty = dirty
-		}
-
-		branch, err := repo.GetCurrentBranch(ctx, fullPath)
-		if err == nil {
-			status.Branch = branch
+			status.Branch = info.Branch
+			status.IsDetached = info.IsDetached
+			status.AheadCount = info.AheadCount
+			status.BehindCount = info.BehindCount
+			status.HasUpstream = info.HasUpstream
+			status.UnstagedCount = info.UnstagedCount
+			status.StagedCount = info.StagedCount
+			status.UntrackedCount = info.UntrackedCount
+			status.ConflictCount = info.ConflictCount
+			status.OngoingOp = info.OngoingOp
+			status.IsDirty = info.UnstagedCount > 0 || info.ConflictCount > 0
+		} else {
+			status.Error = err
 		}
 	}
 

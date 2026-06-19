@@ -612,3 +612,104 @@ func TestBranchExists_Comprehensive(t *testing.T) {
 		})
 	}
 }
+
+func TestPullLatestCode_Conflict(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Create a "remote" repo and commit a file
+	remoteDir, err := os.MkdirTemp("", "test-remote-*")
+	if err != nil {
+		t.Fatalf("Failed to create remote temp dir: %v", err)
+	}
+	defer os.RemoveAll(remoteDir)
+
+	// Run git init, config, etc. on remote
+	runCmd := func(dir, name string, args ...string) {
+		cmd := exec.Command(name, args...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("Command %s %v failed in %s: %v\nOutput: %s", name, args, dir, err, string(out))
+		}
+	}
+
+	runCmd(remoteDir, "git", "init")
+	runCmd(remoteDir, "git", "config", "user.name", "Test User")
+	runCmd(remoteDir, "git", "config", "user.email", "test@example.com")
+	runCmd(remoteDir, "git", "config", "commit.gpgsign", "false")
+	runCmd(remoteDir, "git", "config", "tag.gpgsign", "false")
+	runCmd(remoteDir, "git", "branch", "-M", "main")
+
+	testFileRemote := filepath.Join(remoteDir, "test.txt")
+	if err := os.WriteFile(testFileRemote, []byte("original content\n"), 0o644); err != nil {
+		t.Fatalf("Failed to write remote file: %v", err)
+	}
+	runCmd(remoteDir, "git", "add", "test.txt")
+	runCmd(remoteDir, "git", "commit", "-m", "Initial commit")
+
+	// 2. Create a "local" clone
+	localDir, err := os.MkdirTemp("", "test-local-*")
+	if err != nil {
+		t.Fatalf("Failed to create local temp dir: %v", err)
+	}
+	defer os.RemoveAll(localDir)
+
+	runCmd(localDir, "git", "clone", remoteDir, ".")
+	runCmd(localDir, "git", "config", "user.name", "Test User")
+	runCmd(localDir, "git", "config", "user.email", "test@example.com")
+	runCmd(localDir, "git", "config", "commit.gpgsign", "false")
+	runCmd(localDir, "git", "config", "tag.gpgsign", "false")
+
+	// 3. Make conflict change on remote
+	if err := os.WriteFile(testFileRemote, []byte("remote modification\n"), 0o644); err != nil {
+		t.Fatalf("Failed to modify remote file: %v", err)
+	}
+	runCmd(remoteDir, "git", "add", "test.txt")
+	runCmd(remoteDir, "git", "commit", "-m", "Remote change")
+
+	// 4. Make conflicting change on local and commit
+	testFileLocal := filepath.Join(localDir, "test.txt")
+	if err := os.WriteFile(testFileLocal, []byte("local conflicting modification\n"), 0o644); err != nil {
+		t.Fatalf("Failed to modify local file: %v", err)
+	}
+	runCmd(localDir, "git", "add", "test.txt")
+	runCmd(localDir, "git", "commit", "-m", "Local change")
+
+	// 5. Call PullLatestCode - should conflict, abort, and return warning
+	err = PullLatestCode(ctx, localDir)
+	if err == nil {
+		t.Fatalf("Expected pull to fail with conflict, but got no error")
+	}
+
+	if !strings.Contains(err.Error(), "conflict detected: pull aborted") {
+		t.Errorf("Expected error to contain warning about conflict, got: %v", err)
+	}
+
+	// 6. Check that rebase is not in progress (aborted)
+	cmdGitDir := exec.Command("git", "rev-parse", "--git-dir")
+	cmdGitDir.Dir = localDir
+	gitDirOut, errGitDir := cmdGitDir.Output()
+	if errGitDir == nil {
+		gitDir := strings.TrimSpace(string(gitDirOut))
+		if !filepath.IsAbs(gitDir) {
+			gitDir = filepath.Join(localDir, gitDir)
+		}
+		if _, statErr := os.Stat(filepath.Join(gitDir, "rebase-merge")); statErr == nil {
+			t.Errorf("rebase-merge directory still exists, rebase not aborted")
+		}
+		if _, statErr := os.Stat(filepath.Join(gitDir, "rebase-apply")); statErr == nil {
+			t.Errorf("rebase-apply directory still exists, rebase not aborted")
+		}
+	}
+
+	// 7. Check that local file is restored back to the local commit state
+	localContent, errRead := os.ReadFile(testFileLocal)
+	if errRead != nil {
+		t.Fatalf("Failed to read local file: %v", errRead)
+	}
+	if string(localContent) != "local conflicting modification\n" {
+		t.Errorf(
+			"Expected local content to be restored to 'local conflicting modification\n', got: %q",
+			string(localContent),
+		)
+	}
+}

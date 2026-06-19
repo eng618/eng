@@ -367,3 +367,109 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 		t.Errorf("Expected selected project to be 'NewProject', got: %v", m.list.SelectedItem())
 	}
 }
+
+func TestDashboardStatusRendering(t *testing.T) {
+	projects := []config.Project{
+		{
+			Name: "TestProj",
+			Repos: []config.ProjectRepo{
+				{URL: "https://github.com/test/repo1"},
+			},
+		},
+	}
+
+	m := NewModel(projects, "/tmp/dev", "")
+	m.focusedPane = FocusRight
+	m.ready = true
+	m.windowWidth = 100
+	m.windowHeight = 20
+
+	// Helper to render right pane content
+	render := func() string {
+		return m.renderRightPane()
+	}
+
+	key := "TestProjhttps://github.com/test/repo1"
+
+	// 1. Clean in-sync state
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:    true,
+		Branch:      "main",
+		HasUpstream: true,
+	}
+	view := render()
+	if !strings.Contains(view, "branch: main") || !strings.Contains(view, "status: Clean") {
+		t.Errorf("expected clean in-sync branch/status, got view:\n%s", view)
+	}
+
+	// 2. Ahead/Behind diverged state
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:    true,
+		Branch:      "feature",
+		HasUpstream: true,
+		AheadCount:  2,
+		BehindCount: 1,
+	}
+	view = render()
+	if !strings.Contains(view, "branch: feature ↑2 ↓1") {
+		t.Errorf("expected feature ↑2 ↓1, got view:\n%s", view)
+	}
+
+	// 3. Unpublished branch
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:    true,
+		Branch:      "local-only",
+		HasUpstream: false,
+	}
+	view = render()
+	if !strings.Contains(view, "branch: local-only (unpublished)") {
+		t.Errorf("expected local-only (unpublished), got view:\n%s", view)
+	}
+
+	// 4. Detached HEAD
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:   true,
+		Branch:     "(detached HEAD at abc1234)",
+		IsDetached: true,
+	}
+	view = render()
+	if !strings.Contains(view, "branch: (detached HEAD at abc1234)") {
+		t.Errorf("expected detached HEAD branch line, got view:\n%s", view)
+	}
+
+	// 5. Uncommitted and staged changes, untracked files
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:       true,
+		Branch:         "main",
+		HasUpstream:    true,
+		UnstagedCount:  3,
+		StagedCount:    1,
+		UntrackedCount: 5,
+	}
+	view = render()
+	if !strings.Contains(view, "status: 3 modified, 1 staged, 5 untracked") {
+		t.Errorf("expected modifications list, got view:\n%s", view)
+	}
+
+	// 6. Ongoing Operation (rebase)
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:  true,
+		Branch:    "main",
+		OngoingOp: "rebase",
+	}
+	view = render()
+	if !strings.Contains(view, "status: Ongoing rebase!") {
+		t.Errorf("expected Ongoing rebase!, got view:\n%s", view)
+	}
+
+	// 7. Merge Conflicts
+	m.repoStatuses[key] = RepoStatus{
+		IsCloned:      true,
+		Branch:        "main",
+		ConflictCount: 2,
+	}
+	view = render()
+	if !strings.Contains(view, "status: Merge conflicts! (2 files)") {
+		t.Errorf("expected Merge conflicts! (2 files), got view:\n%s", view)
+	}
+}

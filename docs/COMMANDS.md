@@ -126,6 +126,23 @@ eng dashboard
 
 _Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e` and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
 
+### Status & Branch Tracking
+
+The dashboard provides rich repository status detection, using fast Git CLI commands to track local and remote repository states:
+
+- **Branch Information**:
+  - Displays the active branch name.
+  - Shows ahead (`↑`) and behind (`↓`) commit counts relative to the remote tracking branch.
+  - Highlights unpublished branches (with an `(unpublished)` suffix).
+  - Highlights detached HEAD states (e.g., `(detached HEAD at abc1234)`).
+- **Working Tree Status**:
+  - Shows staged/unstaged modifications and untracked file counts (e.g., `3 modified, 1 staged, 5 untracked`).
+  - A working tree is only flagged as dirty when there are modified tracked files or conflicts, avoiding false positives from untracked files.
+- **Ongoing Operations**:
+  - Alerts you when a `rebase`, `merge`, `cherry-pick`, or `bisect` operation is in progress.
+- **Merge Conflicts**:
+  - Flags active merge conflicts with a high-visibility warning.
+
 ---
 
 ## Dotfiles Management
