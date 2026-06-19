@@ -127,6 +127,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.delayClearNotificationCmd(m.notificationID)
 			}
 			return m, cmd
+		case "E":
+			cmd, err := m.openInCustomEditorCmd()
+			if err != nil {
+				m.notificationID++
+				m.notification = fmt.Sprintf("Editor error: %v", err)
+				m.notificationStyle = notificationErrorStyle
+				m.notificationType = NotifyError
+				return m, m.delayClearNotificationCmd(m.notificationID)
+			}
+			return m, cmd
+		case "t":
+			cmd, err := m.openInTerminalCmd()
+			if err != nil {
+				m.notificationID++
+				m.notification = fmt.Sprintf("Terminal error: %v", err)
+				m.notificationStyle = notificationErrorStyle
+				m.notificationType = NotifyError
+				return m, m.delayClearNotificationCmd(m.notificationID)
+			}
+			return m, cmd
 		case "f", "p", "o", "c", "s":
 			// Handle actions based on focus
 			resModel, cmd := handleAction(m, msg.String())
@@ -663,6 +683,81 @@ func (m Model) openInEditorCmd() (tea.Cmd, error) {
 	}
 
 	execCmd := resolveEditorCommand(m.editor, targetPath)
+
+	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
+		return editorFinishedMsg{err: err}
+	}), nil
+}
+
+func (m Model) openInCustomEditorCmd() (tea.Cmd, error) {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
+		return nil, fmt.Errorf("no project selected")
+	}
+	p := item.Project
+
+	var targetPath string
+	if m.focusedPane == FocusRight {
+		if len(p.Repos) == 0 {
+			return nil, fmt.Errorf("no repository selected")
+		}
+		repoDef := p.Repos[m.selectedRepoIndex]
+		relPath, _ := repoDef.GetEffectivePath()
+		targetPath = filepath.Join(m.devPath, p.Name, relPath)
+
+		if !isRepoCloned(targetPath) {
+			return nil, fmt.Errorf("repository not cloned yet")
+		}
+	} else {
+		targetPath = filepath.Join(m.devPath, p.Name)
+		_ = os.MkdirAll(targetPath, 0o755)
+	}
+
+	self, err := os.Executable()
+	if err != nil {
+		self = "eng"
+	}
+
+	execCmd := exec.Command(self, "dashboard", "select-editor", targetPath)
+
+	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
+		return editorFinishedMsg{err: err}
+	}), nil
+}
+
+func (m Model) openInTerminalCmd() (tea.Cmd, error) {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
+		return nil, fmt.Errorf("no project selected")
+	}
+	p := item.Project
+
+	var targetPath string
+	if m.focusedPane == FocusRight {
+		if len(p.Repos) == 0 {
+			return nil, fmt.Errorf("no repository selected")
+		}
+		repoDef := p.Repos[m.selectedRepoIndex]
+		relPath, _ := repoDef.GetEffectivePath()
+		targetPath = filepath.Join(m.devPath, p.Name, relPath)
+
+		if !isRepoCloned(targetPath) {
+			return nil, fmt.Errorf("repository not cloned yet")
+		}
+	} else {
+		targetPath = filepath.Join(m.devPath, p.Name)
+		_ = os.MkdirAll(targetPath, 0o755)
+	}
+
+	// Detect terminal app in fallback chain: Ghostty -> iTerm -> Terminal
+	terminalApp := "Terminal"
+	if _, err := os.Stat("/Applications/Ghostty.app"); err == nil {
+		terminalApp = "Ghostty"
+	} else if _, err := os.Stat("/Applications/iTerm.app"); err == nil {
+		terminalApp = "iTerm"
+	}
+
+	execCmd := exec.Command("open", "-a", terminalApp, targetPath)
 
 	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
 		return editorFinishedMsg{err: err}

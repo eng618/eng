@@ -301,6 +301,24 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 		t.Fatal("Expected tea.Cmd to be returned")
 	}
 
+	// Test 7b: Custom Editor resolution check
+	cmdCustom, errCustom := m.openInCustomEditorCmd()
+	if errCustom != nil {
+		t.Fatalf("Expected no error launching custom editor, got: %v", errCustom)
+	}
+	if cmdCustom == nil {
+		t.Fatal("Expected tea.Cmd to be returned for custom editor")
+	}
+
+	// Test 7c: Terminal resolution check
+	cmdTerm, errTerm := m.openInTerminalCmd()
+	if errTerm != nil {
+		t.Fatalf("Expected no error launching terminal, got: %v", errTerm)
+	}
+	if cmdTerm == nil {
+		t.Fatal("Expected tea.Cmd to be returned for terminal")
+	}
+
 	// Test 8: Batch progress calculation
 	m.focusedPane = FocusLeft                                                 // project wide
 	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}}) // Fetch all
