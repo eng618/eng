@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.19.0](https://github.com/eng618/eng/compare/v1.18.0...v1.19.0) (2026-06-20)
+
+
+### Features
+
+* Add interactive editor selection and terminal opening capabilities to dashboard ([1e1b975](https://github.com/eng618/eng/commit/1e1b97540f2cbfb826ecae836b2d3762c50d1e0f))
+* Enhance repo dashboard status with detailed git branch info, sync counts, and ongoing operation detection ([a06909e](https://github.com/eng618/eng/commit/a06909e6a814b67ba0f53a1b7ede12b14389f271))
+
 ## [1.18.0](https://github.com/eng618/eng/compare/v1.17.0...v1.18.0) (2026-06-17)
 
 
