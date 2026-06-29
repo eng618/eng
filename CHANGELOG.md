@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.21.0](https://github.com/eng618/eng/compare/v1.20.0...v1.21.0) (2026-06-29)
+
+
+### Features
+
+* Add responsive table view for repository list and include last updated timestamps ([a01546a](https://github.com/eng618/eng/commit/a01546a054fad922f4d767860843783e9b80175b))
+
 ## [1.20.0](https://github.com/eng618/eng/compare/v1.19.0...v1.20.0) (2026-06-29)
 
 
