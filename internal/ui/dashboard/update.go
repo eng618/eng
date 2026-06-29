@@ -153,6 +153,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m = resModel.(Model)
 			m.clampScrollOffset()
 			return m, cmd
+		case "r":
+			return m, m.forceRefreshSelectedProjectStatusesCmd()
 		case "a":
 			cmd := m.addProjectOrRepoCmd()
 			return m, cmd
@@ -243,7 +245,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		} else {
 			m.actionState = ""
-			cmds = append(cmds, m.loadSelectedProjectStatusesCmd())
+			cmds = append(cmds, m.forceRefreshSelectedProjectStatusesCmd())
 
 			m.notificationID++
 			if m.hasError {
@@ -589,6 +591,36 @@ func (m *Model) loadSelectedProjectStatusesCmd() tea.Cmd {
 				return checkRepoStatus(projectName, repoDef, devPath)
 			})
 		}
+	}
+
+	return tea.Batch(cmds...)
+}
+
+// forceRefreshSelectedProjectStatusesCmd generates tea.Cmds to fetch the status of each repo in the currently selected project, bypassing any caching.
+func (m *Model) forceRefreshSelectedProjectStatusesCmd() tea.Cmd {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
+		return nil
+	}
+
+	p := item.Project
+	var cmds []tea.Cmd
+
+	for _, r := range p.Repos {
+		key := p.Name + r.URL
+		s := m.repoStatuses[key]
+		s.Loading = true
+		s.Error = nil
+		m.repoStatuses[key] = s
+
+		// Capture loop variables
+		projectName := p.Name
+		repoDef := r
+		devPath := m.devPath
+
+		cmds = append(cmds, func() tea.Msg {
+			return checkRepoStatus(projectName, repoDef, devPath)
+		})
 	}
 
 	return tea.Batch(cmds...)

@@ -123,6 +123,7 @@ eng dashboard
   - `e` - Edit: Opens the selected project or repository in your configured text editor.
   - `E` - Edit Picker: Prompts to select an editor from available graphical/CLI options to open the target directory.
   - `t` - Terminal: Opens a new terminal window/tab (supporting Ghostty, iTerm, and Terminal app) in the target directory.
+  - `r` - Refresh: Manually refreshes repository statuses for the selected project.
   - `a` - Add: Launches interactive prompt to add new projects or repositories.
   - `?` - Help: Toggles the keyboard shortcut help overlay.
 

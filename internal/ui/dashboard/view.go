@@ -191,9 +191,9 @@ func (m Model) renderRightPane() string {
 		b.WriteString(m.notificationStyle.Render(footerText))
 	} else {
 		if m.focusedPane == FocusRight {
-			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [a] Add Repo  [?] Help  [Esc] Back"
+			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [r] Refresh  [a] Add Repo  [?] Help  [Esc] Back"
 		} else {
-			footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit All  [t] Term All  [a] Add  [?] Help"
+			footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit All  [t] Term All  [r] Refresh All  [a] Add  [?] Help"
 		}
 		footerText = truncate(footerText, innerRightWidth)
 		b.WriteString(statusMutedStyle.Render("\n" + footerText))
@@ -417,6 +417,7 @@ func (m Model) renderHelpModal() string {
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("e     "), descStyle.Render("Open in Configured Editor"))
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("E     "), descStyle.Render("Choose Editor to Open in..."))
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("t     "), descStyle.Render("Open in Terminal Window"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("r     "), descStyle.Render("Refresh repository statuses"))
 	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("a     "), descStyle.Render("Add project or repository"))
 
 	b.WriteString(statusMutedStyle.Render("Press any key to close"))

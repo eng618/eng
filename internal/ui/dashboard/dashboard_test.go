@@ -384,6 +384,12 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	if !ok || item.Project.Name != "NewProject" {
 		t.Errorf("Expected selected project to be 'NewProject', got: %v", m.list.SelectedItem())
 	}
+
+	// Test 10: Manual refresh keypress 'r'
+	m, cmdRefresh := updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	if cmdRefresh == nil {
+		t.Fatal("Expected tea.Cmd to be returned for refresh keypress")
+	}
 }
 
 func TestDashboardStatusRendering(t *testing.T) {
