@@ -131,6 +131,13 @@ _Context-aware Execution:_ Actions triggered from the left pane affect all repos
 
 ### Status & Branch Tracking
 
+#### Responsive Layouts
+
+The repository details pane adaptively updates its layout based on the terminal window's width:
+
+- **Table View (Wide Screens)**: When the terminal's inner right pane width is 75 characters or wider, the dashboard renders a structured multi-column table displaying the repository name, branch, staged/unstaged status, ahead/behind counts, and the timestamp of the last status check (`UPDATED`).
+- **Stacked View (Narrow Screens)**: When the terminal is narrower, it automatically falls back to the vertically stacked layout showing multi-line details for each repository.
+
 The dashboard provides rich repository status detection, using fast Git CLI commands to track local and remote repository states:
 
 - **Branch Information**:

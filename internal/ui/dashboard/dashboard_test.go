@@ -66,8 +66,27 @@ func TestDashboardResponsiveLayout(t *testing.T) {
 
 	for idx, line := range lines {
 		if idx > 0 && idx < actualHeight-1 && lipgloss.Width(line) != width {
-			t.Errorf("Line %d has visual width %d, expected exactly %d", idx, lipgloss.Width(line), width)
+			t.Errorf(
+				"Line %d has visual width %d, expected %d",
+				idx,
+				lipgloss.Width(line),
+				width,
+			)
 		}
+	}
+
+	// 4. Test narrow width fallback to stacked view
+	narrowWidth := 80
+	narrowMsg := tea.WindowSizeMsg{Width: narrowWidth, Height: height}
+	updatedModel2, _ := m.Update(narrowMsg)
+	m2 := updatedModel2.(Model)
+
+	viewStr2 := m2.View()
+	if strings.Contains(viewStr2, "REPOSITORY") {
+		t.Error(
+			"Expected narrow layout to fallback to stacked list view " +
+				"(should not contain table header 'REPOSITORY')",
+		)
 	}
 }
 

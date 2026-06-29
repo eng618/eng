@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -152,25 +153,29 @@ func (m Model) renderRightPane() string {
 	}
 	H_repos := innerRightHeight - 4
 
-	allLines, _, _ := m.getRepoLines()
+	if innerRightWidth >= 75 {
+		b.WriteString(m.renderRepoTable(p, innerRightWidth, H_repos))
+	} else {
+		allLines, _, _ := m.getRepoLines()
 
-	// Slice allLines based on m.repoScrollOffset and H_repos
-	start := m.repoScrollOffset
-	end := start + H_repos
-	if end > len(allLines) {
-		end = len(allLines)
-	}
+		// Slice allLines based on m.repoScrollOffset and H_repos
+		start := m.repoScrollOffset
+		end := start + H_repos
+		if end > len(allLines) {
+			end = len(allLines)
+		}
 
-	for i := start; i < end; i++ {
-		b.WriteString(allLines[i])
-		b.WriteString("\n")
-	}
-
-	// Pad with empty lines if needed to keep the help/footer sticky at the bottom
-	renderedCount := end - start
-	if renderedCount < H_repos {
-		for i := 0; i < H_repos-renderedCount; i++ {
+		for i := start; i < end; i++ {
+			b.WriteString(allLines[i])
 			b.WriteString("\n")
+		}
+
+		// Pad with empty lines if needed to keep the help/footer sticky at the bottom
+		renderedCount := end - start
+		if renderedCount < H_repos {
+			for i := 0; i < H_repos-renderedCount; i++ {
+				b.WriteString("\n")
+			}
 		}
 	}
 
@@ -350,16 +355,17 @@ func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
 }
 
 func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
 		return s
 	}
 	if maxLen < 3 {
 		if maxLen < 0 {
 			return ""
 		}
-		return s[:maxLen]
+		return string(runes[:maxLen])
 	}
-	return s[:maxLen-3] + "..."
+	return string(runes[:maxLen-3]) + "..."
 }
 
 func limitLines(s string, maxLines int) string {
@@ -441,4 +447,227 @@ func renderProgressBar(width int, percentage float64) string {
 	empty := strings.Repeat("░", width-filledLength)
 
 	return progressBarFilledStyle.Render(filled) + progressBarTrackStyle.Render(empty)
+}
+
+func (m Model) renderRepoTable(p config.Project, innerRightWidth, H_repos int) string {
+	gap := "  "
+	gapWidth := len(gap)
+	totalGaps := 4
+	usableWidth := innerRightWidth - (gapWidth * totalGaps)
+	if usableWidth < 40 {
+		usableWidth = 40
+	}
+
+	wRepo := int(float64(usableWidth) * 0.28)
+	wBranch := int(float64(usableWidth) * 0.20)
+	wStatus := int(float64(usableWidth) * 0.27)
+	wUpstream := int(float64(usableWidth) * 0.13)
+	wUpdated := usableWidth - wRepo - wBranch - wStatus - wUpstream
+
+	H_body := H_repos - 2
+	if H_body < 1 {
+		H_body = 1
+	}
+
+	headerRepo := fmt.Sprintf("  %-*s", wRepo-2, "REPOSITORY")
+	headerBranch := fmt.Sprintf("%-*s", wBranch, "BRANCH")
+	headerStatus := fmt.Sprintf("%-*s", wStatus, "STATUS")
+	headerUpstream := fmt.Sprintf("%-*s", wUpstream, "UPSTREAM")
+	headerUpdated := fmt.Sprintf("%*s", wUpdated, "UPDATED")
+
+	headerLine := headerRepo + gap + headerBranch + gap + headerStatus + gap + headerUpstream + gap + headerUpdated
+	tableHeaderStyle := lipgloss.NewStyle().Foreground(theme.Primary).Bold(true)
+
+	underlineLine := strings.Repeat("─", wRepo) + gap +
+		strings.Repeat("─", wBranch) + gap +
+		strings.Repeat("─", wStatus) + gap +
+		strings.Repeat("─", wUpstream) + gap +
+		strings.Repeat("─", wUpdated)
+
+	var tb strings.Builder
+	tb.WriteString(tableHeaderStyle.Render(headerLine))
+	tb.WriteString("\n")
+	tb.WriteString(statusMutedStyle.Render(underlineLine))
+	tb.WriteString("\n")
+
+	start := m.repoScrollOffset
+	end := start + H_body
+	if end > len(p.Repos) {
+		end = len(p.Repos)
+	}
+
+	for idx := start; idx < end; idx++ {
+		r := p.Repos[idx]
+		key := p.Name + r.URL
+		status := m.repoStatuses[key]
+
+		repoName, err := r.GetEffectivePath()
+		if err != nil {
+			repoName = r.URL
+		}
+
+		isSelected := m.focusedPane == FocusRight && idx == m.selectedRepoIndex
+
+		repoCell := renderRepoCell(repoName, isSelected, wRepo)
+		branchCell := renderBranchCell(status, isSelected, wBranch)
+		statusCell := renderStatusCell(status, isSelected, wStatus)
+		upstreamCell := renderUpstreamCell(status, isSelected, wUpstream)
+		updatedCell := renderUpdatedCell(status, isSelected, wUpdated)
+
+		rowLine := repoCell + gap + branchCell + gap + statusCell + gap + upstreamCell + gap + updatedCell
+		tb.WriteString(rowLine)
+		tb.WriteString("\n")
+	}
+
+	renderedCount := end - start
+	if renderedCount < H_body {
+		for i := 0; i < H_body-renderedCount; i++ {
+			tb.WriteString("\n")
+		}
+	}
+
+	return tb.String()
+}
+
+func renderRepoCell(repoName string, isSelected bool, wRepo int) string {
+	var repoText string
+	if isSelected {
+		repoText = fmt.Sprintf("▸ %-*s", wRepo-2, truncate(repoName, wRepo-2))
+		return selectedTableCellStyle.Render(repoText)
+	}
+	repoText = fmt.Sprintf("  %-*s", wRepo-2, truncate(repoName, wRepo-2))
+	return repoNameStyle.Render(repoText)
+}
+
+func renderBranchCell(status RepoStatus, isSelected bool, wBranch int) string {
+	var branchText string
+	branchColor := statusMutedStyle
+
+	if !status.IsCloned {
+		branchText = "—"
+	} else if status.IsDetached {
+		branchText = truncate(status.Branch, wBranch-1)
+		branchColor = statusWarningStyle
+	} else {
+		branchText = truncate(status.Branch, wBranch-1)
+		if status.HasUpstream {
+			if status.AheadCount > 0 && status.BehindCount > 0 {
+				branchColor = statusWarningStyle
+			} else if status.BehindCount > 0 {
+				branchColor = statusErrorStyle
+			} else {
+				branchColor = statusSuccessStyle
+			}
+		} else {
+			branchColor = statusMutedStyle
+		}
+	}
+
+	branchTextFormatted := fmt.Sprintf("%-*s", wBranch, branchText)
+	if isSelected {
+		return selectedTableCellStyle.Render(branchTextFormatted)
+	}
+	return branchColor.Render(branchTextFormatted)
+}
+
+func renderStatusCell(status RepoStatus, isSelected bool, wStatus int) string {
+	var statusText string
+	statusColor := statusSuccessStyle
+
+	if !status.IsCloned {
+		statusText = "Missing"
+		statusColor = statusErrorStyle
+	} else if status.Loading {
+		statusText = "Checking..."
+		statusColor = statusMutedStyle
+	} else if status.Error != nil {
+		statusText = "Error"
+		statusColor = statusErrorStyle
+	} else if status.OngoingOp != "" {
+		statusText = fmt.Sprintf("Ongoing %s!", status.OngoingOp)
+		statusColor = statusWarningStyle
+	} else if status.ConflictCount > 0 {
+		statusText = "Conflict!"
+		statusColor = statusErrorStyle
+	} else if status.UnstagedCount > 0 || status.StagedCount > 0 || status.UntrackedCount > 0 {
+		var parts []string
+		if status.UnstagedCount > 0 {
+			parts = append(parts, fmt.Sprintf("%d mod", status.UnstagedCount))
+			statusColor = statusWarningStyle
+		}
+		if status.StagedCount > 0 {
+			parts = append(parts, fmt.Sprintf("%d stg", status.StagedCount))
+			if status.UnstagedCount == 0 {
+				statusColor = statusSuccessStyle
+			}
+		}
+		if status.UntrackedCount > 0 {
+			parts = append(parts, fmt.Sprintf("%d unt", status.UntrackedCount))
+			if status.UnstagedCount == 0 && status.StagedCount == 0 {
+				statusColor = statusMutedStyle
+			}
+		}
+		statusText = strings.Join(parts, ", ")
+	} else {
+		statusText = "Clean"
+		statusColor = statusSuccessStyle
+	}
+
+	statusTextFormatted := fmt.Sprintf("%-*s", wStatus, truncate(statusText, wStatus-1))
+	if isSelected {
+		return selectedTableCellStyle.Render(statusTextFormatted)
+	}
+	return statusColor.Render(statusTextFormatted)
+}
+
+func renderUpstreamCell(status RepoStatus, isSelected bool, wUpstream int) string {
+	var upstreamText string
+	upstreamColor := statusMutedStyle
+
+	if !status.IsCloned || !status.HasUpstream || status.IsDetached {
+		upstreamText = "—"
+	} else {
+		var parts []string
+		if status.AheadCount > 0 {
+			parts = append(parts, fmt.Sprintf("↑%d", status.AheadCount))
+		}
+		if status.BehindCount > 0 {
+			parts = append(parts, fmt.Sprintf("↓%d", status.BehindCount))
+		}
+
+		if len(parts) > 0 {
+			upstreamText = strings.Join(parts, " ")
+			if status.AheadCount > 0 && status.BehindCount > 0 {
+				upstreamColor = statusWarningStyle
+			} else if status.BehindCount > 0 {
+				upstreamColor = statusErrorStyle
+			} else {
+				upstreamColor = statusSuccessStyle
+			}
+		} else {
+			upstreamText = "in sync"
+			upstreamColor = statusSuccessStyle
+		}
+	}
+
+	upstreamTextFormatted := fmt.Sprintf("%-*s", wUpstream, truncate(upstreamText, wUpstream-1))
+	if isSelected {
+		return selectedTableCellStyle.Render(upstreamTextFormatted)
+	}
+	return upstreamColor.Render(upstreamTextFormatted)
+}
+
+func renderUpdatedCell(status RepoStatus, isSelected bool, wUpdated int) string {
+	var updatedText string
+	if !status.IsCloned || status.LastUpdated.IsZero() {
+		updatedText = "—"
+	} else {
+		updatedText = status.LastUpdated.Format("15:04:56")
+	}
+
+	updatedTextFormatted := fmt.Sprintf("%*s", wUpdated, truncate(updatedText, wUpdated))
+	if isSelected {
+		return selectedTableCellStyle.Render(updatedTextFormatted)
+	}
+	return statusMutedStyle.Render(updatedTextFormatted)
 }

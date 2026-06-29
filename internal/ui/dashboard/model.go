@@ -1,6 +1,8 @@
 package dashboard
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
@@ -39,6 +41,7 @@ type RepoStatus struct {
 	OngoingOp      string
 	Error          error
 	Loading        bool
+	LastUpdated    time.Time
 }
 
 // ProjectItem adapts config.Project to the list.Item interface.

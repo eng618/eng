@@ -67,6 +67,11 @@ var (
 				Bold(true).
 				Padding(0, 1)
 
+	selectedTableCellStyle = lipgloss.NewStyle().
+				Background(theme.Muted).
+				Foreground(theme.Foreground).
+				Bold(true)
+
 	statusSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
 	statusErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)
 	statusWarningStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"})

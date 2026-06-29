@@ -301,11 +301,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) clampScrollOffset() {
-	allLines, repoStarts, repoEnds := m.getRepoLines()
-	if len(allLines) == 0 {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok {
 		m.repoScrollOffset = 0
 		return
 	}
+	p := item.Project
+	if len(p.Repos) == 0 {
+		m.repoScrollOffset = 0
+		return
+	}
+
+	totalPanesWidth := m.windowWidth - 4
+	leftPaneOuterWidth := totalPanesWidth / 4
+	if leftPaneOuterWidth < 20 {
+		leftPaneOuterWidth = 20
+	}
+	if leftPaneOuterWidth > 30 {
+		leftPaneOuterWidth = 30
+	}
+	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
+	rightStyleWidth := rightPaneOuterWidth - 2
+	innerRightWidth := rightStyleWidth - 2
 
 	innerRightHeight := m.windowHeight - 6
 	if innerRightHeight < 5 {
@@ -314,30 +331,58 @@ func (m *Model) clampScrollOffset() {
 	}
 	H_repos := innerRightHeight - 4
 
-	if m.selectedRepoIndex < 0 || m.selectedRepoIndex >= len(repoStarts) {
+	if m.selectedRepoIndex < 0 || m.selectedRepoIndex >= len(p.Repos) {
 		m.selectedRepoIndex = 0
 	}
 
-	startLine := repoStarts[m.selectedRepoIndex]
-	endLine := repoEnds[m.selectedRepoIndex]
+	if innerRightWidth >= 75 {
+		// Table view scroll clamping (one row per repository)
+		if m.selectedRepoIndex < m.repoScrollOffset {
+			m.repoScrollOffset = m.selectedRepoIndex
+		} else if m.selectedRepoIndex >= m.repoScrollOffset+H_repos {
+			m.repoScrollOffset = m.selectedRepoIndex - H_repos + 1
+		}
 
-	// Adjust scroll offset to make sure the selected repo is visible
-	if startLine < m.repoScrollOffset {
-		m.repoScrollOffset = startLine
-	} else if endLine >= m.repoScrollOffset+H_repos {
-		m.repoScrollOffset = endLine - H_repos + 1
-	}
+		maxScroll := len(p.Repos) - H_repos
+		if maxScroll < 0 {
+			maxScroll = 0
+		}
+		if m.repoScrollOffset > maxScroll {
+			m.repoScrollOffset = maxScroll
+		}
+		if m.repoScrollOffset < 0 {
+			m.repoScrollOffset = 0
+		}
+	} else {
+		// Stacked view scroll clamping (multiple lines per repository)
+		allLines, repoStarts, repoEnds := m.getRepoLines()
+		if len(allLines) == 0 {
+			m.repoScrollOffset = 0
+			return
+		}
 
-	// Clamp scroll offset to valid range
-	maxScroll := len(allLines) - H_repos
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
-	if m.repoScrollOffset > maxScroll {
-		m.repoScrollOffset = maxScroll
-	}
-	if m.repoScrollOffset < 0 {
-		m.repoScrollOffset = 0
+		if m.selectedRepoIndex >= len(repoStarts) {
+			m.selectedRepoIndex = 0
+		}
+		startLine := repoStarts[m.selectedRepoIndex]
+		endLine := repoEnds[m.selectedRepoIndex]
+
+		if startLine < m.repoScrollOffset {
+			m.repoScrollOffset = startLine
+		} else if endLine >= m.repoScrollOffset+H_repos {
+			m.repoScrollOffset = endLine - H_repos + 1
+		}
+
+		maxScroll := len(allLines) - H_repos
+		if maxScroll < 0 {
+			maxScroll = 0
+		}
+		if m.repoScrollOffset > maxScroll {
+			m.repoScrollOffset = maxScroll
+		}
+		if m.repoScrollOffset < 0 {
+			m.repoScrollOffset = 0
+		}
 	}
 }
 
@@ -637,8 +682,9 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 			ProjectName: projectName,
 			RepoURL:     repoDef.URL,
 			Status: RepoStatus{
-				Error:   err,
-				Loading: false,
+				Error:       err,
+				Loading:     false,
+				LastUpdated: time.Now(),
 			},
 		}
 	}
@@ -672,6 +718,8 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 			status.Error = err
 		}
 	}
+
+	status.LastUpdated = time.Now()
 
 	return statusMsg{
 		ProjectName: projectName,
