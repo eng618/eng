@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.20.0](https://github.com/eng618/eng/compare/v1.19.0...v1.20.0) (2026-06-29)
+
+
+### Features
+
+* Add 'r' shortcut to manually refresh repository statuses in the dashboard ([781c545](https://github.com/eng618/eng/commit/781c545ed08ddfe914f928f7948eb48dc8bf3f5f))
+
 ## [1.19.0](https://github.com/eng618/eng/compare/v1.18.0...v1.19.0) (2026-06-20)
 
 
