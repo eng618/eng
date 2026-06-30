@@ -5,9 +5,9 @@ name: Go
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,7 +31,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: go-task/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         # Always support current, and upcoming releases
-        go-version: ["1.26"]
+        go-version: ['1.26']
 
     steps:
       - uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: go-task/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}

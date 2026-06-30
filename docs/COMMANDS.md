@@ -95,6 +95,66 @@ Projects are stored in your development folder with each project having its own 
 
 ---
 
+## Dashboard
+
+The `eng dashboard` provides an interactive, terminal-based Command Center for monitoring and managing your projects and their repositories.
+
+> [!NOTE]
+> **Minimum Terminal Dimensions**: The dashboard requires a terminal size of at least 60 columns wide and 12 lines high. If your window is resized below these dimensions, the interface automatically collapses into a friendly warning screen until the terminal is expanded.
+
+### Usage
+
+```sh
+eng dashboard
+```
+
+### Keybindings
+
+- **Navigation**:
+  - `Enter` or `l`: Focus the right pane to select individual repositories within a project.
+  - `Esc` or `h`: Focus the left pane to navigate projects.
+  - `j` / `k` (or `Up`/`Down`): Navigate through the lists.
+- **Actions**:
+  - `f` - Fetch: Runs `git fetch --all --prune`
+  - `p` - Pull: Runs `git pull`
+  - `s` - Sync: Runs stash, pull rebase, and stash pop.
+  - `c` - Clone: Clones a missing repository.
+  - `o` - Open: Opens the selected project or repository in Finder/File Explorer.
+  - `e` - Edit: Opens the selected project or repository in your configured text editor.
+  - `E` - Edit Picker: Prompts to select an editor from available graphical/CLI options to open the target directory.
+  - `t` - Terminal: Opens a new terminal window/tab (supporting Ghostty, iTerm, and Terminal app) in the target directory.
+  - `r` - Refresh: Manually refreshes repository statuses for the selected project.
+  - `a` - Add: Launches interactive prompt to add new projects or repositories.
+  - `?` - Help: Toggles the keyboard shortcut help overlay.
+
+_Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e`, `E`, `t`, and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
+
+### Status & Branch Tracking
+
+#### Responsive Layouts
+
+The repository details pane adaptively updates its layout based on the terminal window's width:
+
+- **Table View (Wide Screens)**: When the terminal's inner right pane width is 75 characters or wider, the dashboard renders a structured multi-column table displaying the repository name, branch, staged/unstaged status, ahead/behind counts, and the timestamp of the last status check (`UPDATED`).
+- **Stacked View (Narrow Screens)**: When the terminal is narrower, it automatically falls back to the vertically stacked layout showing multi-line details for each repository.
+
+The dashboard provides rich repository status detection, using fast Git CLI commands to track local and remote repository states:
+
+- **Branch Information**:
+  - Displays the active branch name.
+  - Shows ahead (`↑`) and behind (`↓`) commit counts relative to the remote tracking branch.
+  - Highlights unpublished branches (with an `(unpublished)` suffix).
+  - Highlights detached HEAD states (e.g., `(detached HEAD at abc1234)`).
+- **Working Tree Status**:
+  - Shows staged/unstaged modifications and untracked file counts (e.g., `3 modified, 1 staged, 5 untracked`).
+  - A working tree is only flagged as dirty when there are modified tracked files or conflicts, avoiding false positives from untracked files.
+- **Ongoing Operations**:
+  - Alerts you when a `rebase`, `merge`, `cherry-pick`, or `bisect` operation is in progress.
+- **Merge Conflicts**:
+  - Flags active merge conflicts with a high-visibility warning.
+
+---
+
 ## Dotfiles Management
 
 Manage your dotfiles with a bare git repository approach. This allows you to version control your home directory configuration files without the overhead of a traditional git repository.

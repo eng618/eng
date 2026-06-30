@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // EnsurePrerequisites checks and installs core prerequisites needed for setup flows.
@@ -48,12 +48,7 @@ func ensureHomebrew(verbose bool) error {
 	log.Warn("Homebrew is not installed")
 	log.Message("Homebrew is required to install Git and Bash")
 
-	var confirm bool
-	prompt := &survey.Confirm{
-		Message: "Would you like to install Homebrew now?",
-		Default: true,
-	}
-	err = askOne(prompt, &confirm)
+	confirm, err := ui.Confirm("Would you like to install Homebrew now?", true)
 	cobra.CheckErr(err)
 
 	if !confirm {
@@ -216,14 +211,14 @@ func ensureGitHubSSH(verbose bool) error {
 // setupSSHFromBitwarden attempts to retrieve SSH keys from Bitwarden vault and set them up locally.
 func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 	// Ensure Bitwarden session is unlocked (prompts user interactively if needed)
-	session, err := utils.EnsureBitwardenSession()
+	session, err := bitwarden.EnsureBitwardenSession()
 	if err != nil {
 		return fmt.Errorf("failed to access Bitwarden: %w", err)
 	}
 	_ = session // Session is set in environment by EnsureBitwardenSession
 
 	// Find SSH keys in vault
-	sshKeys, err := utils.FindSSHKeysInVault()
+	sshKeys, err := bitwarden.FindSSHKeysInVault()
 	if err != nil {
 		return fmt.Errorf("failed to search for SSH keys in Bitwarden: %w", err)
 	}
@@ -232,13 +227,13 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 		return fmt.Errorf("no SSH keys found in Bitwarden vault")
 	}
 
-	var selectedKey *utils.BitwardenItem
+	var selectedKey *bitwarden.BitwardenItem
 
 	// If multiple keys found, let user choose
 	if len(sshKeys) > 1 {
 		log.Message("Multiple SSH keys found in Bitwarden vault:")
 		var options []string
-		keyMap := make(map[string]*utils.BitwardenItem)
+		keyMap := make(map[string]*bitwarden.BitwardenItem)
 
 		for _, key := range sshKeys {
 			option := fmt.Sprintf("%s (ID: %s)", key.Name, key.ID)
@@ -246,12 +241,8 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 			keyMap[option] = &key
 		}
 
-		var selected string
-		prompt := &survey.Select{
-			Message: "Select the SSH key to use for GitHub:",
-			Options: options,
-		}
-		if err := askOne(prompt, &selected); err != nil {
+		selected, err := ui.Select("Select the SSH key to use for GitHub:", options, "")
+		if err != nil {
 			return fmt.Errorf("key selection canceled: %w", err)
 		}
 
@@ -262,7 +253,7 @@ func setupSSHFromBitwarden(sshKeyPath string, verbose bool) error {
 	}
 
 	// Extract the SSH key
-	sshKey, err := utils.ExtractSSHKeyFromItem(selectedKey)
+	sshKey, err := bitwarden.ExtractSSHKeyFromItem(selectedKey)
 	if err != nil {
 		return fmt.Errorf("failed to extract SSH key: %w", err)
 	}

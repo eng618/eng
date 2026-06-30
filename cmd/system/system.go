@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -13,10 +12,6 @@ var (
 	lookPath    = exec.LookPath
 	userHomeDir = os.UserHomeDir
 	stat        = os.Stat
-	// askOne is a wrapper for survey.AskOne to allow mocking prompts in tests.
-	askOne = func(p survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
-		return survey.AskOne(p, response, opts...)
-	}
 )
 
 var SystemCmd = &cobra.Command{
