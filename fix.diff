@@ -1,0 +1,19 @@
+<<<<<<< SEARCH
+		// Extremely large levelID should be clamped or wrapped without panicking
+		// Note: The implementation clamps to math.MaxUint32 (if it exceeds int(math.MaxUint32), which happens on 64-bit systems)
+		// On 32-bit systems, int is 32-bit, so it might not exceed int(math.MaxUint32).
+		// We'll test with math.MaxInt64 and math.MaxInt32 and ensure they don't panic and return valid sizes
+		largeResults := [][2]int{
+			GridSizeForLevel(math.MaxInt32, "Sprout"),
+			GridSizeForLevel(math.MaxInt64, "Sprout"),
+		}
+=======
+		// Extremely large levelID should be clamped or wrapped without panicking
+		// Note: The implementation clamps to math.MaxUint32 (if it exceeds int(math.MaxUint32), which happens on 64-bit systems)
+		// On 32-bit systems, int is 32-bit, so it might not exceed int(math.MaxUint32).
+		// We'll test with math.MaxInt and math.MaxInt32 and ensure they don't panic and return valid sizes
+		largeResults := [][2]int{
+			GridSizeForLevel(math.MaxInt32, "Sprout"),
+			GridSizeForLevel(math.MaxInt, "Sprout"),
+		}
+>>>>>>> REPLACE
