@@ -12,7 +12,9 @@ import (
 func TestFilesCmd(t *testing.T) {
 	cmd := files.FilesCmd
 
-	assert.NotNil(t, cmd)
+	if !assert.NotNil(t, cmd) {
+		return
+	}
 	assert.Equal(t, "files", cmd.Use)
 	assert.Equal(t, "A command for managing files", cmd.Short)
 	assert.Equal(
@@ -37,6 +39,7 @@ func TestFilesCmd_Run(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
+	defer cmd.SetOut(nil)
 
 	cmd.Run(cmd, []string{})
 
