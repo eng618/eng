@@ -5,12 +5,13 @@ package git
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // GitCmd serves as the base command for all git repository management operations.
@@ -21,11 +22,12 @@ var GitCmd = &cobra.Command{
 	Long:  `This command is used to facilitate the management of multiple git repositories in your development folder.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		if showInfo {
 			log.Info("Current git repository management configuration:")
-			devPath := viper.GetString("git.dev_path")
+			gitCfg := config.GetGitConfig()
+			devPath := gitCfg.DevPath
 
 			if devPath == "" {
 				log.Warn("  Development Path: Not Set")
@@ -63,15 +65,21 @@ func init() {
 	GitCmd.AddCommand(CleanAllCmd)
 }
 
+// getBoolFlag safely checks if a flag exists anywhere in the command's local,
+// persistent, or inherited flag sets and returns its boolean value.
+func getBoolFlag(cmd *cobra.Command, name string) bool {
+	if f := cmd.Flag(name); f != nil {
+		if val, err := strconv.ParseBool(f.Value.String()); err == nil {
+			return val
+		}
+	}
+	return false
+}
+
 // getWorkingPath returns either the current working directory (if --current flag is used)
 // or the configured development path from the config file.
 func getWorkingPath(cmd *cobra.Command) (string, error) {
-	// Check for the persistent flag on the root git command or inherited
-	useCurrent, _ := cmd.PersistentFlags().GetBool("current")
-	if !useCurrent {
-		// Try to get from local flags if not found in persistent flags
-		useCurrent, _ = cmd.Flags().GetBool("current")
-	}
+	useCurrent := getBoolFlag(cmd, "current")
 
 	if useCurrent {
 		devPath, err := os.Getwd()
@@ -82,7 +90,8 @@ func getWorkingPath(cmd *cobra.Command) (string, error) {
 		return devPath, nil
 	}
 
-	devPath := viper.GetString("git.dev_path")
+	gitCfg := config.GetGitConfig()
+	devPath := gitCfg.DevPath
 	if devPath == "" {
 		return "", fmt.Errorf(
 			"development folder path is not set. Use 'eng config git-dev-path' to set it, or use the --current flag",

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 var UpCmd = &cobra.Command{
@@ -16,7 +16,7 @@ var UpCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _args []string) error {
 		log.Start("Bringing up the tailscale service")
 		tsUpCmd := exec.Command("sudo", "tailscale", "up")
-		err := utils.StartChildProcess(tsUpCmd)
+		err := cmdutil.StartChildProcess(tsUpCmd)
 		if err != nil {
 			return err // Return the error for Cobra to handle
 		}

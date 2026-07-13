@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 const (
@@ -51,77 +52,102 @@ func listProxyConfigurations(cmd *cobra.Command) {
 }
 
 func renderProxyList(compact bool, proxies []config.ProxyConfig) {
-	if compact {
-		fmt.Println("Proxies (★ active, • inactive):")
-		if len(proxies) == 0 {
-			fmt.Println("- none configured")
-			return
-		}
-		for _, p := range proxies {
-			fmt.Printf("- %s\n", config.FormatProxyOption(p))
-		}
+	title := theme.PrimaryText.Bold(true).Render("Proxy Configurations (★ active, • inactive):")
+	fmt.Println(title)
+	if len(proxies) == 0 {
+		fmt.Println(theme.MutedText.Render("  No proxy configurations found."))
 		return
 	}
-	fmt.Println("Proxy Configurations (★ active, • inactive):")
-	fmt.Println("-------------------------------------------------")
-	if len(proxies) == 0 {
-		fmt.Println("No proxy configurations found.")
-	} else {
-		for i, p := range proxies {
-			fmt.Printf("%d. %s\n", i+1, config.FormatProxyOption(p))
+	for i, p := range proxies {
+		prefix := theme.MutedText.Render(fmt.Sprintf("%d.", i+1))
+		if compact {
+			prefix = theme.MutedText.Render("-")
 		}
+		fmt.Printf("  %s %s\n", prefix, theme.BaseText.Render(config.FormatProxyOption(p)))
 	}
-	fmt.Println("-------------------------------------------------")
 }
 
 func renderEnv(compact, showLowercase bool) {
 	if !compact {
-		fmt.Println("System environment variables:")
-		fmt.Println("ALL_PROXY:", os.Getenv("ALL_PROXY"))
-		fmt.Println("HTTP_PROXY:", os.Getenv("HTTP_PROXY"))
-		fmt.Println("HTTPS_PROXY:", os.Getenv("HTTPS_PROXY"))
-		fmt.Println("GLOBAL_AGENT_HTTP_PROXY:", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
-		fmt.Println("NO_PROXY:", os.Getenv("NO_PROXY"))
-		fmt.Println("-------------------------------------------------")
-		fmt.Println("Lowercase environment variables:")
-		fmt.Println("http_proxy:", os.Getenv("http_proxy"))
-		fmt.Println("https_proxy:", os.Getenv("https_proxy"))
-		fmt.Println("no_proxy:", os.Getenv("no_proxy"))
-		fmt.Println("-------------------------------------------------")
+		fmt.Println(theme.PrimaryText.Bold(true).Render("\nSystem environment variables:"))
+		printEnvVar("ALL_PROXY", os.Getenv("ALL_PROXY"))
+		printEnvVar("HTTP_PROXY", os.Getenv("HTTP_PROXY"))
+		printEnvVar("HTTPS_PROXY", os.Getenv("HTTPS_PROXY"))
+		printEnvVar("GLOBAL_AGENT_HTTP_PROXY", os.Getenv("GLOBAL_AGENT_HTTP_PROXY"))
+		printEnvVar("NO_PROXY", os.Getenv("NO_PROXY"))
+
+		fmt.Println(theme.PrimaryText.Bold(true).Render("\nLowercase environment variables:"))
+		printEnvVar("http_proxy", os.Getenv("http_proxy"))
+		printEnvVar("https_proxy", os.Getenv("https_proxy"))
+		printEnvVar("no_proxy", os.Getenv("no_proxy"))
 		return
 	}
+
 	all := os.Getenv("ALL_PROXY")
 	http := os.Getenv("HTTP_PROXY")
 	https := os.Getenv("HTTPS_PROXY")
 	global := os.Getenv("GLOBAL_AGENT_HTTP_PROXY")
 	noProxy := os.Getenv("NO_PROXY")
+
 	same := all == http && http == https && https == global
+	prefix := theme.MutedText.Render("Env:")
 	if same {
-		fmt.Printf("Env: ALL/HTTP/HTTPS/GLOBAL=%s, NO_PROXY=%s\n", all, noProxy)
+		fmt.Printf(
+			"%s ALL/HTTP/HTTPS/GLOBAL=%s, NO_PROXY=%s\n",
+			prefix,
+			theme.SuccessText.Render(all),
+			theme.SuccessText.Render(noProxy),
+		)
 	} else {
-		fmt.Printf("Env: ALL=%s HTTP=%s HTTPS=%s GLOBAL=%s NO_PROXY=%s\n", all, http, https, global, noProxy)
+		fmt.Printf(
+			"%s ALL=%s HTTP=%s HTTPS=%s GLOBAL=%s NO_PROXY=%s\n",
+			prefix,
+			theme.SuccessText.Render(all),
+			theme.SuccessText.Render(http),
+			theme.SuccessText.Render(https),
+			theme.SuccessText.Render(global),
+			theme.SuccessText.Render(noProxy),
+		)
 	}
 	if showLowercase {
 		lhttp := os.Getenv("http_proxy")
 		lhttps := os.Getenv("https_proxy")
 		lno := os.Getenv("no_proxy")
-		fmt.Printf("Env (lowercase): http=%s https=%s no=%s\n", lhttp, lhttps, lno)
+		fmt.Printf(
+			"%s http=%s https=%s no=%s\n",
+			theme.MutedText.Render("Env (lowercase):"),
+			theme.SuccessText.Render(lhttp),
+			theme.SuccessText.Render(lhttps),
+			theme.SuccessText.Render(lno),
+		)
 	}
+}
+
+func printEnvVar(key, val string) {
+	if val == "" {
+		val = theme.MutedText.Render("<empty>")
+	} else {
+		val = theme.SuccessText.Render(val)
+	}
+	fmt.Printf("  %s %s\n", theme.MutedText.Render(key+":"), val)
 }
 
 func renderActive(compact bool, proxies []config.ProxyConfig, activeIndex int) {
 	if activeIndex >= 0 && activeIndex < len(proxies) {
+		activeStr := theme.SuccessText.Bold(true).Render(config.FormatProxyOption(proxies[activeIndex]))
 		if compact {
-			fmt.Printf("Active: %s\n", config.FormatProxyOption(proxies[activeIndex]))
+			fmt.Printf("\n%s %s\n", theme.PrimaryText.Render("Active:"), activeStr)
 		} else {
-			fmt.Printf("\nActive proxy: %s\n", config.FormatProxyOption(proxies[activeIndex]))
+			fmt.Printf("\n%s %s\n", theme.PrimaryText.Render("Active proxy:"), activeStr)
 		}
 		return
 	}
+
+	noneStr := theme.MutedText.Render("none")
 	if compact {
-		fmt.Println("Active: none")
+		fmt.Printf("\n%s %s\n", theme.PrimaryText.Render("Active:"), noneStr)
 	} else {
-		fmt.Println("\nNo active proxy configured.")
+		fmt.Println(theme.MutedText.Render("\nNo active proxy configured."))
 	}
 }
 
@@ -129,10 +155,15 @@ func renderNote(compact bool) {
 	if compact {
 		return
 	}
-	fmt.Println("\nNote: Environment variable changes only affect the current process.")
-	fmt.Println("For system-wide changes, you may need to restart your terminal or source your profile.")
-	fmt.Println("To apply in your current shell, you can run:")
-	fmt.Println("  eval $(eng system proxy --export)")
+	fmt.Println()
+	theme.InfoMessage("Environment variable changes only affect the current process.")
+	fmt.Println(
+		theme.MutedText.Render(
+			"  For system-wide changes, you may need to restart your terminal or source your profile.",
+		),
+	)
+	fmt.Println(theme.MutedText.Render("  To apply in your current shell, you can run:"))
+	fmt.Println(theme.BaseText.Render("    eval $(eng system proxy --export)"))
 }
 
 var addCmd = &cobra.Command{
@@ -305,16 +336,20 @@ var toggleCmd = &cobra.Command{
 					}
 					options = append(options, "Create new…")
 
-					var sel int
-					prompt := &survey.Select{
-						Message: "Select a proxy to enable or create new:",
-						Options: options,
-						Help:    "Use arrow keys to navigate, and Enter to select.",
-					}
-					if err := survey.AskOne(prompt, &sel); err != nil {
+					selected, err := ui.Select("Select a proxy to enable or create new:", options, "")
+					if err != nil {
 						log.Error("Selection canceled: %v", err)
 						return
 					}
+
+					sel := -1
+					for i, opt := range options {
+						if opt == selected {
+							sel = i
+							break
+						}
+					}
+
 					if sel == len(options)-1 {
 						var idx int
 						proxies, idx = config.AddOrUpdateProxy()

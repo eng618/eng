@@ -5,7 +5,7 @@ package config
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils/config"
+	"github.com/eng618/eng/internal/config"
 )
 
 // ConfigCmd represents the base command for all configuration related operations.
@@ -28,6 +28,7 @@ It should be located at $HOME/.eng.yaml`,
 }
 
 func init() {
+	ConfigCmd.AddCommand(EditCmd)
 	ConfigCmd.AddCommand(EmailCmd)
 	ConfigCmd.AddCommand(DotfilesRepoCmd)
 	ConfigCmd.AddCommand(DotfilesRepoURLCmd)

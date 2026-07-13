@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 // ListCmd defines the cobra command for listing all git repositories.
@@ -18,7 +18,7 @@ var ListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Listing git repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		showPaths, _ := cmd.Flags().GetBool("paths")
 
 		devPath, err := getWorkingPath(cmd)

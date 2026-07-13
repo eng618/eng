@@ -4,10 +4,10 @@ package project
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 )
 
 // ProjectCmd serves as the base command for all project management operations.
@@ -34,11 +34,12 @@ Example structure:
       auth/`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showInfo, _ := cmd.Flags().GetBool("info")
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		if showInfo {
 			log.Info("Current project management configuration:")
-			devPath := viper.GetString("git.dev_path")
+			gitCfg := config.GetGitConfig()
+			devPath := gitCfg.DevPath
 
 			if devPath == "" {
 				log.Warn("  Development Path: Not Set")
@@ -48,8 +49,8 @@ Example structure:
 			}
 
 			// Show configured projects
-			var projects []map[string]interface{}
-			if err := viper.UnmarshalKey("projects", &projects); err == nil && len(projects) > 0 {
+			projects := config.GetProjects()
+			if len(projects) > 0 {
 				log.Info("  Configured Projects: %d", len(projects))
 			} else {
 				log.Info("  Configured Projects: 0")

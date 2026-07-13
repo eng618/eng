@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 // CompauditFixCmd runs 'compaudit' and removes group/world write
@@ -18,7 +18,7 @@ var CompauditFixCmd = &cobra.Command{
 	Long:  `Runs 'compaudit' and applies 'chmod g-w,o-w' to any directories reported as insecure. This uses an interactive zsh so zsh functions like compaudit (from oh-my-zsh) are available.`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Running compaudit and fixing insecure directories...")
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		// Use an interactive zsh (-i) and run a command (-c) so compaudit (a zsh function) is available.
 		execCmd := exec.Command("zsh", "-ic", "compaudit | xargs --no-run-if-empty chmod g-w,o-w")

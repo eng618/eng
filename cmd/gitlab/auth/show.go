@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/log"
 )
 
 // showCmd prints effective GitLab auth/config details without exposing secrets.
@@ -26,7 +26,7 @@ var showCmd = &cobra.Command{
 			tokenSource = "env:GITLAB_TOKEN"
 		} else if tokenItem != "" {
 			// Try to locate item without printing its content
-			if _, err := utils.GetBitwardenItem(tokenItem); err == nil {
+			if _, err := bitwarden.GetBitwardenItem(tokenItem); err == nil {
 				tokenSource = fmt.Sprintf("bitwarden:%s", tokenItem)
 			} else {
 				tokenSource = fmt.Sprintf("bitwarden:%s (not found)", tokenItem)

@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
 )
 
 type PortInfo struct {
@@ -133,38 +135,96 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 	return ports, nil
 }
 
+type portTableModel struct {
+	table    table.Model
+	selected PortInfo
+	canceled bool
+}
+
+func (m portTableModel) Init() tea.Cmd { return nil }
+
+func (m portTableModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc", "q", "ctrl+c":
+			m.canceled = true
+			return m, tea.Quit
+		case "enter":
+			row := m.table.SelectedRow()
+			if len(row) > 0 {
+				m.selected = PortInfo{
+					PID:     row[0],
+					Command: row[1],
+					User:    row[2],
+					Port:    row[3],
+				}
+			}
+			return m, tea.Quit
+		}
+	}
+	m.table, cmd = m.table.Update(msg)
+	return m, cmd
+}
+
+func (m portTableModel) View() string {
+	return "\n" + m.table.View() + "\n\n  enter: select • q/esc: cancel\n"
+}
+
 func selectPort(ports []PortInfo) (PortInfo, error) {
 	if len(ports) == 0 {
 		return PortInfo{}, errors.New("no ports found")
 	}
 
-	options := make([]string, len(ports)+1)
-	for i, p := range ports {
-		options[i] = fmt.Sprintf("%s (PID %s, User %s) on port %s", p.Command, p.PID, p.User, p.Port)
+	columns := []table.Column{
+		{Title: "PID", Width: 10},
+		{Title: "Command", Width: 20},
+		{Title: "User", Width: 15},
+		{Title: "Port", Width: 10},
 	}
-	options[len(ports)] = "Cancel"
 
-	var selected string
-	prompt := &survey.Select{
-		Message: "Select port to kill:",
-		Options: options,
+	var rows []table.Row
+	for _, p := range ports {
+		rows = append(rows, table.Row{p.PID, p.Command, p.User, p.Port})
 	}
-	err := survey.AskOne(prompt, &selected)
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(15),
+	)
+
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+	t.SetStyles(s)
+
+	m := portTableModel{table: t}
+	p := tea.NewProgram(m)
+	finalModel, err := p.Run()
 	if err != nil {
-		return PortInfo{}, err
+		return PortInfo{}, fmt.Errorf("failed to run TUI: %w", err)
 	}
 
-	if selected == "Cancel" {
+	tm := finalModel.(portTableModel)
+	if tm.canceled {
 		return PortInfo{}, errors.New("operation canceled")
 	}
 
-	for i, option := range options[:len(ports)] {
-		if option == selected {
-			return ports[i], nil
-		}
+	if tm.selected.PID == "" {
+		return PortInfo{}, errors.New("no port selected")
 	}
 
-	return PortInfo{}, errors.New("selection failed")
+	return tm.selected, nil
 }
 
 var (
@@ -188,7 +248,7 @@ Requires appropriate tools to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		isVerbose := utils.IsVerbose(cmd) // Get verbosity flag
+		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
 
 		var portStr string
 		var selectedPort PortInfo

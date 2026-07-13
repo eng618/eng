@@ -1,11 +1,14 @@
 package dotfiles
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/internal/dotfiles"
 )
 
 func TestFetchCmd_MissingConfig(t *testing.T) {
@@ -23,14 +26,15 @@ func TestFetchCmd_SuccessAndFailure(t *testing.T) {
 	viper.Set("dotfiles.worktree_path", "/tmp/worktree")
 
 	called := 0
-	// Override to simulate failure then success
-	fetchRepo = func(repoPath, worktreePath string) error {
+	originalFetchRepo := dotfiles.FetchRepo
+	dotfiles.FetchRepo = func(ctx context.Context, repo, worktree string) error {
 		called++
 		if called == 1 {
 			return errors.New("simulated fetch failure")
 		}
 		return nil
 	}
+	defer func() { dotfiles.FetchRepo = originalFetchRepo }()
 
 	cmd := &cobra.Command{}
 	// First call => failure path

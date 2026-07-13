@@ -21,8 +21,17 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/eng618/eng/cmd"
+import (
+	"context"
+	"os"
+	"os/signal"
+
+	"github.com/eng618/eng/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	cmd.ExecuteContext(ctx)
 }

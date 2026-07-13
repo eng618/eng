@@ -1,13 +1,17 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
+	"sync/atomic"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // FetchAllCmd defines the cobra command for fetching all git repositories.
@@ -19,7 +23,7 @@ var FetchAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Fetching all git repositories")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 
 		devPath, err := getWorkingPath(cmd)
@@ -47,33 +51,52 @@ var FetchAllCmd = &cobra.Command{
 
 		log.Info("Found %d git repositories", len(repos))
 
-		successCount := 0
-		failureCount := 0
+		var successCount atomic.Int32
+		var failureCount atomic.Int32
+
+		multi, err := ui.NewMultiSpinner()
+		if err != nil {
+			log.Error("Failed to initialize UI: %s", err)
+			return
+		}
+		defer multi.Stop()
+
+		var eg errgroup.Group
+		eg.SetLimit(10) // Concurrent fetch limit
 
 		for _, repoPath := range repos {
-			repoName := filepath.Base(repoPath)
-			log.Info("Fetching repository: %s", repoName)
+			rPath := repoPath // capture loop variable
+			eg.Go(func() error {
+				repoName := filepath.Base(rPath)
 
-			if dryRun {
-				log.Info("  [DRY RUN] Would fetch repository at: %s", repoPath)
-				successCount++
-				continue
-			}
+				if dryRun {
+					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would fetch repository at: %s", rPath))
+					spinner.Success()
+					successCount.Add(1)
+					return nil
+				}
 
-			// Perform git fetch
-			if err := fetchRepository(repoPath); err != nil {
-				log.Error("  Failed to fetch %s: %s", repoName, err)
-				failureCount++
-				continue
-			}
+				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoName))
 
-			log.Success("  Successfully fetched %s", repoName)
-			successCount++
+				// Perform git fetch
+				if err := fetchRepository(rPath); err != nil {
+					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoName, err))
+					failureCount.Add(1)
+					return nil
+				}
+
+				spinner.Success(fmt.Sprintf("Fetched %s", repoName))
+				successCount.Add(1)
+				return nil
+			})
 		}
 
-		log.Info("Fetch completed: %d successful, %d failed", successCount, failureCount)
+		_ = eg.Wait()
+		multi.Stop()
 
-		if failureCount > 0 {
+		log.Info("Fetch completed: %d successful, %d failed", successCount.Load(), failureCount.Load())
+
+		if failureCount.Load() > 0 {
 			log.Warn("Some repositories failed to fetch. Check the output above for details.")
 		} else {
 			log.Success("All git repositories fetched successfully")
@@ -85,14 +108,11 @@ func init() {
 	FetchAllCmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
 }
 
-// fetchRepository performs a git fetch operation on the given repository path.
 func fetchRepository(repoPath string) error {
 	cmd := exec.Command("git", "-C", repoPath, "fetch", "--all", "--prune")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Error("Git fetch output: %s", string(output))
-		return err
+		return fmt.Errorf("%w: %s", err, string(output))
 	}
-	log.Info("Git fetch output: %s", string(output))
 	return nil
 }

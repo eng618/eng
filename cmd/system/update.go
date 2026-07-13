@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // UpdateCmd represents the system update command.
@@ -22,7 +22,7 @@ var UpdateCmd = &cobra.Command{
 	Short:   "Update the system",
 	Long:    `This command updates the system. It supports Ubuntu and WSL Linux systems and logs a message for unsupported systems.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		autoApprove, _ := cmd.Flags().GetBool("yes")
 		cleanupTimeout, _ := cmd.Flags().GetInt("cleanup-timeout")
 		log.Verbose(isVerbose, "Checking system type...")
@@ -61,7 +61,7 @@ var BrewCmd = &cobra.Command{
 	Short: "Update Homebrew packages only",
 	Long:  `This command updates only Homebrew packages, skipping system updates.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 		updateBrew(isVerbose)
 	},
 }
@@ -174,7 +174,7 @@ func updateAsdf(isVerbose bool) {
 // runCleanup performs system cleanup operations for Ubuntu/Linux systems.
 // It runs apt-get autoremove --purge, apt-get autoclean, and optionally docker system prune.
 // If autoApprove is true, cleanup runs automatically without prompting.
-// If autoApprove is false, the user is prompted with a multi-select survey that auto-selects all after cleanupTimeout seconds.
+// If autoApprove is false, the user is prompted with a multi-select form that auto-selects all after cleanupTimeout seconds.
 // Docker system prune is only executed if Docker is installed on the system.
 func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 	// Define available cleanup operations
@@ -196,21 +196,13 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		// Show initial message
 		log.Message("Select cleanup operations to run (auto-select all in %d seconds):", cleanupTimeout)
 
-		// Use survey multi-select with timeout
-		prompt := &survey.MultiSelect{
-			Message: "Select cleanup operations to run:",
-			Options: operations,
-			Default: operations, // Pre-select all
-		}
-
-		// Channel to receive survey result
+		// Channel to receive form result
 		resultCh := make(chan []string, 1)
 		errorCh := make(chan error, 1)
 
-		// Run survey in goroutine
+		// Run MultiSelect in goroutine
 		go func() {
-			var result []string
-			err := survey.AskOne(prompt, &result)
+			result, err := ui.MultiSelect("Select cleanup operations to run:", operations, nil)
 			if err != nil {
 				errorCh <- err
 			} else {
@@ -223,7 +215,7 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		case selected := <-resultCh:
 			selectedOperations = selected
 		case err := <-errorCh:
-			log.Error("Error with survey prompt: %v", err)
+			log.Error("Error with selection prompt: %v", err)
 			selectedOperations = operations // Default to all on error
 		case <-time.After(time.Duration(cleanupTimeout) * time.Second):
 			log.Message("Timeout reached, running all cleanup operations...")
@@ -238,19 +230,62 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 
 	log.Message("Running selected system cleanup operations...")
 
-	// Run selected operations with progress bars
+	multi, err := ui.NewMultiSpinner()
+	if err != nil {
+		log.Error("Failed to start multi-spinner: %v", err)
+		// Fallback to old behavior
+		for _, operation := range selectedOperations {
+			runCleanupOperationSequential(isVerbose, operation)
+		}
+		return
+	}
+	defer multi.Stop()
+
+	// Run selected operations sequentially within the multi-spinner to avoid apt locks
 	for _, operation := range selectedOperations {
+		var cmdStr, name string
 		switch operation {
 		case "apt-get autoremove --purge":
-			runCleanupOperation(isVerbose, "sudo apt-get autoremove --purge -y", "apt-get autoremove")
+			cmdStr, name = "sudo apt-get autoremove --purge -y", "apt-get autoremove"
 		case "apt-get autoclean":
-			runCleanupOperation(isVerbose, "sudo apt-get autoclean", "apt-get autoclean")
+			cmdStr, name = "sudo apt-get autoclean", "apt-get autoclean"
 		case "docker system prune":
-			runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
+			cmdStr, name = "docker system prune -f", "docker system prune"
 		}
+
+		spinner := multi.AddSpinner(fmt.Sprintf("Running %s...", name))
+		runCleanupOperationWithSpinner(isVerbose, cmdStr, name, spinner)
 	}
 
 	log.Success("System cleanup completed.")
+}
+
+func runCleanupOperationSequential(isVerbose bool, operation string) {
+	switch operation {
+	case "apt-get autoremove --purge":
+		runCleanupOperation(isVerbose, "sudo apt-get autoremove --purge -y", "apt-get autoremove")
+	case "apt-get autoclean":
+		runCleanupOperation(isVerbose, "sudo apt-get autoclean", "apt-get autoclean")
+	case "docker system prune":
+		runCleanupOperation(isVerbose, "docker system prune -f", "docker system prune")
+	}
+}
+
+// runCleanupOperationWithSpinner runs a single cleanup operation using a provided spinner from a MultiSpinner.
+func runCleanupOperationWithSpinner(isVerbose bool, command, operationName string, spinner ui.ProgressSpinner) {
+	log.Verbose(isVerbose, "Running: %s", command)
+
+	cleanupCmd := execCommand("bash", "-c", command)
+	cleanupCmd.Stdout = log.Writer()
+	cleanupCmd.Stderr = log.ErrorWriter()
+
+	if err := cleanupCmd.Run(); err != nil {
+		spinner.Fail(fmt.Sprintf("Error running %s: %s", operationName, err))
+		log.Verbose(isVerbose, "%s failed with error: %v", operationName, err)
+	} else {
+		spinner.Success(fmt.Sprintf("%s completed", operationName))
+		log.Verbose(isVerbose, "%s completed successfully", operationName)
+	}
 }
 
 // runCleanupOperation runs a single cleanup operation with a progress bar
@@ -258,7 +293,7 @@ func runCleanupOperation(isVerbose bool, command, operationName string) {
 	log.Verbose(isVerbose, "Running: %s", command)
 
 	// Create progress bar for this operation
-	progress := utils.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
+	progress := ui.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
 
 	cleanupCmd := execCommand("bash", "-c", command)
 	cleanupCmd.Stdout = log.Writer()

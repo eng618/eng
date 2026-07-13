@@ -8,12 +8,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var SetupCmd = &cobra.Command{
@@ -28,10 +30,11 @@ Running this command without subcommands will run all setup steps:
 - Software installation
 - GPG keys setup (interactive)
 - GPG permissions fix`,
-	Run: func(cmd *cobra.Command, _args []string) {
-		if err := runSetup(cmd, utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, _args []string) error {
+		if err := runSetup(cmd, cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -43,6 +46,32 @@ var (
 	setupSoftwareStep       = setupSoftware
 	setupGPGStep            = setupGPG
 	setupGPGPermissionsStep = setupGPGPermissions
+
+	runSetupWizard = func(steps []setupStep) ([]string, error) {
+		var groups []*huh.Group
+		stepActions := make([]string, len(steps))
+
+		for i, step := range steps {
+			stepActions[i] = setupActionContinue // default
+			groups = append(groups, huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Step: "+step.Name).
+					Description(step.Purpose).
+					Options(
+						huh.NewOption(setupActionContinue, setupActionContinue),
+						huh.NewOption(setupActionSkip, setupActionSkip),
+						huh.NewOption(setupActionExit, setupActionExit),
+					).
+					Value(&stepActions[i]),
+			))
+		}
+
+		form := huh.NewForm(groups...).WithTheme(theme.EngTheme())
+		if err := form.Run(); err != nil {
+			return nil, err
+		}
+		return stepActions, nil
+	}
 )
 
 type setupStep struct {
@@ -62,7 +91,7 @@ var SetupASDFCmd = &cobra.Command{
 	Short: "Setup asdf plugins from $HOME/.tool-versions",
 	Long:  `Reads $HOME/.tool-versions and installs asdf plugins listed there.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		setupASDF(utils.IsVerbose(cmd))
+		setupASDF(cmdutil.IsVerbose(cmd))
 	},
 }
 
@@ -78,10 +107,11 @@ var SetupDotfilesCmd = &cobra.Command{
   - Initialize git submodules
 	- Configure git to hide untracked files
 	- Restore dotfiles secrets when manifest and BWS token are available`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := setupDotfiles(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("Dotfiles setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := setupDotfiles(cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("dotfiles setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -90,7 +120,7 @@ var SetupOhMyZshCmd = &cobra.Command{
 	Short: "Install Oh My Zsh",
 	Long:  `Downloads and installs Oh My Zsh. Skips if already installed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		setupOhMyZsh(utils.IsVerbose(cmd))
+		setupOhMyZsh(cmdutil.IsVerbose(cmd))
 	},
 }
 
@@ -102,10 +132,11 @@ var SetupSSHCmd = &cobra.Command{
   - Attempt to retrieve SSH keys from Bitwarden vault
   - Generate new SSH keys if none found
   - Configure SSH config for GitHub`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := setupSSH(utils.IsVerbose(cmd)); err != nil {
-			log.Fatal("SSH setup failed: %v", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := setupSSH(cmdutil.IsVerbose(cmd)); err != nil {
+			return fmt.Errorf("ssh setup failed: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -189,45 +220,38 @@ func runSetup(cmd *cobra.Command, verbose bool) error {
 		},
 	}
 
-	for _, step := range steps {
-		if interactive {
-			action, promptErr := promptSetupStepAction(step)
-			if promptErr != nil {
-				log.Info("Interactive prompt canceled; exiting setup.")
-				return nil
-			}
-
-			switch action {
-			case setupActionSkip:
-				log.Info("Skipping setup step: %s", step.Name)
-				continue
-			case setupActionExit:
-				log.Info("Exiting setup before step: %s", step.Name)
-				return nil
-			}
+	if interactive {
+		stepActions, err := runSetupWizard(steps)
+		if err != nil {
+			log.Info("Setup wizard canceled.")
+			return nil
 		}
 
-		if err := step.Run(); err != nil {
-			return err
+		// Execute based on choices
+		for i, action := range stepActions {
+			switch action {
+			case setupActionSkip:
+				log.Info("Skipping setup step: %s", steps[i].Name)
+				continue
+			case setupActionExit:
+				log.Info("Setup exited early at step: %s", steps[i].Name)
+				return nil
+			case setupActionContinue:
+				if err := steps[i].Run(); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		// Non-interactive execution
+		for _, step := range steps {
+			if err := step.Run(); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
-}
-
-func promptSetupStepAction(step setupStep) (string, error) {
-	selected := setupActionContinue
-	prompt := &survey.Select{
-		Message: fmt.Sprintf("Next step: %s\nPurpose: %s\nChoose an action:", step.Name, step.Purpose),
-		Options: []string{setupActionContinue, setupActionSkip, setupActionExit},
-		Default: setupActionContinue,
-	}
-
-	if err := askOne(prompt, &selected); err != nil {
-		return "", err
-	}
-
-	return selected, nil
 }
 
 func setupGPGPermissions(verbose bool) {
@@ -446,12 +470,8 @@ func setupSoftware(verbose bool) {
 
 	// Prompt for optional software
 	if len(optionalOptions) > 0 {
-		var selected []string
-		prompt := &survey.MultiSelect{
-			Message: "Select additional software to install:",
-			Options: optionalOptions,
-		}
-		if err := askOne(prompt, &selected); err != nil {
+		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions, nil)
+		if err != nil {
 			log.Error("Selection canceled: %v", err)
 			return
 		}

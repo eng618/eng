@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/utils"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // CopyChangesCmd defines the cobra command for copying modified dotfiles to the local git repository.
@@ -25,7 +25,7 @@ var CopyChangesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Copying modified dotfiles")
 
-		isVerbose := utils.IsVerbose(cmd)
+		isVerbose := cmdutil.IsVerbose(cmd)
 
 		repoPath, worktreePath, err := getDotfilesConfig()
 		if err != nil || repoPath == "" {
@@ -35,7 +35,8 @@ var CopyChangesCmd = &cobra.Command{
 		log.Verbose(isVerbose, "Repository path: %s", repoPath)
 		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		devPath := os.ExpandEnv(viper.GetString("git.dev_path"))
+		gitCfg := config.GetGitConfig()
+		devPath := os.ExpandEnv(gitCfg.DevPath)
 		if devPath == "" {
 			log.Error("Development folder path is not set in configuration")
 			return
@@ -83,11 +84,7 @@ var CopyChangesCmd = &cobra.Command{
 
 		// Ask to reset
 		var resetConfirm bool
-		prompt := &survey.Confirm{
-			Message: "Do you want to reset the local copies in the worktree?",
-		}
-		prompt.Default = true
-		err = survey.AskOne(prompt, &resetConfirm)
+		resetConfirm, err = ui.Confirm("Do you want to reset the local copies in the worktree?", true)
 		if err != nil {
 			log.Error("Failed to get user confirmation: %s", err)
 			return

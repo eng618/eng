@@ -1,7 +1,7 @@
 package project
 
 import (
-	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,9 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/eng618/eng/internal/utils/config"
-	"github.com/eng618/eng/internal/utils/log"
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
+
+func init() {
+	ui.DisableProgress = true
+}
 
 // setupTestEnvironment creates a temporary workspace and config for testing.
 func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, cleanup func()) {
@@ -51,7 +57,7 @@ func setupTestEnvironment(t *testing.T) (workspacePath, configPath string, clean
 }
 
 func TestProjectCmd_Help(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -66,7 +72,7 @@ func TestProjectCmd_Help(t *testing.T) {
 }
 
 func TestProjectCmd_Info(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -92,7 +98,7 @@ func TestProjectCmd_Info(t *testing.T) {
 }
 
 func TestListCmd_EmptyProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -109,7 +115,7 @@ func TestListCmd_EmptyProjects(t *testing.T) {
 }
 
 func TestListCmd_WithProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -145,7 +151,7 @@ func TestListCmd_WithProjects(t *testing.T) {
 }
 
 func TestSetupCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -162,7 +168,7 @@ func TestSetupCmd_NoDevPath(t *testing.T) {
 }
 
 func TestSetupCmd_NoProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -179,7 +185,7 @@ func TestSetupCmd_NoProjects(t *testing.T) {
 }
 
 func TestSetupCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -197,18 +203,12 @@ func TestSetupCmd_DryRun(t *testing.T) {
 	}
 	err := config.SaveProjects(testProjects)
 	require.NoError(t, err)
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"setup", "--dry-run"})
 
-	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
+	err = ProjectCmd.Execute()
 	require.NoError(t, err)
-	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
-	}()
-
-	SetupCmd.SetOut(&buf)
-	SetupCmd.SetErr(&buf)
-
-	SetupCmd.Run(SetupCmd, []string{})
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
@@ -217,7 +217,7 @@ func TestSetupCmd_DryRun(t *testing.T) {
 }
 
 func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -228,21 +228,16 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 	testProjects := []config.Project{
 		{
 			Name:  "ExistingProject",
-			Repos: []config.ProjectRepo{{URL: "git@github.com:org/repo.git"}},
+			Repos: []config.ProjectRepo{{URL: "git@github.com:org/git.git"}},
 		},
 	}
 	err := config.SaveProjects(testProjects)
 	require.NoError(t, err)
 
-	// Set project filter to non-existent project (persistent flag on parent)
-	err = ProjectCmd.PersistentFlags().Set("project", "NonExistent")
-	require.NoError(t, err)
-	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("project", "")
-	}()
-
 	SetupCmd.SetOut(&buf)
 	SetupCmd.SetErr(&buf)
+	_ = SetupCmd.Flags().Set("project", "NonExistent")
+	defer SetupCmd.Flags().Set("project", "")
 
 	SetupCmd.Run(SetupCmd, []string{})
 
@@ -251,7 +246,7 @@ func TestSetupCmd_ProjectFilter_NotFound(t *testing.T) {
 }
 
 func TestSetupCmd_SkipsExistingRepos(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -289,7 +284,7 @@ func TestSetupCmd_SkipsExistingRepos(t *testing.T) {
 }
 
 func TestFetchCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -305,7 +300,7 @@ func TestFetchCmd_NoDevPath(t *testing.T) {
 }
 
 func TestPullCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -321,7 +316,7 @@ func TestPullCmd_NoDevPath(t *testing.T) {
 }
 
 func TestSyncCmd_NoDevPath(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -336,35 +331,6 @@ func TestSyncCmd_NoDevPath(t *testing.T) {
 	assert.Contains(t, out, "Development folder path is not set")
 }
 
-func TestIsRepoCloned(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "test-is-cloned-*")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	// Test non-existent path
-	assert.False(t, isRepoCloned(filepath.Join(tmpDir, "nonexistent")))
-
-	// Test directory without .git
-	noGitDir := filepath.Join(tmpDir, "no-git")
-	err = os.MkdirAll(noGitDir, 0o755)
-	require.NoError(t, err)
-	assert.False(t, isRepoCloned(noGitDir))
-
-	// Test directory with .git file (not directory)
-	gitFileDir := filepath.Join(tmpDir, "git-file")
-	err = os.MkdirAll(gitFileDir, 0o755)
-	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(gitFileDir, ".git"), []byte("gitdir: ../other"), 0o644)
-	require.NoError(t, err)
-	assert.False(t, isRepoCloned(gitFileDir)) // .git must be a directory
-
-	// Test directory with .git directory
-	gitDirPath := filepath.Join(tmpDir, "has-git")
-	err = os.MkdirAll(filepath.Join(gitDirPath, ".git"), 0o755)
-	require.NoError(t, err)
-	assert.True(t, isRepoCloned(gitDirPath))
-}
-
 func TestCloneRepository_InvalidURL(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "test-clone-*")
 	require.NoError(t, err)
@@ -373,12 +339,12 @@ func TestCloneRepository_InvalidURL(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "test-repo")
 
 	// Try to clone with invalid URL - should fail with helpful error
-	err = cloneRepository("not-a-valid-url", destPath)
+	err = repo.Clone(context.Background(), "not-a-valid-url", destPath)
 	assert.Error(t, err)
 }
 
 func TestFetchCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -402,25 +368,20 @@ func TestFetchCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"fetch", "--dry-run"})
+
+	err = ProjectCmd.Execute()
 	require.NoError(t, err)
-	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
-	}()
-
-	FetchCmd.SetOut(&buf)
-	FetchCmd.SetErr(&buf)
-
-	FetchCmd.Run(FetchCmd, []string{})
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Fetch complete: 1 successful")
 }
 
 func TestPullCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -444,25 +405,20 @@ func TestPullCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"pull", "--dry-run"})
+
+	err = ProjectCmd.Execute()
 	require.NoError(t, err)
-	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
-	}()
-
-	PullCmd.SetOut(&buf)
-	PullCmd.SetErr(&buf)
-
-	PullCmd.Run(PullCmd, []string{})
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Pull complete: 1 successful")
 }
 
 func TestSyncCmd_DryRun(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -486,25 +442,20 @@ func TestSyncCmd_DryRun(t *testing.T) {
 	err = os.MkdirAll(repoDir, 0o755)
 	require.NoError(t, err)
 
-	// Set dry-run flag on parent command (persistent flag)
-	err = ProjectCmd.PersistentFlags().Set("dry-run", "true")
+	ProjectCmd.SetOut(&buf)
+	ProjectCmd.SetErr(&buf)
+	ProjectCmd.SetArgs([]string{"sync", "--dry-run"})
+
+	err = ProjectCmd.Execute()
 	require.NoError(t, err)
-	defer func() {
-		_ = ProjectCmd.PersistentFlags().Set("dry-run", "false")
-	}()
-
-	SyncCmd.SetOut(&buf)
-	SyncCmd.SetErr(&buf)
-
-	SyncCmd.Run(SyncCmd, []string{})
 
 	out := buf.String()
 	assert.Contains(t, out, "Dry run mode")
-	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "Fetch: 1 successful")
 }
 
 func TestListCmd_VerboseOutput(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
@@ -548,7 +499,7 @@ func TestListCmd_VerboseOutput(t *testing.T) {
 }
 
 func TestRemoveCmd_NoProjects(t *testing.T) {
-	var buf bytes.Buffer
+	var buf ThreadSafeBuffer
 	log.SetWriters(&buf, &buf)
 	defer log.ResetWriters()
 
