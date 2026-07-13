@@ -62,8 +62,30 @@ func TestFilesCmd_Init_Flags(t *testing.T) {
 	assert.NotNil(t, fadCmd.Flags().Lookup("list-extensions"))
 	assert.Equal(t, "l", fadCmd.Flags().Lookup("list-extensions").Shorthand)
 
+	globFlag := fadCmd.Flags().Lookup("glob")
+	if assert.NotNil(t, globFlag) {
+		assert.Equal(t, "g", globFlag.Shorthand)
+	}
+
+	extFlag := fadCmd.Flags().Lookup("ext")
+	if assert.NotNil(t, extFlag) {
+		assert.Equal(t, "e", extFlag.Shorthand)
+	}
+
+	filenameFlag := fadCmd.Flags().Lookup("filename")
+	if assert.NotNil(t, filenameFlag) {
+		assert.Equal(t, "f", filenameFlag.Shorthand)
+	}
+
+	listExtFlag := fadCmd.Flags().Lookup("list-extensions")
+	if assert.NotNil(t, listExtFlag) {
+		assert.Equal(t, "l", listExtFlag.Shorthand)
+	}
+
 	// FindNonMovieFoldersCmd flags
 	fnmfCmd := files.FindNonMovieFoldersCmd
-	assert.NotNil(t, fnmfCmd.Flags().Lookup("dry-run"))
-	assert.Equal(t, "true", fnmfCmd.Flags().Lookup("dry-run").DefValue)
+	dryRunFlag := fnmfCmd.Flags().Lookup("dry-run")
+	if assert.NotNil(t, dryRunFlag) {
+		assert.Equal(t, "true", dryRunFlag.DefValue)
+	}
 }
