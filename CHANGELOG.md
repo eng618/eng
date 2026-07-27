@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.26.0](https://github.com/eng618/eng/compare/v1.25.0...v1.26.0) (2026-07-27)
+
+
+### Features
+
+* Implement compact responsive dashboard layout and update terminal resizing thresholds ([c4d7536](https://github.com/eng618/eng/commit/c4d75367e88e07dfde4eec374f4b036c271eeb70))
+
 ## [1.25.0](https://github.com/eng618/eng/compare/v1.24.0...v1.25.0) (2026-07-27)
 
 
