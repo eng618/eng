@@ -17,7 +17,7 @@ var (
 var AsdfCmd = &cobra.Command{
 	Use:   "asdf",
 	Short: "Manage asdf version manager plugins and installs",
-	Long:  `Command suite for managing asdf version manager plugins and pruning outdated tool installs.`,
+	Long:  `Command suite for managing asdf version manager plugins, checking project requirements, updating root .tool-versions, and pruning outdated tool installs.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Default to running prune if no subcommand is provided
 		return runPrune(cmd, args)
@@ -26,6 +26,9 @@ var AsdfCmd = &cobra.Command{
 
 func init() {
 	AsdfCmd.AddCommand(PruneCmd)
+	AsdfCmd.AddCommand(CheckCmd)
+	AsdfCmd.AddCommand(UpdateRootCmd)
+	AsdfCmd.AddCommand(StatusCmd)
 
 	// Bind flags to AsdfCmd as well so running `eng asdf [flags]` works identically to `eng asdf prune [flags]`
 	bindPruneFlags(AsdfCmd)
