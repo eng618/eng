@@ -165,12 +165,33 @@ tasks:
   format:
     desc: Format Go code
     cmds:
-      - golangci-lint fmt
+      - |
+        if command -v golangci-lint >/dev/null 2>&1; then
+          golangci-lint fmt
+        else
+          echo "golangci-lint not found, falling back to gofmt..."
+          gofmt -w .
+        fi
 
   format-check:
     desc: Check Go code formatting
     cmds:
-      - golangci-lint fmt --diff
+      - |
+        if command -v golangci-lint >/dev/null 2>&1; then
+          golangci-lint fmt --diff
+        else
+          echo "golangci-lint not found, falling back to gofmt..."
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not formatted:"
+            echo "$unformatted"
+            echo "Run 'task format' to fix."
+            exit 1
+          else
+            echo "All Go files are properly formatted."
+          fi
+        fi
+    silent: true
 
   validate:
     desc: Run lint and tests

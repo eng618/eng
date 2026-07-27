@@ -36,15 +36,15 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check formatting
-        run: task format-check
-
       - name: Lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.10
+          version: v2.12
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check formatting
+        run: task format-check
 
   test:
     needs: lint
