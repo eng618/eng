@@ -8,6 +8,7 @@ Complete documentation for all `eng` CLI commands and their options.
 - [Docker Compose Swarms](#docker-compose-swarms)
 - [Project Management](#project-management)
 - [Dotfiles Management](#dotfiles-management)
+- [ASDF Tool Version Management](#asdf-tool-version-management)
 - [System Utilities](#system-utilities)
 - [File Utilities](#file-utilities)
 - [Codemod Tools](#codemod-tools)
@@ -273,6 +274,27 @@ cfg commit -m "Update"  # Commit changes
 cfg push                # Push changes
 cfg pull                # Pull changes
 ```
+
+---
+
+## ASDF Tool Version Management
+
+Manage `asdf` version manager plugins, check project version requirements, update tool versions, and prune outdated tool installs.
+
+### Commands
+
+| Command | Description |
+| ------- | ----------- |
+| `eng asdf update-latest` | Update `.tool-versions` to latest available tool releases (defaults to user-level global config at `$HOME/.tool-versions`) |
+| `eng asdf prune` | Prune outdated, unused `asdf` tool versions |
+| `eng asdf check` | Check if current project requirements in `.tool-versions` are installed |
+| `eng asdf status` | Display status of all installed `asdf` plugins and versions |
+
+### `update-latest` Flags
+
+- `-c, --config <path>` — Path to specific `.tool-versions` file (defaults to the user level global config at `$HOME/.tool-versions`)
+- `-i, --install` — Automatically run `asdf install` after updating `.tool-versions`
+- `-y, --yes` — Skip interactive prompts and apply all tool upgrades
 
 ---
 
