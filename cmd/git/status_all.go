@@ -1,23 +1,34 @@
 package git
 
 import (
+	"fmt"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // StatusAllCmd defines the cobra command for checking status of all git repositories.
-// It shows the status of all repositories in the development folder.
 var StatusAllCmd = &cobra.Command{
 	Use:   "status-all",
 	Short: "Check status of all git repositories in development folder",
 	Long:  `This command checks the status of all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		log.Start("Checking status of all git repositories")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Println(headerStyle.Render("📊 Development Repositories Status"))
+		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)
 
@@ -29,10 +40,22 @@ var StatusAllCmd = &cobra.Command{
 
 		log.Verbose(isVerbose, "Development path: %s", devPath)
 
+		var scanSpinner *ui.Spinner
+		if !ui.DisableProgress {
+			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s...", devPath))
+		}
+
 		repos, err := findGitRepositories(devPath)
 		if err != nil {
+			if scanSpinner != nil {
+				scanSpinner.Stop()
+			}
 			log.Error("Failed to find git repositories: %s", err)
 			return
+		}
+
+		if scanSpinner != nil {
+			scanSpinner.Stop()
 		}
 
 		if len(repos) == 0 {
@@ -40,15 +63,20 @@ var StatusAllCmd = &cobra.Command{
 			return
 		}
 
-		log.Info("Checking status of %d repositories:", len(repos))
+		type RepoStatusSummary struct {
+			Name    string
+			Branch  string
+			IsDirty bool
+		}
 
+		var summaries []RepoStatusSummary
 		cleanCount := 0
 		dirtyCount := 0
 
 		for _, repoPath := range repos {
 			repoName := filepath.Base(repoPath)
+			branch := getRepoBranch(repoPath)
 
-			// Check if repository is dirty
 			isDirty, err := repo.IsDirty(cmd.Context(), repoPath)
 			if err != nil {
 				log.Error("  %s: Failed to check status - %s", repoName, err)
@@ -56,14 +84,63 @@ var StatusAllCmd = &cobra.Command{
 			}
 
 			if isDirty {
-				log.Warn("  %s: Has uncommitted changes", repoName)
 				dirtyCount++
 			} else {
-				log.Success("  %s: Clean", repoName)
 				cleanCount++
 			}
+
+			summaries = append(summaries, RepoStatusSummary{
+				Name:    repoName,
+				Branch:  branch,
+				IsDirty: isDirty,
+			})
 		}
 
-		log.Info("Status summary: %d clean, %d with uncommitted changes", cleanCount, dirtyCount)
+		// Render Lipgloss Table Box
+		var boxLines []string
+		boxLines = append(boxLines, fmt.Sprintf("Checked %s repository(ies) in %s:",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(repos))),
+			theme.BoldText.Render(devPath),
+		))
+		boxLines = append(boxLines, "")
+		boxLines = append(boxLines, fmt.Sprintf("  %-30s %-20s %s",
+			theme.BoldText.Render("Repository"),
+			theme.BoldText.Render("Branch"),
+			theme.BoldText.Render("Status"),
+		))
+		boxLines = append(boxLines, "  "+strings.Repeat("─", 65))
+
+		for _, s := range summaries {
+			statusTag := theme.SuccessText.Render("✓ Clean")
+			if s.IsDirty {
+				statusTag = theme.ErrorText.Render("⚠️ Uncommitted Changes")
+			}
+
+			boxLines = append(boxLines, fmt.Sprintf("  %-30s %-20s %s",
+				theme.PrimaryText.Render(s.Name),
+				theme.MutedText.Render(s.Branch),
+				statusTag,
+			))
+		}
+
+		if !ui.DisableProgress {
+			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+		}
+
+		summaryMsg := fmt.Sprintf("Status summary: %d clean, %d with uncommitted changes across %d repositories.", cleanCount, dirtyCount, len(repos))
+		if dirtyCount > 0 {
+			theme.WarningMessage(summaryMsg)
+		} else {
+			theme.SuccessMessage(summaryMsg)
+		}
 	},
+}
+
+func getRepoBranch(repoPath string) string {
+	cmd := exec.Command("git", "-C", repoPath, "rev-parse", "--abbrev-ref", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return "main"
+	}
+	return strings.TrimSpace(string(out))
 }
