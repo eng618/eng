@@ -60,10 +60,10 @@ var CleanAllCmd = &cobra.Command{
 		}
 
 		type RepoCleanSummary struct {
-			Path         string
-			Name         string
+			Path           string
+			Name           string
 			UntrackedCount int
-			SizeBytes    int64
+			SizeBytes      int64
 		}
 
 		var reposToClean []RepoCleanSummary
