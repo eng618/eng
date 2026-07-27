@@ -50,8 +50,8 @@ func (m Model) View() string {
 	leftStyleWidth := leftPaneOuterWidth - 2
 	rightStyleWidth := rightPaneOuterWidth - 2
 
-	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 2)
-	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 2)
+	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 4)
+	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 4)
 
 	// Render Left Pane
 	leftContent := leftStyle.Render(limitLines(m.list.View(), m.windowHeight-6))
@@ -165,18 +165,20 @@ func (m Model) renderRightPane() string {
 			end = len(allLines)
 		}
 
+		var lines []string
 		for i := start; i < end; i++ {
-			b.WriteString(allLines[i])
-			b.WriteString("\n")
+			lines = append(lines, allLines[i])
 		}
 
 		// Pad with empty lines if needed to keep the help/footer sticky at the bottom
 		renderedCount := end - start
 		if renderedCount < H_repos {
 			for i := 0; i < H_repos-renderedCount; i++ {
-				b.WriteString("\n")
+				lines = append(lines, "")
 			}
 		}
+
+		b.WriteString(strings.Join(lines, "\n"))
 	}
 
 	var footerText string
@@ -201,7 +203,8 @@ func (m Model) renderRightPane() string {
 			footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit All  [t] Term All  [r] Refresh All  [a] Add  [?] Help"
 		}
 		footerText = truncate(footerText, innerRightWidth)
-		b.WriteString(statusMutedStyle.Render("\n" + footerText))
+		b.WriteString("\n")
+		b.WriteString(statusMutedStyle.Render(footerText))
 	}
 
 	return b.String()
@@ -484,11 +487,9 @@ func (m Model) renderRepoTable(p config.Project, innerRightWidth, H_repos int) s
 		strings.Repeat("─", wUpstream) + gap +
 		strings.Repeat("─", wUpdated)
 
-	var tb strings.Builder
-	tb.WriteString(tableHeaderStyle.Render(headerLine))
-	tb.WriteString("\n")
-	tb.WriteString(statusMutedStyle.Render(underlineLine))
-	tb.WriteString("\n")
+	var lines []string
+	lines = append(lines, tableHeaderStyle.Render(headerLine))
+	lines = append(lines, statusMutedStyle.Render(underlineLine))
 
 	start := m.repoScrollOffset
 	end := start + H_body
@@ -515,18 +516,17 @@ func (m Model) renderRepoTable(p config.Project, innerRightWidth, H_repos int) s
 		updatedCell := renderUpdatedCell(status, isSelected, wUpdated)
 
 		rowLine := repoCell + gap + branchCell + gap + statusCell + gap + upstreamCell + gap + updatedCell
-		tb.WriteString(rowLine)
-		tb.WriteString("\n")
+		lines = append(lines, rowLine)
 	}
 
 	renderedCount := end - start
 	if renderedCount < H_body {
 		for i := 0; i < H_body-renderedCount; i++ {
-			tb.WriteString("\n")
+			lines = append(lines, "")
 		}
 	}
 
-	return tb.String()
+	return strings.Join(lines, "\n")
 }
 
 func renderRepoCell(repoName string, isSelected bool, wRepo int) string {

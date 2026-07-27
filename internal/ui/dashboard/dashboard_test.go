@@ -516,3 +516,49 @@ func TestDashboardStatusRendering(t *testing.T) {
 		t.Errorf("expected Merge conflicts! (2 files), got view:\n%s", view)
 	}
 }
+
+func TestTableScrollVisibility(t *testing.T) {
+	repos := make([]config.ProjectRepo, 30)
+	for i := 0; i < 30; i++ {
+		repos[i] = config.ProjectRepo{
+			URL: fmt.Sprintf("https://github.com/test/repo%d", i),
+		}
+	}
+
+	projects := []config.Project{
+		{
+			Name:  "TestProject",
+			Repos: repos,
+		},
+	}
+
+	m := NewModel(projects, "/tmp/dev", "")
+	m.ready = true
+	m.windowWidth = 120
+	m.windowHeight = 25
+	m.focusedPane = FocusRight
+
+	for i := 0; i < 30; i++ {
+		m.selectedRepoIndex = i
+		m.clampScrollOffset()
+
+		paneView := m.renderRightPane()
+
+		// Verify the selected repo is present in the rendered pane view
+		expectedRepoName := fmt.Sprintf("repo%d", i)
+		if !strings.Contains(paneView, expectedRepoName) {
+			t.Errorf("Selected repo %s (index %d) not visible in right pane output:\n%s", expectedRepoName, i, paneView)
+		}
+
+		// Verify footer text is present in the rendered pane view
+		if !strings.Contains(paneView, "[j/k] Navigate") {
+			t.Errorf("Footer help text not visible when selected index is %d:\n%s", i, paneView)
+		}
+
+		// Verify total lines rendered by renderRightPane is <= innerRightHeight (25 - 6 = 19 lines)
+		lines := strings.Split(paneView, "\n")
+		if len(lines) > 19 {
+			t.Errorf("Expected renderRightPane output to fit in 19 lines, got %d lines (selected index %d)", len(lines), i)
+		}
+	}
+}
