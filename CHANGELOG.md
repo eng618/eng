@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.24.0](https://github.com/eng618/eng/compare/v1.23.0...v1.24.0) (2026-07-27)
+
+
+### Features
+
+* **system,git:** Modernize system update and git status-all/clean-all with Charm UI and disk usage tracking ([7885671](https://github.com/eng618/eng/commit/7885671432de9eb8dd5c017fd1b0593e26e3b6c4))
+
+
+### Bug Fixes
+
+* Apply formatting ([58ec0be](https://github.com/eng618/eng/commit/58ec0be6f153685b9690f7e0356a603fbef350c5))
+
 ## [1.23.0](https://github.com/eng618/eng/compare/v1.22.0...v1.23.0) (2026-07-27)
 
 
