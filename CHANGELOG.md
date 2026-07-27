@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.27.0](https://github.com/eng618/eng/compare/v1.26.0...v1.27.0) (2026-07-27)
+
+
+### Features
+
+* Implement automatic command documentation generation and add full help manual for all CLI tools ([37c8b75](https://github.com/eng618/eng/commit/37c8b759e941ac0eab4d58605594919a3a30dba1))
+
 ## [1.26.0](https://github.com/eng618/eng/compare/v1.25.0...v1.26.0) (2026-07-27)
 
 
