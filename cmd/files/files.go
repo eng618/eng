@@ -15,6 +15,9 @@ var FilesCmd = &cobra.Command{
 }
 
 func init() {
+	FindAndDeleteCmd.Aliases = []string{"find-and-delete", "delete-files", "clean-files"}
+	FindNonMovieFoldersCmd.Aliases = []string{"find-non-movie-folders", "non-movie-folders", "clean-folders"}
+
 	FilesCmd.AddCommand(FindAndDeleteCmd)
 	FilesCmd.AddCommand(FindNonMovieFoldersCmd)
 
@@ -29,5 +32,4 @@ func init() {
 
 	FindNonMovieFoldersCmd.Flags().
 		Bool("dry-run", true, "Perform a dry run without deleting folders. Set to false to enable deletion.")
-	// Default to TRUE for safety
 }

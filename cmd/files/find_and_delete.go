@@ -9,11 +9,14 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // FileTypeCategory represents a category of file types with their extensions.
@@ -21,6 +24,20 @@ type FileTypeCategory struct {
 	Name       string
 	Extensions map[string]bool
 	Options    []string // For display in the survey
+}
+
+// FileMatch tracks a matched file path and its size in bytes.
+type FileMatch struct {
+	Path      string
+	SizeBytes int64
+}
+
+// FormatLabel returns a user-friendly display string with path and human-readable size.
+func (f FileMatch) FormatLabel() string {
+	if f.SizeBytes > 0 {
+		return fmt.Sprintf("%s (%s)", f.Path, humanize.Bytes(uint64(f.SizeBytes)))
+	}
+	return f.Path
 }
 
 // FindAndDeleteCmd scans a directory for selected file types and deletes them after confirmation.
@@ -32,8 +49,9 @@ var (
 )
 
 var FindAndDeleteCmd = &cobra.Command{
-	Use:   "findAndDelete [directory]",
-	Short: "Find and delete files of selected types, or list extensions",
+	Use:     "findAndDelete [directory]",
+	Aliases: []string{"find-and-delete", "delete-files", "clean-files"},
+	Short:   "Find and delete files of selected types, or list extensions",
 	Long: `Recursively scan the provided directory for files of types selected by the user
 and delete them after an interactive confirmation. Use --list-extensions to list
 all file extensions in the directory instead. Use --filename to target a specific
@@ -41,6 +59,14 @@ filename, --glob for glob patterns, or --ext for file extensions.
 `,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Println(headerStyle.Render("🧹 Find & Delete Files"))
+		}
+
 		dir := args[0]
 		isVerbose := cmdutil.IsVerbose(cmd)
 
@@ -55,9 +81,23 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				log.Error("Error listing extensions: %v", err)
 				return
 			}
-			log.Message("File extensions found in %s:", dir)
+
+			var extLines []string
+			extLines = append(extLines, fmt.Sprintf("Found %s file extension(s) in %s:",
+				theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(extensions))),
+				theme.BoldText.Render(dir),
+			))
 			for _, ext := range extensions {
-				log.Message("  - %s", ext)
+				extLines = append(extLines, fmt.Sprintf("  • %s", theme.PrimaryText.Render(ext)))
+			}
+
+			if !ui.DisableProgress {
+				fmt.Println(theme.InfoBox.Render(strings.Join(extLines, "\n")))
+			} else {
+				log.Message("File extensions found in %s:", dir)
+				for _, ext := range extensions {
+					log.Message("  - %s", ext)
+				}
 			}
 			return
 		}
@@ -68,7 +108,6 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			return
 		}
 		if matchFn == nil {
-			// Prompt the user for file types to search for (multi-select).
 			options := []string{
 				"JSON files (.json)",
 				"Video files (.mp4, .mov, .avi, .mkv, .m4v, .wmv, .3gp)",
@@ -84,7 +123,6 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				"Executable files (.exe, .msi, .dmg, .pkg, .deb, .rpm)",
 				"System files (.DS_Store)",
 			}
-			var selected []string
 			selected, err := ui.MultiSelect("Select file types to find and delete:", options, nil)
 			if err != nil {
 				log.Error("Error collecting selection: %v", err)
@@ -96,7 +134,6 @@ filename, --glob for glob patterns, or --ext for file extensions.
 				return
 			}
 
-			// Build a lookup for extensions based on selection.
 			extLookup := map[string]bool{}
 			for _, s := range selected {
 				s = strings.ToLower(s)
@@ -179,97 +216,218 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			}
 		}
 
-		log.Start("Scanning for files...")
-		spinner := ui.NewProgressSpinner("Scanning directories...")
-		matches, totalSize, walkErr := ScanFiles(dir, matchFn, spinner)
+		var spinner *ui.Spinner
+		if !ui.DisableProgress {
+			spinner = ui.NewProgressSpinner("Scanning directories for matching files...")
+		}
 
-		if walkErr != nil {
+		fileMatches, totalSize, walkErr := ScanFileMatches(dir, matchFn, spinner)
+		if spinner != nil {
 			spinner.Stop()
-			log.Error("Error scanning directory: %v", walkErr)
-			return
 		}
-
-		spinner.UpdateMessage("Scan complete.")
-		spinner.SetProgressBar(1.0)
-		spinner.Stop()
 
 		if walkErr != nil {
 			log.Error("Error scanning directory: %v", walkErr)
 			return
 		}
 
-		if len(matches) == 0 {
-			log.Success("No matching files found in %s.", dir)
+		if len(fileMatches) == 0 {
+			theme.SuccessMessage(fmt.Sprintf("No matching files found in %s.", dir))
 			return
 		}
 
-		log.Message("\nFound %d file(s) (%.2f MB total).", len(matches), float64(totalSize)/(1024*1024))
+		sizeFormatted := humanize.Bytes(uint64(totalSize))
 
-		// Use MultiSelect to confirm deletion, with all files selected by default
-		selectedToDelete, err := ui.MultiSelect(
-			fmt.Sprintf("Select files to delete (%.2f MB total selected by default):", float64(totalSize)/(1024*1024)),
-			matches,
-			matches, // Pre-select all
-		)
+		// Render Callout Box
+		var boxLines []string
+		boxLines = append(boxLines, fmt.Sprintf("Found %s matching file(s) reclaiming %s space in %s:",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(fileMatches))),
+			theme.SuccessText.Bold(true).Render(sizeFormatted),
+			theme.BoldText.Render(dir),
+		))
+
+		if !ui.DisableProgress {
+			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+		}
+
+		// Prepare MultiSelect options with itemized file sizes
+		labelMap := make(map[string]FileMatch)
+		var options []string
+		for _, fm := range fileMatches {
+			label := fm.FormatLabel()
+			labelMap[label] = fm
+			options = append(options, label)
+		}
+
+		confirmPromptMsg := fmt.Sprintf("Select files to delete (%s total matched):", sizeFormatted)
+		selectedLabels, err := ui.MultiSelect(confirmPromptMsg, options, options)
 		if err != nil {
 			log.Error("Error during confirmation prompt: %v", err)
 			return
 		}
-		if len(selectedToDelete) == 0 {
+
+		if len(selectedLabels) == 0 {
 			log.Info("Deletion canceled or no files selected.")
 			return
 		}
 
-		// Attempt parallel deletion
-		var deleted, errors atomic.Int64
-		var wg sync.WaitGroup
-		workerCount := 4 // Adjust based on system capabilities
-		fileChan := make(chan string, len(selectedToDelete))
+		var selectedFiles []FileMatch
+		var selectedTotalBytes int64
+		for _, label := range selectedLabels {
+			if fm, ok := labelMap[label]; ok {
+				selectedFiles = append(selectedFiles, fm)
+				selectedTotalBytes += fm.SizeBytes
+			}
+		}
 
-		// Start workers
-		for i := 0; i < workerCount; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for f := range fileChan {
-					if f == "" { // Skip empty strings if any
-						continue
-					}
-					if err := os.Remove(f); err != nil {
-						if !os.IsNotExist(err) { // Only log if it's not a "file not found" error
-							log.Error("Failed to delete %s: %v", f, err)
-							errors.Add(1)
-						}
-					} else {
-						if isVerbose {
-							log.Success("Deleted %s", f)
-						}
-						deleted.Add(1)
+		totalToDelete := len(selectedFiles)
+		var deleteSpinner *ui.Spinner
+		if !ui.DisableProgress {
+			deleteSpinner = ui.NewProgressSpinner(fmt.Sprintf("Deleting %d selected file(s)...", totalToDelete))
+		}
+
+		var deletedCount int
+		var freedBytes int64
+		var errorCount int
+
+		for i, fm := range selectedFiles {
+			ratio := float64(i+1) / float64(totalToDelete)
+			statusMsg := fmt.Sprintf("[%d/%d] Deleting %s", i+1, totalToDelete, filepath.Base(fm.Path))
+
+			if deleteSpinner != nil {
+				deleteSpinner.SetProgressBar(ratio, statusMsg)
+			}
+
+			if err := os.Remove(fm.Path); err != nil && !os.IsNotExist(err) {
+				errorCount++
+				if deleteSpinner != nil {
+					deleteSpinner.Logf("  %s Failed %s: %v\n", theme.ErrorText.Render("✗"), fm.Path, err)
+				} else {
+					log.Error("Failed to delete %s: %v", fm.Path, err)
+				}
+			} else {
+				deletedCount++
+				freedBytes += fm.SizeBytes
+				sizeStr := ""
+				if fm.SizeBytes > 0 {
+					sizeStr = fmt.Sprintf(" (freed %s)", humanize.Bytes(uint64(fm.SizeBytes)))
+				}
+				if deleteSpinner != nil {
+					deleteSpinner.Logf("  %s Deleted %s%s\n", theme.SuccessText.Render("✓"), fm.Path, sizeStr)
+				} else {
+					if isVerbose {
+						log.Success("Deleted %s%s", fm.Path, sizeStr)
 					}
 				}
-			}()
+			}
 		}
 
-		// Feed files to workers
-		for _, f := range selectedToDelete {
-			fileChan <- f
+		if deleteSpinner != nil {
+			deleteSpinner.SetProgressBar(1.0, "Deletion complete")
+			deleteSpinner.Stop()
 		}
-		close(fileChan)
 
-		// Wait for completion
-		wg.Wait()
-
-		log.Success("Done. Deleted %d file(s), %d errors.", deleted.Load(), errors.Load())
+		freedStr := humanize.Bytes(uint64(freedBytes))
+		if errorCount > 0 {
+			theme.WarningMessage(fmt.Sprintf("Deleted %d file(s) freeing %s, but encountered %d error(s).", deletedCount, freedStr, errorCount))
+		} else {
+			theme.SuccessMessage(fmt.Sprintf("Successfully deleted %d file(s) freeing %s of disk space!", deletedCount, freedStr))
+		}
 	},
 }
 
+// deleteFiles deletes the given files in parallel and returns counts of successes and errors.
+// Maintained for backward compatibility with unit tests.
+func deleteFiles(files []string, isVerbose bool) (deleted, errors int64) {
+	var wg sync.WaitGroup
+	var deletedCount, errorCount atomic.Int64
+	workerCount := 4
+	fileChan := make(chan string, len(files))
+
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for f := range fileChan {
+				if f == "" {
+					continue
+				}
+				if err := os.Remove(f); err != nil {
+					if !os.IsNotExist(err) {
+						log.Error("Failed to delete %s: %v", f, err)
+						errorCount.Add(1)
+					}
+				} else {
+					if isVerbose {
+						log.Success("Deleted %s", f)
+					}
+					deletedCount.Add(1)
+				}
+			}
+		}()
+	}
+
+	for _, f := range files {
+		fileChan <- f
+	}
+	close(fileChan)
+	wg.Wait()
+
+	return deletedCount.Load(), errorCount.Load()
+}
+
+// ScanFileMatches walks dir recursively and returns FileMatch structs containing path and size.
+func ScanFileMatches(dir string, matchFn func(name string) bool, spinner *ui.Spinner) ([]FileMatch, int64, error) {
+	var matches []FileMatch
+	var totalSize int64
+	var filesProcessed int
+
+	walkErr := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d == nil {
+			return nil
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		filesProcessed++
+		if spinner != nil && filesProcessed%50 == 0 {
+			spinner.SetProgressBar(0.5, fmt.Sprintf("Scanning files... (%d processed, %d matched)", filesProcessed, len(matches)))
+		}
+
+		if matchFn(d.Name()) {
+			info, err := d.Info()
+			var sz int64
+			if err == nil {
+				sz = info.Size()
+			}
+			matches = append(matches, FileMatch{
+				Path:      path,
+				SizeBytes: sz,
+			})
+			totalSize += sz
+		}
+		return nil
+	})
+
+	return matches, totalSize, walkErr
+}
+
 // ScanFiles walks dir recursively and returns files that match the provided function.
-// Also returns the total size of matched files. spinner may be nil.
-// buildMatchFunction creates a file matching function based on provided patterns.
+// Maintained for backward compatibility.
+func ScanFiles(dir string, matchFn func(name string) bool, spinner *ui.Spinner) ([]string, int64, error) {
+	fileMatches, totalSize, err := ScanFileMatches(dir, matchFn, spinner)
+	var paths []string
+	for _, fm := range fileMatches {
+		paths = append(paths, fm.Path)
+	}
+	return paths, totalSize, err
+}
+
 func buildMatchFunction(globPattern, extension, filename string) (func(name string) bool, error) {
 	if globPattern != "" {
 		pattern := globPattern
-		// Validate pattern before returning the function
 		if _, err := filepath.Match(pattern, "test"); err != nil {
 			return nil, fmt.Errorf("invalid glob pattern '%s': %w", pattern, err)
 		}
@@ -298,115 +456,10 @@ func buildMatchFunction(globPattern, extension, filename string) (func(name stri
 	return nil, nil
 }
 
-// deleteFiles deletes the given files in parallel and returns counts of successes and errors.
-func deleteFiles(files []string, isVerbose bool) (deleted, errors int64) {
-	var wg sync.WaitGroup
-	var deletedCount, errorCount atomic.Int64
-	workerCount := 4 // Adjust based on system capabilities
-	fileChan := make(chan string, len(files))
-
-	// Start workers
-	for i := 0; i < workerCount; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for f := range fileChan {
-				if f == "" { // Skip empty strings if any
-					continue
-				}
-				if err := os.Remove(f); err != nil {
-					if !os.IsNotExist(err) { // Only log if it's not a "file not found" error
-						log.Error("Failed to delete %s: %v", f, err)
-						errorCount.Add(1)
-					}
-				} else {
-					if isVerbose {
-						log.Success("Deleted %s", f)
-					}
-					deletedCount.Add(1)
-				}
-			}
-		}()
-	}
-
-	// Feed files to workers
-	for _, f := range files {
-		fileChan <- f
-	}
-	close(fileChan)
-
-	// Wait for completion
-	wg.Wait()
-
-	return deletedCount.Load(), errorCount.Load()
-}
-
-func ScanFiles(dir string, matchFn func(name string) bool, spinner *ui.Spinner) ([]string, int64, error) {
-	var matches []string
-	var totalSize int64
-	var filesProcessed, totalFiles atomic.Int64
-
-	// First, count total files for progress reporting
-	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			log.Warn("Error accessing path %s: %v", path, err)
-			return filepath.SkipDir
-		}
-		if !d.IsDir() {
-			totalFiles.Add(1)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, 0, fmt.Errorf("error counting files: %w", err)
-	}
-
-	// Now do the actual scanning
-	walkErr := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			// log and continue
-			log.Warn("Error accessing path %s: %v", path, err)
-			return nil
-		}
-
-		if err != nil {
-			log.Warn("Error accessing path %s: %v", path, err)
-			return filepath.SkipDir
-		}
-
-		if !d.IsDir() {
-			filesProcessed.Add(1)
-			if spinner != nil && filesProcessed.Load()%50 == 0 {
-				progress := float64(filesProcessed.Load()) / float64(totalFiles.Load())
-				spinner.SetProgressBar(progress, fmt.Sprintf("Scanning... (%d/%d files, %d matches)",
-					filesProcessed.Load(), totalFiles.Load(), len(matches)))
-			}
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		if matchFn(d.Name()) {
-			info, err := d.Info()
-			if err != nil {
-				log.Warn("Error getting file info for %s: %v", path, err)
-				return nil
-			}
-			matches = append(matches, path)
-			totalSize += info.Size()
-		}
-		return nil
-	})
-
-	return matches, totalSize, walkErr
-}
-
 func ListExtensions(dir string) ([]string, error) {
 	extSet := make(map[string]bool)
 	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			log.Warn("Error accessing path %s: %v", path, err)
+		if err != nil || d == nil {
 			return nil
 		}
 		if !d.IsDir() {

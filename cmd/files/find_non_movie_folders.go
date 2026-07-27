@@ -7,167 +7,222 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/internal/asdf"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
+
+// FolderMatch represents a detected non-movie folder with disk size and file count.
+type FolderMatch struct {
+	Path      string
+	SizeBytes int64
+	FileCount int
+}
+
+// FormatLabel returns a user-friendly display string with folder path, size, and file count.
+func (f FolderMatch) FormatLabel() string {
+	sizeStr := humanize.Bytes(uint64(f.SizeBytes))
+	return fmt.Sprintf("%s (%s, %d file(s))", f.Path, sizeStr, f.FileCount)
+}
 
 // FindNonMovieFoldersCmd defines the cobra command for finding and optionally deleting
 // directories that do not contain common video file types.
 var FindNonMovieFoldersCmd = &cobra.Command{
-	Use:   "findNonMovieFolders [directory]",
-	Short: "Find and optionally delete non-movie folders",
+	Use:     "findNonMovieFolders [directory]",
+	Aliases: []string{"find-non-movie-folders", "non-movie-folders", "clean-folders"},
+	Short:   "Find and optionally delete non-movie folders",
 	Long: `This command searches recursively through the supplied directory for directories
 that do not contain video files (mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v).
 It identifies top-level subdirectories within the supplied directory that lack
 any such files anywhere within their structure.
 
-It lists the files within the identified folders and prompts for confirmation before deletion.`,
+It calculates folder disk space, lists folder contents, and prompts for confirmation before deletion.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Start("Scanning for non-movie folders...")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Println(headerStyle.Render("🎬 Find Non-Movie Folders"))
+		}
 
 		directory := args[0]
 		isVerbose := cmdutil.IsVerbose(cmd)
 
-		// Validate directory exists
 		if _, err := os.Stat(directory); os.IsNotExist(err) {
 			log.Error("Provided directory does not exist: %s", directory)
 			return
 		}
 
-		log.Verbose(isVerbose, "Searching for directories in: %s", directory)
-		spinner := ui.NewProgressSpinner("Scanning directories...")
+		var spinner *ui.Spinner
+		if !ui.DisableProgress {
+			spinner = ui.NewProgressSpinner("Scanning directories for non-movie folders...")
+		}
 
 		nonMovieFolders, err := findNonMovieFolders(isVerbose, directory, spinner, func(done, total int) {
 			progress := 0.0
 			if total > 0 {
 				progress = float64(done) / float64(total)
 			}
-			spinner.SetProgressBar(progress, fmt.Sprintf("Scanning... (%d/%d)", done, total))
+			if spinner != nil {
+				spinner.SetProgressBar(progress, fmt.Sprintf("Scanning... (%d/%d directories)", done, total))
+			}
 		})
-		// Explicitly Stop Spinner before printing results
+
+		if spinner != nil {
+			spinner.Stop()
+		}
+
 		if err != nil {
-			spinner.Stop() // Stop spinner even if there was an error during scan
 			log.Error("Error finding non-movie folders: %s", err)
 			return
 		}
-		spinner.UpdateMessage("Scan complete.")
-		spinner.SetProgressBar(1.0) // Ensure it shows 100%
-		spinner.Stop()
-
-		log.Verbose(isVerbose, "Found %d potential non-movie folders.", len(nonMovieFolders))
 
 		if len(nonMovieFolders) == 0 {
-			log.Success("No non-movie folders found in %s.", directory)
+			theme.SuccessMessage(fmt.Sprintf("No non-movie folders found in %s.", directory))
 			return
 		}
 
-		log.Message("\nFound %d non-movie folder(s) that will be deleted:", len(nonMovieFolders))
-
-		// Store folder contents for summary and confirmation
-		type FolderContent struct {
-			Files []string
-			Error string
-		}
-		folderContents := make(map[string]FolderContent)
+		// Inspect each non-movie folder for size and file count
+		var folderMatches []FolderMatch
+		var totalReclaimableBytes int64
+		var totalFiles int
 
 		for _, folder := range nonMovieFolders {
-			var files []string
-			walkErr := filepath.WalkDir(folder, func(path string, d os.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if !d.IsDir() {
-					relPath, err := filepath.Rel(folder, path)
-					if err != nil {
-						return err
-					}
-					files = append(files, relPath)
-				}
-				return nil
+			sz := asdf.CalculateDirSize(folder)
+			fc := countFilesInDir(folder)
+
+			folderMatches = append(folderMatches, FolderMatch{
+				Path:      folder,
+				SizeBytes: sz,
+				FileCount: fc,
 			})
 
-			listErrorString := ""
-			if walkErr != nil {
-				errMsg := fmt.Sprintf("Could not list files in folder %s: %s", folder, walkErr)
-				log.Warn(errMsg)
-				listErrorString = "(error listing files)"
-			}
-			folderContents[folder] = FolderContent{Files: files, Error: listErrorString}
-
-			log.Message("  - %s", folder)
-			if listErrorString != "" {
-				log.Message("    %s", listErrorString)
-			} else if len(files) > 0 {
-				for _, file := range files {
-					displayPath := filepath.Join(filepath.Base(folder), file)
-					log.Message("    - %s", displayPath)
-				}
-			} else {
-				log.Message("    (Contains no files or only empty subdirectories)")
-			}
+			totalReclaimableBytes += sz
+			totalFiles += fc
 		}
 
-		log.Message("") // Add a blank line for readability
+		totalSizeStr := humanize.Bytes(uint64(totalReclaimableBytes))
 
-		// Use MultiSelect to confirm deletion, with all folders selected by default
-		selectedToDelete, err := ui.MultiSelect(
-			"Select folders to delete:",
-			nonMovieFolders,
-			nonMovieFolders, // Pre-select all
-		)
+		// Render Callout Box
+		var boxLines []string
+		boxLines = append(boxLines, fmt.Sprintf("Found %s non-movie folder(s) reclaiming %s space (%d total file(s)):",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(folderMatches))),
+			theme.SuccessText.Bold(true).Render(totalSizeStr),
+			totalFiles,
+		))
+
+		for _, fm := range folderMatches {
+			boxLines = append(boxLines, fmt.Sprintf("  • %s %s",
+				theme.BoldText.Render(fm.Path),
+				theme.MutedText.Render(fmt.Sprintf("(%s, %d files)", humanize.Bytes(uint64(fm.SizeBytes)), fm.FileCount)),
+			))
+		}
+
+		if !ui.DisableProgress {
+			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+		}
+
+		// Prepare MultiSelect options
+		labelMap := make(map[string]FolderMatch)
+		var options []string
+		for _, fm := range folderMatches {
+			label := fm.FormatLabel()
+			labelMap[label] = fm
+			options = append(options, label)
+		}
+
+		confirmPromptMsg := fmt.Sprintf("Select non-movie folders to delete (%s total reclaimable):", totalSizeStr)
+		selectedLabels, err := ui.MultiSelect(confirmPromptMsg, options, options)
 		if err != nil {
 			log.Error("Error during confirmation prompt: %v", err)
 			return
 		}
-		if len(selectedToDelete) == 0 {
+
+		if len(selectedLabels) == 0 {
 			log.Info("Deletion canceled or no folders selected.")
 			return
 		}
 
-		log.Start("Deleting non-movie folders...")
-		deletedCount := 0
-		skippedCount := 0
-		errorMessages := []string{}
-
-		for _, folder := range selectedToDelete {
-			log.Warn("Attempting to delete: %s", folder)
-			if err := os.RemoveAll(folder); err != nil {
-				errMsg := fmt.Sprintf("Error deleting folder %s: %s", folder, err)
-				log.Error(errMsg)
-				errorMessages = append(errorMessages, errMsg)
-				skippedCount++
-			} else {
-				log.Success("Deleted: %s", folder)
-				deletedCount++
+		var selectedFolders []FolderMatch
+		for _, label := range selectedLabels {
+			if fm, ok := labelMap[label]; ok {
+				selectedFolders = append(selectedFolders, fm)
 			}
 		}
 
-		// Final summary
-		if len(errorMessages) > 0 {
-			log.Warn("Encountered %d error(s) during processing.", len(errorMessages))
+		totalToDelete := len(selectedFolders)
+		var deleteSpinner *ui.Spinner
+		if !ui.DisableProgress {
+			deleteSpinner = ui.NewProgressSpinner(fmt.Sprintf("Deleting %d non-movie folder(s)...", totalToDelete))
 		}
 
-		log.Success("Processing complete. Deleted %d folder(s), skipped %d due to errors.", deletedCount, skippedCount)
+		var deletedCount int
+		var freedBytes int64
+		var errorCount int
+
+		for i, fm := range selectedFolders {
+			ratio := float64(i+1) / float64(totalToDelete)
+			statusMsg := fmt.Sprintf("[%d/%d] Removing %s", i+1, totalToDelete, filepath.Base(fm.Path))
+
+			if deleteSpinner != nil {
+				deleteSpinner.SetProgressBar(ratio, statusMsg)
+			}
+
+			if err := os.RemoveAll(fm.Path); err != nil {
+				errorCount++
+				if deleteSpinner != nil {
+					deleteSpinner.Logf("  %s Failed to remove %s: %v\n", theme.ErrorText.Render("✗"), fm.Path, err)
+				} else {
+					log.Error("Error deleting folder %s: %v", fm.Path, err)
+				}
+			} else {
+				deletedCount++
+				freedBytes += fm.SizeBytes
+				sizeStr := humanize.Bytes(uint64(fm.SizeBytes))
+				if deleteSpinner != nil {
+					deleteSpinner.Logf("  %s Deleted %s (freed %s, %d files)\n", theme.SuccessText.Render("✓"), fm.Path, sizeStr, fm.FileCount)
+				} else {
+					log.Success("Deleted: %s (freed %s)", fm.Path, sizeStr)
+				}
+			}
+		}
+
+		if deleteSpinner != nil {
+			deleteSpinner.SetProgressBar(1.0, "Folder deletion complete")
+			deleteSpinner.Stop()
+		}
+
+		freedStr := humanize.Bytes(uint64(freedBytes))
+		if errorCount > 0 {
+			theme.WarningMessage(fmt.Sprintf("Deleted %d non-movie folder(s) freeing %s, but encountered %d error(s).", deletedCount, freedStr, errorCount))
+		} else {
+			theme.SuccessMessage(fmt.Sprintf("Successfully deleted %d non-movie folder(s) freeing %s of disk space!", deletedCount, freedStr))
+		}
 	},
 }
 
-// findNonMovieFolders scans the immediate subdirectories of rootDir.
-// It returns a slice of paths to subdirectories that do not contain any files
-// matching common video extensions (recursively within each subdirectory).
-//
-// Parameters:
-//   - isVerbose: If true, logs verbose messages during the scan.
-//   - rootDir: The path to the directory whose subdirectories will be scanned.
-//   - spinner: A pointer to the progress spinner.
-//   - progress: A callback function to report progress (done, total). Can be nil.
-//
-// Returns:
-//   - A slice of strings, where each string is the absolute path to a non-movie folder.
-//   - An error if reading the root directory fails.
+func countFilesInDir(dirPath string) int {
+	var count int
+	_ = filepath.WalkDir(dirPath, func(_ string, d os.DirEntry, err error) error {
+		if err != nil || d == nil {
+			return nil
+		}
+		if !d.IsDir() {
+			count++
+		}
+		return nil
+	})
+	return count
+}
+
 func findNonMovieFolders(
 	isVerbose bool,
 	rootDir string,
@@ -181,7 +236,6 @@ func findNonMovieFolders(
 		return nil, fmt.Errorf("failed to read directory %s: %w", rootDir, err)
 	}
 
-	// Filter for directories only
 	var dirEntries []os.DirEntry
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -193,7 +247,7 @@ func findNonMovieFolders(
 	done := 0
 
 	if progress != nil {
-		progress(done, total) // Initial progress report (0/total)
+		progress(done, total)
 	}
 
 	videoExtensions := map[string]bool{
@@ -203,39 +257,36 @@ func findNonMovieFolders(
 
 	for _, entry := range dirEntries {
 		dirPath := filepath.Join(rootDir, entry.Name())
-		if isVerbose {
+		if isVerbose && spinner != nil {
 			spinner.Logf("--- Checking directory: %s\n", dirPath)
 		}
 
 		foundMovieFile := false
 		walkErr := filepath.WalkDir(dirPath, func(_ string, d os.DirEntry, err error) error {
 			if err != nil {
-				return err // Propagate errors
+				return err
 			}
 			if !d.IsDir() {
 				ext := strings.ToLower(filepath.Ext(d.Name()))
 				if videoExtensions[ext] {
 					foundMovieFile = true
-					// Return a special error to stop walking, since we found what we need.
 					return filepath.SkipAll
 				}
 			}
 			return nil
 		})
 
-		// If walkErr is filepath.SkipAll, it means we found a movie file and stopped early.
-		// This is our success condition for finding a movie, not a real error.
 		if walkErr != nil && !errors.Is(walkErr, filepath.SkipAll) {
 			log.Warn("Error scanning directory %s: %v. Skipping.", dirPath, walkErr)
 		}
 
 		if !foundMovieFile {
-			if isVerbose {
+			if isVerbose && spinner != nil {
 				spinner.Logf("--- No movie files found in: %s\n", dirPath)
 			}
 			nonMovieFolders = append(nonMovieFolders, dirPath)
 		} else {
-			if isVerbose {
+			if isVerbose && spinner != nil {
 				spinner.Logf("--- Movie file(s) found in %s.\n", dirPath)
 			}
 		}
