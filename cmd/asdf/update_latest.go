@@ -21,33 +21,34 @@ var (
 	updateConfigFlag  string
 )
 
-// UpdateRootCmd represents the subcommand to update root .tool-versions to latest available versions.
-var UpdateRootCmd = &cobra.Command{
-	Use:     "update-root",
-	Aliases: []string{"update-tools", "upgrade"},
-	Short:   "Update root .tool-versions file to the latest available releases for each tool",
-	Long: `Reads the root $HOME/.tool-versions file, queries 'asdf latest' for each plugin, and updates the file with the newest available releases.
+// UpdateLatestCmd represents the subcommand to update .tool-versions to latest available versions.
+var UpdateLatestCmd = &cobra.Command{
+	Use:     "update-latest",
+	Aliases: []string{"update-root", "update-tools", "upgrade"},
+	Short:   "Update .tool-versions file to the latest available releases for each tool (defaults to $HOME/.tool-versions)",
+	Long: `Reads a .tool-versions file (defaults to the user level global config at $HOME/.tool-versions), queries 'asdf latest' for each plugin, and updates the file with the newest available releases.
 
+Use the --config (-c) flag to specify a custom .tool-versions file path.
 Use the --install (-i) flag to automatically install the upgraded tool versions.
 Use the --yes (-y) flag to skip prompts and apply all upgrades.`,
-	RunE: runUpdateRoot,
+	RunE: runUpdateLatest,
 }
 
 func init() {
-	UpdateRootCmd.Flags().BoolVarP(&updateYesFlag, "yes", "y", false, "Skip prompts and apply all tool upgrades")
-	UpdateRootCmd.Flags().
+	UpdateLatestCmd.Flags().BoolVarP(&updateYesFlag, "yes", "y", false, "Skip prompts and apply all tool upgrades")
+	UpdateLatestCmd.Flags().
 		BoolVarP(&updateInstallFlag, "install", "i", false, "Automatically run asdf install after updating .tool-versions")
-	UpdateRootCmd.Flags().
-		StringVarP(&updateConfigFlag, "config", "c", "", "Path to specific .tool-versions file (default $HOME/.tool-versions)")
+	UpdateLatestCmd.Flags().
+		StringVarP(&updateConfigFlag, "config", "c", "", "Path to specific .tool-versions file (defaults to user level global config at $HOME/.tool-versions)")
 }
 
-func runUpdateRoot(_cmd *cobra.Command, _args []string) error {
+func runUpdateLatest(_cmd *cobra.Command, _args []string) error {
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("🚀 ASDF Root Tool Upgrade"))
+		fmt.Println(headerStyle.Render("🚀 ASDF Tool Upgrade"))
 	}
 
 	if _, err := lookPath("asdf"); err != nil {
@@ -131,19 +132,22 @@ func runUpdateRoot(_cmd *cobra.Command, _args []string) error {
 
 	// Render diff table
 	var tableLines []string
-	tableLines = append(tableLines, fmt.Sprintf("Found %s tool(s) with available upgrades:",
+	tableLines = append(tableLines, fmt.Sprintf(
+		"Found %s tool(s) with available upgrades:",
 		theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", upgradableCount)),
 	))
 
 	for _, u := range upgrades {
 		if u.CanUpgrade {
-			tableLines = append(tableLines, fmt.Sprintf("  • %-20s %s ➔ %s",
+			tableLines = append(tableLines, fmt.Sprintf(
+				"  • %-20s %s ➔ %s",
 				theme.BoldText.Render(u.Plugin),
 				theme.MutedText.Render(u.CurrentVersion),
 				theme.SuccessText.Bold(true).Render(u.LatestVersion),
 			))
 		} else {
-			tableLines = append(tableLines, fmt.Sprintf("  • %-20s %s %s",
+			tableLines = append(tableLines, fmt.Sprintf(
+				"  • %-20s %s %s",
 				theme.MutedText.Render(u.Plugin),
 				theme.MutedText.Render(u.CurrentVersion),
 				theme.MutedText.Render("(up to date)"),
