@@ -33,3 +33,15 @@ func GetDotfilesConfig() DotfilesConfig {
 		WorktreePath: viper.GetString("dotfiles.worktree_path"),
 	}
 }
+
+// ContainersConfig holds container-related configuration.
+type ContainersConfig struct {
+	Path string `mapstructure:"path"`
+}
+
+// GetContainersConfig retrieves the containers configuration from Viper.
+func GetContainersConfig() ContainersConfig {
+	return ContainersConfig{
+		Path: viper.GetString("containers.path"),
+	}
+}

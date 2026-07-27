@@ -50,8 +50,8 @@ func (m Model) View() string {
 	leftStyleWidth := leftPaneOuterWidth - 2
 	rightStyleWidth := rightPaneOuterWidth - 2
 
-	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 4)
-	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 4)
+	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 2)
+	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 2)
 
 	// Render Left Pane
 	leftContent := leftStyle.Render(limitLines(m.list.View(), m.windowHeight-6))

@@ -12,6 +12,8 @@ import (
 	"github.com/eng618/eng/internal/log"
 )
 
+var execCommand = exec.Command
+
 // BitwardenItem represents a Bitwarden vault item.
 type BitwardenItem struct {
 	ID     string           `json:"id"`
@@ -58,7 +60,7 @@ func setEnvVar(env []string, key, value string) []string {
 
 // CheckBitwardenLoginStatus checks if the user is logged into Bitwarden.
 func CheckBitwardenLoginStatus() (bool, error) {
-	cmd := exec.Command("bw", "status")
+	cmd := execCommand("bw", "status")
 	output, err := cmd.Output()
 	if err != nil {
 		return false, fmt.Errorf("failed to check Bitwarden status: %w", err)
@@ -99,7 +101,7 @@ func EnsureBitwardenSession() (string, error) {
 		}
 	}
 	// Check current status
-	cmd := exec.Command("bw", "status")
+	cmd := execCommand("bw", "status")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("bitwarden status failed: %w", err)
@@ -113,7 +115,7 @@ func EnsureBitwardenSession() (string, error) {
 	switch status.Status {
 	case "unauthenticated":
 		log.Info("Logging into Bitwarden (you may be prompted)")
-		login := exec.Command("bw", "login")
+		login := execCommand("bw", "login")
 		login.Stdin = os.Stdin
 		login.Stdout = log.Writer()
 		login.Stderr = log.ErrorWriter()
@@ -122,7 +124,7 @@ func EnsureBitwardenSession() (string, error) {
 		}
 
 		// Refresh status after login.
-		cmd = exec.Command("bw", "status")
+		cmd = execCommand("bw", "status")
 		out, err = cmd.Output()
 		if err != nil {
 			return "", fmt.Errorf("bitwarden status failed after login: %w", err)
@@ -190,7 +192,7 @@ func unlockBitwardenVault() (string, error) {
 		}
 	}
 
-	unlock := exec.Command("bw", "unlock", "--raw", "--passwordenv", passwordEnv)
+	unlock := execCommand("bw", "unlock", "--raw", "--passwordenv", passwordEnv)
 	unlock.Env = setEnvVar(os.Environ(), passwordEnv, masterPassword)
 	unlock.Stdout = log.Writer()
 	unlock.Stderr = log.ErrorWriter()
@@ -247,7 +249,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	env := setEnvVar(os.Environ(), "BW_SESSION", sess)
 
 	// Try to find existing item
-	find := exec.Command("bw", "list", "items", "--search", name)
+	find := execCommand("bw", "list", "items", "--search", name)
 	find.Env = env
 	find.Stderr = log.ErrorWriter()
 	fb, err := find.Output()
@@ -258,7 +260,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 	_ = json.Unmarshal(fb, &existing)
 
 	// Encode JSON for bw create/edit
-	enc := exec.Command("bw", "encode")
+	enc := execCommand("bw", "encode")
 	enc.Env = env
 	enc.Stdin = strings.NewReader(string(b))
 	enc.Stderr = log.ErrorWriter()
@@ -269,7 +271,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 
 	if len(existing) > 0 {
 		id := existing[0].ID
-		edit := exec.Command("bw", "edit", "item", id, string(encoded))
+		edit := execCommand("bw", "edit", "item", id, string(encoded))
 		edit.Env = env
 		edit.Stderr = log.ErrorWriter()
 		if _, err := edit.Output(); err != nil {
@@ -277,7 +279,7 @@ func SaveOrUpdateBitwardenSecret(name, secret, notes string) (string, error) {
 		}
 		return id, nil
 	}
-	create := exec.Command("bw", "create", "item", string(encoded))
+	create := execCommand("bw", "create", "item", string(encoded))
 	create.Env = env
 	create.Stderr = log.ErrorWriter()
 	out, err := create.Output()
@@ -297,7 +299,7 @@ func VerifyBitwardenSession(sess string) error {
 		return fmt.Errorf("empty bitwarden session")
 	}
 
-	cmd := exec.Command("bw", "status")
+	cmd := execCommand("bw", "status")
 	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
 	cmd.Stderr = log.ErrorWriter()
 	output, err := cmd.Output()
@@ -337,7 +339,7 @@ func GetBitwardenItem(name string) (*BitwardenItem, error) {
 		}
 	}
 
-	cmd := exec.Command("bw", "get", "item", name)
+	cmd := execCommand("bw", "get", "item", name)
 	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
 	cmd.Stderr = log.ErrorWriter()
 	output, err := cmd.Output()
@@ -371,7 +373,7 @@ func ListBitwardenItems() ([]BitwardenItem, error) {
 		}
 	}
 
-	cmd := exec.Command("bw", "list", "items")
+	cmd := execCommand("bw", "list", "items")
 	cmd.Env = setEnvVar(os.Environ(), "BW_SESSION", sess)
 	cmd.Stderr = log.ErrorWriter()
 	output, err := cmd.Output()
@@ -475,4 +477,14 @@ func ExtractSSHKeyFromItem(item *BitwardenItem) (string, error) {
 	}
 
 	return "", fmt.Errorf("no SSH private key found in item '%s'", item.Name)
+}
+
+// SetExecCommandForTest overrides the internal execCommand for test mocking.
+func SetExecCommandForTest(f func(string, ...string) *exec.Cmd) {
+	execCommand = f
+}
+
+// GetExecCommandForTest retrieves the current execCommand function.
+func GetExecCommandForTest() func(string, ...string) *exec.Cmd {
+	return execCommand
 }

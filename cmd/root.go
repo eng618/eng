@@ -31,6 +31,7 @@ import (
 
 	"github.com/eng618/eng/cmd/asdf"
 	"github.com/eng618/eng/cmd/codemod"
+	"github.com/eng618/eng/cmd/compose"
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/files"
@@ -108,6 +109,7 @@ func init() {
 	// Add subcommands
 	rootCmd.AddCommand(asdf.AsdfCmd)
 	rootCmd.AddCommand(codemod.CodemodCmd)
+	rootCmd.AddCommand(compose.ComposeCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(files.FilesCmd)

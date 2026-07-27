@@ -25,6 +25,7 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 ## Features
 
 - **Git Repository Management** — Bulk operations across multiple git repositories with intelligent branch detection
+- **Docker Compose Swarms** — Lifecycle management (`up`, `down`, `pull`, `status`, `logs`) for multi-service compose stacks
 - **Project Management** — Organize and manage groups of related repositories as logical projects
 - **Dotfiles Management** — Manage dotfiles via a bare git repo, with sync/fetch/checkout helpers
 - **Dotfiles Secrets** — Backup and restore manifest-managed env files with Bitwarden Secrets Manager
@@ -133,6 +134,7 @@ If those prerequisites are not met, the restore step is skipped safely.
 | Command         | Description                                                        |
 | --------------- | ------------------------------------------------------------------ |
 | `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status) |
+| `eng compose`   | Manage Docker Compose swarms (up, down, pull, status, logs) — alias: `swarm` |
 | `eng project`   | Manage project-based repository collections                        |
 | `eng dashboard` | Interactive TUI command center for monitoring and managing projects|
 | `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)           |

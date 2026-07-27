@@ -337,13 +337,18 @@ func (m *Model) clampScrollOffset() {
 
 	if innerRightWidth >= 75 {
 		// Table view scroll clamping (one row per repository)
-		if m.selectedRepoIndex < m.repoScrollOffset {
-			m.repoScrollOffset = m.selectedRepoIndex
-		} else if m.selectedRepoIndex >= m.repoScrollOffset+H_repos {
-			m.repoScrollOffset = m.selectedRepoIndex - H_repos + 1
+		H_body := H_repos - 2
+		if H_body < 1 {
+			H_body = 1
 		}
 
-		maxScroll := len(p.Repos) - H_repos
+		if m.selectedRepoIndex < m.repoScrollOffset {
+			m.repoScrollOffset = m.selectedRepoIndex
+		} else if m.selectedRepoIndex >= m.repoScrollOffset+H_body {
+			m.repoScrollOffset = m.selectedRepoIndex - H_body + 1
+		}
+
+		maxScroll := len(p.Repos) - H_body
 		if maxScroll < 0 {
 			maxScroll = 0
 		}

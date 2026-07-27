@@ -2,9 +2,12 @@ package ts
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 )
+
+var execCommand = exec.Command
 
 var TailscaleCmd = &cobra.Command{
 	Use:   "tailscale",

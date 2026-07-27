@@ -2,15 +2,21 @@
 # This can be directly copied to your $HOME/.eng.yaml
 # You can further customize it from there.
 
+containers:
+    path: $HOME/bin/containers
 dotfiles:
-  repopath: $HOME/.my-dotfiles
-  worktree: /Users/myuser
+    bare_repo_path: $HOME/.my-dotfiles
+    repopath: $HOME/.my-dotfiles
+    worktree: /Users/myuser
+    worktree_path: /Users/myuser
 git:
-  devpath: $HOME/Development
+    dev_path: $HOME/Development
+    devpath: $HOME/Development
+projects: []
 proxies:
-  - enabled: false
-    noproxy: ""
-    title: My custom proxy
-    value: myproxy.example.com:8080
+    - enabled: false
+      noproxy: ''
+      title: My custom proxy
+      value: myproxy.example.com:8080
 user-email: myemail@example.com
 verbose: false

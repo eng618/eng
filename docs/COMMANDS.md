@@ -5,6 +5,7 @@ Complete documentation for all `eng` CLI commands and their options.
 ## Table of Contents
 
 - [Git Repository Management](#git-repository-management)
+- [Docker Compose Swarms](#docker-compose-swarms)
 - [Project Management](#project-management)
 - [Dotfiles Management](#dotfiles-management)
 - [System Utilities](#system-utilities)
@@ -46,6 +47,32 @@ eng config git-dev-path /path/to/your/dev/folder
 
 - `--current` — Use current working directory instead of configured development path
 - `--dry-run` — Show what would be done without making changes (where applicable)
+
+---
+
+## Docker Compose Swarms
+
+Manage multi-service Docker Compose stacks with lifecycle commands, inter-stack networking (`eng-shared-net`), environment overrides, and status reporting.
+
+**Aliases:** `eng swarm`, `eng stack`
+
+### Commands
+
+| Command | Description |
+| ------- | ----------- |
+| `eng compose list` / `ls` | List all discovered compose stacks under `$HOME/bin/containers` |
+| `eng compose up [stack...] [-e env] [-a] [-d] [--build]` | Spin up target stack(s) (e.g. `media`, `arrsenal`, `immich`) |
+| `eng compose down [stack...] [-a] [-v]` | Spin down target stack(s) and optionally remove volumes |
+| `eng compose pull [stack...] [-a]` | Pull latest images for target stack(s) |
+| `eng compose status [stack...] [--json] [-a]` | Show live container counts and status for target stack(s) |
+| `eng compose logs <stack> [-f] [--tail lines]` | Tail log output for a specific compose stack |
+
+### Config
+
+```sh
+# Override container stacks root directory (default: $HOME/bin/containers)
+eng config containers-path /path/to/containers
+```
 
 ---
 

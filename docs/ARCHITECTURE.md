@@ -137,3 +137,7 @@ The CLI integrates with several external tools:
 - **goreleaser** — Release automation
 
 ---
+
+## Testing
+
+For details on the testing methodology, run commands, and mocking strategies, see the [Testing Guide](file:///Users/engarcia/Development/eng/docs/TESTING.md).

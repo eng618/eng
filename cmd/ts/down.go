@@ -1,8 +1,6 @@
 package ts
 
 import (
-	"os/exec"
-
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -15,7 +13,7 @@ var DownCmd = &cobra.Command{
 	Long:  `This call 'sudo tailscale down' under the hood..`,
 	RunE: func(cmd *cobra.Command, _args []string) error {
 		log.Start("Taking down the tailscale service")
-		tsDownCmd := exec.Command("sudo", "tailscale", "down")
+		tsDownCmd := execCommand("sudo", "tailscale", "down")
 		err := cmdutil.StartChildProcess(tsDownCmd)
 		if err != nil {
 			return err // Return the error for Cobra to handle

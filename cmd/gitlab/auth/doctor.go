@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,7 +27,7 @@ var doctorCmd = &cobra.Command{
 	Short: "Validate GitLab token and project access",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check glab is installed
-		if _, err := exec.LookPath("glab"); err != nil {
+		if _, err := lookPath("glab"); err != nil {
 			return theme.NewActionableError(
 				errors.New("glab CLI not found in PATH"),
 				"Install the glab CLI from https://gitlab.com/gitlab-org/cli to enable this command.",
@@ -91,7 +90,7 @@ var doctorCmd = &cobra.Command{
 
 		// 1) Validate token by calling /user
 		{
-			cmdUser := exec.Command("glab", "api", "user")
+			cmdUser := execCommand("glab", "api", "user")
 			cmdUser.Env = env
 			out, err := cmdUser.Output()
 			if err != nil {
@@ -119,7 +118,7 @@ var doctorCmd = &cobra.Command{
 
 		// 2) If project resolvable, ensure access by GET /projects/:id
 		if project != "" {
-			cmdProj := exec.Command("glab", "api", fmt.Sprintf("projects/%s", project))
+			cmdProj := execCommand("glab", "api", fmt.Sprintf("projects/%s", project))
 			cmdProj.Env = env
 			out, err := cmdProj.Output()
 			if err != nil {

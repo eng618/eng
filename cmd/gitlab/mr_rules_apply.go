@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -134,7 +133,7 @@ var mrRulesApplyCmd = &cobra.Command{
 			return nil
 		}
 
-		cmdExec := exec.Command("glab", apiArgs...)
+		cmdExec := execCommand("glab", apiArgs...)
 		cmdExec.Env = env
 		return cmdutil.StartChildProcess(cmdExec)
 	},
