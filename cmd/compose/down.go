@@ -43,5 +43,5 @@ var downCmd = &cobra.Command{
 
 func init() {
 	downCmd.Flags().BoolVarP(&allFlagDown, "all", "a", false, "Spin down all discovered stacks")
-	downCmd.Flags().BoolVarP(&volumesFlag, "volumes", "v", false, "Remove named volumes declared in compose file")
+	downCmd.Flags().BoolVarP(&volumesFlag, "volumes", "V", false, "Remove named volumes declared in compose file")
 }

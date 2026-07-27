@@ -1,15 +1,15 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // IsVerbose returns whether verbose mode is enabled globally via config or environment.
@@ -28,7 +28,7 @@ func Verbose() bool {
 
 	// Verify this is the correct verbose setting they are expecting to use.
 	vConfirm, err := ui.Confirm(
-		fmt.Sprintf("Confirm verbose mode: %s?", color.CyanString(fmt.Sprintf("%t", verbose))),
+		fmt.Sprintf("Confirm verbose mode: %s?", theme.PrimaryText.Render(fmt.Sprintf("%t", verbose))),
 		verbose,
 	)
 	cobra.CheckErr(err)
@@ -54,8 +54,13 @@ func updateVerbose() {
 
 	// Save the updated configuration back to the file
 	if err := viper.WriteConfig(); err != nil {
-		err := errors.New(color.RedString("Error writing config file: %v", err))
-		cobra.CheckErr(err)
+		cobra.CheckErr(
+			fmt.Errorf(
+				"%s: %w",
+				lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+				err,
+			),
+		)
 	}
 	log.Success("Configuration updated successfully")
 }

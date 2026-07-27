@@ -186,6 +186,7 @@ Contributions are welcome! Please follow these guidelines:
 ```sh
 task build      # Build the binary
 task install    # Install to $GOPATH/bin
+task docs       # Generate Markdown documentation for CLI commands
 task lint       # Run golangci-lint
 task test       # Run tests with coverage
 task validate   # Run format + lint + test

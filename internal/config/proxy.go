@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -59,7 +59,11 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 			// Clean up old format
 			viper.Set("proxy", nil)
 			if err := viper.WriteConfig(); err != nil {
-				err := errors.New(color.RedString("Error writing config file: %w", err))
+				err := fmt.Errorf(
+					"%s: %w",
+					lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+					err,
+				)
 				cobra.CheckErr(err)
 			}
 			log.Success("Migration complete: old proxy configuration has been converted to the new format")
@@ -67,7 +71,11 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 			// No old format and no new format - initialize with empty array
 			viper.Set("proxies", []ProxyConfig{})
 			if err := viper.WriteConfig(); err != nil {
-				err := errors.New(color.RedString("Error writing config file: %v", err))
+				err := fmt.Errorf(
+					"%s: %w",
+					lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+					err,
+				)
 				cobra.CheckErr(err)
 			}
 			log.Info("Initialized empty proxy configurations array")
@@ -115,7 +123,11 @@ type SaveProxyConfigsFunc func(proxies []ProxyConfig) error
 func SaveProxyConfigsImpl(proxies []ProxyConfig) error {
 	viper.Set("proxies", proxies)
 	if err := viper.WriteConfig(); err != nil {
-		return errors.New(color.RedString("Error writing config file: %v", err))
+		return fmt.Errorf(
+			"%s: %w",
+			lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+			err,
+		)
 	}
 	return nil
 }
@@ -392,18 +404,18 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 // Example: "● Corp Proxy (http://proxy:8080)" with colored markers and dimmed value.
 func FormatProxyOption(proxy ProxyConfig) string {
 	// Marker and label with stronger contrast: ★ ACTIVE vs • inactive
-	marker := color.New(color.FgHiBlack).Sprint("•")
-	label := color.New(color.FgHiBlack).Sprint("[inactive]")
+	marker := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render("•")
+	label := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render("[inactive]")
 	title := proxy.Title
 
 	if proxy.Enabled {
-		marker = color.New(color.FgHiGreen, color.Bold).Sprint("★")
-		label = color.New(color.FgHiGreen).Sprint("[ACTIVE]")
-		title = color.New(color.Bold).Sprint(proxy.Title)
+		marker = lipgloss.NewStyle().Foreground(theme.Secondary).Bold(true).Render("★")
+		label = lipgloss.NewStyle().Foreground(theme.Secondary).Render("[ACTIVE]")
+		title = theme.BoldText.Render(proxy.Title)
 	}
 
 	// Value in dim gray
-	value := color.New(color.FgHiBlack).Sprintf("(%s)", proxy.Value)
+	value := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render(fmt.Sprintf("(%s)", proxy.Value))
 
 	return fmt.Sprintf("%s %s %s %s", marker, title, value, label)
 }

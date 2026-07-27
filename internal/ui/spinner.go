@@ -4,120 +4,101 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
-	"github.com/vbauerster/mpb/v8"
-	"github.com/vbauerster/mpb/v8/decor"
+	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Out is the writer used for spinner output. Tests may replace it.
 var Out io.Writer = os.Stderr
 
-// Spinner wraps the mpb.Progress container and a single bar.
-// It's designed to manage a single progress bar and allow logging
-// messages above the bar without disrupting it.
+// Spinner manages progress bars and status updates using Lip Gloss and Bubbles.
 type Spinner struct {
-	p              *mpb.Progress
-	bar            *mpb.Bar
-	msgCh          chan string
+	mu             sync.Mutex
 	baseMessage    string
 	currentMessage string
+	prog           progress.Model
+	isProgress     bool
+	currentPercent float64
 }
 
-// NewSpinner creates a new spinner with a default indeterminate style.
+// NewSpinner creates a new spinner with default theme styling.
 func NewSpinner(message string) *Spinner {
-	p := mpb.New(mpb.WithOutput(Out))
-	msgCh := make(chan string, 1)
-	msgCh <- message
-
-	s := &Spinner{
-		p:              p,
-		msgCh:          msgCh,
-		baseMessage:    message,
-		currentMessage: message,
-	}
-
-	bar := p.New(0, // Total is 0 for an indeterminate spinner
-		mpb.SpinnerStyle(),
-		mpb.PrependDecorators(
-			decor.Any(func(_ decor.Statistics) string {
-				return s.currentMessage
-			}),
-		),
-		mpb.AppendDecorators(
-			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 4}),
+	p := progress.New(
+		progress.WithScaledGradient(
+			string(theme.Primary.Dark),
+			string(theme.Secondary.Dark),
 		),
 	)
-
-	s.bar = bar
-	return s
+	return &Spinner{
+		baseMessage:    message,
+		currentMessage: message,
+		prog:           p,
+		isProgress:     false,
+	}
 }
 
 // NewProgressSpinner creates a spinner that displays progress as a bar.
 func NewProgressSpinner(message string) *Spinner {
-	p := mpb.New(mpb.WithOutput(Out))
-	msgCh := make(chan string, 1)
-	msgCh <- message
-
-	s := &Spinner{
-		p:              p,
-		msgCh:          msgCh,
-		baseMessage:    message,
-		currentMessage: message,
-	}
-
-	bar := p.New(100, // Total is 100 for percentage-based progress
-		mpb.BarStyle().Lbound("[").Filler("=").Tip(">").Padding("-").Rbound("]"),
-		mpb.PrependDecorators(
-			decor.Any(func(_ decor.Statistics) string {
-				return s.currentMessage
-			}),
-			decor.Percentage(decor.WCSyncSpace),
-		),
-		mpb.AppendDecorators(
-			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 4}),
+	p := progress.New(
+		progress.WithScaledGradient(
+			string(theme.Primary.Dark),
+			string(theme.Secondary.Dark),
 		),
 	)
-
-	s.bar = bar
-	return s
+	return &Spinner{
+		baseMessage:    message,
+		currentMessage: message,
+		prog:           p,
+		isProgress:     true,
+	}
 }
 
-// Start does nothing in this implementation, as the bar is visible on creation.
+// Start displays initial spinner state.
 func (s *Spinner) Start() {
-	// The bar is displayed automatically by the mpb.Progress container.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if Out != nil {
+		fmt.Fprintf(Out, "%s\n", lipgloss.NewStyle().Foreground(theme.Primary).Render("... "+s.currentMessage))
+	}
 }
 
-// Stop marks the bar as completed and waits for the progress container to finish.
+// Stop completes progress output.
 func (s *Spinner) Stop() {
-	if s.bar != nil {
-		s.bar.SetTotal(0, true) // Mark as complete
-	}
-	if s.p != nil && Out == os.Stderr {
-		s.p.Wait() // Wait for the container to finish rendering
-	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 }
 
-// UpdateMessage updates the message displayed next to the spinner/bar.
+// UpdateMessage updates the message displayed next to the progress bar.
 func (s *Spinner) UpdateMessage(msg string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.baseMessage = msg
 	s.currentMessage = msg
 }
 
-// SetProgressBar sets the progress of the bar. Progress should be from 0.0 to 1.0.
-func (s *Spinner) SetProgressBar(progress float64, msg ...string) {
-	if s.bar != nil {
-		currentMessage := s.baseMessage
-		if len(msg) > 0 {
-			currentMessage = msg[0]
-		}
-		s.UpdateMessage(currentMessage)
-		s.bar.SetCurrent(int64(progress * 100))
+// SetProgressBar sets the progress of the bar (0.0 to 1.0).
+func (s *Spinner) SetProgressBar(percent float64, msg ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(msg) > 0 {
+		s.currentMessage = msg[0]
+	}
+	s.currentPercent = percent
+	if Out != nil && s.isProgress {
+		barView := s.prog.ViewAs(percent)
+		fmt.Fprintf(Out, "%s %s\n", s.currentMessage, barView)
 	}
 }
 
 // Logf prints a formatted message above the progress bar.
 func (s *Spinner) Logf(format string, a ...interface{}) {
-	if s.p != nil {
-		fmt.Fprintf(s.p, format, a...)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if Out != nil {
+		fmt.Fprintf(Out, format+"\n", a...)
 	}
 }

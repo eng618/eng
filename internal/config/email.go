@@ -1,15 +1,15 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Email checks for the user's email in the configuration and prompts the user to confirm it.
@@ -25,7 +25,7 @@ func Email() string {
 		updateEmail()
 	} else {
 		// Verify this is the correct email they are expecting to use.
-		eConfirm, err := ui.Confirm(fmt.Sprintf("Confirm email: %s?", color.CyanString(email)), true)
+		eConfirm, err := ui.Confirm(fmt.Sprintf("Confirm email: %s?", theme.PrimaryText.Render(email)), true)
 		cobra.CheckErr(err)
 
 		if !eConfirm {
@@ -65,8 +65,13 @@ func updateEmail() {
 
 	// Save the updated configuration back to the file
 	if err := viper.WriteConfig(); err != nil {
-		err := errors.New(color.RedString("Error writing config file: %v", err))
-		cobra.CheckErr(err)
+		cobra.CheckErr(
+			fmt.Errorf(
+				"%s: %w",
+				lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+				err,
+			),
+		)
 	}
 	log.Success("Configuration updated successfully")
 }

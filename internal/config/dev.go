@@ -1,16 +1,16 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // GitDevPath checks for the development folder path in the configuration and prompts the user to confirm it.
@@ -27,7 +27,7 @@ func GitDevPath() string {
 	} else {
 		// Verify this is the correct dev path they are expecting to use.
 		dConfirm, err := ui.Confirm(
-			fmt.Sprintf("Confirm development folder path: %s?", color.CyanString(devPath)),
+			fmt.Sprintf("Confirm development folder path: %s?", theme.PrimaryText.Render(devPath)),
 			true,
 		)
 		cobra.CheckErr(err)
@@ -53,8 +53,13 @@ func updateGitDevPath() {
 
 	// Save the updated configuration back to the file
 	if err := viper.WriteConfig(); err != nil {
-		err := errors.New(color.RedString("Error writing config file: %v", err))
-		cobra.CheckErr(err)
+		cobra.CheckErr(
+			fmt.Errorf(
+				"%s: %w",
+				lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+				err,
+			),
+		)
 	}
 	log.Success("Configuration updated successfully")
 }

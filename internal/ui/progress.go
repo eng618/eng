@@ -1,12 +1,17 @@
 package ui
 
 import (
-	"github.com/pterm/pterm"
+	"fmt"
+	"io"
+	"sync"
+
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
-// DisableProgress can be set to true in tests to prevent pterm goroutines from spawning and causing race conditions.
+// DisableProgress can be set to true in tests to prevent progress goroutines from spawning.
 var DisableProgress = false
 
 // ProgressSpinner defines the interface for spinner operations.
@@ -18,16 +23,74 @@ type ProgressSpinner interface {
 	Info(text ...interface{})
 }
 
-// ptermSpinner wraps a pterm.SpinnerPrinter to implement ProgressSpinner.
-type ptermSpinner struct {
-	p *pterm.SpinnerPrinter
+type charmSpinner struct {
+	mu     sync.Mutex
+	text   string
+	active bool
+	out    io.Writer
 }
 
-func (s *ptermSpinner) UpdateText(text string)      { s.p.UpdateText(text) }
-func (s *ptermSpinner) Success(text ...interface{}) { s.p.Success(text...) }
-func (s *ptermSpinner) Fail(text ...interface{})    { s.p.Fail(text...) }
-func (s *ptermSpinner) Warning(text ...interface{}) { s.p.Warning(text...) }
-func (s *ptermSpinner) Info(text ...interface{})    { s.p.Info(text...) }
+func (s *charmSpinner) UpdateText(text string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.text = text
+}
+
+func (s *charmSpinner) Success(text ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.active = false
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.SuccessBanner.Render("SUCCESS")
+	txt := theme.BaseText.Render(msg)
+	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
+}
+
+func (s *charmSpinner) Fail(text ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.active = false
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.ErrorBanner.Render("ERROR")
+	txt := theme.ErrorText.Render(msg)
+	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
+}
+
+func (s *charmSpinner) Warning(text ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.WarningBanner.Render("WARN")
+	txt := theme.BaseText.Render(msg)
+	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
+}
+
+func (s *charmSpinner) Info(text ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := lipgloss.NewStyle().
+		Background(theme.Primary).
+		Foreground(theme.Background).
+		Bold(true).
+		Padding(0, 1).
+		MarginRight(1).
+		Render("INFO")
+	txt := theme.BaseText.Render(msg)
+	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
+}
 
 // dummySpinner is a no-op implementation of ProgressSpinner.
 type dummySpinner struct{}
@@ -38,38 +101,35 @@ func (s *dummySpinner) Fail(text ...interface{})    {}
 func (s *dummySpinner) Warning(text ...interface{}) {}
 func (s *dummySpinner) Info(text ...interface{})    {}
 
-// MultiSpinner manages multiple concurrent spinners.
+// MultiSpinner manages multiple concurrent progress indicators.
 type MultiSpinner struct {
-	printer *pterm.MultiPrinter
+	spinners []*charmSpinner
 }
 
 // NewMultiSpinner creates a new multi-spinner manager.
 func NewMultiSpinner() (*MultiSpinner, error) {
-	if DisableProgress {
-		return &MultiSpinner{printer: nil}, nil
-	}
-
-	pterm.SetDefaultOutput(log.Writer())
-	p, err := pterm.DefaultMultiPrinter.WithWriter(log.Writer()).Start()
-	if err != nil {
-		return nil, err
-	}
-	return &MultiSpinner{printer: p}, nil
+	return &MultiSpinner{}, nil
 }
 
-// AddSpinner adds a new spinner to the multi-printer display.
+// AddSpinner adds a new spinner to the display.
 func (m *MultiSpinner) AddSpinner(text string) ProgressSpinner {
-	if DisableProgress || m.printer == nil {
+	if DisableProgress {
 		return &dummySpinner{}
 	}
-	spinner, _ := pterm.DefaultSpinner.WithWriter(m.printer.NewWriter()).Start(text)
-	return &ptermSpinner{p: spinner}
+	sp := &charmSpinner{
+		text:   text,
+		active: true,
+		out:    log.Writer(),
+	}
+	m.spinners = append(m.spinners, sp)
+	return sp
 }
 
-// Stop stops the multi-printer.
+// Stop stops the multi-spinner.
 func (m *MultiSpinner) Stop() {
-	if DisableProgress || m.printer == nil {
-		return
+	for _, sp := range m.spinners {
+		sp.mu.Lock()
+		sp.active = false
+		sp.mu.Unlock()
 	}
-	_, _ = m.printer.Stop()
 }

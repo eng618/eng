@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // VerifyDotfilesConfig checks for Repo URL, Branch, and Bare Repo Path.
@@ -34,10 +34,10 @@ func VerifyDotfilesConfig() (string, string, string, string, error) {
 	worktreePath = os.ExpandEnv(worktreePath)
 
 	options := []string{
-		fmt.Sprintf("Repo URL: %s", color.CyanString(repoURL)),
-		fmt.Sprintf("Branch:   %s", color.CyanString(branch)),
-		fmt.Sprintf("Bare Path:%s", color.CyanString(bareRepoPath)),
-		fmt.Sprintf("Worktree: %s", color.CyanString(worktreePath)),
+		fmt.Sprintf("Repo URL: %s", theme.PrimaryText.Render(repoURL)),
+		fmt.Sprintf("Branch:   %s", theme.PrimaryText.Render(branch)),
+		fmt.Sprintf("Bare Path:%s", theme.PrimaryText.Render(bareRepoPath)),
+		fmt.Sprintf("Worktree: %s", theme.PrimaryText.Render(worktreePath)),
 	}
 
 	selected, err := ui.MultiSelect(

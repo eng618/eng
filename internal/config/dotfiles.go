@@ -1,16 +1,17 @@
 package config
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // RepoURL checks for the dotfiles repository URL in the configuration and returns it.
@@ -115,8 +116,13 @@ func GetDotfilesRepo() {
 
 func saveConfig() {
 	if err := viper.WriteConfig(); err != nil {
-		err := errors.New(color.RedString("Error writing config file: %v", err))
-		cobra.CheckErr(err)
+		cobra.CheckErr(
+			fmt.Errorf(
+				"%s: %w",
+				lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
+				err,
+			),
+		)
 	}
 	log.Success("Configuration updated successfully")
 }

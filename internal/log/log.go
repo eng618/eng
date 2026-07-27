@@ -2,12 +2,12 @@
 Package log is a wrapper around colorizing the log output. It has functions
 that allow you to simply write output to the screen for various scenarios.
 
-- Start     ==> Blue
-- Success   ==> Green
-- Info      ==> Cyan
+- Start     ==> Blue/Primary
+- Success   ==> Green/Secondary
+- Info      ==> Cyan/Primary
 - Debug     ==> Magenta
 - Warn      ==> Yellow
-- Error     ==> Red
+- Error     ==> Red/Destructive
 */
 package log
 
@@ -17,7 +17,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Out and Err are writers used for normal and error output. Tests may replace them.
@@ -25,6 +27,13 @@ var (
 	Out io.Writer = os.Stdout
 	Err io.Writer = os.Stderr
 	mu  sync.RWMutex
+
+	startStyle   = lipgloss.NewStyle().Foreground(theme.Primary)
+	successStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
+	infoStyle    = lipgloss.NewStyle().Foreground(theme.Primary)
+	debugStyle   = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#c084fc", Dark: "#e879f9"})
+	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"})
+	errorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)
 )
 
 // Message prints a formatted message to the configured Out writer.
@@ -70,42 +79,48 @@ func ErrorWriter() *CMDErrorWriter {
 func Start(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgBlue).Fprintf(Out, "==> "+format+"\n", a...)
+	msg := fmt.Sprintf("==> "+format, a...)
+	_, _ = fmt.Fprintln(Out, startStyle.Render(msg))
 }
 
 // Success prints a message to the terminal in green, indicating a successful action.
 func Success(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgGreen).Fprintf(Out, "==> "+format+"\n", a...)
+	msg := fmt.Sprintf("==> "+format, a...)
+	_, _ = fmt.Fprintln(Out, successStyle.Render(msg))
 }
 
 // Info prints a message to the terminal in cyan, indicating informational output.
 func Info(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgCyan).Fprintf(Out, "==> "+format+"\n", a...)
+	msg := fmt.Sprintf("==> "+format, a...)
+	_, _ = fmt.Fprintln(Out, infoStyle.Render(msg))
 }
 
 // Debug prints a message to the terminal in magenta, for debugging output.
 func Debug(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgMagenta).Fprintf(Out, "==> "+format+"\n", a...)
+	msg := fmt.Sprintf("==> "+format, a...)
+	_, _ = fmt.Fprintln(Out, debugStyle.Render(msg))
 }
 
 // Warn prints a message to the terminal in yellow, indicating a warning.
 func Warn(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgYellow).Fprintf(Out, "==x "+format+"\n", a...)
+	msg := fmt.Sprintf("==x "+format, a...)
+	_, _ = fmt.Fprintln(Out, warnStyle.Render(msg))
 }
 
 // Error prints a message to the terminal in red, indicating an error.
 func Error(format string, a ...any) {
 	mu.RLock()
 	defer mu.RUnlock()
-	_, _ = color.New(color.FgRed).Fprintf(Err, "==x "+format+"\n", a...)
+	msg := fmt.Sprintf("==x "+format, a...)
+	_, _ = fmt.Fprintln(Err, errorStyle.Render(msg))
 }
 
 // Verbose prints a message to the terminal if v is true, prefixed with '---'.

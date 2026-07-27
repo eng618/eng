@@ -44,6 +44,7 @@ import (
 	"github.com/eng618/eng/internal/cmdutil"
 	configUtils "github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -70,6 +71,11 @@ var rootCmd = &cobra.Command{
 This is personal cli to facilitate my workflow. An maintain my development machine.`,
 }
 
+// GetRootCommand returns the root cobra.Command instance (used by tools/gendocs).
+func GetRootCommand() *cobra.Command {
+	return rootCmd
+}
+
 // ExecuteContext adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func ExecuteContext(ctx context.Context) {
@@ -88,14 +94,22 @@ func ExecuteContext(ctx context.Context) {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// Custom Lip Gloss Help & Usage styling
+	rootCmd.SetHelpFunc(ui.HelpFunc)
+	rootCmd.SetUsageFunc(ui.UsageFunc)
+
+	// Define command groups
+	rootCmd.AddGroup(
+		&cobra.Group{ID: "devtools", Title: "Developer Tools"},
+		&cobra.Group{ID: "envops", Title: "Environment & Ops"},
+		&cobra.Group{ID: "mgmt", Title: "Management & Workflows"},
+		&cobra.Group{ID: "meta", Title: "Meta"},
+	)
+
 	// Set the version string for the root command's --version flag
-	// Use the exported Version variable from the version package
 	rootCmd.Version = version.Version
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
+	// Persistent flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.eng.yaml)")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 
@@ -103,8 +117,23 @@ func init() {
 	err := viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	cobra.CheckErr(err)
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	// Subcommands & Group Assignment
+	asdf.AsdfCmd.GroupID = "devtools"
+	codemod.CodemodCmd.GroupID = "devtools"
+	git.GitCmd.GroupID = "devtools"
+	gitlab.GitLabCmd.GroupID = "devtools"
+	ts.TailscaleCmd.GroupID = "devtools"
+
+	compose.ComposeCmd.GroupID = "envops"
+	dotfiles.DotfilesCmd.GroupID = "envops"
+	files.FilesCmd.GroupID = "envops"
+	system.SystemCmd.GroupID = "envops"
+
+	config.ConfigCmd.GroupID = "mgmt"
+	project.ProjectCmd.GroupID = "mgmt"
+	dashboardCmd.GroupID = "mgmt"
+
+	version.VersionCmd.GroupID = "meta"
 
 	// Add subcommands
 	rootCmd.AddCommand(asdf.AsdfCmd)
