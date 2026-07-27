@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/cmd/asdf"
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/config"
 	"github.com/eng618/eng/cmd/dotfiles"
@@ -105,6 +106,7 @@ func init() {
 	// when this action is called directly.
 
 	// Add subcommands
+	rootCmd.AddCommand(asdf.AsdfCmd)
 	rootCmd.AddCommand(codemod.CodemodCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
