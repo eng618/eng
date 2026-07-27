@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.22.0](https://github.com/eng618/eng/compare/v1.21.0...v1.22.0) (2026-07-27)
+
+
+### Features
+
+* **asdf:** Add check, update-root, and status subcommands for asdf management ([0d294f8](https://github.com/eng618/eng/commit/0d294f88f3d5cd4fe29f8bd66e880513fc34e98c))
+* **asdf:** Add cleanup command to prune outdated asdf installs ([6b447ec](https://github.com/eng618/eng/commit/6b447ecc8cfe58b64748ae80ca1578c3a2a41ac1))
+
 ## [1.21.0](https://github.com/eng618/eng/compare/v1.20.0...v1.21.0) (2026-06-29)
 
 
