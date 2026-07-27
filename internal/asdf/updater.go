@@ -77,5 +77,5 @@ func WriteToolVersions(filePath string, tv ToolVersions) error {
 	}
 
 	content := strings.Join(lines, "\n") + "\n"
-	return os.WriteFile(filePath, []byte(content), 0644)
+	return os.WriteFile(filePath, []byte(content), 0o644)
 }

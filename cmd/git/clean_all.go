@@ -118,12 +118,22 @@ var CleanAllCmd = &cobra.Command{
 		}
 
 		if dryRun {
-			theme.InfoMessage(fmt.Sprintf("Dry run complete. Previewed cleaning %d repository(ies) reclaiming %s disk space.", len(reposToClean), totalSizeStr))
+			theme.InfoMessage(
+				fmt.Sprintf(
+					"Dry run complete. Previewed cleaning %d repository(ies) reclaiming %s disk space.",
+					len(reposToClean),
+					totalSizeStr,
+				),
+			)
 			return
 		}
 
 		if !force {
-			confirmMsg := fmt.Sprintf("Are you sure you want to clean untracked files across these %d repository(ies) to reclaim %s?", len(reposToClean), totalSizeStr)
+			confirmMsg := fmt.Sprintf(
+				"Are you sure you want to clean untracked files across these %d repository(ies) to reclaim %s?",
+				len(reposToClean),
+				totalSizeStr,
+			)
 			confirmed, err := ui.Confirm(confirmMsg, false)
 			if err != nil || !confirmed {
 				log.Message("Clean operation cancelled.")
@@ -178,9 +188,22 @@ var CleanAllCmd = &cobra.Command{
 
 		freedStr := humanize.Bytes(uint64(freedBytes))
 		if failureCount > 0 {
-			theme.WarningMessage(fmt.Sprintf("Cleaned %d repository(ies) freeing %s, but %d failed.", successCount, freedStr, failureCount))
+			theme.WarningMessage(
+				fmt.Sprintf(
+					"Cleaned %d repository(ies) freeing %s, but %d failed.",
+					successCount,
+					freedStr,
+					failureCount,
+				),
+			)
 		} else {
-			theme.SuccessMessage(fmt.Sprintf("Successfully cleaned %d git repository(ies) freeing %s of disk space!", successCount, freedStr))
+			theme.SuccessMessage(
+				fmt.Sprintf(
+					"Successfully cleaned %d git repository(ies) freeing %s of disk space!",
+					successCount,
+					freedStr,
+				),
+			)
 		}
 	},
 }

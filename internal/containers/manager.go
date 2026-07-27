@@ -97,7 +97,7 @@ func (m *Manager) EnsureSharedNetwork() error {
 }
 
 // Up starts target stack(s) using docker compose up.
-func (m *Manager) Up(stackNames []string, envName string, detach bool, build bool) error {
+func (m *Manager) Up(stackNames []string, envName string, detach, build bool) error {
 	if err := m.EnsureSharedNetwork(); err != nil {
 		// Log warning or continue
 	}

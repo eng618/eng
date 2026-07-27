@@ -31,7 +31,7 @@ func TestParseToolVersionsFile(t *testing.T) {
 	filePath := filepath.Join(tempDir, ".tool-versions")
 	content := "ruby 3.4.8\n"
 
-	err := os.WriteFile(filePath, []byte(content), 0644)
+	err := os.WriteFile(filePath, []byte(content), 0o644)
 	require.NoError(t, err)
 
 	result, err := ParseToolVersionsFile(filePath)

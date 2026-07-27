@@ -12,8 +12,8 @@ func TestDiscoverStacks(t *testing.T) {
 	mediaDir := filepath.Join(stacksDir, "media")
 	arrDir := filepath.Join(stacksDir, "arrsenal")
 
-	_ = os.MkdirAll(mediaDir, 0755)
-	_ = os.MkdirAll(arrDir, 0755)
+	_ = os.MkdirAll(mediaDir, 0o755)
+	_ = os.MkdirAll(arrDir, 0o755)
 
 	mediaCompose := `
 services:
@@ -28,10 +28,10 @@ services:
     image: qmcgaw/gluetun
 `
 
-	if err := os.WriteFile(filepath.Join(mediaDir, "docker-compose.yml"), []byte(mediaCompose), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(mediaDir, "docker-compose.yml"), []byte(mediaCompose), 0o644); err != nil {
 		t.Fatalf("failed to write mock media compose: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(arrDir, "docker-compose.yml"), []byte(arrCompose), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(arrDir, "docker-compose.yml"), []byte(arrCompose), 0o644); err != nil {
 		t.Fatalf("failed to write mock arr compose: %v", err)
 	}
 

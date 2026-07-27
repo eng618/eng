@@ -16,7 +16,7 @@ import (
 func TestRunUpdateRoot(t *testing.T) {
 	tempDir := t.TempDir()
 	toolVersionsPath := filepath.Join(tempDir, ".tool-versions")
-	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0644))
+	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0o644))
 
 	origDisableProgress := ui.DisableProgress
 	ui.DisableProgress = true

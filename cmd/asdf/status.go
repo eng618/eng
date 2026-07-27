@@ -127,11 +127,14 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 
 	// Render Dashboard Callout
 	var dashboardLines []string
-	dashboardLines = append(dashboardLines, fmt.Sprintf("Summary: %s plugins  •  %s installed versions  •  %s total disk space",
-		theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
-		theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", totalVersions)),
-		theme.SuccessText.Bold(true).Render(humanize.Bytes(uint64(totalDiskBytes))),
-	))
+	dashboardLines = append(
+		dashboardLines,
+		fmt.Sprintf("Summary: %s plugins  •  %s installed versions  •  %s total disk space",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", totalVersions)),
+			theme.SuccessText.Bold(true).Render(humanize.Bytes(uint64(totalDiskBytes))),
+		),
+	)
 	dashboardLines = append(dashboardLines, "")
 	dashboardLines = append(dashboardLines, fmt.Sprintf("  %-25s %-20s %-12s %s",
 		theme.BoldText.Render("Plugin"),

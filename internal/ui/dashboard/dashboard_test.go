@@ -558,7 +558,11 @@ func TestTableScrollVisibility(t *testing.T) {
 		// Verify total lines rendered by renderRightPane is <= innerRightHeight (25 - 6 = 19 lines)
 		lines := strings.Split(paneView, "\n")
 		if len(lines) > 19 {
-			t.Errorf("Expected renderRightPane output to fit in 19 lines, got %d lines (selected index %d)", len(lines), i)
+			t.Errorf(
+				"Expected renderRightPane output to fit in 19 lines, got %d lines (selected index %d)",
+				len(lines),
+				i,
+			)
 		}
 	}
 }

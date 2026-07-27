@@ -45,7 +45,11 @@ func CalculateDirSize(dirPath string) int64 {
 // and returns a list of CleanupTargets eligible for removal.
 // If targetPlugin is non-empty, only versions for that specific plugin are returned.
 // If asdfDataDir is non-empty, disk size for each removable target will be calculated.
-func FilterRemovableVersions(installed map[string][]string, protected ToolVersions, targetPlugin string, asdfDataDir string) []CleanupTarget {
+func FilterRemovableVersions(
+	installed map[string][]string,
+	protected ToolVersions,
+	targetPlugin, asdfDataDir string,
+) []CleanupTarget {
 	var targets []CleanupTarget
 
 	for plugin, versions := range installed {

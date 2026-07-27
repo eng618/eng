@@ -127,7 +127,12 @@ var StatusAllCmd = &cobra.Command{
 			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		}
 
-		summaryMsg := fmt.Sprintf("Status summary: %d clean, %d with uncommitted changes across %d repositories.", cleanCount, dirtyCount, len(repos))
+		summaryMsg := fmt.Sprintf(
+			"Status summary: %d clean, %d with uncommitted changes across %d repositories.",
+			cleanCount,
+			dirtyCount,
+			len(repos),
+		)
 		if dirtyCount > 0 {
 			theme.WarningMessage(summaryMsg)
 		} else {

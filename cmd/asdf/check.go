@@ -123,7 +123,12 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 	}
 
 	if len(missing) == 0 {
-		theme.SuccessMessage(fmt.Sprintf("All project .tool-versions requirements are installed and ready! (Checked %d file(s))", len(summaries)))
+		theme.SuccessMessage(
+			fmt.Sprintf(
+				"All project .tool-versions requirements are installed and ready! (Checked %d file(s))",
+				len(summaries),
+			),
+		)
 		return nil
 	}
 

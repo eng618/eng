@@ -35,8 +35,10 @@ Use the --yes (-y) flag to skip prompts and apply all upgrades.`,
 
 func init() {
 	UpdateRootCmd.Flags().BoolVarP(&updateYesFlag, "yes", "y", false, "Skip prompts and apply all tool upgrades")
-	UpdateRootCmd.Flags().BoolVarP(&updateInstallFlag, "install", "i", false, "Automatically run asdf install after updating .tool-versions")
-	UpdateRootCmd.Flags().StringVarP(&updateConfigFlag, "config", "c", "", "Path to specific .tool-versions file (default $HOME/.tool-versions)")
+	UpdateRootCmd.Flags().
+		BoolVarP(&updateInstallFlag, "install", "i", false, "Automatically run asdf install after updating .tool-versions")
+	UpdateRootCmd.Flags().
+		StringVarP(&updateConfigFlag, "config", "c", "", "Path to specific .tool-versions file (default $HOME/.tool-versions)")
 }
 
 func runUpdateRoot(_cmd *cobra.Command, _args []string) error {
@@ -212,12 +214,17 @@ func runUpdateRoot(_cmd *cobra.Command, _args []string) error {
 		return err
 	}
 
-	theme.SuccessMessage(fmt.Sprintf("Updated %s with %d upgraded tool version(s)!", toolVersionsPath, len(selectedToUpgrade)))
+	theme.SuccessMessage(
+		fmt.Sprintf("Updated %s with %d upgraded tool version(s)!", toolVersionsPath, len(selectedToUpgrade)),
+	)
 
 	// Install newly upgraded versions if requested or confirmed
 	shouldInstall := updateInstallFlag
 	if !shouldInstall && !updateYesFlag {
-		confirmMsg := fmt.Sprintf("Would you like to run 'asdf install' for the %d upgraded tool(s) now?", len(selectedToUpgrade))
+		confirmMsg := fmt.Sprintf(
+			"Would you like to run 'asdf install' for the %d upgraded tool(s) now?",
+			len(selectedToUpgrade),
+		)
 		confirmed, err := ui.Confirm(confirmMsg, true)
 		if err == nil && confirmed {
 			shouldInstall = true
@@ -248,13 +255,24 @@ func runUpdateRoot(_cmd *cobra.Command, _args []string) error {
 
 		if err := instCmd.Run(); err != nil {
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Failed %s @ %s: %v\n", theme.ErrorText.Render("✗"), u.Plugin, u.LatestVersion, err)
+				progressSpinner.Logf(
+					"  %s Failed %s @ %s: %v\n",
+					theme.ErrorText.Render("✗"),
+					u.Plugin,
+					u.LatestVersion,
+					err,
+				)
 			} else {
 				log.Error("Failed to install %s @ %s: %v", u.Plugin, u.LatestVersion, err)
 			}
 		} else {
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Installed %s @ %s\n", theme.SuccessText.Render("✓"), u.Plugin, u.LatestVersion)
+				progressSpinner.Logf(
+					"  %s Installed %s @ %s\n",
+					theme.SuccessText.Render("✓"),
+					u.Plugin,
+					u.LatestVersion,
+				)
 			} else {
 				log.Success("Installed %s @ %s", u.Plugin, u.LatestVersion)
 			}

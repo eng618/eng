@@ -38,12 +38,12 @@ func TestFilterRemovableVersions(t *testing.T) {
 func TestCalculateDirSize(t *testing.T) {
 	tempDir := t.TempDir()
 	f1 := filepath.Join(tempDir, "file1.txt")
-	require.NoError(t, os.WriteFile(f1, []byte("1234567890"), 0644)) // 10 bytes
+	require.NoError(t, os.WriteFile(f1, []byte("1234567890"), 0o644)) // 10 bytes
 
 	subDir := filepath.Join(tempDir, "subdir")
-	require.NoError(t, os.MkdirAll(subDir, 0755))
+	require.NoError(t, os.MkdirAll(subDir, 0o755))
 	f2 := filepath.Join(subDir, "file2.txt")
-	require.NoError(t, os.WriteFile(f2, []byte("12345"), 0644)) // 5 bytes
+	require.NoError(t, os.WriteFile(f2, []byte("12345"), 0o644)) // 5 bytes
 
 	size := CalculateDirSize(tempDir)
 	assert.Equal(t, int64(15), size)

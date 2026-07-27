@@ -45,13 +45,18 @@ Use the --no-scan flag to disable searching development directories for project 
 var CleanupCmd = PruneCmd
 
 func bindPruneFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&interactiveFlag, "interactive", "i", false, "Interactively select installed tool versions to delete")
-	cmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Show what versions would be deleted without removing them")
+	cmd.Flags().
+		BoolVarP(&interactiveFlag, "interactive", "i", false, "Interactively select installed tool versions to delete")
+	cmd.Flags().
+		BoolVarP(&dryRunFlag, "dry-run", "d", false, "Show what versions would be deleted without removing them")
 	cmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Skip confirmation prompt in default mode")
 	cmd.Flags().StringVarP(&pluginFlag, "plugin", "p", "", "Limit cleanup to a specific plugin (e.g. nodejs)")
-	cmd.Flags().StringVarP(&configFlag, "config", "c", "", "Path to specific .tool-versions file (default scans $HOME and dev folders)")
-	cmd.Flags().BoolVar(&noScanFlag, "no-scan", false, "Disable scanning development directories for project .tool-versions files")
-	cmd.Flags().StringVar(&scanDirFlag, "scan-dir", "", "Additional directory to recursively scan for .tool-versions files")
+	cmd.Flags().
+		StringVarP(&configFlag, "config", "c", "", "Path to specific .tool-versions file (default scans $HOME and dev folders)")
+	cmd.Flags().
+		BoolVar(&noScanFlag, "no-scan", false, "Disable scanning development directories for project .tool-versions files")
+	cmd.Flags().
+		StringVar(&scanDirFlag, "scan-dir", "", "Additional directory to recursively scan for .tool-versions files")
 }
 
 func runPrune(cmd *cobra.Command, _args []string) error {
@@ -230,11 +235,14 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		var breakdown []string
 		sizeFormatted := humanize.Bytes(uint64(totalReclaimableBytes))
 
-		breakdown = append(breakdown, fmt.Sprintf("Found %s removable version(s) reclaiming %s space across %s plugin(s):",
-			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(targets))),
-			theme.SuccessText.Bold(true).Render(sizeFormatted),
-			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
-		))
+		breakdown = append(
+			breakdown,
+			fmt.Sprintf("Found %s removable version(s) reclaiming %s space across %s plugin(s):",
+				theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(targets))),
+				theme.SuccessText.Bold(true).Render(sizeFormatted),
+				theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
+			),
+		)
 
 		for _, p := range pluginNames {
 			sizeStr := ""
@@ -254,7 +262,11 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		}
 
 		if !dryRunFlag && !forceFlag {
-			confirmMsg := fmt.Sprintf("Are you sure you want to uninstall these %d version(s) to reclaim %s?", len(targets), sizeFormatted)
+			confirmMsg := fmt.Sprintf(
+				"Are you sure you want to uninstall these %d version(s) to reclaim %s?",
+				len(targets),
+				sizeFormatted,
+			)
 			confirmed, err := ui.Confirm(confirmMsg, false)
 			if err != nil || !confirmed {
 				log.Message("Prune operation cancelled.")
@@ -289,7 +301,13 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 
 		if dryRunFlag {
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s [Dry Run] %s @ %s%s\n", theme.MutedText.Render("•"), target.Plugin, target.Version, sizeTag)
+				progressSpinner.Logf(
+					"  %s [Dry Run] %s @ %s%s\n",
+					theme.MutedText.Render("•"),
+					target.Plugin,
+					target.Version,
+					sizeTag,
+				)
 			} else {
 				log.Message("[Dry Run] Would uninstall: %s @ %s%s", target.Plugin, target.Version, sizeTag)
 			}
@@ -302,13 +320,25 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		uninstCmd := execCommand("asdf", "uninstall", target.Plugin, target.Version)
 		if err := uninstCmd.Run(); err != nil {
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Failed %s @ %s: %v\n", theme.ErrorText.Render("✗"), target.Plugin, target.Version, err)
+				progressSpinner.Logf(
+					"  %s Failed %s @ %s: %v\n",
+					theme.ErrorText.Render("✗"),
+					target.Plugin,
+					target.Version,
+					err,
+				)
 			} else {
 				log.Error("Failed to uninstall %s @ %s: %v", target.Plugin, target.Version, err)
 			}
 		} else {
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Uninstalled %s @ %s%s\n", theme.SuccessText.Render("✓"), target.Plugin, target.Version, sizeTag)
+				progressSpinner.Logf(
+					"  %s Uninstalled %s @ %s%s\n",
+					theme.SuccessText.Render("✓"),
+					target.Plugin,
+					target.Version,
+					sizeTag,
+				)
 			} else {
 				log.Success("Uninstalled %s @ %s%s", target.Plugin, target.Version, sizeTag)
 			}
@@ -326,9 +356,20 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 	// 6. Render final summary banner with reclaimed disk space
 	freedStr := humanize.Bytes(uint64(freedBytes))
 	if dryRunFlag {
-		theme.InfoMessage(fmt.Sprintf("Dry run complete. Previewed %d uninstallation(s) reclaiming %s disk space.", uninstalledCount, freedStr))
+		theme.InfoMessage(
+			fmt.Sprintf(
+				"Dry run complete. Previewed %d uninstallation(s) reclaiming %s disk space.",
+				uninstalledCount,
+				freedStr,
+			),
+		)
 	} else {
-		summaryMsg := fmt.Sprintf("ASDF prune completed! Successfully freed %s of disk space (%d version(s) across %d plugin(s)).", freedStr, uninstalledCount, len(cleanedPlugins))
+		summaryMsg := fmt.Sprintf(
+			"ASDF prune completed! Successfully freed %s of disk space (%d version(s) across %d plugin(s)).",
+			freedStr,
+			uninstalledCount,
+			len(cleanedPlugins),
+		)
 		theme.SuccessMessage(summaryMsg)
 	}
 

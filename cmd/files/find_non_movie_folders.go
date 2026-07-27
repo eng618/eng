@@ -120,9 +120,12 @@ It calculates folder disk space, lists folder contents, and prompts for confirma
 		))
 
 		for _, fm := range folderMatches {
-			boxLines = append(boxLines, fmt.Sprintf("  • %s %s",
+			boxLines = append(boxLines, fmt.Sprintf(
+				"  • %s %s",
 				theme.BoldText.Render(fm.Path),
-				theme.MutedText.Render(fmt.Sprintf("(%s, %d files)", humanize.Bytes(uint64(fm.SizeBytes)), fm.FileCount)),
+				theme.MutedText.Render(
+					fmt.Sprintf("(%s, %d files)", humanize.Bytes(uint64(fm.SizeBytes)), fm.FileCount),
+				),
 			))
 		}
 
@@ -188,7 +191,13 @@ It calculates folder disk space, lists folder contents, and prompts for confirma
 				freedBytes += fm.SizeBytes
 				sizeStr := humanize.Bytes(uint64(fm.SizeBytes))
 				if deleteSpinner != nil {
-					deleteSpinner.Logf("  %s Deleted %s (freed %s, %d files)\n", theme.SuccessText.Render("✓"), fm.Path, sizeStr, fm.FileCount)
+					deleteSpinner.Logf(
+						"  %s Deleted %s (freed %s, %d files)\n",
+						theme.SuccessText.Render("✓"),
+						fm.Path,
+						sizeStr,
+						fm.FileCount,
+					)
 				} else {
 					log.Success("Deleted: %s (freed %s)", fm.Path, sizeStr)
 				}
@@ -202,9 +211,22 @@ It calculates folder disk space, lists folder contents, and prompts for confirma
 
 		freedStr := humanize.Bytes(uint64(freedBytes))
 		if errorCount > 0 {
-			theme.WarningMessage(fmt.Sprintf("Deleted %d non-movie folder(s) freeing %s, but encountered %d error(s).", deletedCount, freedStr, errorCount))
+			theme.WarningMessage(
+				fmt.Sprintf(
+					"Deleted %d non-movie folder(s) freeing %s, but encountered %d error(s).",
+					deletedCount,
+					freedStr,
+					errorCount,
+				),
+			)
 		} else {
-			theme.SuccessMessage(fmt.Sprintf("Successfully deleted %d non-movie folder(s) freeing %s of disk space!", deletedCount, freedStr))
+			theme.SuccessMessage(
+				fmt.Sprintf(
+					"Successfully deleted %d non-movie folder(s) freeing %s of disk space!",
+					deletedCount,
+					freedStr,
+				),
+			)
 		}
 	},
 }

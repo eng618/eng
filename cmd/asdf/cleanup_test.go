@@ -15,7 +15,7 @@ import (
 func TestRunPruneDryRun(t *testing.T) {
 	tempDir := t.TempDir()
 	toolVersionsPath := filepath.Join(tempDir, ".tool-versions")
-	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0644))
+	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0o644))
 
 	origDisableProgress := ui.DisableProgress
 	ui.DisableProgress = true
@@ -75,12 +75,12 @@ func TestRunPruneDryRun(t *testing.T) {
 func TestRunPruneMultiProject(t *testing.T) {
 	tempDir := t.TempDir()
 	globalFile := filepath.Join(tempDir, ".tool-versions")
-	require.NoError(t, os.WriteFile(globalFile, []byte("nodejs 24.18.0\n"), 0644))
+	require.NoError(t, os.WriteFile(globalFile, []byte("nodejs 24.18.0\n"), 0o644))
 
 	projDir := filepath.Join(tempDir, "Development", "legacy-app")
-	require.NoError(t, os.MkdirAll(projDir, 0755))
+	require.NoError(t, os.MkdirAll(projDir, 0o755))
 	projFile := filepath.Join(projDir, ".tool-versions")
-	require.NoError(t, os.WriteFile(projFile, []byte("nodejs 20.19.5\n"), 0644))
+	require.NoError(t, os.WriteFile(projFile, []byte("nodejs 20.19.5\n"), 0o644))
 
 	origDisableProgress := ui.DisableProgress
 	ui.DisableProgress = true

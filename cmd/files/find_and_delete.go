@@ -329,9 +329,18 @@ filename, --glob for glob patterns, or --ext for file extensions.
 
 		freedStr := humanize.Bytes(uint64(freedBytes))
 		if errorCount > 0 {
-			theme.WarningMessage(fmt.Sprintf("Deleted %d file(s) freeing %s, but encountered %d error(s).", deletedCount, freedStr, errorCount))
+			theme.WarningMessage(
+				fmt.Sprintf(
+					"Deleted %d file(s) freeing %s, but encountered %d error(s).",
+					deletedCount,
+					freedStr,
+					errorCount,
+				),
+			)
 		} else {
-			theme.SuccessMessage(fmt.Sprintf("Successfully deleted %d file(s) freeing %s of disk space!", deletedCount, freedStr))
+			theme.SuccessMessage(
+				fmt.Sprintf("Successfully deleted %d file(s) freeing %s of disk space!", deletedCount, freedStr),
+			)
 		}
 	},
 }
@@ -393,7 +402,10 @@ func ScanFileMatches(dir string, matchFn func(name string) bool, spinner *ui.Spi
 
 		filesProcessed++
 		if spinner != nil && filesProcessed%50 == 0 {
-			spinner.SetProgressBar(0.5, fmt.Sprintf("Scanning files... (%d processed, %d matched)", filesProcessed, len(matches)))
+			spinner.SetProgressBar(
+				0.5,
+				fmt.Sprintf("Scanning files... (%d processed, %d matched)", filesProcessed, len(matches)),
+			)
 		}
 
 		if matchFn(d.Name()) {

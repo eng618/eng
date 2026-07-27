@@ -77,7 +77,6 @@ func FindToolVersionFiles(rootDirs []string) ([]string, error) {
 			}
 			return nil
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("error searching for .tool-versions in %s: %w", absRoot, err)
 		}
