@@ -28,20 +28,23 @@ var (
 	scanDirFlag     string
 )
 
-// CleanupCmd represents the subcommand to clean up outdated asdf installs.
-var CleanupCmd = &cobra.Command{
-	Use:     "cleanup",
-	Aliases: []string{"clean", "prune"},
-	Short:   "Cleanup outdated asdf tool versions not listed in .tool-versions",
+// PruneCmd represents the subcommand to prune outdated asdf installs.
+var PruneCmd = &cobra.Command{
+	Use:     "prune",
+	Aliases: []string{"cleanup", "clean"},
+	Short:   "Prune outdated asdf tool versions not listed in .tool-versions",
 	Long: `Reads the root (user level) .tool-versions file and scans project directories for additional .tool-versions files, then removes installed tool versions that are not explicitly defined.
 
 Use the --interactive (-i) flag to present a multi-select prompt for choosing specific versions to uninstall.
 Use the --dry-run (-d) flag to preview which versions would be uninstalled.
 Use the --no-scan flag to disable searching development directories for project .tool-versions files.`,
-	RunE: runCleanup,
+	RunE: runPrune,
 }
 
-func bindCleanupFlags(cmd *cobra.Command) {
+// CleanupCmd is an alias variable for backward compatibility.
+var CleanupCmd = PruneCmd
+
+func bindPruneFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&interactiveFlag, "interactive", "i", false, "Interactively select installed tool versions to delete")
 	cmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Show what versions would be deleted without removing them")
 	cmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Skip confirmation prompt in default mode")
@@ -51,14 +54,14 @@ func bindCleanupFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&scanDirFlag, "scan-dir", "", "Additional directory to recursively scan for .tool-versions files")
 }
 
-func runCleanup(cmd *cobra.Command, _args []string) error {
+func runPrune(cmd *cobra.Command, _args []string) error {
 	// Header styling
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("🧹 ASDF Tool Cleanup"))
+		fmt.Println(headerStyle.Render("🧹 ASDF Tool Prune"))
 	}
 
 	// 1. Verify asdf is installed
@@ -254,7 +257,7 @@ func runCleanup(cmd *cobra.Command, _args []string) error {
 			confirmMsg := fmt.Sprintf("Are you sure you want to uninstall these %d version(s) to reclaim %s?", len(targets), sizeFormatted)
 			confirmed, err := ui.Confirm(confirmMsg, false)
 			if err != nil || !confirmed {
-				log.Message("Cleanup cancelled.")
+				log.Message("Prune operation cancelled.")
 				return nil
 			}
 		}
@@ -263,7 +266,7 @@ func runCleanup(cmd *cobra.Command, _args []string) error {
 	totalTargets := len(targets)
 	var progressSpinner *ui.Spinner
 	if !ui.DisableProgress {
-		progressSpinner = ui.NewProgressSpinner(fmt.Sprintf("Cleaning up %d asdf version(s)...", totalTargets))
+		progressSpinner = ui.NewProgressSpinner(fmt.Sprintf("Pruning %d asdf version(s)...", totalTargets))
 	}
 
 	// 5. Execute uninstalls with live progress indicator and disk space tracking
@@ -316,7 +319,7 @@ func runCleanup(cmd *cobra.Command, _args []string) error {
 	}
 
 	if progressSpinner != nil {
-		progressSpinner.SetProgressBar(1.0, "Cleanup completed")
+		progressSpinner.SetProgressBar(1.0, "Prune completed")
 		progressSpinner.Stop()
 	}
 
@@ -325,7 +328,7 @@ func runCleanup(cmd *cobra.Command, _args []string) error {
 	if dryRunFlag {
 		theme.InfoMessage(fmt.Sprintf("Dry run complete. Previewed %d uninstallation(s) reclaiming %s disk space.", uninstalledCount, freedStr))
 	} else {
-		summaryMsg := fmt.Sprintf("ASDF cleanup completed! Successfully freed %s of disk space (%d version(s) across %d plugin(s)).", freedStr, uninstalledCount, len(cleanedPlugins))
+		summaryMsg := fmt.Sprintf("ASDF prune completed! Successfully freed %s of disk space (%d version(s) across %d plugin(s)).", freedStr, uninstalledCount, len(cleanedPlugins))
 		theme.SuccessMessage(summaryMsg)
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/eng618/eng/internal/ui"
 )
 
-func TestRunCleanupDryRun(t *testing.T) {
+func TestRunPruneDryRun(t *testing.T) {
 	tempDir := t.TempDir()
 	toolVersionsPath := filepath.Join(tempDir, ".tool-versions")
 	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0644))
@@ -63,7 +63,7 @@ func TestRunCleanupDryRun(t *testing.T) {
 	noScanFlag = true
 	scanDirFlag = ""
 
-	err := runCleanup(nil, nil)
+	err := runPrune(nil, nil)
 	require.NoError(t, err)
 
 	assert.Contains(t, executedCommands, "asdf list")
@@ -72,7 +72,7 @@ func TestRunCleanupDryRun(t *testing.T) {
 	}
 }
 
-func TestRunCleanupMultiProject(t *testing.T) {
+func TestRunPruneMultiProject(t *testing.T) {
 	tempDir := t.TempDir()
 	globalFile := filepath.Join(tempDir, ".tool-versions")
 	require.NoError(t, os.WriteFile(globalFile, []byte("nodejs 24.18.0\n"), 0644))
@@ -108,7 +108,6 @@ func TestRunCleanupMultiProject(t *testing.T) {
 
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		if arg[0] == "list" {
-			// Both 24.18.0 and 20.19.5 are protected, so 22.14.0 is the only removable version!
 			return exec.Command("echo", "nodejs\n  20.19.5\n  22.14.0\n *24.18.0")
 		}
 		return exec.Command("echo", "ok")
@@ -122,6 +121,6 @@ func TestRunCleanupMultiProject(t *testing.T) {
 	noScanFlag = false
 	scanDirFlag = tempDir
 
-	err := runCleanup(nil, nil)
+	err := runPrune(nil, nil)
 	require.NoError(t, err)
 }

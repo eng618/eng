@@ -17,17 +17,17 @@ var (
 var AsdfCmd = &cobra.Command{
 	Use:   "asdf",
 	Short: "Manage asdf version manager plugins and installs",
-	Long:  `Command suite for managing asdf version manager plugins and cleaning up outdated tool installs.`,
+	Long:  `Command suite for managing asdf version manager plugins and pruning outdated tool installs.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Default to running cleanup if no subcommand is provided
-		return runCleanup(cmd, args)
+		// Default to running prune if no subcommand is provided
+		return runPrune(cmd, args)
 	},
 }
 
 func init() {
-	AsdfCmd.AddCommand(CleanupCmd)
+	AsdfCmd.AddCommand(PruneCmd)
 
-	// Bind flags to AsdfCmd as well so running `eng asdf [flags]` works identically to `eng asdf cleanup [flags]`
-	bindCleanupFlags(AsdfCmd)
-	bindCleanupFlags(CleanupCmd)
+	// Bind flags to AsdfCmd as well so running `eng asdf [flags]` works identically to `eng asdf prune [flags]`
+	bindPruneFlags(AsdfCmd)
+	bindPruneFlags(PruneCmd)
 }
