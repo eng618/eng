@@ -128,7 +128,7 @@ Projects are stored in your development folder with each project having its own 
 The `eng dashboard` provides an interactive, terminal-based Command Center for monitoring and managing your projects and their repositories.
 
 > [!NOTE]
-> **Minimum Terminal Dimensions**: The dashboard requires a terminal size of at least 60 columns wide and 12 lines high. If your window is resized below these dimensions, the interface automatically collapses into a friendly warning screen until the terminal is expanded.
+> **Minimum Terminal Dimensions**: The dashboard requires a terminal size of at least 50 columns wide and 10 lines high. If your window is resized below these dimensions, the interface displays an explicit instruction screen ("Expand your window to view the dashboard.") until the window is expanded.
 
 ### Usage
 
@@ -139,7 +139,7 @@ eng dashboard
 ### Keybindings
 
 - **Navigation**:
-  - `Enter` or `l`: Focus the right pane to select individual repositories within a project.
+  - `Tab`, `Enter`, or `l`: Focus the right pane to select individual repositories within a project (or switch tabs in Compact mode).
   - `Esc` or `h`: Focus the left pane to navigate projects.
   - `j` / `k` (or `Up`/`Down`): Navigate through the lists.
 - **Actions**:
@@ -161,10 +161,12 @@ _Context-aware Execution:_ Actions triggered from the left pane affect all repos
 
 #### Responsive Layouts
 
-The repository details pane adaptively updates its layout based on the terminal window's width:
+The dashboard adaptively updates its layout based on the terminal window's dimensions:
 
-- **Table View (Wide Screens)**: When the terminal's inner right pane width is 75 characters or wider, the dashboard renders a structured multi-column table displaying the repository name, branch, staged/unstaged status, ahead/behind counts, and the timestamp of the last status check (`UPDATED`).
-- **Stacked View (Narrow Screens)**: When the terminal is narrower, it automatically falls back to the vertically stacked layout showing multi-line details for each repository.
+- **Full Table Dashboard (Wide & Tall Screens, `Width >= 60`, `Height >= 14`, Right Pane `>= 75`)**: Renders a split-pane interface with a structured multi-column table displaying repository name, branch, status, ahead/behind counts, and updated timestamp.
+- **Full Stacked Dashboard (Standard Split-Pane, `Width >= 60`, `Height >= 14`)**: Renders a split-pane layout with multi-line stacked repository cards.
+- **Compact Dashboard (Compact Screens, `50 <= Width < 60` or `10 <= Height < 14`)**: Renders a single active pane with tab switcher (`1: Projects` | `2: Repos`) to maximize visible content without truncating items or hiding them behind footers.
+- **Instruction Fallback Screen (`Width < 50` or `Height < 10`)**: Displays a clear warning modal asking the user to expand their terminal window to view the dashboard.
 
 The dashboard provides rich repository status detection, using fast Git CLI commands to track local and remote repository states:
 

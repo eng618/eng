@@ -134,3 +134,11 @@ func NewModel(projects []config.Project, devPath, editor string) Model {
 	}
 	return m
 }
+
+func (m Model) isFallbackMode() bool {
+	return m.windowWidth < 50 || m.windowHeight < 10
+}
+
+func (m Model) isCompactMode() bool {
+	return !m.isFallbackMode() && (m.windowWidth < 60 || m.windowHeight < 14)
+}

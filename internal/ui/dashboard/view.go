@@ -15,7 +15,7 @@ func (m Model) View() string {
 		return "Initializing Dashboard..."
 	}
 
-	if m.windowWidth < 60 || m.windowHeight < 12 {
+	if m.isFallbackMode() {
 		return m.renderFallbackScreen()
 	}
 
@@ -28,39 +28,12 @@ func (m Model) View() string {
 			Render(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, modal, lipgloss.WithWhitespaceChars(" ")))
 	}
 
-	leftStyle := inactivePaneStyle
-	rightStyle := inactivePaneStyle
-
-	if m.focusedPane == FocusLeft {
-		leftStyle = activePaneStyle
+	var mainView string
+	if m.isCompactMode() {
+		mainView = m.renderCompactDashboard()
 	} else {
-		rightStyle = activePaneStyle
+		mainView = m.renderFullDashboard()
 	}
-
-	totalPanesWidth := m.windowWidth - 4
-	leftPaneOuterWidth := totalPanesWidth / 4
-	if leftPaneOuterWidth < 20 {
-		leftPaneOuterWidth = 20
-	}
-	if leftPaneOuterWidth > 30 {
-		leftPaneOuterWidth = 30
-	}
-	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
-
-	leftStyleWidth := leftPaneOuterWidth - 2
-	rightStyleWidth := rightPaneOuterWidth - 2
-
-	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 4)
-	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 4)
-
-	// Render Left Pane
-	leftContent := leftStyle.Render(limitLines(m.list.View(), m.windowHeight-6))
-
-	// Render Right Pane
-	rightContent := rightStyle.Render(limitLines(m.renderRightPane(), m.windowHeight-6))
-
-	// Combine panes
-	mainView := appStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent))
 
 	if m.actionState != "" {
 		// Render Modal Overlay
@@ -113,6 +86,89 @@ func (m Model) View() string {
 	}
 
 	return mainView
+}
+
+func (m Model) renderFullDashboard() string {
+	leftStyle := inactivePaneStyle
+	rightStyle := inactivePaneStyle
+
+	if m.focusedPane == FocusLeft {
+		leftStyle = activePaneStyle
+	} else {
+		rightStyle = activePaneStyle
+	}
+
+	totalPanesWidth := m.windowWidth - 4
+	leftPaneOuterWidth := totalPanesWidth / 4
+	if leftPaneOuterWidth < 20 {
+		leftPaneOuterWidth = 20
+	}
+	if leftPaneOuterWidth > 30 {
+		leftPaneOuterWidth = 30
+	}
+	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
+
+	leftStyleWidth := leftPaneOuterWidth - 2
+	rightStyleWidth := rightPaneOuterWidth - 2
+
+	leftStyle = leftStyle.Width(leftStyleWidth).Height(m.windowHeight - 4)
+	rightStyle = rightStyle.Width(rightStyleWidth).Height(m.windowHeight - 4)
+
+	// Render Left Pane
+	leftContent := leftStyle.Render(limitLines(m.list.View(), m.windowHeight-6))
+
+	// Render Right Pane
+	rightContent := rightStyle.Render(limitLines(m.renderRightPane(), m.windowHeight-6))
+
+	// Combine panes
+	return appStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent))
+}
+
+func (m Model) renderCompactDashboard() string {
+	var b strings.Builder
+
+	// Render Tab Header
+	var tab1, tab2 string
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	projName := "Repos"
+	if ok {
+		projName = fmt.Sprintf("Repos (%s)", truncate(item.Project.Name, 15))
+	}
+
+	if m.focusedPane == FocusLeft {
+		tab1 = tabActiveStyle.Render("[1: Projects]")
+		tab2 = tabInactiveStyle.Render("2: " + projName)
+	} else {
+		tab1 = tabInactiveStyle.Render("1: Projects")
+		tab2 = tabActiveStyle.Render("[2: " + projName + "]")
+	}
+
+	tabBar := lipgloss.JoinHorizontal(lipgloss.Left, tab1, "  ", tab2)
+	b.WriteString(tabBar)
+	b.WriteString("\n")
+
+	contentHeight := m.windowHeight - 6
+	if contentHeight < 1 {
+		contentHeight = 1
+	}
+
+	if m.focusedPane == FocusLeft {
+		b.WriteString(limitLines(m.list.View(), contentHeight))
+	} else {
+		b.WriteString(limitLines(m.renderRightPane(), contentHeight))
+	}
+
+	paneWidth := m.windowWidth - 4
+	if paneWidth < 10 {
+		paneWidth = 10
+	}
+
+	pane := compactPaneStyle.
+		Width(paneWidth).
+		Height(m.windowHeight - 2).
+		Render(b.String())
+
+	return appStyle.Render(pane)
 }
 
 func (m Model) renderRightPane() string {
@@ -384,7 +440,7 @@ func limitLines(s string, maxLines int) string {
 
 func (m Model) renderFallbackScreen() string {
 	msg := fmt.Sprintf(
-		"Terminal Too Small\n\nWidth: %d/60, Height: %d/12\n\nPlease resize your window or\npress [q] or [Ctrl+C] to quit.",
+		"Terminal Too Small\n\nExpand your window to view the dashboard.\n\nWidth: %d/50, Height: %d/10\n\nPlease resize your window or\npress [q] or [Ctrl+C] to quit.",
 		m.windowWidth,
 		m.windowHeight,
 	)

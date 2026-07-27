@@ -86,4 +86,19 @@ var (
 	progressBarFilledStyle = lipgloss.NewStyle().Foreground(theme.Primary)
 	progressBarTrackStyle  = lipgloss.NewStyle().Foreground(theme.MutedForeground)
 	progressInfoStyle      = lipgloss.NewStyle().Foreground(theme.MutedForeground)
+
+	compactPaneStyle = lipgloss.NewStyle().
+				Border(paneBorder).
+				BorderForeground(theme.Primary).
+				Padding(0, 1)
+
+	tabActiveStyle = lipgloss.NewStyle().
+			Foreground(theme.Foreground).
+			Background(theme.Primary).
+			Bold(true).
+			Padding(0, 1)
+
+	tabInactiveStyle = lipgloss.NewStyle().
+				Foreground(theme.MutedForeground).
+				Padding(0, 1)
 )

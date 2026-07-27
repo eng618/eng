@@ -207,8 +207,8 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 
 	m := NewModel(projects, "/tmp/dev", "")
 
-	// 1. Resize terminal below the threshold (e.g. 50 width, 10 height)
-	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 50, Height: 10})
+	// 1. Resize terminal below the threshold (e.g. 45 width, 8 height)
+	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 45, Height: 8})
 
 	// 2. Call View and assert the fallback screen is displayed
 	viewStr := m.View()
@@ -216,7 +216,10 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 	if !strings.Contains(viewStr, "Terminal Too Small") {
 		t.Error("Expected fallback screen to display 'Terminal Too Small'")
 	}
-	if !strings.Contains(viewStr, "Width: 50/60") || !strings.Contains(viewStr, "Height: 10/12") {
+	if !strings.Contains(viewStr, "Expand your window to view the dashboard.") {
+		t.Error("Expected fallback screen to display 'Expand your window to view the dashboard.'")
+	}
+	if !strings.Contains(viewStr, "Width: 45/50") || !strings.Contains(viewStr, "Height: 8/10") {
 		t.Errorf("Expected fallback screen to display current dimensions, got:\n%s", viewStr)
 	}
 
@@ -227,6 +230,46 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 	viewStr = m.View()
 	if strings.Contains(viewStr, "Terminal Too Small") {
 		t.Error("Expected standard dashboard layout to render when dimensions are valid, but fallback screen was shown")
+	}
+}
+
+func TestDashboardCompactMode(t *testing.T) {
+	projects := []config.Project{
+		{
+			Name: "TestProject",
+			Repos: []config.ProjectRepo{
+				{URL: "https://github.com/test/repo1"},
+				{URL: "https://github.com/test/repo2"},
+			},
+		},
+	}
+
+	m := NewModel(projects, "/tmp/dev", "")
+
+	// 1. Resize terminal to compact range (e.g. 55 width, 12 height)
+	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 55, Height: 12})
+
+	// 2. Assert compact mode renders tabs
+	viewStr := m.View()
+	if strings.Contains(viewStr, "Terminal Too Small") {
+		t.Fatal("Expected compact mode to render, but got fallback screen")
+	}
+	if !strings.Contains(viewStr, "1: Projects") {
+		t.Error("Expected compact mode tab '1: Projects' in output")
+	}
+
+	// 3. Press Tab to switch to Repos pane
+	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}, Alt: false})
+	// Simulate Tab key string explicitly
+	m, _ = updateModel(m, tea.KeyMsg{Type: tea.KeyTab})
+
+	if m.focusedPane != FocusRight {
+		t.Errorf("Expected focusedPane to be FocusRight after pressing Tab, got %v", m.focusedPane)
+	}
+
+	viewStr2 := m.View()
+	if !strings.Contains(viewStr2, "repo1") {
+		t.Errorf("Expected compact right pane to show repo1, got:\n%s", viewStr2)
 	}
 }
 

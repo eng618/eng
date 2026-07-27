@@ -44,21 +44,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
-		totalPanesWidth := msg.Width - 4
-		leftPaneOuterWidth := totalPanesWidth / 4
-		if leftPaneOuterWidth < 20 {
-			leftPaneOuterWidth = 20
-		}
-		if leftPaneOuterWidth > 30 {
-			leftPaneOuterWidth = 30
+		var listWidth, listHeight int
+		if m.isCompactMode() {
+			listWidth = msg.Width - 6
+			listHeight = msg.Height - 6
+		} else {
+			totalPanesWidth := msg.Width - 4
+			leftPaneOuterWidth := totalPanesWidth / 4
+			if leftPaneOuterWidth < 20 {
+				leftPaneOuterWidth = 20
+			}
+			if leftPaneOuterWidth > 30 {
+				leftPaneOuterWidth = 30
+			}
+
+			leftStyleWidth := leftPaneOuterWidth - 2
+			listWidth = leftStyleWidth - 2
+			listHeight = msg.Height - 6
 		}
 
-		leftStyleWidth := leftPaneOuterWidth - 2
-		listWidth := leftStyleWidth - 2
 		if listWidth < 1 {
 			listWidth = 1
 		}
-		listHeight := msg.Height - 6
 		if listHeight < 1 {
 			listHeight = 1
 		}
@@ -84,6 +91,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch msg.String() {
+		case "tab":
+			if m.focusedPane == FocusLeft {
+				m.focusedPane = FocusRight
+				m.selectedRepoIndex = 0
+			} else {
+				m.focusedPane = FocusLeft
+			}
+			m.clampScrollOffset()
+			return m, nil
 		case "enter", "l", "right":
 			if m.focusedPane == FocusLeft {
 				m.focusedPane = FocusRight
@@ -312,24 +328,33 @@ func (m *Model) clampScrollOffset() {
 		return
 	}
 
-	totalPanesWidth := m.windowWidth - 4
-	leftPaneOuterWidth := totalPanesWidth / 4
-	if leftPaneOuterWidth < 20 {
-		leftPaneOuterWidth = 20
+	var innerRightWidth, innerRightHeight int
+	if m.isCompactMode() {
+		innerRightWidth = m.windowWidth - 6
+		innerRightHeight = m.windowHeight - 6
+	} else {
+		totalPanesWidth := m.windowWidth - 4
+		leftPaneOuterWidth := totalPanesWidth / 4
+		if leftPaneOuterWidth < 20 {
+			leftPaneOuterWidth = 20
+		}
+		if leftPaneOuterWidth > 30 {
+			leftPaneOuterWidth = 30
+		}
+		rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
+		rightStyleWidth := rightPaneOuterWidth - 2
+		innerRightWidth = rightStyleWidth - 2
+		innerRightHeight = m.windowHeight - 6
 	}
-	if leftPaneOuterWidth > 30 {
-		leftPaneOuterWidth = 30
-	}
-	rightPaneOuterWidth := totalPanesWidth - leftPaneOuterWidth
-	rightStyleWidth := rightPaneOuterWidth - 2
-	innerRightWidth := rightStyleWidth - 2
 
-	innerRightHeight := m.windowHeight - 6
-	if innerRightHeight < 5 {
+	if innerRightHeight < 3 {
 		m.repoScrollOffset = 0
 		return
 	}
 	H_repos := innerRightHeight - 4
+	if H_repos < 1 {
+		H_repos = 1
+	}
 
 	if m.selectedRepoIndex < 0 || m.selectedRepoIndex >= len(p.Repos) {
 		m.selectedRepoIndex = 0
