@@ -1,5 +1,24 @@
 <a name="unreleased"></a>
 
+## [1.25.0](https://github.com/eng618/eng/compare/v1.24.0...v1.25.0) (2026-07-27)
+
+
+### Features
+
+* Add Docker Compose management command and enhance testing infrastructure ([f68629e](https://github.com/eng618/eng/commit/f68629e79159a50fcb9b12ddbe12a43dd7ad0dc7))
+* Switch Go formatting tool from gofmt to golangci-lint in Taskfile ([f02c8bf](https://github.com/eng618/eng/commit/f02c8bfefea67039c0b63e021cd0390d80ffdf2a))
+
+
+### Bug Fixes
+
+* Adjust dashboard pane height and optimize string builder operations using slice joins ([bfde8fe](https://github.com/eng618/eng/commit/bfde8fe0c51238e5f2c8d02e66bfc8dbfdfb0fe5))
+
+
+### Miscellaneous
+
+* Update golangci-lint version and add gofmt fallback to formatting tasks ([750473c](https://github.com/eng618/eng/commit/750473cad370c7b51b2166f73e63949f34fd60d7))
+* Upgrade Go version to 1.26.5 and update project dependencies ([77ab761](https://github.com/eng618/eng/commit/77ab761a5b15d5544236b67b19b60e2e67b2946d))
+
 ## [1.24.0](https://github.com/eng618/eng/compare/v1.23.0...v1.24.0) (2026-07-27)
 
 
