@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.23.0](https://github.com/eng618/eng/compare/v1.22.0...v1.23.0) (2026-07-27)
+
+
+### Features
+
+* **files:** Upgrade findAndDelete and findNonMovieFolders with Charm UI and data usage tracking ([7ee3260](https://github.com/eng618/eng/commit/7ee32609f6e4fda0a7ca589272a129851c197666))
+
 ## [1.22.0](https://github.com/eng618/eng/compare/v1.21.0...v1.22.0) (2026-07-27)
 
 
