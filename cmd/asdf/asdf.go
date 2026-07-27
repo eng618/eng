@@ -27,7 +27,7 @@ var AsdfCmd = &cobra.Command{
 func init() {
 	AsdfCmd.AddCommand(PruneCmd)
 	AsdfCmd.AddCommand(CheckCmd)
-	AsdfCmd.AddCommand(UpdateRootCmd)
+	AsdfCmd.AddCommand(UpdateLatestCmd)
 	AsdfCmd.AddCommand(StatusCmd)
 
 	// Bind flags to AsdfCmd as well so running `eng asdf [flags]` works identically to `eng asdf prune [flags]`

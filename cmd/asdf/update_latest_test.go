@@ -13,7 +13,7 @@ import (
 	"github.com/eng618/eng/internal/ui"
 )
 
-func TestRunUpdateRoot(t *testing.T) {
+func TestRunUpdateLatest(t *testing.T) {
 	tempDir := t.TempDir()
 	toolVersionsPath := filepath.Join(tempDir, ".tool-versions")
 	require.NoError(t, os.WriteFile(toolVersionsPath, []byte("nodejs 24.18.0\n"), 0o644))
@@ -53,7 +53,7 @@ func TestRunUpdateRoot(t *testing.T) {
 	updateInstallFlag = false
 	updateConfigFlag = toolVersionsPath
 
-	err := runUpdateRoot(nil, nil)
+	err := runUpdateLatest(nil, nil)
 	require.NoError(t, err)
 
 	updatedTV, err := asdf.ParseToolVersionsFile(toolVersionsPath)
