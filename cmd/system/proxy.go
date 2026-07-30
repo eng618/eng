@@ -66,7 +66,9 @@ func renderProxyList(compact bool, proxies []config.ProxyConfig) {
 	header := theme.PrimaryText.Bold(true).Render("🌐 Proxy Configurations (★ active, • inactive):")
 	fmt.Println(header)
 	if len(proxies) == 0 {
-		fmt.Println(theme.MutedText.Render("  No proxy configurations found. Use 'eng system proxy add' to create one."))
+		fmt.Println(
+			theme.MutedText.Render("  No proxy configurations found. Use 'eng system proxy add' to create one."),
+		)
 		return
 	}
 	for i, p := range proxies {

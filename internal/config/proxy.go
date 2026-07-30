@@ -599,7 +599,7 @@ func RemoveProxy(index int) ([]ProxyConfig, error) {
 }
 
 // TestProxyConnection tests HTTP connectivity using the specified proxy URL.
-func TestProxyConnection(proxyURLStr string, targetURLStr string) (time.Duration, error) {
+func TestProxyConnection(proxyURLStr, targetURLStr string) (time.Duration, error) {
 	if targetURLStr == "" {
 		targetURLStr = "https://1.1.1.1"
 	}
@@ -636,4 +636,3 @@ func TestProxyConnection(proxyURLStr string, targetURLStr string) (time.Duration
 
 	return duration, nil
 }
-

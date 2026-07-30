@@ -63,7 +63,12 @@ func (m pagerModel) View() string {
 	}
 
 	header := theme.PrimaryText.Bold(true).Render(" Compose Status Inspection Viewport")
-	footer := theme.MutedText.Render(fmt.Sprintf(" %3.f%%  •  Use j/k or arrow keys to scroll  •  Press 'q' or 'esc' to exit ", m.viewport.ScrollPercent()*100))
+	footer := theme.MutedText.Render(
+		fmt.Sprintf(
+			" %3.f%%  •  Use j/k or arrow keys to scroll  •  Press 'q' or 'esc' to exit ",
+			m.viewport.ScrollPercent()*100,
+		),
+	)
 
 	return fmt.Sprintf("%s\n%s\n%s", header, m.viewport.View(), footer)
 }

@@ -136,4 +136,3 @@ func TestResolveProxyIndex(t *testing.T) {
 		t.Errorf("Expected -1 for unknown proxy, got %d", idx)
 	}
 }
-
