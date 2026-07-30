@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.30.0](https://github.com/eng618/eng/compare/v1.29.0...v1.30.0) (2026-07-30)
+
+
+### Features
+
+* **version:** Modernize and update the version command ([795e7a4](https://github.com/eng618/eng/commit/795e7a4c5305a03ec3a076206d45891a717065a6))
+
 ## [1.29.0](https://github.com/eng618/eng/compare/v1.28.0...v1.29.0) (2026-07-30)
 
 
