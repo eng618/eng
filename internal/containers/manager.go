@@ -272,6 +272,65 @@ func parseServices(composeFile string) ([]string, error) {
 	return services, nil
 }
 
+// Publisher represents port forwarding mappings from docker compose ps json.
+type Publisher struct {
+	URL           string `json:"URL"`
+	TargetPort    int    `json:"TargetPort"`
+	PublishedPort int    `json:"PublishedPort"`
+	Protocol      string `json:"Protocol"`
+}
+
+// ContainerDetail holds full metadata for an individual container.
+type ContainerDetail struct {
+	ID         string      `json:"ID"`
+	Name       string      `json:"Name"`
+	Service    string      `json:"Service"`
+	State      string      `json:"State"`
+	Status     string      `json:"Status"`
+	Health     string      `json:"Health"`
+	Image      string      `json:"Image"`
+	Publishers []Publisher `json:"Publishers"`
+}
+
+// ContainerDetails returns detailed container information for target stack(s).
+func (m *Manager) ContainerDetails(stackNames []string) (map[string][]ContainerDetail, error) {
+	targetStacks, err := m.resolveStacks(stackNames)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[string][]ContainerDetail)
+	for _, s := range targetStacks {
+		cmd := execCommand("docker", "compose", "-f", s.File, "ps", "--format", "json")
+		var outBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+
+		if err := cmd.Run(); err != nil {
+			results[s.Name] = []ContainerDetail{}
+		} else {
+			results[s.Name] = parseContainerDetailsJSON(outBuf.Bytes())
+		}
+	}
+
+	return results, nil
+}
+
+func parseContainerDetailsJSON(data []byte) []ContainerDetail {
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	var containers []ContainerDetail
+
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var c ContainerDetail
+		if err := json.Unmarshal([]byte(line), &c); err == nil {
+			containers = append(containers, c)
+		}
+	}
+	return containers
+}
+
 type psContainer struct {
 	State string `json:"State"`
 }

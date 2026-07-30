@@ -9,9 +9,10 @@ eng compose status [stack...] [flags]
 ### Options
 
 ```
-  -a, --all    Include all stacks
-  -h, --help   help for status
-      --json   Output status in JSON format
+  -a, --all       Include all stacks
+  -d, --details   Show detailed container inspection
+  -h, --help      help for status
+      --json      Output status in JSON format
 ```
 
 ### Options inherited from parent commands

@@ -84,3 +84,19 @@ func TestParseDockerPsJSON(t *testing.T) {
 		t.Errorf("expected count 2 and status Partial (1/2), got count %d and status %s", count, status)
 	}
 }
+
+func TestParseContainerDetailsJSON(t *testing.T) {
+	sampleJSON := `{"ID":"123","Name":"web-api","Service":"api","State":"running","Health":"healthy","Image":"api:latest","Publishers":[{"TargetPort":80,"PublishedPort":8080,"Protocol":"tcp"}]}
+{"ID":"456","Name":"web-db","Service":"db","State":"running","Health":"","Image":"postgres:16","Publishers":[]}`
+
+	details := parseContainerDetailsJSON([]byte(sampleJSON))
+	if len(details) != 2 {
+		t.Fatalf("expected 2 container details, got %d", len(details))
+	}
+	if details[0].Name != "web-api" || details[0].Service != "api" || details[0].Health != "healthy" {
+		t.Errorf("unexpected first container detail: %+v", details[0])
+	}
+	if len(details[0].Publishers) != 1 || details[0].Publishers[0].PublishedPort != 8080 {
+		t.Errorf("unexpected publisher mapping: %+v", details[0].Publishers)
+	}
+}

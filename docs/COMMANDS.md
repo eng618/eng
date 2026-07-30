@@ -65,7 +65,7 @@ Manage multi-service Docker Compose stacks with lifecycle commands, inter-stack 
 | `eng compose up [stack...] [-e env] [-a] [-d] [--build]` | Spin up target stack(s) (e.g. `media`, `arrsenal`, `immich`) |
 | `eng compose down [stack...] [-a] [-v]` | Spin down target stack(s) and optionally remove volumes |
 | `eng compose pull [stack...] [-a]` | Pull latest images for target stack(s) |
-| `eng compose status [stack...] [--json] [-a]` | Show live container counts and status for target stack(s) |
+| `eng compose status [stack...] [--json] [-a] [-d]` | Show live stack status formatted with Lip Gloss tables; use `-d` / `--details` for container inspection |
 | `eng compose logs <stack> [-f] [--tail lines]` | Tail log output for a specific compose stack |
 
 ### Config
