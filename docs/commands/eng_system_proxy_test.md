@@ -1,24 +1,22 @@
-## eng system proxy add
+## eng system proxy test
 
-Add a new proxy configuration
+Test HTTP connection through a proxy
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Sends a test HTTP request through the specified proxy or active proxy to verify connectivity.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy test [name|index] [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+  -h, --help            help for test
+      --index int       Proxy index to test (default -1)
+      --target string   Target URL to test proxy against (default "https://1.1.1.1")
+      --title string    Proxy title to test
 ```
 
 ### Options inherited from parent commands

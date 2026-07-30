@@ -1,24 +1,20 @@
-## eng system proxy add
+## eng system proxy off
 
-Add a new proxy configuration
+Deactivate all proxies and unset environment variables
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Disables all proxy configurations and unsets all shell proxy environment variables.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy off [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+  -h, --help    help for off
+      --quiet   Suppress status output after disabling
 ```
 
 ### Options inherited from parent commands

@@ -1,24 +1,22 @@
-## eng system proxy add
+## eng system proxy use
 
-Add a new proxy configuration
+Activate a proxy configuration
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Select and enable a proxy configuration interactively or by name/index.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy use [name|index] [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+  -h, --help           help for use
+      --index int      Proxy index to enable (default -1)
+      --quiet          Suppress status output after enabling
+      --title string   Proxy title to enable
 ```
 
 ### Options inherited from parent commands

@@ -1,20 +1,21 @@
-## eng system proxy add
+## eng system proxy edit
 
-Add a new proxy configuration
+Edit an existing proxy configuration
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Modify an existing proxy configuration via flags or interactively.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy edit [name|index] [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
+      --enable            Enable this proxy after editing
+  -h, --help              help for edit
+      --interactive       Use interactive prompts when missing values
       --no-proxy string   Additional no_proxy values (comma-separated)
       --title string      Proxy configuration title
       --url string        Proxy address (e.g., http://host:port)

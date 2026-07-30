@@ -1,24 +1,21 @@
-## eng system proxy add
+## eng system proxy remove
 
-Add a new proxy configuration
+Remove a proxy configuration
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Deletes a stored proxy configuration profile.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy remove [name|index] [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+  -h, --help           help for remove
+      --index int      Proxy index to remove (default -1)
+      --title string   Proxy title to remove
 ```
 
 ### Options inherited from parent commands

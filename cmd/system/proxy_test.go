@@ -105,3 +105,35 @@ func TestExportCmd_Disabled(t *testing.T) {
 		t.Error("Expected unset command for HTTP_PROXY when no proxy is enabled")
 	}
 }
+
+func TestResolveProxyIndex(t *testing.T) {
+	proxies := []config.ProxyConfig{
+		{Title: "Corp VPN", Value: "http://corp:8080", Enabled: true},
+		{Title: "Home Relay", Value: "http://home:1080", Enabled: false},
+	}
+
+	// Test 1-based index string
+	if idx := resolveProxyIndex("1", -1, "", proxies); idx != 0 {
+		t.Errorf("Expected 0 for 1-based index '1', got %d", idx)
+	}
+
+	if idx := resolveProxyIndex("2", -1, "", proxies); idx != 1 {
+		t.Errorf("Expected 1 for 1-based index '2', got %d", idx)
+	}
+
+	// Test title resolution
+	if idx := resolveProxyIndex("home relay", -1, "", proxies); idx != 1 {
+		t.Errorf("Expected 1 for title match 'home relay', got %d", idx)
+	}
+
+	// Test flag fallback
+	if idx := resolveProxyIndex("", 0, "", proxies); idx != 0 {
+		t.Errorf("Expected 0 for flag fallback index 0, got %d", idx)
+	}
+
+	// Test non-match fallback
+	if idx := resolveProxyIndex("unknown", -1, "", proxies); idx != -1 {
+		t.Errorf("Expected -1 for unknown proxy, got %d", idx)
+	}
+}
+

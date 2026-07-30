@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -572,3 +574,66 @@ func NormalizeProxyURLString(value string) string {
 	// No port provided; leave as-is (validator will catch missing port)
 	return s
 }
+
+// RemoveProxy removes the proxy configuration at the specified index.
+func RemoveProxy(index int) ([]ProxyConfig, error) {
+	proxies, _ := GetProxyConfigs()
+	if index < 0 || index >= len(proxies) {
+		return proxies, errors.New("proxy index out of range")
+	}
+
+	// If deleting active proxy, unset env vars
+	if proxies[index].Enabled {
+		UnsetProxyEnvVars()
+	}
+
+	title := proxies[index].Title
+	proxies = append(proxies[:index], proxies[index+1:]...)
+
+	if err := SaveProxyConfigs(proxies); err != nil {
+		return proxies, err
+	}
+
+	log.Success("Proxy '%s' removed successfully", title)
+	return proxies, nil
+}
+
+// TestProxyConnection tests HTTP connectivity using the specified proxy URL.
+func TestProxyConnection(proxyURLStr string, targetURLStr string) (time.Duration, error) {
+	if targetURLStr == "" {
+		targetURLStr = "https://1.1.1.1"
+	}
+
+	normalizedProxy := NormalizeProxyURLString(proxyURLStr)
+	parsedProxy, err := url.Parse(normalizedProxy)
+	if err != nil {
+		return 0, fmt.Errorf("invalid proxy URL '%s': %w", proxyURLStr, err)
+	}
+
+	transport := &http.Transport{
+		Proxy: http.ProxyURL(parsedProxy),
+		DialContext: (&net.Dialer{
+			Timeout: 5 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   7 * time.Second,
+	}
+
+	start := time.Now()
+	resp, err := client.Get(targetURLStr)
+	duration := time.Since(start)
+	if err != nil {
+		return duration, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return duration, fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	return duration, nil
+}
+

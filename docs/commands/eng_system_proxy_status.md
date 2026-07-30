@@ -1,24 +1,19 @@
-## eng system proxy add
+## eng system proxy status
 
-Add a new proxy configuration
+Show active proxy status, profiles, and shell env vars
 
 ### Synopsis
 
-Add a new proxy configuration with a title, proxy address, and optional bypass domains.
+Displays current active proxy status, list of stored configurations, and environment variable states.
 
 ```
-eng system proxy add [title] [url] [flags]
+eng system proxy status [flags]
 ```
 
 ### Options
 
 ```
-      --enable            Enable proxy after adding
-  -h, --help              help for add
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+  -h, --help   help for status
 ```
 
 ### Options inherited from parent commands
