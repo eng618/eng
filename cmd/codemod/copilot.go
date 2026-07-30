@@ -3,11 +3,15 @@
 package codemod
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // CopilotSetupCmd creates a base custom Copilot instructions file in .github/copilot-instructions.md.
@@ -16,6 +20,14 @@ var CopilotSetupCmd = &cobra.Command{
 	Short: "Setup custom Copilot instructions file",
 	Long:  `Create a base custom Copilot instructions file at .github/copilot-instructions.md. By default, this command assumes you are in the root of a Git repository. Use --force to bypass this check.`,
 	Run: func(cmd *cobra.Command, _args []string) {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("🤖 GitHub Copilot Custom Instructions Setup"))
+		}
+
 		force, _ := cmd.Flags().GetBool("force")
 
 		// Check if we're in a git repository unless force is used
@@ -31,7 +43,7 @@ var CopilotSetupCmd = &cobra.Command{
 			return
 		}
 
-		log.Success("Copilot instructions file created at .github/copilot-instructions.md")
+		theme.SuccessMessage("Copilot instructions file created at .github/copilot-instructions.md")
 	},
 }
 

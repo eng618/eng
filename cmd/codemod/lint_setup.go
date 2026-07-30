@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -13,9 +14,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 //go:embed eslint.config.standard.tmpl
@@ -102,6 +106,14 @@ var LintSetupCmd = &cobra.Command{
 	Short: "Setup linting and formatting for a Node.js project",
 	Long:  `Install and configure linting, formatting, and pre-commit hooks for a Node.js project (eslint, prettier, husky, etc).`,
 	Run: func(cmd *cobra.Command, _args []string) {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("🛠️ Node.js Linting & Formatting Setup"))
+		}
+
 		if _, err := os.Stat("package.json"); errors.Is(err, os.ErrNotExist) {
 			log.Error("package.json not found in current directory")
 			return

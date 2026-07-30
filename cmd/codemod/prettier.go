@@ -8,9 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // PrettierCmd formats the current directory with prettier, installing @eng618/prettier-config if needed.
@@ -20,6 +23,14 @@ var PrettierCmd = &cobra.Command{
 	Long: `Format code with prettier, automatically installing @eng618/prettier-config if not available.
 If no path is provided, formats the current directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("✨ Prettier Code Formatter"))
+		}
+
 		// Determine the target path
 		targetPath := "."
 		if len(args) > 0 {
@@ -31,7 +42,7 @@ If no path is provided, formats the current directory.`,
 			return
 		}
 
-		log.Success("Prettier formatting completed!")
+		theme.SuccessMessage("Prettier formatting completed!")
 	},
 }
 
