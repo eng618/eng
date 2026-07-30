@@ -64,7 +64,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			Foreground(theme.Primary).
 			MarginBottom(1)
 		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("🧹 Find & Delete Files"))
+			fmt.Fprintln(log.Out, headerStyle.Render("🧹 Find & Delete Files"))
 		}
 
 		dir := args[0]

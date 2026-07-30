@@ -1,9 +1,15 @@
 package config
 
 import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var interactiveMode bool
@@ -16,6 +22,14 @@ var EditCmd = &cobra.Command{
 
 By default, this command launches the interactive editor. Use --interactive=false if you want to bypass the wizard in the future (though currently, the interactive editor is the primary function of this command).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("📝 Interactive Configuration Editor"))
+		}
+
 		if !interactiveMode {
 			// In the future, if interactive mode is false, we might open $EDITOR
 			// For now, default to the TUI if they just run 'eng config edit'

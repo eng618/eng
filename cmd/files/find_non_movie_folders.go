@@ -50,7 +50,7 @@ It calculates folder disk space, lists folder contents, and prompts for confirma
 			Foreground(theme.Primary).
 			MarginBottom(1)
 		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("🎬 Find Non-Movie Folders"))
+			fmt.Fprintln(log.Out, headerStyle.Render("🎬 Find Non-Movie Folders"))
 		}
 
 		directory := args[0]
