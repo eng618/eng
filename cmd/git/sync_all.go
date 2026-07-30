@@ -118,7 +118,12 @@ var SyncAllCmd = &cobra.Command{
 		_ = eg.Wait()
 		multi.Stop()
 
-		summaryMsg := fmt.Sprintf("Sync completed: %d successful, %d failed across %d repositories.", successCount.Load(), failureCount.Load(), len(repos))
+		summaryMsg := fmt.Sprintf(
+			"Sync completed: %d successful, %d failed across %d repositories.",
+			successCount.Load(),
+			failureCount.Load(),
+			len(repos),
+		)
 		if failureCount.Load() > 0 {
 			theme.WarningMessage(summaryMsg)
 		} else {

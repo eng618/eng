@@ -126,7 +126,13 @@ var PushAllCmd = &cobra.Command{
 			successCount++
 		}
 
-		summaryMsg := fmt.Sprintf("Push completed: %d successful, %d failed, %d skipped across %d repositories.", successCount, failureCount, skippedCount, len(repos))
+		summaryMsg := fmt.Sprintf(
+			"Push completed: %d successful, %d failed, %d skipped across %d repositories.",
+			successCount,
+			failureCount,
+			skippedCount,
+			len(repos),
+		)
 		if failureCount > 0 {
 			theme.WarningMessage(summaryMsg)
 		} else {
