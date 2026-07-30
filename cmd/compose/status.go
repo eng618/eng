@@ -94,6 +94,6 @@ func init() {
 	statusCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output status in JSON format")
 	statusCmd.Flags().BoolVarP(&allFlagStatus, "all", "a", false, "Include all stacks")
 	statusCmd.Flags().BoolVarP(&detailsFlag, "details", "d", false, "Show detailed container inspection")
-	statusCmd.Flags().BoolVarP(&pagerFlag, "pager", "p", false, "Open status table inside an interactive scrollable viewport")
+	statusCmd.Flags().
+		BoolVarP(&pagerFlag, "pager", "p", false, "Open status table inside an interactive scrollable viewport")
 }
-
