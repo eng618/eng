@@ -1,12 +1,16 @@
 package dotfiles
 
 import (
+	"fmt"
 	"os/exec"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // StatusCmd defines the cobra command for checking the status of the dotfiles repository.
@@ -16,7 +20,13 @@ var StatusCmd = &cobra.Command{
 	Short: "check the status of your dotfiles repository",
 	Long:  `This command checks the status of your local bare dotfiles repository to see if there are any local changes.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Start("Checking dotfiles status")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("📊 Dotfiles Repository Status"))
+		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)
 
@@ -35,7 +45,7 @@ var StatusCmd = &cobra.Command{
 			return
 		}
 
-		log.Success("Status check complete")
+		theme.SuccessMessage("Dotfiles status check complete.")
 	},
 }
 
