@@ -14,6 +14,7 @@ import (
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 type ProcessInfo struct {
@@ -122,13 +123,13 @@ func selectProcess(processes []ProcessInfo) (ProcessInfo, error) {
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
+		BorderForeground(theme.MutedForeground).
 		BorderBottom(true).
-		Bold(false)
+		Bold(true)
 	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
+		Foreground(theme.Background).
+		Background(theme.Primary).
+		Bold(true)
 	t.SetStyles(s)
 
 	m := processTableModel{table: t}

@@ -1,6 +1,7 @@
 package system
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -120,6 +121,7 @@ func updateBrew(isVerbose bool) {
 	var spinner *ui.Spinner
 	if !ui.DisableProgress {
 		spinner = ui.NewSpinner("Running Homebrew update, upgrade, and cleanup...")
+		spinner.Start()
 	}
 
 	// Measure brew cache size before cleanup
@@ -132,18 +134,22 @@ func updateBrew(isVerbose bool) {
 	sizeBefore := asdf.CalculateDirSize(brewCacheDir)
 
 	updateCmd := execCommand("bash", "-c", "brew update && brew outdated && brew upgrade && brew cleanup")
-	updateCmd.Stdout = log.Writer()
-	updateCmd.Stderr = log.ErrorWriter()
-
-	if err := updateCmd.Run(); err != nil {
-		if spinner != nil {
-			spinner.Stop()
-		}
-		log.Error("Error updating Homebrew packages: %s", err)
+	if isVerbose {
+		updateCmd.Stdout = log.Writer()
+		updateCmd.Stderr = log.ErrorWriter()
 	} else {
-		if spinner != nil {
-			spinner.Stop()
-		}
+		var stderrBuf bytes.Buffer
+		updateCmd.Stderr = &stderrBuf
+	}
+
+	runErr := updateCmd.Run()
+	if spinner != nil {
+		spinner.Stop()
+	}
+
+	if runErr != nil {
+		log.Error("Error updating Homebrew packages: %s", runErr)
+	} else {
 		sizeAfter := asdf.CalculateDirSize(brewCacheDir)
 		freedBytes := sizeBefore - sizeAfter
 		freedStr := ""

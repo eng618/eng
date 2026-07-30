@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -150,6 +151,14 @@ func init() {
 }
 
 func runSetup(cmd *cobra.Command, verbose bool) error {
+	headerStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.Primary).
+		MarginBottom(1)
+	if !ui.DisableProgress {
+		fmt.Fprintln(log.Out, headerStyle.Render("🚀 System Environment Setup"))
+	}
+
 	interactive, err := cmd.Flags().GetBool("interactive")
 	if err != nil {
 		return fmt.Errorf("failed to read interactive flag: %w", err)
@@ -251,6 +260,7 @@ func runSetup(cmd *cobra.Command, verbose bool) error {
 		}
 	}
 
+	theme.SuccessMessage("System environment setup completed successfully!")
 	return nil
 }
 
