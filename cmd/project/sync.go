@@ -1,14 +1,18 @@
 package project
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	internalProject "github.com/eng618/eng/internal/project"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // SyncCmd defines the cobra command for syncing all project repositories.
@@ -27,6 +31,14 @@ Example:
   eng project sync -p MyProject     # Sync only the specified project
   eng project sync --dry-run        # Preview what would be synced`,
 	Run: func(cmd *cobra.Command, args []string) {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("🔄 Syncing Project Repositories"))
+		}
+
 		gitCfg := config.GetGitConfig()
 		devPath := gitCfg.DevPath
 		if devPath == "" {
