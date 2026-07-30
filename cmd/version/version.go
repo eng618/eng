@@ -3,6 +3,7 @@
 package version
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,10 +15,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Build-time variables
@@ -39,7 +42,10 @@ const (
 	brewPkgName     = "eng"           // Package name in Homebrew
 )
 
-var githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
+var (
+	githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
+	execCommand  = exec.Command
+)
 
 // Flag variable for the --update flag.
 var updateFlag bool
@@ -68,12 +74,17 @@ you can use the --update flag to attempt an automatic upgrade.`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose, _ := cmd.Flags().GetBool("verbose")
 
-		printVersionInfo()
+		printVersionInfo(isVerbose)
 
-		sp := ui.NewSpinner("Checking for latest version...")
-		sp.Start()
+		var sp *ui.Spinner
+		if !ui.DisableProgress {
+			sp = ui.NewSpinner("Checking for latest version...")
+			sp.Start()
+		}
 		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName, isVerbose)
-		sp.Stop() // Stop spinner before printing results or attempting update
+		if sp != nil {
+			sp.Stop() // Stop spinner before printing results or attempting update
+		}
 
 		if err != nil {
 			log.Warn("Could not check for updates: %v", err)
@@ -112,21 +123,79 @@ func init() {
 }
 
 // printVersionInfo displays the static build and runtime information.
-func printVersionInfo() {
-	log.Info("eng version: %s", Version)
-	log.Message("  Git Commit: %s", Commit)
-	log.Message("  Build Date: %s", Date)
-	log.Message("  Go Version: %s", runtime.Version())
-	log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Message("") // Separator line
+func printVersionInfo(isVerbose bool) {
+	installSource := "Binary / Go Install"
+	if isBrewInstallation(isVerbose) {
+		installSource = "Homebrew"
+	}
+
+	headerStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.Primary).
+		MarginBottom(1)
+
+	if !ui.DisableProgress {
+		fmt.Fprintln(log.Out, headerStyle.Render("📌 eng CLI Version Details"))
+	} else {
+		log.Info("eng version: %s", Version)
+		log.Message("  Git Commit: %s", Commit)
+		log.Message("  Build Date: %s", Date)
+		log.Message("  Go Version: %s", runtime.Version())
+		log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
+		log.Message("  Install Source: %s", installSource)
+		log.Message("") // Separator line
+		return
+	}
+
+	var cardLines []string
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Version:"), theme.PrimaryText.Bold(true).Render(Version)),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Git Commit:"), theme.MutedText.Render(Commit)),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Build Date:"), theme.MutedText.Render(Date)),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Go Version:"), theme.BaseText.Render(runtime.Version())),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf(
+			"  %-16s %s",
+			theme.BoldText.Render("OS/Arch:"),
+			theme.BaseText.Render(fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)),
+		),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Install Source:"), theme.BaseText.Render(installSource)),
+	)
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(theme.Primary).
+		Padding(0, 1).
+		MarginBottom(1)
+
+	fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(cardLines, "\n")))
 }
 
 // handleDevVersion logs information when running a development version.
 func handleDevVersion(latestRelease *githubReleaseInfo) {
 	log.Info("Currently running development version.")
-	log.Info("Latest official release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
+	log.Message(
+		"  Latest official release is %s: %s",
+		theme.PrimaryText.Render(latestRelease.TagName),
+		theme.MutedText.Render(latestRelease.HTMLURL),
+	)
 	if updateFlag {
-		log.Info("--update flag ignored when running a dev version.")
+		log.Warn("--update flag ignored when running a dev version.")
 	}
 }
 
@@ -160,6 +229,8 @@ func compareAndHandleUpdate(
 
 	if latestSemVer.GreaterThan(currentSemVer) {
 		log.Success("A newer version is available: %s", latestRelease.TagName)
+		log.Message("  Release notes: %s", theme.MutedText.Render(latestRelease.HTMLURL))
+		log.Message("")
 
 		if updateFlag {
 			if brewDetected {
@@ -169,9 +240,6 @@ func compareAndHandleUpdate(
 					log.Error("Brew update failed: %v", err)
 					log.Info("  Please try manually: %s upgrade %s", brewCmd, brewPkgName)
 					log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
-				} else {
-					log.Success("Update via %s successful!", brewCmd)
-					// Optionally: You could re-verify the version here, but exiting is simpler.
 				}
 				// Exit after attempting update, regardless of success/failure
 				// to avoid printing redundant "Get it here" messages.
@@ -185,11 +253,10 @@ func compareAndHandleUpdate(
 		}
 		// Just inform the user how to update
 		if brewDetected {
-			log.Info("  Run `eng version --update` or `eng version -u` to attempt an automatic update.")
+			log.Info("Run `eng version --update` or `eng version -u` to attempt an automatic update via Homebrew.")
 		} else { // If not brew detected, suggest go install
-			log.Info("  Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+			log.Info("Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
 		}
-		log.Info("  Or get it manually here: %s", latestRelease.HTMLURL)
 	} else if latestSemVer.Equal(currentSemVer) {
 		log.Success("You are running the latest version.")
 		if updateFlag {
@@ -246,33 +313,73 @@ func isBrewInstallation(isVerbose bool) bool {
 
 // runBrewUpgrade executes the 'brew upgrade eng' command.
 // It first runs 'brew update' to refresh formula information (including taps),
-// then runs 'brew upgrade eng'. It streams the commands' output directly
-// to the user's terminal, respecting verbosity for command logging.
+// then runs 'brew upgrade eng'.
+// When verbose is false, outputs are hidden behind progress spinners.
+// When verbose is true, outputs are streamed directly to the terminal.
 func runBrewUpgrade(isVerbose bool) error {
-	// Step 1: Update brew formula information
-	log.Info("Running '%s update'...", brewCmd)
-	updateCmd := exec.Command(brewCmd, "update")
-	updateCmd.Stdout = log.Writer()
-	updateCmd.Stderr = log.ErrorWriter()
-	log.Verbose(isVerbose, "Executing command: %s", updateCmd.String())
-	err := updateCmd.Run()
-	if err != nil {
-		// Don't necessarily fail the whole process if 'brew update' has minor issues,
-		// but log it. The subsequent upgrade might still work.
-		log.Warn("'%s update' command finished with error (proceeding with upgrade attempt): %v", brewCmd, err)
+	if isVerbose {
+		// Verbose mode: stream raw output directly
+		log.Info("Running '%s update'...", brewCmd)
+		updateCmd := execCommand(brewCmd, "update")
+		updateCmd.Stdout = log.Writer()
+		updateCmd.Stderr = log.ErrorWriter()
+		log.Verbose(isVerbose, "Executing command: %s", updateCmd.String())
+		err := updateCmd.Run()
+		if err != nil {
+			log.Warn("'%s update' command finished with error (proceeding with upgrade attempt): %v", brewCmd, err)
+		}
+
+		log.Info("Running '%s upgrade %s'...", brewCmd, brewPkgName)
+		upgradeCmd := execCommand(brewCmd, "upgrade", brewPkgName)
+		upgradeCmd.Stdout = log.Writer()
+		upgradeCmd.Stderr = log.ErrorWriter()
+		log.Verbose(isVerbose, "Executing command: %s", upgradeCmd.String())
+		err = upgradeCmd.Run()
+		if err != nil {
+			return fmt.Errorf("'%s upgrade %s' command failed: %w", brewCmd, brewPkgName, err)
+		}
+		log.Success("Homebrew upgrade successful! %s upgraded to latest version.", brewPkgName)
+		return nil
 	}
 
-	// Step 2: Upgrade the specific package
-	log.Info("Running '%s upgrade %s'...", brewCmd, brewPkgName)
-	upgradeCmd := exec.Command(brewCmd, "upgrade", brewPkgName)
-	upgradeCmd.Stdout = log.Writer()
-	upgradeCmd.Stderr = log.ErrorWriter()
-	log.Verbose(isVerbose, "Executing command: %s", upgradeCmd.String())
-	err = upgradeCmd.Run()
+	// Non-verbose mode: hide raw brew outputs behind spinners
+	var updateSpinner *ui.Spinner
+	if !ui.DisableProgress {
+		updateSpinner = ui.NewSpinner("Updating Homebrew formula index...")
+		updateSpinner.Start()
+	}
+	updateCmd := execCommand(brewCmd, "update")
+	var updateStderr bytes.Buffer
+	updateCmd.Stderr = &updateStderr
+	err := updateCmd.Run()
+	if updateSpinner != nil {
+		updateSpinner.Stop()
+	}
 	if err != nil {
-		// Return the error from the upgrade command specifically
+		log.Verbose(isVerbose, "brew update warning: %v (%s)", err, strings.TrimSpace(updateStderr.String()))
+	}
+
+	var upgradeSpinner *ui.Spinner
+	if !ui.DisableProgress {
+		upgradeSpinner = ui.NewSpinner(fmt.Sprintf("Upgrading %s package via Homebrew...", brewPkgName))
+		upgradeSpinner.Start()
+	}
+	upgradeCmd := execCommand(brewCmd, "upgrade", brewPkgName)
+	var upgradeStderr bytes.Buffer
+	upgradeCmd.Stderr = &upgradeStderr
+	err = upgradeCmd.Run()
+	if upgradeSpinner != nil {
+		upgradeSpinner.Stop()
+	}
+	if err != nil {
+		stderrOutput := strings.TrimSpace(upgradeStderr.String())
+		if stderrOutput != "" {
+			log.Error("Brew upgrade error output:\n%s", stderrOutput)
+		}
 		return fmt.Errorf("'%s upgrade %s' command failed: %w", brewCmd, brewPkgName, err)
 	}
+
+	log.Success("Homebrew upgrade successful! %s upgraded to latest version.", brewPkgName)
 	return nil
 }
 

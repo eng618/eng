@@ -5,18 +5,25 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 func TestPrintVersionInfo(t *testing.T) {
 	var outBuf bytes.Buffer
 	log.SetWriters(&outBuf, &outBuf)
 	defer log.ResetWriters()
+
+	origDisableProgress := ui.DisableProgress
+	ui.DisableProgress = true
+	defer func() { ui.DisableProgress = origDisableProgress }()
 
 	// Backup original values and restore them after the test
 	origVersion := Version
@@ -32,7 +39,7 @@ func TestPrintVersionInfo(t *testing.T) {
 	Commit = "abcdef"
 	Date = "2023-10-27"
 
-	printVersionInfo()
+	printVersionInfo(false)
 
 	output := outBuf.String()
 
@@ -182,4 +189,40 @@ func TestCompareAndHandleUpdate(t *testing.T) {
 	if !strings.Contains(output, "A newer version is available: v1.1.0") {
 		t.Errorf("Expected output to mention newer version, got: %s", output)
 	}
+}
+
+func TestRunBrewUpgradeMock(t *testing.T) {
+	origExecCommand := execCommand
+	defer func() { execCommand = origExecCommand }()
+
+	origDisableProgress := ui.DisableProgress
+	ui.DisableProgress = true
+	defer func() { ui.DisableProgress = origDisableProgress }()
+
+	// Mock successful command execution
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		cs := []string{"-test.run=TestHelperProcess", "--", name}
+		cs = append(cs, arg...)
+		cmd := exec.Command(os.Args[0], cs...)
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		return cmd
+	}
+
+	err := runBrewUpgrade(false)
+	if err != nil {
+		t.Fatalf("Expected runBrewUpgrade(false) to succeed with mock, got: %v", err)
+	}
+
+	err = runBrewUpgrade(true)
+	if err != nil {
+		t.Fatalf("Expected runBrewUpgrade(true) to succeed with mock, got: %v", err)
+	}
+}
+
+// TestHelperProcess isn't a real test. It's used to mock exec.Command calls.
+func TestHelperProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	os.Exit(0)
 }
