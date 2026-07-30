@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.28.0](https://github.com/eng618/eng/compare/v1.27.0...v1.28.0) (2026-07-30)
+
+
+### Features
+
+* Add --details flag to compose status and implement Lip Gloss table rendering for stacks and containers ([23defb6](https://github.com/eng618/eng/commit/23defb6d1a37f3e03191e2242f785659641438ef))
+
 ## [1.27.0](https://github.com/eng618/eng/compare/v1.26.0...v1.27.0) (2026-07-27)
 
 
