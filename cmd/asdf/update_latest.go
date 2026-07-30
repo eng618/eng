@@ -48,7 +48,7 @@ func runUpdateLatest(_cmd *cobra.Command, _args []string) error {
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("🚀 ASDF Tool Upgrade"))
+		fmt.Fprintln(log.Out, headerStyle.Render("🚀 ASDF Tool Upgrade"))
 	}
 
 	if _, err := lookPath("asdf"); err != nil {

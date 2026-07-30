@@ -31,7 +31,7 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("📊 ASDF Environment Dashboard"))
+		fmt.Fprintln(log.Out, headerStyle.Render("📊 ASDF Environment Dashboard"))
 	}
 
 	if _, err := lookPath("asdf"); err != nil {
@@ -164,7 +164,7 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 			BorderForeground(theme.Primary).
 			Padding(0, 1).
 			MarginBottom(1)
-		fmt.Println(boxStyle.Render(strings.Join(dashboardLines, "\n")))
+		fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(dashboardLines, "\n")))
 	}
 
 	return nil

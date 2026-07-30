@@ -66,7 +66,7 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("🧹 ASDF Tool Prune"))
+		fmt.Fprintln(log.Out, headerStyle.Render("🧹 ASDF Tool Prune"))
 	}
 
 	// 1. Verify asdf is installed

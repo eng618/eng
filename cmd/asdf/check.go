@@ -43,7 +43,7 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 		Foreground(theme.Primary).
 		MarginBottom(1)
 	if !ui.DisableProgress {
-		fmt.Println(headerStyle.Render("🔍 ASDF Tool Version Check"))
+		fmt.Fprintln(log.Out, headerStyle.Render("🔍 ASDF Tool Version Check"))
 	}
 
 	if _, err := lookPath("asdf"); err != nil {
@@ -152,7 +152,7 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 			BorderForeground(theme.Destructive).
 			Padding(0, 1).
 			MarginBottom(1)
-		fmt.Println(boxStyle.Render(strings.Join(breakdown, "\n")))
+		fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(breakdown, "\n")))
 	}
 
 	shouldInstall := installMissingFlag
