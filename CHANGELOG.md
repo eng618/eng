@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.29.0](https://github.com/eng618/eng/compare/v1.28.0...v1.29.0) (2026-07-30)
+
+
+### Features
+
+* Add dynamic table resizing and an interactive scrollable pager for compose status output ([ef0c36a](https://github.com/eng618/eng/commit/ef0c36aab692b6d7c205cf2e4c91eee76b9832fa))
+* Refactor system proxy management with new commands and updated CLI documentation ([356ed5d](https://github.com/eng618/eng/commit/356ed5d336f42f7aa0e3349092c1c019c0a31a08))
+
 ## [1.28.0](https://github.com/eng618/eng/compare/v1.27.0...v1.28.0) (2026-07-30)
 
 
