@@ -1,15 +1,19 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // PushAllCmd defines the cobra command for pushing all git repositories.
@@ -19,7 +23,13 @@ var PushAllCmd = &cobra.Command{
 	Short: "Push all git repositories in development folder",
 	Long:  `This command pushes commits for all git repositories found in your development folder that have unpushed commits.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Start("Pushing all git repositories")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("📤 Pushing Git Repositories"))
+		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -60,7 +70,7 @@ var PushAllCmd = &cobra.Command{
 
 		for _, repoPath := range repos {
 			repoName := filepath.Base(repoPath)
-			log.Info("Checking repository: %s", repoName)
+			log.Verbose(isVerbose, "Checking repository: %s", repoName)
 
 			if dryRun {
 				hasUnpushed, err := hasUnpushedCommits(repoPath)
@@ -73,7 +83,7 @@ var PushAllCmd = &cobra.Command{
 					log.Info("  [DRY RUN] Would push repository at: %s", repoPath)
 					successCount++
 				} else {
-					log.Info("  [DRY RUN] No unpushed commits, skipping: %s", repoPath)
+					log.Verbose(isVerbose, "  [DRY RUN] No unpushed commits, skipping: %s", repoPath)
 					skippedCount++
 				}
 				continue
@@ -88,7 +98,7 @@ var PushAllCmd = &cobra.Command{
 			}
 
 			if !hasUnpushed {
-				log.Info("  No unpushed commits, skipping...")
+				log.Verbose(isVerbose, "  No unpushed commits, skipping: %s", repoName)
 				skippedCount++
 				continue
 			}
@@ -102,7 +112,7 @@ var PushAllCmd = &cobra.Command{
 			}
 
 			if isDirty {
-				log.Warn("  Repository has uncommitted changes, but proceeding with push...")
+				log.Warn("  Repository %s has uncommitted changes, but proceeding with push...", repoName)
 			}
 
 			// Push commits
@@ -116,12 +126,11 @@ var PushAllCmd = &cobra.Command{
 			successCount++
 		}
 
-		log.Info("Push completed: %d successful, %d failed, %d skipped", successCount, failureCount, skippedCount)
-
+		summaryMsg := fmt.Sprintf("Push completed: %d successful, %d failed, %d skipped across %d repositories.", successCount, failureCount, skippedCount, len(repos))
 		if failureCount > 0 {
-			log.Warn("Some repositories failed to push. Check the output above for details.")
+			theme.WarningMessage(summaryMsg)
 		} else {
-			log.Success("All git repositories with unpushed commits pushed successfully")
+			theme.SuccessMessage(summaryMsg)
 		}
 	},
 }

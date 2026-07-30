@@ -6,12 +6,14 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // FetchAllCmd defines the cobra command for fetching all git repositories.
@@ -21,7 +23,13 @@ var FetchAllCmd = &cobra.Command{
 	Short: "Fetch all git repositories in development folder",
 	Long:  `This command fetches updates from remote for all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Start("Fetching all git repositories")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("🔍 Fetching Git Repositories"))
+		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -94,12 +102,11 @@ var FetchAllCmd = &cobra.Command{
 		_ = eg.Wait()
 		multi.Stop()
 
-		log.Info("Fetch completed: %d successful, %d failed", successCount.Load(), failureCount.Load())
-
+		summaryMsg := fmt.Sprintf("Fetch completed: %d successful, %d failed across %d repositories.", successCount.Load(), failureCount.Load(), len(repos))
 		if failureCount.Load() > 0 {
-			log.Warn("Some repositories failed to fetch. Check the output above for details.")
+			theme.WarningMessage(summaryMsg)
 		} else {
-			log.Success("All git repositories fetched successfully")
+			theme.SuccessMessage(summaryMsg)
 		}
 	},
 }

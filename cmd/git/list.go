@@ -1,12 +1,17 @@
 package git
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // ListCmd defines the cobra command for listing all git repositories.
@@ -16,7 +21,13 @@ var ListCmd = &cobra.Command{
 	Short: "List all git repositories in development folder",
 	Long:  `This command lists all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		log.Start("Listing git repositories")
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("📁 Development Git Repositories"))
+		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)
 		showPaths, _ := cmd.Flags().GetBool("paths")
@@ -40,18 +51,46 @@ var ListCmd = &cobra.Command{
 			return
 		}
 
-		log.Info("Found %d git repositories:", len(repos))
+		var cardLines []string
+		cardLines = append(cardLines, fmt.Sprintf("Found %s repositories in %s:",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(repos))),
+			theme.BoldText.Render(devPath),
+		))
+		cardLines = append(cardLines, "")
 
 		for i, repoPath := range repos {
 			repoName := filepath.Base(repoPath)
+			branch := getRepoBranch(repoPath)
 			if showPaths {
-				log.Info("  %d. %s (%s)", i+1, repoName, repoPath)
+				cardLines = append(cardLines, fmt.Sprintf("  %-3d %-25s %-15s %s",
+					i+1,
+					theme.PrimaryText.Render(repoName),
+					theme.MutedText.Render(branch),
+					theme.BaseText.Render(repoPath),
+				))
 			} else {
-				log.Info("  %d. %s", i+1, repoName)
+				cardLines = append(cardLines, fmt.Sprintf("  %-3d %-25s %s",
+					i+1,
+					theme.PrimaryText.Render(repoName),
+					theme.MutedText.Render(branch),
+				))
 			}
 		}
 
-		log.Success("Listed %d git repositories", len(repos))
+		if !ui.DisableProgress {
+			boxStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(theme.Primary).
+				Padding(0, 1).
+				MarginBottom(1)
+			fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(cardLines, "\n")))
+		} else {
+			for _, line := range cardLines {
+				log.Info("%s", line)
+			}
+		}
+
+		theme.SuccessMessage(fmt.Sprintf("Listed %d git repositories", len(repos)))
 	},
 }
 
