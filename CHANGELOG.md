@@ -1,5 +1,14 @@
 <a name="unreleased"></a>
 
+## [1.31.0](https://github.com/eng618/eng/compare/v1.30.0...v1.31.0) (2026-07-30)
+
+
+### Features
+
+* **git:** Modernize command output ([a25f1de](https://github.com/eng618/eng/commit/a25f1de2514c7efb82c11feabbc069e9692e25c5))
+* **project:** Modernize command output ([d56bc1c](https://github.com/eng618/eng/commit/d56bc1c09a397fd4b6ba7bd058362b80888ac71f))
+* **system:** Modernize command output ([73ca8ce](https://github.com/eng618/eng/commit/73ca8cee205c93ca141fb71112dcea938abbff22))
+
 ## [1.30.0](https://github.com/eng618/eng/compare/v1.29.0...v1.30.0) (2026-07-30)
 
 
