@@ -3,15 +3,18 @@ package gitlab
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	gitlabcfg "github.com/eng618/eng/internal/config/gitlab"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var (
@@ -25,6 +28,14 @@ var mrRulesInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Interactively generate a MR rules JSON file",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("📝 Generating GitLab MR Rules"))
+		}
+
 		// Default output
 		if initOutputPath == "" {
 			initOutputPath = "gitlab-rules.json"

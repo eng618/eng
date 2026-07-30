@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -16,6 +17,8 @@ import (
 	gitlabcfg "github.com/eng618/eng/internal/config/gitlab"
 	"github.com/eng618/eng/internal/log"
 	gitrepo "github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var (
@@ -31,6 +34,14 @@ var mrRulesApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply merge request rules from a JSON file",
 	RunE: func(cmd *cobra.Command, _args []string) error {
+		headerStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(theme.Primary).
+			MarginBottom(1)
+		if !ui.DisableProgress {
+			fmt.Fprintln(log.Out, headerStyle.Render("🦊 Applying GitLab MR Rules"))
+		}
+
 		// Load and validate rules file
 		if rulesPath == "" {
 			return fmt.Errorf("--rules is required")
