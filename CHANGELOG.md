@@ -1,5 +1,19 @@
 <a name="unreleased"></a>
 
+## [1.32.0](https://github.com/eng618/eng/compare/v1.31.0...v1.32.0) (2026-07-30)
+
+
+### Features
+
+* **codemod:** Modernize command output ([35bf15b](https://github.com/eng618/eng/commit/35bf15b8c51555a009cc85a863126e3f5a83dc18))
+* **compose:** Modernize command output ([b443086](https://github.com/eng618/eng/commit/b4430860a385d1e02629f2a444c6d2e9a8f1f546))
+* **dotfiles:** Modernize command output ([65b8c5f](https://github.com/eng618/eng/commit/65b8c5f3ce52c183424f121437117427a9661c00))
+
+
+### Bug Fixes
+
+* **asdf:** Minor logging adjustments for standardizations ([1353656](https://github.com/eng618/eng/commit/1353656d2932c5684caf3186dbf8763a7abef0cd))
+
 ## [1.31.0](https://github.com/eng618/eng/compare/v1.30.0...v1.31.0) (2026-07-30)
 
 
