@@ -16,6 +16,7 @@ var (
 	jsonFlag      bool
 	allFlagStatus bool
 	detailsFlag   bool
+	pagerFlag     bool
 )
 
 var statusCmd = &cobra.Command{
@@ -30,6 +31,8 @@ var statusCmd = &cobra.Command{
 		if len(args) == 0 || allFlagStatus {
 			targets = []string{"all"}
 		}
+
+		termWidth := ui.GetTerminalWidth()
 
 		if detailsFlag {
 			details, err := mgr.ContainerDetails(targets)
@@ -46,13 +49,18 @@ var statusCmd = &cobra.Command{
 				return nil
 			}
 
+			var rendered string
+			for stackName, containersList := range details {
+				rendered += ui.RenderContainerTable(stackName, containersList, termWidth) + "\n\n"
+			}
+
+			if pagerFlag {
+				return ui.RunContainersPager(rendered)
+			}
+
 			theme.InfoMessage("Compose Swarms Status (Detailed):")
 			fmt.Println()
-
-			for stackName, containersList := range details {
-				fmt.Println(ui.RenderContainerTable(stackName, containersList))
-				fmt.Println()
-			}
+			fmt.Print(rendered)
 			return nil
 		}
 
@@ -70,9 +78,14 @@ var statusCmd = &cobra.Command{
 			return nil
 		}
 
+		if pagerFlag {
+			rendered := ui.RenderStackTable(stacks, termWidth)
+			return ui.RunContainersPager(rendered)
+		}
+
 		theme.InfoMessage("Compose Swarms Status:")
 		fmt.Println()
-		fmt.Println(ui.RenderStackTable(stacks))
+		fmt.Println(ui.RenderStackTable(stacks, termWidth))
 		return nil
 	},
 }
@@ -81,4 +94,6 @@ func init() {
 	statusCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output status in JSON format")
 	statusCmd.Flags().BoolVarP(&allFlagStatus, "all", "a", false, "Include all stacks")
 	statusCmd.Flags().BoolVarP(&detailsFlag, "details", "d", false, "Show detailed container inspection")
+	statusCmd.Flags().BoolVarP(&pagerFlag, "pager", "p", false, "Open status table inside an interactive scrollable viewport")
 }
+

@@ -2,18 +2,33 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"golang.org/x/term"
 
 	"github.com/eng618/eng/internal/containers"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
+// GetTerminalWidth returns the current terminal width in columns, defaulting to 100 if unparseable.
+func GetTerminalWidth() int {
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil || w <= 0 {
+		return 100
+	}
+	return w
+}
+
 // RenderStackTable renders a Lip Gloss table showing high-level status for Compose stacks.
-func RenderStackTable(stacks []containers.Stack) string {
+func RenderStackTable(stacks []containers.Stack, termWidth int) string {
+	if termWidth <= 0 {
+		termWidth = GetTerminalWidth()
+	}
+
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(theme.Background).
@@ -21,8 +36,21 @@ func RenderStackTable(stacks []containers.Stack) string {
 		Padding(0, 1)
 
 	cellStyle := lipgloss.NewStyle().Padding(0, 1)
-
 	borderStyle := lipgloss.NewStyle().Foreground(theme.Primary)
+
+	// Available width for columns after table borders and inner paddings (4 columns = 5 borders + 8 padding spaces = 13 spaces)
+	availWidth := termWidth - 13
+	if availWidth < 40 {
+		availWidth = 40
+	}
+
+	colStack := clamp(availWidth*20/100, 12, 25)
+	colCount := 10
+	colStatus := 14
+	colFile := availWidth - (colStack + colCount + colStatus)
+	if colFile < 15 {
+		colFile = 15
+	}
 
 	t := table.New().
 		Border(lipgloss.RoundedBorder()).
@@ -32,15 +60,26 @@ func RenderStackTable(stacks []containers.Stack) string {
 			if row == 0 {
 				return headerStyle
 			}
-			return cellStyle
+			s := cellStyle
+			switch col {
+			case 0:
+				return s.MaxWidth(colStack)
+			case 1:
+				return s.Width(colCount).Align(lipgloss.Center)
+			case 2:
+				return s.MaxWidth(colStatus)
+			case 3:
+				return s.MaxWidth(colFile)
+			}
+			return s
 		})
 
 	for _, s := range stacks {
 		t.Row(
-			theme.BoldText.Render(s.Name),
+			truncateString(s.Name, colStack),
 			strconv.Itoa(s.Containers),
 			formatStackStatusBadge(s.Status),
-			theme.MutedText.Render(s.File),
+			truncateString(s.File, colFile),
 		)
 	}
 
@@ -48,9 +87,13 @@ func RenderStackTable(stacks []containers.Stack) string {
 }
 
 // RenderContainerTable renders a detailed Lip Gloss table for containers in a specific stack.
-func RenderContainerTable(stackName string, containerList []containers.ContainerDetail) string {
+func RenderContainerTable(stackName string, containerList []containers.ContainerDetail, termWidth int) string {
 	if len(containerList) == 0 {
 		return theme.MutedText.Render(fmt.Sprintf("No running or registered containers in stack %s.", stackName))
+	}
+
+	if termWidth <= 0 {
+		termWidth = GetTerminalWidth()
 	}
 
 	headerStyle := lipgloss.NewStyle().
@@ -62,6 +105,24 @@ func RenderContainerTable(stackName string, containerList []containers.Container
 	cellStyle := lipgloss.NewStyle().Padding(0, 1)
 	borderStyle := lipgloss.NewStyle().Foreground(theme.Primary)
 
+	// Calculate widths dynamically for 5 columns (6 border chars + 10 padding spaces = 16 spaces overhead)
+	overhead := 16
+	availWidth := termWidth - overhead
+	if availWidth < 50 {
+		availWidth = 50
+	}
+
+	colStatus := 14
+	colService := clamp(availWidth*20/100, 10, 22)
+	colName := clamp(availWidth*25/100, 14, 30)
+
+	remWidth := availWidth - (colName + colService + colStatus)
+	colPorts := clamp(remWidth*40/100, 12, 28)
+	colImage := remWidth - colPorts
+	if colImage < 15 {
+		colImage = 15
+	}
+
 	t := table.New().
 		Border(lipgloss.RoundedBorder()).
 		BorderStyle(borderStyle).
@@ -70,16 +131,29 @@ func RenderContainerTable(stackName string, containerList []containers.Container
 			if row == 0 {
 				return headerStyle
 			}
-			return cellStyle
+			s := cellStyle
+			switch col {
+			case 0:
+				return s.MaxWidth(colName)
+			case 1:
+				return s.MaxWidth(colService)
+			case 2:
+				return s.MaxWidth(colStatus)
+			case 3:
+				return s.MaxWidth(colPorts)
+			case 4:
+				return s.MaxWidth(colImage)
+			}
+			return s
 		})
 
 	for _, c := range containerList {
 		t.Row(
-			theme.BoldText.Render(c.Name),
-			c.Service,
+			theme.BoldText.Render(truncateString(c.Name, colName)),
+			truncateString(c.Service, colService),
 			formatContainerStatusBadge(c.State, c.Health),
-			theme.MutedText.Render(formatPublishers(c.Publishers)),
-			theme.MutedText.Render(c.Image),
+			theme.MutedText.Render(formatCompactPublishers(c.Publishers, colPorts)),
+			theme.MutedText.Render(truncateString(c.Image, colImage)),
 		)
 	}
 
@@ -130,7 +204,7 @@ func formatContainerStatusBadge(state, health string) string {
 	}
 }
 
-func formatPublishers(pubs []containers.Publisher) string {
+func formatCompactPublishers(pubs []containers.Publisher, maxColWidth int) string {
 	if len(pubs) == 0 {
 		return "-"
 	}
@@ -143,5 +217,39 @@ func formatPublishers(pubs []containers.Publisher) string {
 			parts = append(parts, strconv.Itoa(p.TargetPort))
 		}
 	}
-	return strings.Join(parts, ", ")
+
+	fullStr := strings.Join(parts, ", ")
+	if len(fullStr) <= maxColWidth || len(parts) == 1 {
+		return truncateString(fullStr, maxColWidth)
+	}
+
+	// Compact multiple ports
+	firstPort := parts[0]
+	moreCount := len(parts) - 1
+	compactStr := fmt.Sprintf("%s (+%d more)", firstPort, moreCount)
+	if len(compactStr) <= maxColWidth {
+		return compactStr
+	}
+
+	return fmt.Sprintf("%d ports", len(parts))
+}
+
+func truncateString(s string, maxLen int) string {
+	if maxLen <= 3 {
+		return s
+	}
+	if len(s) > maxLen {
+		return s[:maxLen-3] + "..."
+	}
+	return s
+}
+
+func clamp(val, min, max int) int {
+	if val < min {
+		return min
+	}
+	if val > max {
+		return max
+	}
+	return val
 }

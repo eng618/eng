@@ -13,6 +13,7 @@ eng compose status [stack...] [flags]
   -d, --details   Show detailed container inspection
   -h, --help      help for status
       --json      Output status in JSON format
+  -p, --pager     Open status table inside an interactive scrollable viewport
 ```
 
 ### Options inherited from parent commands
