@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.33.0](https://github.com/eng618/eng/compare/v1.32.0...v1.33.0) (2026-07-30)
+
+
+### Features
+
+* **gitlab:** Modernize command output ([f203644](https://github.com/eng618/eng/commit/f203644d5a931bf9053303cdd2d5482828ded63a))
+* Modernize command output ([4797558](https://github.com/eng618/eng/commit/47975581c3d00136a0e5210f3345e4fc8594ec2c))
+
 ## [1.32.0](https://github.com/eng618/eng/compare/v1.31.0...v1.32.0) (2026-07-30)
 
 
