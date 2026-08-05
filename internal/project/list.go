@@ -3,6 +3,7 @@ package project
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
@@ -44,6 +45,11 @@ func List(opts ListOptions) {
 		return
 	}
 
+	// Sort projects alphabetically
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
+
 	log.Info("Development path: %s", devPath)
 	log.Info("")
 
@@ -55,7 +61,13 @@ func List(opts ListOptions) {
 			log.Info("  Path: %s", projectPath)
 			log.Info("  Repositories (%d):", len(project.Repos))
 
-			for _, repoItem := range project.Repos {
+			sortedRepos := make([]config.Repo, len(project.Repos))
+			copy(sortedRepos, project.Repos)
+			sort.Slice(sortedRepos, func(i, j int) bool {
+				return sortedRepos[i].URL < sortedRepos[j].URL
+			})
+
+			for _, repoItem := range sortedRepos {
 				repoPath, err := repoItem.GetEffectivePath()
 				if err != nil {
 					log.Error("    ✗ %s (invalid path)", repoItem.URL)
