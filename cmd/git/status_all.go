@@ -6,10 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
@@ -22,30 +20,20 @@ var StatusAllCmd = &cobra.Command{
 	Short: "Check status of all git repositories in development folder",
 	Long:  `This command checks the status of all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
-		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("📊 Development Repositories Status"))
-		}
+		printHeader("📊 Development Repositories Status")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
-
 		var scanSpinner *ui.Spinner
 		if !ui.DisableProgress {
-			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s...", devPath))
+			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s...", setup.DevPath))
 		}
 
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			if scanSpinner != nil {
 				scanSpinner.Stop()
@@ -59,7 +47,7 @@ var StatusAllCmd = &cobra.Command{
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 
@@ -100,7 +88,7 @@ var StatusAllCmd = &cobra.Command{
 		var boxLines []string
 		boxLines = append(boxLines, fmt.Sprintf("Checked %s repository(ies) in %s:",
 			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(repos))),
-			theme.BoldText.Render(devPath),
+			theme.BoldText.Render(setup.DevPath),
 		))
 		boxLines = append(boxLines, "")
 		boxLines = append(boxLines, fmt.Sprintf("  %-30s %-20s %s",

@@ -7,12 +7,56 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/ui/theme"
 )
+
+// GitCommandSetup holds common variables and flags resolved during git command initialization.
+type GitCommandSetup struct {
+	IsVerbose bool
+	DryRun    bool
+	DevPath   string
+}
+
+// setupGitCommand abstracts the duplicated setup and validation steps shared across git commands.
+func setupGitCommand(cmd *cobra.Command) (*GitCommandSetup, error) {
+	isVerbose := cmdutil.IsVerbose(cmd)
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+
+	devPath, err := getWorkingPath(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Verbose(isVerbose, "Development path: %s", devPath)
+
+	if dryRun {
+		log.Info("Dry run mode - no actual git operations will be performed")
+	}
+
+	return &GitCommandSetup{
+		IsVerbose: isVerbose,
+		DryRun:    dryRun,
+		DevPath:   devPath,
+	}, nil
+}
+
+// printHeader prints a stylized header consistently to log.Out if progress display is enabled.
+func printHeader(text string) {
+	headerStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.Primary).
+		MarginBottom(1)
+	if !ui.DisableProgress {
+		fmt.Fprintln(log.Out, headerStyle.Render(text))
+	}
+}
 
 // GitCmd serves as the base command for all git repository management operations.
 // It doesn't perform any action itself but groups subcommands like sync-all, status-all, etc.

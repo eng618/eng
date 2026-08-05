@@ -7,12 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/asdf"
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -24,33 +22,23 @@ var CleanAllCmd = &cobra.Command{
 	Short: "Clean untracked files in all git repositories in development folder",
 	Long:  `This command removes untracked files and directories for all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
-		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("🧹 Clean Development Repositories"))
-		}
+		printHeader("🧹 Clean Development Repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		force, _ := cmd.Flags().GetBool("force")
-		directories, _ := cmd.Flags().GetBool("directories")
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
+		force, _ := cmd.Flags().GetBool("force")
+		directories, _ := cmd.Flags().GetBool("directories")
 
 		var scanSpinner *ui.Spinner
 		if !ui.DisableProgress {
-			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s for untracked files...", devPath))
+			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s for untracked files...", setup.DevPath))
 		}
 
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			if scanSpinner != nil {
 				scanSpinner.Stop()
@@ -117,7 +105,7 @@ var CleanAllCmd = &cobra.Command{
 			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		}
 
-		if dryRun {
+		if setup.DryRun {
 			theme.InfoMessage(
 				fmt.Sprintf(
 					"Dry run complete. Previewed cleaning %d repository(ies) reclaiming %s disk space.",
