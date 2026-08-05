@@ -56,3 +56,35 @@ func TestOpenURL(t *testing.T) {
 		t.Error("openURL did not call any system command")
 	}
 }
+
+func TestCategorizedSoftwareLists(t *testing.T) {
+	security := getSecurityAndPrivacyApps()
+	if len(security) == 0 {
+		t.Error("getSecurityAndPrivacyApps returned empty list")
+	}
+
+	browsers := getBrowserApps()
+	if len(browsers) == 0 {
+		t.Error("getBrowserApps returned empty list")
+	}
+
+	dev := getDeveloperAndTerminalApps()
+	if len(dev) == 0 {
+		t.Error("getDeveloperAndTerminalApps returned empty list")
+	}
+
+	prod := getProductivityApps()
+	if len(prod) == 0 {
+		t.Error("getProductivityApps returned empty list")
+	}
+
+	media := getMediaAndCommunicationApps()
+	if len(media) == 0 {
+		t.Error("getMediaAndCommunicationApps returned empty list")
+	}
+
+	utils := getUtilityAndOtherApps()
+	if len(utils) == 0 {
+		t.Error("getUtilityAndOtherApps returned empty list")
+	}
+}
