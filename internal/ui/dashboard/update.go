@@ -455,7 +455,7 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 			repoName = repoDef.URL
 		}
 
-		cloned := isRepoCloned(fullPath)
+		cloned := repo.IsCloned(fullPath)
 		if action == "c" && cloned {
 			m.notificationID++
 			m.notification = fmt.Sprintf("Already cloned: %s", repoName)
@@ -559,7 +559,7 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 
 		var err error
 
-		cloned := isRepoCloned(item.FullPath)
+		cloned := repo.IsCloned(item.FullPath)
 		if item.Action == "c" && cloned {
 			log.Warn("Already cloned: %s", prettyName)
 			pw.Close()
@@ -721,9 +721,7 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 
 	fullPath := filepath.Join(devPath, projectName, repoPath)
 
-	// Wait, isRepoCloned is internal to project package, we might need a quick hack or to use os.Stat
-	// Let's just use os.Stat directly to avoid cross-package unexported dependency.
-	isCloned := isRepoCloned(fullPath)
+	isCloned := repo.IsCloned(fullPath)
 
 	status := RepoStatus{
 		IsCloned: isCloned,
@@ -758,12 +756,6 @@ func checkRepoStatus(projectName string, repoDef config.ProjectRepo, devPath str
 	}
 }
 
-func isRepoCloned(repoPath string) bool {
-	gitDir := filepath.Join(repoPath, ".git")
-	info, err := os.Stat(gitDir)
-	return err == nil && info.IsDir()
-}
-
 type editorFinishedMsg struct {
 	err error
 }
@@ -784,7 +776,7 @@ func (m Model) openInEditorCmd() (tea.Cmd, error) {
 		relPath, _ := repoDef.GetEffectivePath()
 		targetPath = filepath.Join(m.devPath, p.Name, relPath)
 
-		if !isRepoCloned(targetPath) {
+		if !repo.IsCloned(targetPath) {
 			return nil, fmt.Errorf("repository not cloned yet")
 		}
 	} else {
@@ -815,7 +807,7 @@ func (m Model) openInCustomEditorCmd() (tea.Cmd, error) {
 		relPath, _ := repoDef.GetEffectivePath()
 		targetPath = filepath.Join(m.devPath, p.Name, relPath)
 
-		if !isRepoCloned(targetPath) {
+		if !repo.IsCloned(targetPath) {
 			return nil, fmt.Errorf("repository not cloned yet")
 		}
 	} else {
@@ -851,7 +843,7 @@ func (m Model) openInTerminalCmd() (tea.Cmd, error) {
 		relPath, _ := repoDef.GetEffectivePath()
 		targetPath = filepath.Join(m.devPath, p.Name, relPath)
 
-		if !isRepoCloned(targetPath) {
+		if !repo.IsCloned(targetPath) {
 			return nil, fmt.Errorf("repository not cloned yet")
 		}
 	} else {
