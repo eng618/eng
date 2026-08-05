@@ -713,3 +713,50 @@ func TestPullLatestCode_Conflict(t *testing.T) {
 		)
 	}
 }
+
+func TestIsCloned(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "test-is-cloned-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Test non-existent path
+	if IsCloned(filepath.Join(tmpDir, "nonexistent")) {
+		t.Error("Expected IsCloned to return false for non-existent path")
+	}
+
+	// Test directory without .git
+	noGitDir := filepath.Join(tmpDir, "no-git")
+	err = os.MkdirAll(noGitDir, 0o755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+	if IsCloned(noGitDir) {
+		t.Error("Expected IsCloned to return false for directory without .git")
+	}
+
+	// Test directory with .git file (not directory)
+	gitFileDir := filepath.Join(tmpDir, "git-file")
+	err = os.MkdirAll(gitFileDir, 0o755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+	err = os.WriteFile(filepath.Join(gitFileDir, ".git"), []byte("gitdir: ../other"), 0o644)
+	if err != nil {
+		t.Fatalf("Failed to write file: %v", err)
+	}
+	if IsCloned(gitFileDir) {
+		t.Error("Expected IsCloned to return false for directory with .git file (not a directory)")
+	}
+
+	// Test directory with .git directory
+	gitDirPath := filepath.Join(tmpDir, "has-git")
+	err = os.MkdirAll(filepath.Join(gitDirPath, ".git"), 0o755)
+	if err != nil {
+		t.Fatalf("Failed to create .git directory: %v", err)
+	}
+	if !IsCloned(gitDirPath) {
+		t.Error("Expected IsCloned to return true for directory with .git directory")
+	}
+}

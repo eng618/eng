@@ -322,3 +322,9 @@ func FetchAllPrune(ctx context.Context, repoPath string) error {
 	}
 	return nil
 }
+
+// IsCloned checks if a git repository is cloned at the given path by checking if the `.git` directory exists.
+func IsCloned(repoPath string) bool {
+	info, err := os.Stat(filepath.Join(repoPath, ".git"))
+	return err == nil && info.IsDir()
+}

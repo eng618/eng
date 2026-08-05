@@ -43,16 +43,18 @@ var setCmd = &cobra.Command{
 		// If token is provided, we require a token-item name
 		var tokenToSave string
 		if setTokenStdin {
+			var builder strings.Builder
 			in := bufio.NewScanner(os.Stdin)
 			for in.Scan() {
-				if tokenToSave != "" {
-					tokenToSave += "\n"
+				if builder.Len() > 0 {
+					builder.WriteByte('\n')
 				}
-				tokenToSave += in.Text()
+				builder.WriteString(in.Text())
 			}
 			if err := in.Err(); err != nil {
 				return fmt.Errorf("reading token from stdin failed: %w", err)
 			}
+			tokenToSave = builder.String()
 		} else if setToken != "" {
 			tokenToSave = setToken
 		}
