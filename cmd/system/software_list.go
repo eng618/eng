@@ -37,6 +37,71 @@ func openURL(url string) error {
 	return execCommand(cmd, args...).Start()
 }
 
+// Helpers for checks and installs
+
+func checkFalse() bool {
+	return false
+}
+
+func installByURL(url string) func() error {
+	return func() error {
+		return openURL(url)
+	}
+}
+
+func checkByPath(path string) func() bool {
+	return func() bool {
+		_, err := lookPath(path)
+		return err == nil
+	}
+}
+
+func checkByBundleID(bundleID string) func() bool {
+	return func() bool {
+		if runtime.GOOS == "darwin" {
+			return execCommand("mdfind", "kMDItemCFBundleIdentifier == '"+bundleID+"'").Run() == nil
+		}
+		return false
+	}
+}
+
+func checkByBundleIDOrPath(bundleID, linuxPath string) func() bool {
+	return func() bool {
+		if runtime.GOOS == "darwin" {
+			return execCommand("mdfind", "kMDItemCFBundleIdentifier == '"+bundleID+"'").Run() == nil
+		}
+		_, err := lookPath(linuxPath)
+		return err == nil
+	}
+}
+
+func checkObsidian() bool {
+	if runtime.GOOS == "darwin" {
+		return execCommand(
+			"mdfind",
+			"kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'",
+		).Run() == nil
+	}
+	_, err := lookPath("obsidian")
+	return err == nil
+}
+
+func checkAndroidStudio() bool {
+	if runtime.GOOS == "darwin" {
+		_, err := os.Stat("/Applications/Android Studio.app")
+		return err == nil
+	}
+	if runtime.GOOS == "linux" {
+		_, err := lookPath("studio")
+		if err == nil {
+			return true
+		}
+		_, err = lookPath("studio.sh")
+		return err == nil
+	}
+	return false
+}
+
 func getCoreSoftware() []Software {
 	return []Software{
 		// Critical / Core Items
@@ -46,11 +111,8 @@ func getCoreSoftware() []Software {
 			Description: "Code Editor",
 			Optional:    true,
 			URL:         "https://code.visualstudio.com/Download",
-			Check: func() bool {
-				_, err := lookPath("code")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://code.visualstudio.com/Download") },
+			Check:       checkByPath("code"),
+			Install:     installByURL("https://code.visualstudio.com/Download"),
 		},
 		{
 			Name:        "Brew Bundle",
@@ -95,24 +157,24 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "Encrypted Photo Backup",
 			Optional:    true,
 			URL:         "https://ente.io/download",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://ente.io/download") },
+			Check:       checkFalse,
+			Install:     installByURL("https://ente.io/download"),
 		},
 		{
 			Name:        "Ente Auth",
 			Description: "Ente Authenticator (2FA)",
 			Optional:    true,
 			URL:         "https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4") },
+			Check:       checkFalse,
+			Install:     installByURL("https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4"),
 		},
 		{
 			Name:        "Ente Locker",
 			Description: "Ente Password Manager",
 			Optional:    true,
 			URL:         "https://ente.io/locker/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://ente.io/locker/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://ente.io/locker/"),
 		},
 		{
 			Name:        "GPGTools",
@@ -120,44 +182,32 @@ func getSecurityAndPrivacyApps() []Software {
 			Optional:    false, // Seem important for dotfiles
 			URL:         "https://gpgtools.org/",
 			OS:          "darwin",
-			Check: func() bool {
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.gpgtools.gpgkeychain'").Run() == nil
-			},
-			Install: func() error { return openURL("https://gpgtools.org/") },
+			Check:       checkByBundleID("org.gpgtools.gpgkeychain"),
+			Install:     installByURL("https://gpgtools.org/"),
 		},
 		{
 			Name:        "YubiKey Manager",
 			Description: "YubiKey Configuration",
 			Optional:    true,
 			URL:         "https://www.yubico.com/support/download/yubikey-manager/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.yubico.com/support/download/yubikey-manager/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://www.yubico.com/support/download/yubikey-manager/"),
 		},
 		{
 			Name:        "SafeInCloud",
 			Description: "Password manager",
 			Optional:    true,
 			URL:         "https://www.safe-in-cloud.com/en/download/",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					// macOS bundle identifier
-					return execCommand(
-						"mdfind",
-						"kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'",
-					).Run() ==
-						nil
-				}
-				return false
-			},
-			Install: func() error { return openURL("https://www.safe-in-cloud.com/en/download/") },
+			Check:       checkByBundleID("com.safeinscloud.SafeInCloud"),
+			Install:     installByURL("https://www.safe-in-cloud.com/en/download/"),
 		},
 		{
 			Name:        "NextDNS",
 			Description: "DNS Security",
 			Optional:    true,
 			URL:         "https://nextdns.io/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://nextdns.io/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://nextdns.io/"),
 		},
 	}
 }
@@ -169,28 +219,16 @@ func getBrowserApps() []Software {
 			Description: "Web Browser",
 			Optional:    true,
 			URL:         "https://www.google.com/chrome/",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.google.Chrome'").Run() == nil
-				}
-				_, err := lookPath("google-chrome")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://www.google.com/chrome/") },
+			Check:       checkByBundleIDOrPath("com.google.Chrome", "google-chrome"),
+			Install:     installByURL("https://www.google.com/chrome/"),
 		},
 		{
 			Name:        "Brave Browser",
 			Description: "Privacy Browser",
 			Optional:    true,
 			URL:         "https://brave.com/download/",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.brave.Browser'").Run() == nil
-				}
-				_, err := lookPath("brave-browser")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://brave.com/download/") },
+			Check:       checkByBundleIDOrPath("com.brave.Browser", "brave-browser"),
+			Install:     installByURL("https://brave.com/download/"),
 		},
 	}
 }
@@ -203,48 +241,32 @@ func getDeveloperAndTerminalApps() []Software {
 			Optional:    true,
 			URL:         "https://iterm2.com/downloads.html",
 			OS:          "darwin",
-			Check: func() bool {
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'").Run() == nil
-			},
-			Install: func() error { return openURL("https://iterm2.com/downloads.html") },
+			Check:       checkByBundleID("com.googlecode.iterm2"),
+			Install:     installByURL("https://iterm2.com/downloads.html"),
 		},
 		{
 			Name:        "VNC Viewer",
 			Description: "Remote Desktop",
 			Optional:    true,
 			URL:         "https://www.realvnc.com/en/connect/download/viewer/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.realvnc.com/en/connect/download/viewer/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://www.realvnc.com/en/connect/download/viewer/"),
 		},
 		{
 			Name:        "Rancher Desktop",
 			Description: "Container Management",
 			Optional:    true,
 			URL:         "https://rancherdesktop.io/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://rancherdesktop.io/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://rancherdesktop.io/"),
 		},
 		{
 			Name:        "Android Studio",
 			Description: "Android app development IDE",
 			Optional:    true,
 			URL:         "https://developer.android.com/studio",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					_, err := os.Stat("/Applications/Android Studio.app")
-					return err == nil
-				}
-				if runtime.GOOS == "linux" {
-					_, err := lookPath("studio")
-					if err == nil {
-						return true
-					}
-					_, err = lookPath("studio.sh")
-					return err == nil
-				}
-				return false
-			},
-			Install: func() error { return openURL("https://developer.android.com/studio") },
+			Check:       checkAndroidStudio,
+			Install:     installByURL("https://developer.android.com/studio"),
 		},
 	}
 }
@@ -257,40 +279,24 @@ func getProductivityApps() []Software {
 			Optional:    true,
 			URL:         "https://www.alfredapp.com/",
 			OS:          "darwin",
-			Check: func() bool {
-				return execCommand(
-					"mdfind",
-					"kMDItemCFBundleIdentifier == 'com.runningwithcrayons.Alfred'",
-				).Run() ==
-					nil
-			},
-			Install: func() error { return openURL("https://www.alfredapp.com/") },
+			Check:       checkByBundleID("com.runningwithcrayons.Alfred"),
+			Install:     installByURL("https://www.alfredapp.com/"),
 		},
 		{
 			Name:        "Notion",
 			Description: "Notes & Collaboration",
 			Optional:    true,
 			URL:         "https://www.notion.so/desktop",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.notion.so/desktop") },
+			Check:       checkFalse,
+			Install:     installByURL("https://www.notion.so/desktop"),
 		},
 		{
 			Name:        "Obsidian",
 			Description: "Markdown notes & knowledge base",
 			Optional:    true,
 			URL:         "https://obsidian.md/download",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand(
-						"mdfind",
-						"kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'",
-					).Run() ==
-						nil
-				}
-				_, err := lookPath("obsidian")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://obsidian.md/download") },
+			Check:       checkObsidian,
+			Install:     installByURL("https://obsidian.md/download"),
 		},
 	}
 }
@@ -303,63 +309,48 @@ func getMediaAndCommunicationApps() []Software {
 			Optional:    true,
 			URL:         "https://www.cockos.com/licecap/",
 			OS:          "darwin",
-			Check: func() bool {
-				// Simple check, might not accept all paths
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.cockos.LICEcap'").Run() == nil
-			},
-			Install: func() error { return openURL("https://www.cockos.com/licecap/") },
+			Check:       checkByBundleID("com.cockos.LICEcap"),
+			Install:     installByURL("https://www.cockos.com/licecap/"),
 		},
 		{
 			Name:        "Signal",
 			Description: "Secure Messaging",
 			Optional:    true,
 			URL:         "https://signal.org/download/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://signal.org/download/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://signal.org/download/"),
 		},
 		{
 			Name:        "VLC",
 			Description: "Video Player",
 			Optional:    true,
 			URL:         "https://www.videolan.org/vlc/",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.videolan.vlc'").Run() == nil
-				}
-				_, err := lookPath("vlc")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://www.videolan.org/vlc/") },
+			Check:       checkByBundleIDOrPath("org.videolan.vlc", "vlc"),
+			Install:     installByURL("https://www.videolan.org/vlc/"),
 		},
 		{
 			Name:        "OBS Studio",
 			Description: "Screen Recorder",
 			Optional:    true,
 			URL:         "https://obsproject.com/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://obsproject.com/") },
+			Check:       checkFalse,
+			Install:     installByURL("https://obsproject.com/"),
 		},
 		{
 			Name:        "HandBrake",
 			Description: "Video Transcoder",
 			Optional:    true,
 			URL:         "https://handbrake.fr/downloads.php",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://handbrake.fr/downloads.php") },
+			Check:       checkFalse,
+			Install:     installByURL("https://handbrake.fr/downloads.php"),
 		},
 		{
 			Name:        "Spotify",
 			Description: "Music Streaming",
 			Optional:    true,
 			URL:         "https://open.spotify.com/download",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.spotify.client'").Run() == nil
-				}
-				_, err := lookPath("spotify")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://open.spotify.com/download") },
+			Check:       checkByBundleIDOrPath("com.spotify.client", "spotify"),
+			Install:     installByURL("https://open.spotify.com/download"),
 		},
 	}
 }
@@ -371,16 +362,16 @@ func getUtilityAndOtherApps() []Software {
 			Description: "Headset Software",
 			Optional:    true,
 			URL:         "https://www.jabra.com/software-and-services/jabra-direct",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.jabra.com/software-and-services/jabra-direct") },
+			Check:       checkFalse,
+			Install:     installByURL("https://www.jabra.com/software-and-services/jabra-direct"),
 		},
 		{
 			Name:        "Antigravity",
 			Description: "Antigravity Tool",
 			Optional:    false,
 			URL:         "https://antigravity.google/download",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://antigravity.google/download") },
+			Check:       checkFalse,
+			Install:     installByURL("https://antigravity.google/download"),
 		},
 	}
 }
@@ -402,10 +393,7 @@ func getCLITools() []Software {
 			Name:        "Bitwarden CLI",
 			Description: "Password Manager CLI",
 			Optional:    false,
-			Check: func() bool {
-				_, err := lookPath("bw")
-				return err == nil
-			},
+			Check:       checkByPath("bw"),
 			Install: func() error {
 				log.Info("Installing bitwarden-cli via brew...")
 				cmd := execCommand("brew", "install", "bitwarden-cli")
