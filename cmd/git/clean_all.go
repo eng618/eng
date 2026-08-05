@@ -35,7 +35,10 @@ var CleanAllCmd = &cobra.Command{
 
 		var scanSpinner *ui.Spinner
 		if !ui.DisableProgress {
-			scanSpinner = ui.NewSpinner(fmt.Sprintf("Scanning git repositories in %s for untracked files...", setup.DevPath))
+			scanSpinner = ui.NewSpinner(fmt.Sprintf(
+				"Scanning git repositories in %s for untracked files...",
+				setup.DevPath,
+			))
 		}
 
 		repos, err := findGitRepositories(setup.DevPath)
