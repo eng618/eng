@@ -12,6 +12,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -85,7 +86,7 @@ func Sync(ctx context.Context, opts SyncOptions) {
 				fullRepoPath := filepath.Join(projectPath, repoPath)
 
 				// Check if repo exists
-				if !isRepoCloned(fullRepoPath) {
+				if !repo.IsCloned(fullRepoPath) {
 					if opts.IsVerbose {
 						spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
 						spinner.Warning()

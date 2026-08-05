@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -721,10 +722,7 @@ func TestConfigEdgeCases(t *testing.T) {
 		viper.Reset()
 
 		// Create a very long string
-		longString := ""
-		for i := 0; i < 1000; i++ {
-			longString += "a"
-		}
+		longString := strings.Repeat("a", 1000)
 
 		viper.Set("dotfiles.repo_url", longString)
 		storedString := viper.GetString("dotfiles.repo_url")
@@ -841,4 +839,21 @@ func TestDotfilesConfigHelpers(t *testing.T) {
 		expandedBarePath := os.ExpandEnv(expectedBareRepoPath)
 		assert.Equal(t, expandedBarePath, DotfilesRepo(), "DotfilesRepo() should return the same as BareRepoPath()")
 	})
+}
+
+func BenchmarkStringConcatLoop(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		longString := ""
+		for j := 0; j < 1000; j++ {
+			longString += "a"
+		}
+		_ = longString
+	}
+}
+
+func BenchmarkStringsRepeat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		longString := strings.Repeat("a", 1000)
+		_ = longString
+	}
 }
