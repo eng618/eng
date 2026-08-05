@@ -6,13 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -23,42 +20,28 @@ var PushAllCmd = &cobra.Command{
 	Short: "Push all git repositories in development folder",
 	Long:  `This command pushes commits for all git repositories found in your development folder that have unpushed commits.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
-		if !ui.DisableProgress {
-			fmt.Fprintln(log.Out, headerStyle.Render("📤 Pushing Git Repositories"))
-		}
+		printHeader("📤 Pushing Git Repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		force, _ := cmd.Flags().GetBool("force")
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
-
-		if dryRun {
-			log.Info("Dry run mode - no actual git operations will be performed")
-		}
+		force, _ := cmd.Flags().GetBool("force")
 
 		if force {
 			log.Warn("Force push mode enabled - this will force push to remote")
 		}
 
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			log.Error("Failed to find git repositories: %s", err)
 			return
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 
@@ -70,9 +53,9 @@ var PushAllCmd = &cobra.Command{
 
 		for _, repoPath := range repos {
 			repoName := filepath.Base(repoPath)
-			log.Verbose(isVerbose, "Checking repository: %s", repoName)
+			log.Verbose(setup.IsVerbose, "Checking repository: %s", repoName)
 
-			if dryRun {
+			if setup.DryRun {
 				hasUnpushed, err := hasUnpushedCommits(repoPath)
 				if err != nil {
 					log.Error("  [DRY RUN] Failed to check for unpushed commits: %s", err)
@@ -83,7 +66,7 @@ var PushAllCmd = &cobra.Command{
 					log.Info("  [DRY RUN] Would push repository at: %s", repoPath)
 					successCount++
 				} else {
-					log.Verbose(isVerbose, "  [DRY RUN] No unpushed commits, skipping: %s", repoPath)
+					log.Verbose(setup.IsVerbose, "  [DRY RUN] No unpushed commits, skipping: %s", repoPath)
 					skippedCount++
 				}
 				continue
@@ -98,7 +81,7 @@ var PushAllCmd = &cobra.Command{
 			}
 
 			if !hasUnpushed {
-				log.Verbose(isVerbose, "  No unpushed commits, skipping: %s", repoName)
+				log.Verbose(setup.IsVerbose, "  No unpushed commits, skipping: %s", repoName)
 				skippedCount++
 				continue
 			}

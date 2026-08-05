@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -21,40 +20,31 @@ var ListCmd = &cobra.Command{
 	Short: "List all git repositories in development folder",
 	Long:  `This command lists all git repositories found in your development folder.`,
 	Run: func(cmd *cobra.Command, _args []string) {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
-		if !ui.DisableProgress {
-			fmt.Fprintln(log.Out, headerStyle.Render("📁 Development Git Repositories"))
-		}
+		printHeader("📁 Development Git Repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-		showPaths, _ := cmd.Flags().GetBool("paths")
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
+		showPaths, _ := cmd.Flags().GetBool("paths")
 
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			log.Error("Failed to find git repositories: %s", err)
 			return
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 
 		var cardLines []string
 		cardLines = append(cardLines, fmt.Sprintf("Found %s repositories in %s:",
 			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(repos))),
-			theme.BoldText.Render(devPath),
+			theme.BoldText.Render(setup.DevPath),
 		))
 		cardLines = append(cardLines, "")
 

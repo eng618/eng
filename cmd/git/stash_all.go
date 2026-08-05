@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 )
 
@@ -19,30 +18,22 @@ var StashAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _args []string) {
 		log.Start("Stashing changes in all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		message, _ := cmd.Flags().GetString("message")
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
+		message, _ := cmd.Flags().GetString("message")
 
-		if dryRun {
-			log.Info("Dry run mode - no actual git operations will be performed")
-		}
-
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			log.Error("Failed to find git repositories: %s", err)
 			return
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 
@@ -56,7 +47,7 @@ var StashAllCmd = &cobra.Command{
 			repoName := filepath.Base(repoPath)
 			log.Info("Checking repository: %s", repoName)
 
-			if dryRun {
+			if setup.DryRun {
 				hasChanges, err := hasUncommittedChanges(repoPath)
 				if err != nil {
 					log.Error("  [DRY RUN] Failed to check for changes: %s", err)
