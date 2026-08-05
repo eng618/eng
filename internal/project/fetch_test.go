@@ -13,6 +13,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -132,13 +133,13 @@ func TestIsRepoCloned(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Test non-existent path
-	assert.False(t, isRepoCloned(filepath.Join(tmpDir, "nonexistent")))
+	assert.False(t, repo.IsCloned(filepath.Join(tmpDir, "nonexistent")))
 
 	// Test directory without .git
 	noGitDir := filepath.Join(tmpDir, "no-git")
 	err = os.MkdirAll(noGitDir, 0o755)
 	require.NoError(t, err)
-	assert.False(t, isRepoCloned(noGitDir))
+	assert.False(t, repo.IsCloned(noGitDir))
 
 	// Test directory with .git file (not directory)
 	gitFileDir := filepath.Join(tmpDir, "git-file")
@@ -146,11 +147,11 @@ func TestIsRepoCloned(t *testing.T) {
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(gitFileDir, ".git"), []byte("gitdir: ../other"), 0o644)
 	require.NoError(t, err)
-	assert.False(t, isRepoCloned(gitFileDir)) // .git must be a directory
+	assert.False(t, repo.IsCloned(gitFileDir)) // .git must be a directory
 
 	// Test directory with .git directory
 	gitDirPath := filepath.Join(tmpDir, "has-git")
 	err = os.MkdirAll(filepath.Join(gitDirPath, ".git"), 0o755)
 	require.NoError(t, err)
-	assert.True(t, isRepoCloned(gitDirPath))
+	assert.True(t, repo.IsCloned(gitDirPath))
 }

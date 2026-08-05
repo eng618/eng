@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -66,8 +66,8 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 	for _, project := range projects {
 		projectPath := filepath.Join(opts.DevPath, project.Name)
 
-		for _, repo := range project.Repos {
-			r := repo // explicitly capture loop variable for closure
+		for _, repoItem := range project.Repos {
+			r := repoItem // explicitly capture loop variable for closure
 
 			eg.Go(func() error {
 				repoPath, err := r.GetEffectivePath()
@@ -82,7 +82,7 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 				fullRepoPath := filepath.Join(projectPath, repoPath)
 
 				// Check if repo exists
-				if !isRepoCloned(fullRepoPath) {
+				if !repo.IsCloned(fullRepoPath) {
 					if opts.IsVerbose {
 						spinner := multi.AddSpinner(fmt.Sprintf("Skipping %s (not cloned)", repoPath))
 						spinner.Warning()
@@ -140,9 +140,4 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 			log.Error("  - %s", r)
 		}
 	}
-}
-
-func isRepoCloned(repoPath string) bool {
-	info, err := os.Stat(filepath.Join(repoPath, ".git"))
-	return err == nil && info.IsDir()
 }
