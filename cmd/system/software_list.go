@@ -88,9 +88,8 @@ func getCoreSoftware() []Software {
 	}
 }
 
-func getManualInstalls() []Software {
+func getSecurityAndPrivacyApps() []Software {
 	return []Software{
-		// Manual Installs
 		{
 			Name:        "Ente",
 			Description: "Encrypted Photo Backup",
@@ -115,6 +114,56 @@ func getManualInstalls() []Software {
 			Check:       func() bool { return false },
 			Install:     func() error { return openURL("https://ente.io/locker/") },
 		},
+		{
+			Name:        "GPGTools",
+			Description: "OpenPGP Suite",
+			Optional:    false, // Seem important for dotfiles
+			URL:         "https://gpgtools.org/",
+			OS:          "darwin",
+			Check: func() bool {
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.gpgtools.gpgkeychain'").Run() == nil
+			},
+			Install: func() error { return openURL("https://gpgtools.org/") },
+		},
+		{
+			Name:        "YubiKey Manager",
+			Description: "YubiKey Configuration",
+			Optional:    true,
+			URL:         "https://www.yubico.com/support/download/yubikey-manager/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://www.yubico.com/support/download/yubikey-manager/") },
+		},
+		{
+			Name:        "SafeInCloud",
+			Description: "Password manager",
+			Optional:    true,
+			URL:         "https://www.safe-in-cloud.com/en/download/",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					// macOS bundle identifier
+					return execCommand(
+						"mdfind",
+						"kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'",
+					).Run() ==
+						nil
+				}
+				return false
+			},
+			Install: func() error { return openURL("https://www.safe-in-cloud.com/en/download/") },
+		},
+		{
+			Name:        "NextDNS",
+			Description: "DNS Security",
+			Optional:    true,
+			URL:         "https://nextdns.io/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://nextdns.io/") },
+		},
+	}
+}
+
+func getBrowserApps() []Software {
+	return []Software{
 		{
 			Name:        "Google Chrome",
 			Description: "Web Browser",
@@ -143,6 +192,11 @@ func getManualInstalls() []Software {
 			},
 			Install: func() error { return openURL("https://brave.com/download/") },
 		},
+	}
+}
+
+func getDeveloperAndTerminalApps() []Software {
+	return []Software{
 		{
 			Name:        "iTerm",
 			Description: "Terminal Emulator",
@@ -154,6 +208,49 @@ func getManualInstalls() []Software {
 			},
 			Install: func() error { return openURL("https://iterm2.com/downloads.html") },
 		},
+		{
+			Name:        "VNC Viewer",
+			Description: "Remote Desktop",
+			Optional:    true,
+			URL:         "https://www.realvnc.com/en/connect/download/viewer/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://www.realvnc.com/en/connect/download/viewer/") },
+		},
+		{
+			Name:        "Rancher Desktop",
+			Description: "Container Management",
+			Optional:    true,
+			URL:         "https://rancherdesktop.io/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://rancherdesktop.io/") },
+		},
+		{
+			Name:        "Android Studio",
+			Description: "Android app development IDE",
+			Optional:    true,
+			URL:         "https://developer.android.com/studio",
+			Check: func() bool {
+				if runtime.GOOS == "darwin" {
+					_, err := os.Stat("/Applications/Android Studio.app")
+					return err == nil
+				}
+				if runtime.GOOS == "linux" {
+					_, err := lookPath("studio")
+					if err == nil {
+						return true
+					}
+					_, err = lookPath("studio.sh")
+					return err == nil
+				}
+				return false
+			},
+			Install: func() error { return openURL("https://developer.android.com/studio") },
+		},
+	}
+}
+
+func getProductivityApps() []Software {
+	return []Software{
 		{
 			Name:        "Alfred",
 			Description: "Productivity App",
@@ -168,99 +265,6 @@ func getManualInstalls() []Software {
 					nil
 			},
 			Install: func() error { return openURL("https://www.alfredapp.com/") },
-		},
-		{
-			Name:        "LICEcap",
-			Description: "GIF Recorder",
-			Optional:    true,
-			URL:         "https://www.cockos.com/licecap/",
-			OS:          "darwin",
-			Check: func() bool {
-				// Simple check, might not accept all paths
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.cockos.LICEcap'").Run() == nil
-			},
-			Install: func() error { return openURL("https://www.cockos.com/licecap/") },
-		},
-		{
-			Name:        "Signal",
-			Description: "Secure Messaging",
-			Optional:    true,
-			URL:         "https://signal.org/download/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://signal.org/download/") },
-		},
-		{
-			Name:        "VNC Viewer",
-			Description: "Remote Desktop",
-			Optional:    true,
-			URL:         "https://www.realvnc.com/en/connect/download/viewer/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.realvnc.com/en/connect/download/viewer/") },
-		},
-		{
-			Name:        "VLC",
-			Description: "Video Player",
-			Optional:    true,
-			URL:         "https://www.videolan.org/vlc/",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.videolan.vlc'").Run() == nil
-				}
-				_, err := lookPath("vlc")
-				return err == nil
-			},
-			Install: func() error { return openURL("https://www.videolan.org/vlc/") },
-		},
-		{
-			Name:        "GPGTools",
-			Description: "OpenPGP Suite",
-			Optional:    false, // Seem important for dotfiles
-			URL:         "https://gpgtools.org/",
-			OS:          "darwin",
-			Check: func() bool {
-				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.gpgtools.gpgkeychain'").Run() == nil
-			},
-			Install: func() error { return openURL("https://gpgtools.org/") },
-		},
-		{
-			Name:        "YubiKey Manager",
-			Description: "YubiKey Configuration",
-			Optional:    true,
-			URL:         "https://www.yubico.com/support/download/yubikey-manager/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.yubico.com/support/download/yubikey-manager/") },
-		},
-		{
-			Name:        "Rancher Desktop",
-			Description: "Container Management",
-			Optional:    true,
-			URL:         "https://rancherdesktop.io/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://rancherdesktop.io/") },
-		},
-		{
-			Name:        "Jabra Direct",
-			Description: "Headset Software",
-			Optional:    true,
-			URL:         "https://www.jabra.com/software-and-services/jabra-direct",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://www.jabra.com/software-and-services/jabra-direct") },
-		},
-		{
-			Name:        "OBS Studio",
-			Description: "Screen Recorder",
-			Optional:    true,
-			URL:         "https://obsproject.com/",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://obsproject.com/") },
-		},
-		{
-			Name:        "HandBrake",
-			Description: "Video Transcoder",
-			Optional:    true,
-			URL:         "https://handbrake.fr/downloads.php",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://handbrake.fr/downloads.php") },
 		},
 		{
 			Name:        "Notion",
@@ -288,61 +292,60 @@ func getManualInstalls() []Software {
 			},
 			Install: func() error { return openURL("https://obsidian.md/download") },
 		},
+	}
+}
+
+func getMediaAndCommunicationApps() []Software {
+	return []Software{
 		{
-			Name:        "SafeInCloud",
-			Description: "Password manager",
+			Name:        "LICEcap",
+			Description: "GIF Recorder",
 			Optional:    true,
-			URL:         "https://www.safe-in-cloud.com/en/download/",
+			URL:         "https://www.cockos.com/licecap/",
+			OS:          "darwin",
+			Check: func() bool {
+				// Simple check, might not accept all paths
+				return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'com.cockos.LICEcap'").Run() == nil
+			},
+			Install: func() error { return openURL("https://www.cockos.com/licecap/") },
+		},
+		{
+			Name:        "Signal",
+			Description: "Secure Messaging",
+			Optional:    true,
+			URL:         "https://signal.org/download/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://signal.org/download/") },
+		},
+		{
+			Name:        "VLC",
+			Description: "Video Player",
+			Optional:    true,
+			URL:         "https://www.videolan.org/vlc/",
 			Check: func() bool {
 				if runtime.GOOS == "darwin" {
-					// macOS bundle identifier
-					return execCommand(
-						"mdfind",
-						"kMDItemCFBundleIdentifier == 'com.safeinscloud.SafeInCloud'",
-					).Run() ==
-						nil
+					return execCommand("mdfind", "kMDItemCFBundleIdentifier == 'org.videolan.vlc'").Run() == nil
 				}
-				return false
+				_, err := lookPath("vlc")
+				return err == nil
 			},
-			Install: func() error { return openURL("https://www.safe-in-cloud.com/en/download/") },
+			Install: func() error { return openURL("https://www.videolan.org/vlc/") },
 		},
 		{
-			Name:        "Android Studio",
-			Description: "Android app development IDE",
+			Name:        "OBS Studio",
+			Description: "Screen Recorder",
 			Optional:    true,
-			URL:         "https://developer.android.com/studio",
-			Check: func() bool {
-				if runtime.GOOS == "darwin" {
-					_, err := os.Stat("/Applications/Android Studio.app")
-					return err == nil
-				}
-				if runtime.GOOS == "linux" {
-					_, err := lookPath("studio")
-					if err == nil {
-						return true
-					}
-					_, err = lookPath("studio.sh")
-					return err == nil
-				}
-				return false
-			},
-			Install: func() error { return openURL("https://developer.android.com/studio") },
+			URL:         "https://obsproject.com/",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://obsproject.com/") },
 		},
 		{
-			Name:        "NextDNS",
-			Description: "DNS Security",
+			Name:        "HandBrake",
+			Description: "Video Transcoder",
 			Optional:    true,
-			URL:         "https://nextdns.io/",
+			URL:         "https://handbrake.fr/downloads.php",
 			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://nextdns.io/") },
-		},
-		{
-			Name:        "Antigravity",
-			Description: "Antigravity Tool",
-			Optional:    false,
-			URL:         "https://antigravity.google/download",
-			Check:       func() bool { return false },
-			Install:     func() error { return openURL("https://antigravity.google/download") },
+			Install:     func() error { return openURL("https://handbrake.fr/downloads.php") },
 		},
 		{
 			Name:        "Spotify",
@@ -359,6 +362,38 @@ func getManualInstalls() []Software {
 			Install: func() error { return openURL("https://open.spotify.com/download") },
 		},
 	}
+}
+
+func getUtilityAndOtherApps() []Software {
+	return []Software{
+		{
+			Name:        "Jabra Direct",
+			Description: "Headset Software",
+			Optional:    true,
+			URL:         "https://www.jabra.com/software-and-services/jabra-direct",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://www.jabra.com/software-and-services/jabra-direct") },
+		},
+		{
+			Name:        "Antigravity",
+			Description: "Antigravity Tool",
+			Optional:    false,
+			URL:         "https://antigravity.google/download",
+			Check:       func() bool { return false },
+			Install:     func() error { return openURL("https://antigravity.google/download") },
+		},
+	}
+}
+
+func getManualInstalls() []Software {
+	var list []Software
+	list = append(list, getSecurityAndPrivacyApps()...)
+	list = append(list, getBrowserApps()...)
+	list = append(list, getDeveloperAndTerminalApps()...)
+	list = append(list, getProductivityApps()...)
+	list = append(list, getMediaAndCommunicationApps()...)
+	list = append(list, getUtilityAndOtherApps()...)
+	return list
 }
 
 func getCLITools() []Software {
