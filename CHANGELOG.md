@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.34.0](https://github.com/eng618/eng/compare/v1.33.0...v1.34.0) (2026-08-05)
+
+
+### Features
+
+* **project:** Sort repos and projects ([19fcd95](https://github.com/eng618/eng/commit/19fcd9522311597ee90eb121296022a88d2afe22))
+
+
+### Bug Fixes
+
+* Lint naming ([051d5f0](https://github.com/eng618/eng/commit/051d5f01295b6da6779f329b72de175397d092bf))
+
 ## [1.33.0](https://github.com/eng618/eng/compare/v1.32.0...v1.33.0) (2026-07-30)
 
 
