@@ -3,9 +3,11 @@ package project
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 )
 
 // ListOptions holds the configuration for listing projects.
@@ -43,6 +45,11 @@ func List(opts ListOptions) {
 		return
 	}
 
+	// Sort projects alphabetically
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
+
 	log.Info("Development path: %s", devPath)
 	log.Info("")
 
@@ -54,15 +61,21 @@ func List(opts ListOptions) {
 			log.Info("  Path: %s", projectPath)
 			log.Info("  Repositories (%d):", len(project.Repos))
 
-			for _, repo := range project.Repos {
-				repoPath, err := repo.GetEffectivePath()
+			sortedRepos := make([]config.Repo, len(project.Repos))
+			copy(sortedRepos, project.Repos)
+			sort.Slice(sortedRepos, func(i, j int) bool {
+				return sortedRepos[i].URL < sortedRepos[j].URL
+			})
+
+			for _, repoItem := range sortedRepos {
+				repoPath, err := repoItem.GetEffectivePath()
 				if err != nil {
-					log.Error("    ✗ %s (invalid path)", repo.URL)
+					log.Error("    ✗ %s (invalid path)", repoItem.URL)
 					continue
 				}
 
 				fullRepoPath := filepath.Join(projectPath, repoPath)
-				cloned := isRepoCloned(fullRepoPath)
+				cloned := repo.IsCloned(fullRepoPath)
 
 				if cloned {
 					log.Success("    ✓ %s", repoPath)
@@ -70,20 +83,20 @@ func List(opts ListOptions) {
 					log.Warn("    ✗ %s (not cloned)", repoPath)
 				}
 
-				log.Info("      URL: %s", repo.URL)
-				if repo.Path != "" {
-					log.Info("      Custom path: %s", repo.Path)
+				log.Info("      URL: %s", repoItem.URL)
+				if repoItem.Path != "" {
+					log.Info("      Custom path: %s", repoItem.Path)
 				}
 			}
 		} else {
 			clonedCount := 0
-			for _, repo := range project.Repos {
-				repoPath, err := repo.GetEffectivePath()
+			for _, r := range project.Repos {
+				repoPath, err := r.GetEffectivePath()
 				if err != nil {
 					continue
 				}
 				fullRepoPath := filepath.Join(projectPath, repoPath)
-				if isRepoCloned(fullRepoPath) {
+				if repo.IsCloned(fullRepoPath) {
 					clonedCount++
 				}
 			}
