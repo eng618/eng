@@ -61,7 +61,7 @@ func List(opts ListOptions) {
 			log.Info("  Path: %s", projectPath)
 			log.Info("  Repositories (%d):", len(project.Repos))
 
-			sortedRepos := make([]config.Repo, len(project.Repos))
+			sortedRepos := make([]config.ProjectRepo, len(project.Repos))
 			copy(sortedRepos, project.Repos)
 			sort.Slice(sortedRepos, func(i, j int) bool {
 				return sortedRepos[i].URL < sortedRepos[j].URL
