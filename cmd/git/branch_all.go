@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 )
@@ -19,24 +18,20 @@ var BranchAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Checking current branch of all git repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
-
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			log.Error("Failed to find git repositories: %s", err)
 			return
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 

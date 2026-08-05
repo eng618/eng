@@ -6,11 +6,9 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
@@ -24,37 +22,22 @@ var PullAllCmd = &cobra.Command{
 	Short: "Pull all git repositories in development folder",
 	Long:  `This command pulls with rebase for all git repositories found in your development folder. Use this after fetch-all for faster operations.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
-		if !ui.DisableProgress {
-			fmt.Fprintln(log.Out, headerStyle.Render("📥 Pulling Git Repositories"))
-		}
+		printHeader("📥 Pulling Git Repositories")
 
-		isVerbose := cmdutil.IsVerbose(cmd)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-
-		devPath, err := getWorkingPath(cmd)
+		setup, err := setupGitCommand(cmd)
 		if err != nil {
 			log.Error("%s", err)
 			return
 		}
 
-		log.Verbose(isVerbose, "Development path: %s", devPath)
-
-		if dryRun {
-			log.Info("Dry run mode - no actual git operations will be performed")
-		}
-
-		repos, err := findGitRepositories(devPath)
+		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			log.Error("Failed to find git repositories: %s", err)
 			return
 		}
 
 		if len(repos) == 0 {
-			log.Warn("No git repositories found in %s", devPath)
+			log.Warn("No git repositories found in %s", setup.DevPath)
 			return
 		}
 
@@ -78,7 +61,7 @@ var PullAllCmd = &cobra.Command{
 			eg.Go(func() error {
 				repoName := filepath.Base(rPath)
 
-				if dryRun {
+				if setup.DryRun {
 					spinner := multi.AddSpinner(fmt.Sprintf("[DRY RUN] Would pull repository at: %s", rPath))
 					spinner.Success()
 					successCount.Add(1)
