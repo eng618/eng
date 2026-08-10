@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.35.0](https://github.com/eng618/eng/compare/v1.34.0...v1.35.0) (2026-08-10)
+
+
+### Features
+
+* **fetch:** Implement tag overwrite ([750ffc5](https://github.com/eng618/eng/commit/750ffc57749b2e3f3797eb982f32f4642d6a7ef7))
+
 ## [1.34.0](https://github.com/eng618/eng/compare/v1.33.0...v1.34.0) (2026-08-05)
 
 
