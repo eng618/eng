@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.36.0](https://github.com/eng618/eng/compare/v1.35.0...v1.36.0) (2026-08-10)
+
+
+### Features
+
+* **git:** Make fetch more aware of tag clobber ([9a59580](https://github.com/eng618/eng/commit/9a59580998feb3ff49db958282db24a94dcfe259))
+
 ## [1.35.0](https://github.com/eng618/eng/compare/v1.34.0...v1.35.0) (2026-08-10)
 
 
