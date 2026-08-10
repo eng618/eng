@@ -42,7 +42,7 @@ func TestFetch(t *testing.T) {
 	os.MkdirAll(filepath.Join(tmpDir, "TestProject", "repo2", ".git"), 0o755)
 
 	mockRepoClient := &MockRepoClient{
-		FetchAllPruneWithPromptFunc: func(ctx context.Context, path string) error {
+		FetchWithOptionsFunc: func(ctx context.Context, path string, force bool) error {
 			if filepath.Base(path) == "repo1" {
 				return nil
 			}

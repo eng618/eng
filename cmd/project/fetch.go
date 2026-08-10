@@ -25,7 +25,8 @@ var FetchCmd = &cobra.Command{
 Example:
   eng project fetch                  # Fetch all projects
   eng project fetch -p MyProject     # Fetch only the specified project
-  eng project fetch --dry-run        # Preview what would be fetched`,
+  eng project fetch --dry-run        # Preview what would be fetched
+  eng project fetch --force          # Force overwrite tags on conflicts`,
 	Run: func(cmd *cobra.Command, args []string) {
 		headerStyle := lipgloss.NewStyle().
 			Bold(true).
@@ -43,10 +44,12 @@ Example:
 		}
 
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		force, _ := cmd.Flags().GetBool("force")
 		projectFilter, _ := cmd.Flags().GetString("project")
 
 		opts := internalProject.FetchOptions{
 			DryRun:        dryRun,
+			Force:         force,
 			IsVerbose:     cmdutil.IsVerbose(cmd),
 			ProjectFilter: projectFilter,
 			DevPath:       os.ExpandEnv(devPath),

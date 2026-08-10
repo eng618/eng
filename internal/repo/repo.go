@@ -323,9 +323,13 @@ func CheckoutBareRepo(ctx context.Context, repoPath, workTree string, force, all
 }
 
 // FetchAllPrune performs git fetch --all --prune for the given repository path.
-// If force is true, it will use --force to overwrite local tags that would clobber.
 func FetchAllPrune(ctx context.Context, repoPath string) error {
 	return fetchAllPruneWithForce(ctx, repoPath, false)
+}
+
+// FetchAllPruneWithForce performs git fetch --all --prune with --force flag.
+func FetchAllPruneWithForce(ctx context.Context, repoPath string) error {
+	return fetchAllPruneWithForce(ctx, repoPath, true)
 }
 
 // fetchAllPruneWithForce performs git fetch --all --prune with optional force flag.

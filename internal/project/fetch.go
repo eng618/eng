@@ -17,6 +17,7 @@ import (
 // FetchOptions holds the configuration for fetching projects.
 type FetchOptions struct {
 	DryRun        bool
+	Force         bool
 	IsVerbose     bool
 	ProjectFilter string
 	DevPath       string
@@ -104,7 +105,7 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoPath))
-				if err := opts.RepoClient.FetchAllPruneWithPrompt(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.FetchWithOptions(egCtx, fullRepoPath, opts.Force); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoPath, err))
 					mu.Lock()
 					failedCount++

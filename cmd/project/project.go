@@ -74,6 +74,7 @@ func init() {
 	ProjectCmd.Flags().BoolP("info", "i", false, "Show current project management configuration")
 	ProjectCmd.PersistentFlags().StringP("project", "p", "", "Filter operations to a specific project")
 	ProjectCmd.PersistentFlags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	ProjectCmd.PersistentFlags().Bool("force", false, "Force overwrite tags on fetch conflicts (bypasses prompts)")
 
 	// Register subcommands
 	ProjectCmd.AddCommand(SetupCmd)

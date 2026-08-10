@@ -5,11 +5,11 @@ import (
 )
 
 type MockRepoClient struct {
-	CloneFunc                   func(ctx context.Context, url, path string) error
-	IsDirtyFunc                 func(ctx context.Context, repoPath string) (bool, error)
-	PullLatestCodeFunc          func(ctx context.Context, repoPath string) error
-	FetchAllPruneFunc           func(ctx context.Context, repoPath string) error
-	FetchAllPruneWithPromptFunc func(ctx context.Context, repoPath string) error
+	CloneFunc            func(ctx context.Context, url, path string) error
+	IsDirtyFunc          func(ctx context.Context, repoPath string) (bool, error)
+	PullLatestCodeFunc   func(ctx context.Context, repoPath string) error
+	FetchAllPruneFunc    func(ctx context.Context, repoPath string) error
+	FetchWithOptionsFunc func(ctx context.Context, repoPath string, force bool) error
 }
 
 func (m *MockRepoClient) Clone(ctx context.Context, url, path string) error {
@@ -40,9 +40,9 @@ func (m *MockRepoClient) FetchAllPrune(ctx context.Context, repoPath string) err
 	return nil
 }
 
-func (m *MockRepoClient) FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error {
-	if m.FetchAllPruneWithPromptFunc != nil {
-		return m.FetchAllPruneWithPromptFunc(ctx, repoPath)
+func (m *MockRepoClient) FetchWithOptions(ctx context.Context, repoPath string, force bool) error {
+	if m.FetchWithOptionsFunc != nil {
+		return m.FetchWithOptionsFunc(ctx, repoPath, force)
 	}
 	return nil
 }
