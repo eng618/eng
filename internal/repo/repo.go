@@ -12,7 +12,18 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
+
+// TagClobberError is returned when a git fetch fails due to tag conflicts.
+type TagClobberError struct {
+	Message string
+	Output  string
+}
+
+func (e *TagClobberError) Error() string {
+	return e.Message
+}
 
 // IsDirty checks if the repository at the given path has uncommitted changes.
 // It takes the repository path `repoPath` as input and returns a boolean indicating
@@ -312,15 +323,64 @@ func CheckoutBareRepo(ctx context.Context, repoPath, workTree string, force, all
 }
 
 // FetchAllPrune performs git fetch --all --prune for the given repository path.
+// If force is true, it will use --force to overwrite local tags that would clobber.
 func FetchAllPrune(ctx context.Context, repoPath string) error {
-	cmd, cancel := execGitCommand(ctx, repoPath, "fetch", "--all", "--prune")
+	return fetchAllPruneWithForce(ctx, repoPath, false)
+}
+
+// fetchAllPruneWithForce performs git fetch --all --prune with optional force flag.
+func fetchAllPruneWithForce(ctx context.Context, repoPath string, force bool) error {
+	args := []string{"fetch", "--all", "--prune"}
+	if force {
+		args = append(args, "--force")
+	}
+
+	cmd, cancel := execGitCommand(ctx, repoPath, args...)
 	defer cancel()
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("git fetch failed: %w\n%s", err, string(out))
+		outStr := string(out)
+		// Check if error is due to tag clobber
+		if !force && strings.Contains(outStr, "would clobber existing tag") {
+			return &TagClobberError{
+				Message: fmt.Sprintf("git fetch failed: %s", outStr),
+				Output:  outStr,
+			}
+		}
+		return fmt.Errorf("git fetch failed: %w\n%s", err, outStr)
 	}
 	return nil
+}
+
+// FetchAllPruneWithPrompt performs git fetch --all --prune and prompts the user
+// to force overwrite tags if a tag clobber error occurs.
+func FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error {
+	err := FetchAllPrune(ctx, repoPath)
+	if err == nil {
+		return nil
+	}
+
+	clobberErr, ok := err.(*TagClobberError)
+	if !ok {
+		return err
+	}
+
+	// Prompt user to force overwrite
+	proceed, promptErr := ui.Confirm(
+		"Tag clobber detected. Overwrite local tags with remote tags?",
+		false,
+	)
+	if promptErr != nil {
+		return clobberErr
+	}
+
+	if !proceed {
+		return clobberErr
+	}
+
+	// Retry with force flag
+	return fetchAllPruneWithForce(ctx, repoPath, true)
 }
 
 // IsCloned checks if a git repository is cloned at the given path by checking if the `.git` directory exists.

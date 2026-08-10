@@ -104,7 +104,7 @@ func Fetch(ctx context.Context, opts FetchOptions) {
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoPath))
-				if err := opts.RepoClient.FetchAllPrune(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.FetchAllPruneWithPrompt(egCtx, fullRepoPath); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoPath, err))
 					mu.Lock()
 					failedCount++

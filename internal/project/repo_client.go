@@ -12,6 +12,7 @@ type RepoClient interface {
 	IsDirty(ctx context.Context, repoPath string) (bool, error)
 	PullLatestCode(ctx context.Context, repoPath string) error
 	FetchAllPrune(ctx context.Context, repoPath string) error
+	FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error
 }
 
 // defaultRepoClient provides the standard implementation using internal/repo.
@@ -31,4 +32,8 @@ func (d *defaultRepoClient) PullLatestCode(ctx context.Context, repoPath string)
 
 func (d *defaultRepoClient) FetchAllPrune(ctx context.Context, repoPath string) error {
 	return repo.FetchAllPrune(ctx, repoPath)
+}
+
+func (d *defaultRepoClient) FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error {
+	return repo.FetchAllPruneWithPrompt(ctx, repoPath)
 }

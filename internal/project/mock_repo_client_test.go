@@ -5,10 +5,11 @@ import (
 )
 
 type MockRepoClient struct {
-	CloneFunc          func(ctx context.Context, url, path string) error
-	IsDirtyFunc        func(ctx context.Context, repoPath string) (bool, error)
-	PullLatestCodeFunc func(ctx context.Context, repoPath string) error
-	FetchAllPruneFunc  func(ctx context.Context, repoPath string) error
+	CloneFunc                 func(ctx context.Context, url, path string) error
+	IsDirtyFunc               func(ctx context.Context, repoPath string) (bool, error)
+	PullLatestCodeFunc        func(ctx context.Context, repoPath string) error
+	FetchAllPruneFunc         func(ctx context.Context, repoPath string) error
+	FetchAllPruneWithPromptFunc func(ctx context.Context, repoPath string) error
 }
 
 func (m *MockRepoClient) Clone(ctx context.Context, url, path string) error {
@@ -35,6 +36,13 @@ func (m *MockRepoClient) PullLatestCode(ctx context.Context, repoPath string) er
 func (m *MockRepoClient) FetchAllPrune(ctx context.Context, repoPath string) error {
 	if m.FetchAllPruneFunc != nil {
 		return m.FetchAllPruneFunc(ctx, repoPath)
+	}
+	return nil
+}
+
+func (m *MockRepoClient) FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error {
+	if m.FetchAllPruneWithPromptFunc != nil {
+		return m.FetchAllPruneWithPromptFunc(ctx, repoPath)
 	}
 	return nil
 }

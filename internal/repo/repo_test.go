@@ -760,3 +760,14 @@ func TestIsCloned(t *testing.T) {
 		t.Error("Expected IsCloned to return true for directory with .git directory")
 	}
 }
+
+func TestTagClobberError(t *testing.T) {
+	err := &TagClobberError{
+		Message: "test error",
+		Output:  "git output",
+	}
+
+	if err.Error() != "test error" {
+		t.Errorf("Expected error message 'test error', got '%s'", err.Error())
+	}
+}
