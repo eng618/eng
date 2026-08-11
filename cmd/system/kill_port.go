@@ -244,6 +244,9 @@ var KillPortCmd = &cobra.Command{
 	Long: `This command finds the process ID (PID) listening on the specified network port
 using available tools (lsof, ss, netstat) and then terminates that process.
 
+A comma-separated list of ports may be provided to kill processes on multiple ports, e.g.
+"eng system killPort 3000,8080".
+
 If no port is provided or --interactive is used, it lists listening ports for selection.
 Requires appropriate tools to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
@@ -251,8 +254,7 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
 
-		var portStr string
-		var selectedPort PortInfo
+		var portList []string
 
 		if len(args) == 0 || interactive {
 			log.Message("Listing listening ports...")
@@ -265,123 +267,164 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 				log.Warn("No listening ports found.")
 				return
 			}
-			selectedPort, err = selectPort(ports)
+			selectedPort, err := selectPort(ports)
 			if err != nil {
 				log.Error("Failed to select port: %v", err)
 				return
 			}
-			portStr = selectedPort.Port
+			portList = []string{selectedPort.Port}
 		} else {
-			portStr = args[0]
-			// Validate that the input is a number
-			if _, err := strconv.Atoi(portStr); err != nil {
-				log.Error("Invalid port number provided: %s. Port must be an integer.", portStr)
+			log.Message("Parsing ports: %s", args[0])
+			var errs []error
+			portList, errs = parsePortList(args[0])
+			if len(errs) > 0 {
+				log.Error("Found %d problem(s) in port list %q:", len(errs), args[0])
+				for _, err := range errs {
+					log.Error("  - %v", err)
+				}
 				return
 			}
 		}
 
-		log.Message("Attempting to find process on port %s...", portStr)
-
-		// Find PID using the tool
-		tool := findPortTool()
-		if tool == "" {
-			log.Error("No suitable tool found for finding processes on ports.")
-			return
+		for _, portStr := range portList {
+			killPort(portStr, signal, isVerbose)
 		}
-
-		var lsofCmd *exec.Cmd
-		switch tool {
-		case "lsof":
-			lsofCmd = exec.Command("lsof", "-ti:"+portStr)
-		case "ss":
-			// ss -tulpn | grep :port | awk '{print $7}' | sed 's/.*pid=\([0-9]*\).*/\1/'
-			lsofCmd = exec.Command(
-				"sh",
-				"-c",
-				fmt.Sprintf("ss -tulpn | grep ':%s ' | grep -o 'pid=[0-9]*' | cut -d'=' -f2 | head -1", portStr),
-			)
-		case "netstat":
-			lsofCmd = exec.Command(
-				"sh",
-				"-c",
-				fmt.Sprintf("netstat -tulpn | grep ':%s ' | awk '{print $7}' | cut -d'/' -f1 | head -1", portStr),
-			)
-		}
-		log.Verbose(isVerbose, "Executing: %s", lsofCmd.String())
-
-		// Use CombinedOutput to capture both stdout and stderr from command
-		outputBytes, err := lsofCmd.CombinedOutput()
-		output := strings.TrimSpace(string(outputBytes))
-
-		// Check for errors from command execution
-		if err != nil {
-			// If lsof exits with an error, it might mean the port is not in use,
-			// or lsof itself failed.
-			log.Verbose(isVerbose, "Command finished with error: %v", err)
-			log.Verbose(isVerbose, "lsof output: %s", output)
-
-			// Check if the error is ExitError and output is empty - common case for "port not found"
-			var exitErr *exec.ExitError
-			if errors.As(err, &exitErr) && output == "" {
-				log.Warn("No process found listening on port %s.", portStr)
-			} else {
-				// A different error occurred (e.g., lsof not found, permission denied)
-				log.Error("Failed to execute command: %v", err)
-				log.Error("Command output (if any): %s", output)
-			}
-			return // Stop execution if lsof failed or found nothing
-		}
-
-		// If lsof succeeded but returned no output (less common with -t but possible)
-		if output == "" {
-			log.Warn("lsof ran successfully but found no process ID on port %s.", portStr)
-			return
-		}
-
-		// We expect a single PID from the command. Handle multiple lines just in case.
-		pids := strings.Fields(output) // Split by whitespace, handles multiple PIDs on separate lines if any
-		if len(pids) == 0 {
-			log.Warn("Command ran successfully but found no process ID on port %s.", portStr)
-			return
-		}
-
-		// --- Step 2: Kill the process(es) found ---
-		killedCount := 0
-		errorCount := 0
-		for _, pid := range pids {
-			log.Info("Found process with PID %s on port %s. Attempting to kill...", pid, portStr)
-
-			// Use 'kill -<signal> <pid>' to terminate.
-			killCmd := exec.Command("kill", "-"+signal, pid)
-			log.Verbose(isVerbose, "Executing: %s", killCmd.String())
-
-			// Run kill command
-			if err := killCmd.Run(); err != nil {
-				log.Error("Failed to kill process with PID %s: %v", pid, err)
-				if strings.Contains(err.Error(), "permission denied") {
-					log.Warn("Try running with sudo: sudo kill -%s %s", signal, pid)
-				}
-				errorCount++
-			} else {
-				log.Success("Successfully sent kill signal %s to process with PID %s.", signal, pid)
-				killedCount++
-			}
-		}
-
-		// --- Final Summary ---
-		if killedCount > 0 && errorCount == 0 {
-			log.Success("Finished killing process(es) on port %s.", portStr)
-		} else if killedCount > 0 && errorCount > 0 {
-			log.Warn(
-				"Finished attempting to kill process(es) on port %s, but encountered %d error(s).",
-				portStr,
-				errorCount,
-			)
-		} else if killedCount == 0 && errorCount > 0 {
-			log.Error("Failed to kill any process found on port %s.", portStr)
-		}
-		// If killedCount == 0 and errorCount == 0, it means lsof found nothing, already handled earlier.
 	},
+}
+
+// parsePortList validates a comma-separated list of ports. It returns the
+// normalized port strings and accumulates every validation problem rather than
+// failing on the first one, so callers can report all issues at once.
+func parsePortList(input string) ([]string, []error) {
+	if strings.TrimSpace(input) == "" {
+		return nil, []error{errors.New("port list cannot be empty")}
+	}
+
+	var ports []string
+	var errs []error
+	for _, raw := range strings.Split(input, ",") {
+		port := strings.TrimSpace(raw)
+		if port == "" {
+			errs = append(errs, fmt.Errorf("empty port in list %q", input))
+			continue
+		}
+		n, err := strconv.Atoi(port)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("invalid port number %q: port must be an integer", port))
+			continue
+		}
+		if n < 1 || n > 65535 {
+			errs = append(errs, fmt.Errorf("invalid port number %q: port must be between 1 and 65535", port))
+			continue
+		}
+		ports = append(ports, port)
+	}
+	return ports, errs
+}
+
+// killPort finds the process listening on the given port and terminates it.
+func killPort(portStr, signal string, isVerbose bool) {
+	log.Message("Attempting to find process on port %s...", portStr)
+
+	// Find PID using the tool
+	tool := findPortTool()
+	if tool == "" {
+		log.Error("No suitable tool found for finding processes on ports.")
+		return
+	}
+
+	var lsofCmd *exec.Cmd
+	switch tool {
+	case "lsof":
+		lsofCmd = exec.Command("lsof", "-ti:"+portStr)
+	case "ss":
+		// ss -tulpn | grep :port | awk '{print $7}' | sed 's/.*pid=\([0-9]*\).*/\1/'
+		lsofCmd = exec.Command(
+			"sh",
+			"-c",
+			fmt.Sprintf("ss -tulpn | grep ':%s ' | grep -o 'pid=[0-9]*' | cut -d'=' -f2 | head -1", portStr),
+		)
+	case "netstat":
+		lsofCmd = exec.Command(
+			"sh",
+			"-c",
+			fmt.Sprintf("netstat -tulpn | grep ':%s ' | awk '{print $7}' | cut -d'/' -f1 | head -1", portStr),
+		)
+	}
+	log.Verbose(isVerbose, "Executing: %s", lsofCmd.String())
+
+	// Use CombinedOutput to capture both stdout and stderr from command
+	outputBytes, err := lsofCmd.CombinedOutput()
+	output := strings.TrimSpace(string(outputBytes))
+
+	// Check for errors from command execution
+	if err != nil {
+		// If lsof exits with an error, it might mean the port is not in use,
+		// or lsof itself failed.
+		log.Verbose(isVerbose, "Command finished with error: %v", err)
+		log.Verbose(isVerbose, "lsof output: %s", output)
+
+		// Check if the error is ExitError and output is empty - common case for "port not found"
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && output == "" {
+			log.Warn("No process found listening on port %s.", portStr)
+		} else {
+			// A different error occurred (e.g., lsof not found, permission denied)
+			log.Error("Failed to execute command: %v", err)
+			log.Error("Command output (if any): %s", output)
+		}
+		return // Stop execution if lsof failed or found nothing
+	}
+
+	// If lsof succeeded but returned no output (less common with -t but possible)
+	if output == "" {
+		log.Warn("lsof ran successfully but found no process ID on port %s.", portStr)
+		return
+	}
+
+	// We expect a single PID from the command. Handle multiple lines just in case.
+	pids := strings.Fields(output) // Split by whitespace, handles multiple PIDs on separate lines if any
+	if len(pids) == 0 {
+		log.Warn("Command ran successfully but found no process ID on port %s.", portStr)
+		return
+	}
+
+	// --- Step 2: Kill the process(es) found ---
+	killedCount := 0
+	errorCount := 0
+	for _, pid := range pids {
+		log.Info("Found process with PID %s on port %s. Attempting to kill...", pid, portStr)
+
+		// Use 'kill -<signal> <pid>' to terminate.
+		killCmd := exec.Command("kill", "-"+signal, pid)
+		log.Verbose(isVerbose, "Executing: %s", killCmd.String())
+
+		// Run kill command
+		if err := killCmd.Run(); err != nil {
+			log.Error("Failed to kill process with PID %s: %v", pid, err)
+			if strings.Contains(err.Error(), "permission denied") {
+				log.Warn("Try running with sudo: sudo kill -%s %s", signal, pid)
+			}
+			errorCount++
+		} else {
+			log.Success("Successfully sent kill signal %s to process with PID %s.", signal, pid)
+			killedCount++
+		}
+	}
+
+	// --- Final Summary ---
+	if killedCount > 0 && errorCount == 0 {
+		log.Success("Finished killing process(es) on port %s.", portStr)
+	} else if killedCount > 0 && errorCount > 0 {
+		log.Warn(
+			"Finished attempting to kill process(es) on port %s, but encountered %d error(s).",
+			portStr,
+			errorCount,
+		)
+	} else if killedCount == 0 && errorCount > 0 {
+		log.Error("Failed to kill any process found on port %s.", portStr)
+	}
+	// If killedCount == 0 and errorCount == 0, it means lsof found nothing, already handled earlier.
 }
 
 func init() {
