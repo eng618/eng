@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.37.0](https://github.com/eng618/eng/compare/v1.36.0...v1.37.0) (2026-08-11)
+
+
+### Features
+
+* Allow multiple comma-separated ports for kill command and refactor validation logic ([4765f88](https://github.com/eng618/eng/commit/4765f8855b7f522f555233aee05a9ebb321b3b43))
+
 ## [1.36.0](https://github.com/eng618/eng/compare/v1.35.0...v1.36.0) (2026-08-10)
 
 
