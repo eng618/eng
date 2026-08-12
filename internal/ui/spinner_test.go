@@ -71,4 +71,3 @@ func TestSpinner(t *testing.T) {
 		}
 	})
 }
-

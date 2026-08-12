@@ -169,4 +169,3 @@ func (s *Spinner) Logf(format string, a ...interface{}) {
 		s.renderLocked()
 	}
 }
-
