@@ -18,19 +18,21 @@ func GetGitConfig() GitConfig {
 
 // DotfilesConfig holds all dotfiles-related configuration.
 type DotfilesConfig struct {
-	RepoURL      string `mapstructure:"repo_url"`
-	Branch       string `mapstructure:"branch"`
-	BareRepoPath string `mapstructure:"bare_repo_path"`
-	WorktreePath string `mapstructure:"worktree_path"`
+	RepoURL        string `mapstructure:"repo_url"`
+	Branch         string `mapstructure:"branch"`
+	BareRepoPath   string `mapstructure:"bare_repo_path"`
+	WorktreePath   string `mapstructure:"worktree_path"`
+	TargetRepoPath string `mapstructure:"target_repo_path"`
 }
 
 // GetDotfilesConfig retrieves the dotfiles configuration from Viper.
 func GetDotfilesConfig() DotfilesConfig {
 	return DotfilesConfig{
-		RepoURL:      viper.GetString("dotfiles.repo_url"),
-		Branch:       viper.GetString("dotfiles.branch"),
-		BareRepoPath: viper.GetString("dotfiles.bare_repo_path"),
-		WorktreePath: viper.GetString("dotfiles.worktree_path"),
+		RepoURL:        viper.GetString("dotfiles.repo_url"),
+		Branch:         viper.GetString("dotfiles.branch"),
+		BareRepoPath:   viper.GetString("dotfiles.bare_repo_path"),
+		WorktreePath:   viper.GetString("dotfiles.worktree_path"),
+		TargetRepoPath: viper.GetString("dotfiles.target_repo_path"),
 	}
 }
 

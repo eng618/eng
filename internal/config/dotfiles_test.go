@@ -841,6 +841,69 @@ func TestDotfilesConfigHelpers(t *testing.T) {
 	})
 }
 
+func TestTargetRepoPath(t *testing.T) {
+	t.Run("ExplicitTargetRepoPath", func(t *testing.T) {
+		viper.Reset()
+		viper.Set("dotfiles.target_repo_path", "/custom/target/path")
+		assert.Equal(t, "/custom/target/path", TargetRepoPath("/some/dev/path"))
+	})
+
+	t.Run("ExplicitLocalRepoPath", func(t *testing.T) {
+		viper.Reset()
+		viper.Set("dotfiles.local_repo_path", "/custom/local/path")
+		assert.Equal(t, "/custom/local/path", TargetRepoPath("/some/dev/path"))
+	})
+
+	t.Run("ConfiguredProjectWithDiskMatch", func(t *testing.T) {
+		viper.Reset()
+		tmpDev := t.TempDir()
+		projDir := filepath.Join(tmpDev, "myproject")
+		repoDir := filepath.Join(projDir, "dotfiles")
+		if err := os.MkdirAll(filepath.Join(repoDir, ".git"), 0o755); err != nil {
+			t.Fatalf("failed setup: %v", err)
+		}
+
+		viper.Set("dotfiles.repo_url", "git@github.com:user/dotfiles.git")
+		projects := []Project{
+			{
+				Name: "myproject",
+				Repos: []ProjectRepo{
+					{URL: "git@github.com:user/dotfiles.git"},
+				},
+			},
+		}
+		viper.Set("projects", projects)
+
+		resolved := TargetRepoPath(tmpDev)
+		assert.Equal(t, repoDir, resolved)
+	})
+
+	t.Run("ProjectSubdirectoryOnDisk", func(t *testing.T) {
+		viper.Reset()
+		tmpDev := t.TempDir()
+		projDir := filepath.Join(tmpDev, "eng618")
+		repoDir := filepath.Join(projDir, "eng-cfg")
+		if err := os.MkdirAll(filepath.Join(repoDir, ".git"), 0o755); err != nil {
+			t.Fatalf("failed setup: %v", err)
+		}
+
+		resolved := TargetRepoPath(tmpDev)
+		assert.Equal(t, repoDir, resolved)
+	})
+
+	t.Run("LegacyPathOnDisk", func(t *testing.T) {
+		viper.Reset()
+		tmpDev := t.TempDir()
+		repoDir := filepath.Join(tmpDev, "eng-cfg")
+		if err := os.MkdirAll(filepath.Join(repoDir, ".git"), 0o755); err != nil {
+			t.Fatalf("failed setup: %v", err)
+		}
+
+		resolved := TargetRepoPath(tmpDev)
+		assert.Equal(t, repoDir, resolved)
+	})
+}
+
 func BenchmarkStringConcatLoop(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		longString := ""

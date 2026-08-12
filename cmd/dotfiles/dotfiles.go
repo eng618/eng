@@ -37,6 +37,12 @@ var DotfilesCmd = &cobra.Command{
 			} else {
 				log.Info("  Worktree Path:   %s", worktreePath)
 			}
+
+			gitCfg := config.GetGitConfig()
+			if gitCfg.DevPath != "" {
+				targetPath := config.TargetRepoPath(gitCfg.DevPath)
+				log.Info("  Target Path:     %s", targetPath)
+			}
 			return // Don't show help if info flag is used
 		}
 

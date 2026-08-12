@@ -43,8 +43,8 @@ var CopyChangesCmd = &cobra.Command{
 		}
 		log.Verbose(isVerbose, "Development path: %s", devPath)
 
-		engCfgPath := filepath.Join(devPath, "eng-cfg")
-		log.Verbose(isVerbose, "eng-cfg path: %s", engCfgPath)
+		targetRepoPath := getTargetRepoPathFunc(devPath)
+		log.Verbose(isVerbose, "Target repository path: %s", targetRepoPath)
 
 		// Get modified files
 		modifiedFiles, err := getModifiedFilesFunc(repoPath, worktreePath)
@@ -63,7 +63,7 @@ var CopyChangesCmd = &cobra.Command{
 		// Copy files
 		for _, file := range modifiedFiles {
 			src := filepath.Join(worktreePath, file)
-			dest := filepath.Join(engCfgPath, file)
+			dest := filepath.Join(targetRepoPath, file)
 
 			// Ensure destination directory exists
 			destDir := filepath.Dir(dest)
@@ -103,6 +103,9 @@ var CopyChangesCmd = &cobra.Command{
 		}
 	},
 }
+
+// getTargetRepoPathFunc is injectable for tests.
+var getTargetRepoPathFunc = config.TargetRepoPath
 
 // getModifiedFilesFunc is injectable for tests.
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
