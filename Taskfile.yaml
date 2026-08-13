@@ -249,6 +249,11 @@ tasks:
     cmds:
       - echo "Generating CLI documentation..."
       - go run ./tools/gendocs
+    aliases:
+      - docs:update
+      - update-docs
+      - docs-update
+      - gendocs
 
   tools:test:
     desc: Run tests for maintenance tools

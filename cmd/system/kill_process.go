@@ -161,6 +161,10 @@ var KillProcessCmd = &cobra.Command{
 	Use:   "killProcess [pid]",
 	Short: "Find and kill a process by PID or interactively",
 	Long: `This command finds and kills a process by its PID, or lists processes for interactive selection.
+
+A comma-separated list of PIDs may be provided to kill multiple processes, e.g.
+"eng system killProcess 1234,5678".
+
 If no PID is provided or --interactive is used, it lists running processes for selection.
 Requires 'ps' and 'kill' commands to be available on the system.
 Primarily intended for Unix-like systems (Linux, macOS).`,
@@ -168,8 +172,7 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
 
-		var pidStr string
-		var selectedProcess ProcessInfo
+		var pidList []string
 
 		if len(args) == 0 || processInteractive {
 			log.Message("Listing running processes...")
@@ -182,37 +185,78 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 				log.Warn("No processes found.")
 				return
 			}
-			selectedProcess, err = selectProcess(processes)
+			selectedProcess, err := selectProcess(processes)
 			if err != nil {
 				log.Error("Failed to select process: %v", err)
 				return
 			}
-			pidStr = selectedProcess.PID
+			pidList = []string{selectedProcess.PID}
 		} else {
-			pidStr = args[0]
-			// Validate that the input is a number
-			if _, err := strconv.Atoi(pidStr); err != nil {
-				log.Error("Invalid PID provided: %s. PID must be an integer.", pidStr)
+			log.Message("Parsing process PIDs: %s", args[0])
+			var errs []error
+			pidList, errs = parseProcessList(args[0])
+			if len(errs) > 0 {
+				log.Error("Found %d problem(s) in process PID list %q:", len(errs), args[0])
+				for _, err := range errs {
+					log.Error("  - %v", err)
+				}
 				return
 			}
 		}
 
-		log.Message("Attempting to kill process with PID %s...", pidStr)
-
-		// Kill the process
-		killCmd := exec.Command("kill", "-"+processSignal, pidStr)
-		log.Verbose(isVerbose, "Executing: %s", killCmd.String())
-
-		// Run kill command
-		if err := killCmd.Run(); err != nil {
-			log.Error("Failed to kill process with PID %s: %v", pidStr, err)
-			if strings.Contains(err.Error(), "permission denied") {
-				log.Warn("Try running with sudo: sudo kill -%s %s", processSignal, pidStr)
-			}
-		} else {
-			log.Success("Successfully sent kill signal %s to process with PID %s.", processSignal, pidStr)
+		for _, pidStr := range pidList {
+			killProcess(pidStr, processSignal, isVerbose)
 		}
 	},
+}
+
+// parseProcessList validates a comma-separated list of process PIDs. It returns the
+// normalized PID strings and accumulates every validation problem rather than
+// failing on the first one, so callers can report all issues at once.
+func parseProcessList(input string) ([]string, []error) {
+	if strings.TrimSpace(input) == "" {
+		return nil, []error{errors.New("process PID list cannot be empty")}
+	}
+
+	var pids []string
+	var errs []error
+	for _, raw := range strings.Split(input, ",") {
+		pid := strings.TrimSpace(raw)
+		if pid == "" {
+			errs = append(errs, fmt.Errorf("empty PID in list %q", input))
+			continue
+		}
+		n, err := strconv.Atoi(pid)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("invalid PID %q: PID must be an integer", pid))
+			continue
+		}
+		if n <= 0 {
+			errs = append(errs, fmt.Errorf("invalid PID %q: PID must be greater than 0", pid))
+			continue
+		}
+		pids = append(pids, pid)
+	}
+	return pids, errs
+}
+
+// killProcess finds and terminates the process with the given PID.
+func killProcess(pidStr, signal string, isVerbose bool) {
+	log.Message("Attempting to kill process with PID %s...", pidStr)
+
+	// Kill the process
+	killCmd := exec.Command("kill", "-"+signal, pidStr)
+	log.Verbose(isVerbose, "Executing: %s", killCmd.String())
+
+	// Run kill command
+	if err := killCmd.Run(); err != nil {
+		log.Error("Failed to kill process with PID %s: %v", pidStr, err)
+		if strings.Contains(err.Error(), "permission denied") {
+			log.Warn("Try running with sudo: sudo kill -%s %s", signal, pidStr)
+		}
+	} else {
+		log.Success("Successfully sent kill signal %s to process with PID %s.", signal, pidStr)
+	}
 }
 
 func init() {
