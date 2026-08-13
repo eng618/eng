@@ -1,5 +1,14 @@
 <a name="unreleased"></a>
 
+## [1.38.0](https://github.com/eng618/eng/compare/v1.37.0...v1.38.0) (2026-08-13)
+
+
+### Features
+
+* Enable multi-PID support for killProcess command with bulk validation and error reporting ([2f119f3](https://github.com/eng618/eng/commit/2f119f35b4b348fbc511ca664d138abb2816a5fe))
+* Implement smart resolution for dotfiles target repository path with configurable fallbacks and testing support ([bb1e9e7](https://github.com/eng618/eng/commit/bb1e9e70a2b1d54616ff9284db73cbf3501a2dce))
+* Implement TTY-aware spinner rendering with dynamic line clearing and progress bar updates ([7ca60b7](https://github.com/eng618/eng/commit/7ca60b70a0a95f4f072ef88ee7bd5f427610f1b7))
+
 ## [1.37.0](https://github.com/eng618/eng/compare/v1.36.0...v1.37.0) (2026-08-11)
 
 
