@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.39.1](https://github.com/eng618/eng/compare/v1.39.0...v1.39.1) (2026-08-14)
+
+
+### Bug Fixes
+
+* Update setGPGTrust to use --import-ownertrust for non-interactive GPG key trust configuration ([212ada6](https://github.com/eng618/eng/commit/212ada69fc2a8f73d8960d0f9b941cefe7a0d40b))
+
 ## [1.39.0](https://github.com/eng618/eng/compare/v1.38.0...v1.39.0) (2026-08-14)
 
 
