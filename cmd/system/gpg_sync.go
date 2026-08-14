@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	syncKeyID     string
-	syncKeyserver string
+	syncKeyID      string
+	syncKeyserver  string
 	syncGitHubUser string
 )
 
@@ -36,7 +36,8 @@ and GitHub on secondary devices without needing access to your master key.`,
 func init() {
 	SyncGPGCmd.Flags().StringVarP(&syncKeyID, "key-id", "k", "", "GPG key ID (defaults to git user.signingkey)")
 	SyncGPGCmd.Flags().StringVar(&syncKeyserver, "keyserver", "hkps://keys.openpgp.org", "Keyserver URL")
-	SyncGPGCmd.Flags().StringVar(&syncGitHubUser, "github-user", "", "GitHub username to fetch public key from (e.g. eng618)")
+	SyncGPGCmd.Flags().
+		StringVar(&syncGitHubUser, "github-user", "", "GitHub username to fetch public key from (e.g. eng618)")
 }
 
 // syncGPG pulls the latest public key version from keyservers and GitHub to update local keyring.
