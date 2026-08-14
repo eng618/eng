@@ -31,6 +31,7 @@ func init() {
 	SystemCmd.AddCommand(ProxyCmd)
 	SystemCmd.AddCommand(CompauditFixCmd)
 	SystemCmd.AddCommand(SetupCmd)
+	SystemCmd.AddCommand(GPGCmd)
 
 	// Add flags for subcommands if needed
 }
