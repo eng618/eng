@@ -313,6 +313,7 @@ System utilities for macOS and Linux, including developer setup automation.
 - `eng system setup ssh` — Setup SSH keys for GitHub access
 - `eng system setup gpg` — Setup GPG keys for signing commits and encryption
 - `eng system gpg renew` — Interactively extend GPG primary key & subkey expiration, re-export, publish to keyserver, and update GitHub (aliases: `update`, `extend`)
+- `eng system gpg sync` — Sync updated public key and expiration dates from keyservers/GitHub on secondary devices (aliases: `pull`, `fetch`, `refresh`)
 
 #### Setup Flags
 
@@ -325,6 +326,7 @@ System utilities for macOS and Linux, including developer setup automation.
 | Command                        | Description                                    |
 | ------------------------------ | ---------------------------------------------- |
 | `eng system gpg renew`         | Extend GPG key & subkey expiry (aliases: `update`, `extend`) |
+| `eng system gpg sync`          | Sync updated public key from keyserver/GitHub (aliases: `pull`, `fetch`, `refresh`) |
 | `eng system killPort <port>`   | Kill process on a port                         |
 | `eng system killProcess [pid]` | Kill a process by PID or interactively         |
 | `eng system compauditFix`      | Fix insecure directories reported by compaudit |

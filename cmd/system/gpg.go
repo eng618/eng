@@ -16,4 +16,5 @@ var GPGCmd = &cobra.Command{
 func init() {
 	GPGCmd.AddCommand(SetupGPGCmd)
 	GPGCmd.AddCommand(RenewGPGCmd)
+	GPGCmd.AddCommand(SyncGPGCmd)
 }
