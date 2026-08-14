@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.39.0](https://github.com/eng618/eng/compare/v1.38.0...v1.39.0) (2026-08-14)
+
+
+### Features
+
+* Add system gpg renew command to manage and extend key expiration ([41a9a98](https://github.com/eng618/eng/commit/41a9a986adf7898e7b65f47ab9d61f75fd798477))
+* Add system gpg sync command to update public keys and trust levels from keyservers and GitHub ([e6ded1c](https://github.com/eng618/eng/commit/e6ded1c21939998c782fedc41aa23126a1ea790d))
+
 ## [1.38.0](https://github.com/eng618/eng/compare/v1.37.0...v1.38.0) (2026-08-13)
 
 
