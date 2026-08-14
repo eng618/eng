@@ -196,22 +196,23 @@ func importGPGKeys(verbose bool) (string, error) {
 	return keyID, nil
 }
 
-// setGPGTrust sets a GPG key to ultimate trust level.
+// setGPGTrust sets a GPG key to ultimate trust level non-interactively.
 func setGPGTrust(keyID string, verbose bool) error {
-	log.Message("")
-	log.Start("Setting key trust level...")
-	log.Message("You will be prompted to set the trust level for this key to 'ultimate'.")
-	log.Message("At the 'gpg>' prompt, type: trust")
-	log.Message("Then select 5 for 'ultimate' trust")
-	log.Message("Then type 'save' to confirm")
-	log.Message("")
+	log.Verbose(verbose, "Setting key trust level to ultimate for %s...", keyID)
 
-	cmd := execCommand("gpg", "--edit-key", keyID)
-	cmd.Stdin = strings.NewReader("trust\n5\ny\nsave\n")
+	primaryFpr, _, err := inspectGPGKey(keyID, verbose)
+	if err != nil || primaryFpr == "" {
+		primaryFpr = keyID
+	}
+
+	trustInput := fmt.Sprintf("%s:6:\n", strings.ToUpper(primaryFpr))
+	cmd := execCommand("gpg", "--import-ownertrust")
+	cmd.Stdin = strings.NewReader(trustInput)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {
-		log.Warn("Could not automatically set trust - please run: gpg --edit-key %s", keyID)
+		log.Warn("Could not set ownertrust automatically via --import-ownertrust: %v", err)
+		log.Message("You can manually set trust by running: gpg --edit-key %s", keyID)
 		return nil // Non-fatal - user can set manually
 	}
 
