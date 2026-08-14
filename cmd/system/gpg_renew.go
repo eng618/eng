@@ -42,7 +42,8 @@ func init() {
 
 	RenewGPGCmd.Flags().StringVarP(&renewKeyDir, "key-dir", "d", defaultKeyDir, "Directory containing GPG key backups")
 	RenewGPGCmd.Flags().StringVar(&renewDuration, "duration", "1y", "Expiration duration (e.g., 1y, 2y, 6m)")
-	RenewGPGCmd.Flags().BoolVar(&renewKeepMaster, "keep-master", false, "Keep master key in local keyring (do not strip to subkeys-only)")
+	RenewGPGCmd.Flags().
+		BoolVar(&renewKeepMaster, "keep-master", false, "Keep master key in local keyring (do not strip to subkeys-only)")
 }
 
 // renewGPG guides the user through extending GPG key expiration and managing master key export/removal.
@@ -230,13 +231,18 @@ func renewGPG(verbose bool) error {
 				log.Success("Public key added to GitHub profile")
 			}
 		} else {
-			log.Message("GitHub CLI (gh) not found or not functional. Update manually under GitHub Settings → SSH and GPG keys.")
+			log.Message(
+				"GitHub CLI (gh) not found or not functional. Update manually under GitHub Settings → SSH and GPG keys.",
+			)
 		}
 	}
 
 	// 14. Remove Master Key from Local Keyring (Subkey-only Mode)
 	if !renewKeepMaster {
-		removeMaster, err := ui.Confirm("Remove master key from local keyring (keep subkeys only for commit signing)?", true)
+		removeMaster, err := ui.Confirm(
+			"Remove master key from local keyring (keep subkeys only for commit signing)?",
+			true,
+		)
 		if err == nil && removeMaster {
 			log.Message("")
 			log.Start("Removing master key from local keyring...")
@@ -328,7 +334,8 @@ func findAndImportMasterKey(keyDir string, verbose bool) (string, error) {
 	entries, err := os.ReadDir(keyDir)
 	if err == nil {
 		for _, entry := range entries {
-			if !entry.IsDir() && (strings.HasSuffix(entry.Name(), ".secret.gpg") || strings.HasSuffix(entry.Name(), ".sec.gpg")) {
+			if !entry.IsDir() &&
+				(strings.HasSuffix(entry.Name(), ".secret.gpg") || strings.HasSuffix(entry.Name(), ".sec.gpg")) {
 				path := filepath.Join(keyDir, entry.Name())
 				candidates = append([]string{path}, candidates...)
 			}
