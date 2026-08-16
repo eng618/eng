@@ -35,6 +35,18 @@ func TestFindToolVersionFiles(t *testing.T) {
 	assert.Contains(t, files, rootFile)
 	assert.Contains(t, files, projFile)
 	assert.NotContains(t, files, ignoredFile)
+
+	// Test progress tracking
+	var reportedDirs []string
+	var lastCount int
+	progressFiles, err := FindToolVersionFilesWithProgress([]string{tempDir}, func(currentDir string, foundCount int) {
+		reportedDirs = append(reportedDirs, currentDir)
+		lastCount = foundCount
+	})
+	require.NoError(t, err)
+	assert.Equal(t, files, progressFiles)
+	assert.NotEmpty(t, reportedDirs)
+	assert.Equal(t, 2, lastCount)
 }
 
 func TestParseAndMergeToolVersions(t *testing.T) {

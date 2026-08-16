@@ -30,6 +30,12 @@ var DefaultIgnoredDirs = []string{
 // FindToolVersionFiles recursively scans the given root directories for .tool-versions files,
 // skipping common build, dependency, and VCS directories.
 func FindToolVersionFiles(rootDirs []string) ([]string, error) {
+	return FindToolVersionFilesWithProgress(rootDirs, nil)
+}
+
+// FindToolVersionFilesWithProgress recursively scans the given root directories for .tool-versions files,
+// invoking onProgress (if non-nil) whenever a directory is inspected or a file is found.
+func FindToolVersionFilesWithProgress(rootDirs []string, onProgress func(currentDir string, foundCount int)) ([]string, error) {
 	var foundFiles []string
 	seenPaths := make(map[string]bool)
 
@@ -50,9 +56,16 @@ func FindToolVersionFiles(rootDirs []string) ([]string, error) {
 				if !seenPaths[absRoot] {
 					seenPaths[absRoot] = true
 					foundFiles = append(foundFiles, absRoot)
+					if onProgress != nil {
+						onProgress(absRoot, len(foundFiles))
+					}
 				}
 			}
 			continue
+		}
+
+		if onProgress != nil {
+			onProgress(absRoot, len(foundFiles))
 		}
 
 		err = filepath.WalkDir(absRoot, func(path string, d fs.DirEntry, walkErr error) error {
@@ -66,6 +79,9 @@ func FindToolVersionFiles(rootDirs []string) ([]string, error) {
 				if path != absRoot && slices.Contains(DefaultIgnoredDirs, dirName) {
 					return filepath.SkipDir
 				}
+				if onProgress != nil && path != absRoot {
+					onProgress(path, len(foundFiles))
+				}
 				return nil
 			}
 
@@ -73,6 +89,9 @@ func FindToolVersionFiles(rootDirs []string) ([]string, error) {
 				if !seenPaths[path] {
 					seenPaths[path] = true
 					foundFiles = append(foundFiles, path)
+					if onProgress != nil {
+						onProgress(path, len(foundFiles))
+					}
 				}
 			}
 			return nil

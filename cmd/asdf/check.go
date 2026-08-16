@@ -77,15 +77,24 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 	var scanSpinner *ui.Spinner
 	if !ui.DisableProgress {
 		scanSpinner = ui.NewSpinner("Checking .tool-versions requirements and installed versions...")
+		scanSpinner.Start()
 	}
 
-	discoveredFiles, err := asdf.FindToolVersionFiles(searchRoots)
+	discoveredFiles, err := asdf.FindToolVersionFilesWithProgress(searchRoots, func(_ string, count int) {
+		if scanSpinner != nil {
+			scanSpinner.UpdateMessage(fmt.Sprintf("Scanning for .tool-versions... (%d found)", count))
+		}
+	})
 	if err != nil {
 		if scanSpinner != nil {
 			scanSpinner.Stop()
 		}
 		log.Error("Error scanning for .tool-versions files: %v", err)
 		return err
+	}
+
+	if scanSpinner != nil {
+		scanSpinner.UpdateMessage("Parsing .tool-versions requirements...")
 	}
 
 	_, summaries, err := asdf.ParseAndMergeToolVersions(discoveredFiles)
@@ -95,6 +104,10 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 		}
 		log.Error("Failed to parse .tool-versions files: %v", err)
 		return err
+	}
+
+	if scanSpinner != nil {
+		scanSpinner.UpdateMessage("Verifying installed versions via 'asdf list'...")
 	}
 
 	listCmd := execCommand("asdf", "list")
@@ -174,6 +187,7 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 	var progressSpinner *ui.Spinner
 	if !ui.DisableProgress {
 		progressSpinner = ui.NewProgressSpinner(fmt.Sprintf("Installing %d missing tool version(s)...", totalMissing))
+		progressSpinner.Start()
 	}
 
 	var installedCount int
@@ -186,14 +200,17 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 		}
 
 		instCmd := execCommand("asdf", "install", m.Plugin, m.Version)
-		instCmd.Stdout = log.Writer()
-		instCmd.Stderr = log.ErrorWriter()
+		out, err := instCmd.CombinedOutput()
 
-		if err := instCmd.Run(); err != nil {
+		if err != nil {
+			errDetail := strings.TrimSpace(string(out))
+			if errDetail != "" {
+				errDetail = ": " + errDetail
+			}
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Failed %s @ %s: %v\n", theme.ErrorText.Render("✗"), m.Plugin, m.Version, err)
+				progressSpinner.Logf("  %s Failed %s @ %s%s\n", theme.ErrorText.Render("✗"), m.Plugin, m.Version, errDetail)
 			} else {
-				log.Error("Failed to install %s @ %s: %v", m.Plugin, m.Version, err)
+				log.Error("Failed to install %s @ %s%s", m.Plugin, m.Version, errDetail)
 			}
 		} else {
 			if progressSpinner != nil {

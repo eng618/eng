@@ -114,15 +114,24 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 	var scanSpinner *ui.Spinner
 	if !ui.DisableProgress {
 		scanSpinner = ui.NewSpinner("Scanning for .tool-versions files and calculating disk usage...")
+		scanSpinner.Start()
 	}
 
-	discoveredFiles, err := asdf.FindToolVersionFiles(searchRoots)
+	discoveredFiles, err := asdf.FindToolVersionFilesWithProgress(searchRoots, func(_ string, count int) {
+		if scanSpinner != nil {
+			scanSpinner.UpdateMessage(fmt.Sprintf("Scanning for .tool-versions... (%d found)", count))
+		}
+	})
 	if err != nil {
 		if scanSpinner != nil {
 			scanSpinner.Stop()
 		}
 		log.Error("Error scanning for .tool-versions files: %v", err)
 		return err
+	}
+
+	if scanSpinner != nil {
+		scanSpinner.UpdateMessage("Parsing .tool-versions requirements...")
 	}
 
 	protected, summaries, err := asdf.ParseAndMergeToolVersions(discoveredFiles)
@@ -132,6 +141,10 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		}
 		log.Error("Failed to parse .tool-versions files: %v", err)
 		return err
+	}
+
+	if scanSpinner != nil {
+		scanSpinner.UpdateMessage("Fetching installed versions via 'asdf list'...")
 	}
 
 	listCmd := execCommand("asdf", "list")
@@ -151,6 +164,10 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		}
 		log.Error("Failed to parse 'asdf list' output: %v", err)
 		return err
+	}
+
+	if scanSpinner != nil {
+		scanSpinner.UpdateMessage("Calculating disk usage for removable versions...")
 	}
 
 	asdfDataDir := asdf.GetASDFDataDir(homeDir)
@@ -279,6 +296,7 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 	var progressSpinner *ui.Spinner
 	if !ui.DisableProgress {
 		progressSpinner = ui.NewProgressSpinner(fmt.Sprintf("Pruning %d asdf version(s)...", totalTargets))
+		progressSpinner.Start()
 	}
 
 	// 5. Execute uninstalls with live progress indicator and disk space tracking
@@ -318,17 +336,22 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 		}
 
 		uninstCmd := execCommand("asdf", "uninstall", target.Plugin, target.Version)
-		if err := uninstCmd.Run(); err != nil {
+		out, err := uninstCmd.CombinedOutput()
+		if err != nil {
+			errDetail := strings.TrimSpace(string(out))
+			if errDetail != "" {
+				errDetail = ": " + errDetail
+			}
 			if progressSpinner != nil {
 				progressSpinner.Logf(
-					"  %s Failed %s @ %s: %v\n",
+					"  %s Failed %s @ %s%s\n",
 					theme.ErrorText.Render("✗"),
 					target.Plugin,
 					target.Version,
-					err,
+					errDetail,
 				)
 			} else {
-				log.Error("Failed to uninstall %s @ %s: %v", target.Plugin, target.Version, err)
+				log.Error("Failed to uninstall %s @ %s%s", target.Plugin, target.Version, errDetail)
 			}
 		} else {
 			if progressSpinner != nil {

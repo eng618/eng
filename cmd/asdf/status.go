@@ -44,7 +44,8 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 
 	var scanSpinner *ui.Spinner
 	if !ui.DisableProgress {
-		scanSpinner = ui.NewSpinner("Inspecting asdf plugins, active versions, and disk usage...")
+		scanSpinner = ui.NewSpinner("Inspecting asdf plugins and active versions...")
+		scanSpinner.Start()
 	}
 
 	listCmd := execCommand("asdf", "list")
@@ -99,8 +100,20 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 	}
 
 	var summaries []PluginSummary
+	totalPlugins := len(pluginNames)
 
-	for _, plugin := range pluginNames {
+	var progressSpinner *ui.Spinner
+	if !ui.DisableProgress {
+		progressSpinner = ui.NewProgressSpinner(fmt.Sprintf("Calculating disk usage for %d plugin(s)...", totalPlugins))
+		progressSpinner.Start()
+	}
+
+	for idx, plugin := range pluginNames {
+		if progressSpinner != nil {
+			ratio := float64(idx+1) / float64(totalPlugins)
+			progressSpinner.SetProgressBar(ratio, fmt.Sprintf("[%d/%d] Inspecting disk usage for %s...", idx+1, totalPlugins, plugin))
+		}
+
 		versions := installed[plugin]
 		vCount := len(versions)
 		totalVersions += vCount
@@ -123,6 +136,11 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 			VersionCount: vCount,
 			DiskBytes:    pluginBytes,
 		})
+	}
+
+	if progressSpinner != nil {
+		progressSpinner.SetProgressBar(1.0, "Disk usage calculation complete")
+		progressSpinner.Stop()
 	}
 
 	// Render Dashboard Callout
