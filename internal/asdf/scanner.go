@@ -35,7 +35,10 @@ func FindToolVersionFiles(rootDirs []string) ([]string, error) {
 
 // FindToolVersionFilesWithProgress recursively scans the given root directories for .tool-versions files,
 // invoking onProgress (if non-nil) whenever a directory is inspected or a file is found.
-func FindToolVersionFilesWithProgress(rootDirs []string, onProgress func(currentDir string, foundCount int)) ([]string, error) {
+func FindToolVersionFilesWithProgress(
+	rootDirs []string,
+	onProgress func(currentDir string, foundCount int),
+) ([]string, error) {
 	var foundFiles []string
 	seenPaths := make(map[string]bool)
 

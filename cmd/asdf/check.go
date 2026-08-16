@@ -208,7 +208,13 @@ func runCheck(_cmd *cobra.Command, _args []string) error {
 				errDetail = ": " + errDetail
 			}
 			if progressSpinner != nil {
-				progressSpinner.Logf("  %s Failed %s @ %s%s\n", theme.ErrorText.Render("✗"), m.Plugin, m.Version, errDetail)
+				progressSpinner.Logf(
+					"  %s Failed %s @ %s%s\n",
+					theme.ErrorText.Render("✗"),
+					m.Plugin,
+					m.Version,
+					errDetail,
+				)
 			} else {
 				log.Error("Failed to install %s @ %s%s", m.Plugin, m.Version, errDetail)
 			}

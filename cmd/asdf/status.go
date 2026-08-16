@@ -111,7 +111,10 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 	for idx, plugin := range pluginNames {
 		if progressSpinner != nil {
 			ratio := float64(idx+1) / float64(totalPlugins)
-			progressSpinner.SetProgressBar(ratio, fmt.Sprintf("[%d/%d] Inspecting disk usage for %s...", idx+1, totalPlugins, plugin))
+			progressSpinner.SetProgressBar(
+				ratio,
+				fmt.Sprintf("[%d/%d] Inspecting disk usage for %s...", idx+1, totalPlugins, plugin),
+			)
 		}
 
 		versions := installed[plugin]

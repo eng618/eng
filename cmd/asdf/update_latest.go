@@ -95,7 +95,9 @@ func runUpdateLatest(_cmd *cobra.Command, _args []string) error {
 
 	var fetchSpinner *ui.Spinner
 	if !ui.DisableProgress {
-		fetchSpinner = ui.NewProgressSpinner(fmt.Sprintf("Querying latest available releases for %d tool(s)...", totalPlugins))
+		fetchSpinner = ui.NewProgressSpinner(
+			fmt.Sprintf("Querying latest available releases for %d tool(s)...", totalPlugins),
+		)
 		fetchSpinner.Start()
 	}
 
@@ -104,7 +106,10 @@ func runUpdateLatest(_cmd *cobra.Command, _args []string) error {
 		idx++
 		ratio := float64(idx) / float64(totalPlugins)
 		if fetchSpinner != nil {
-			fetchSpinner.SetProgressBar(ratio, fmt.Sprintf("[%d/%d] Checking latest version for %s...", idx, totalPlugins, plugin))
+			fetchSpinner.SetProgressBar(
+				ratio,
+				fmt.Sprintf("[%d/%d] Checking latest version for %s...", idx, totalPlugins, plugin),
+			)
 		}
 
 		currentVer := ""
