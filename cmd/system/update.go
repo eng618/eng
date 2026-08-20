@@ -381,4 +381,3 @@ func updateIde(isVerbose, autoApprove bool) {
 		log.Warn("Antigravity IDE update check: %v", err)
 	}
 }
-

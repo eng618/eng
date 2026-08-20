@@ -107,7 +107,10 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 	if archivePath == "" {
 		log.Warn("No Antigravity IDE archive found in ~/Downloads and no download URL specified.")
 		if !autoApprove {
-			confirm, err := ui.Confirm("Would you like to open the official Antigravity download page in your browser?", true)
+			confirm, err := ui.Confirm(
+				"Would you like to open the official Antigravity download page in your browser?",
+				true,
+			)
 			if err == nil && confirm {
 				_ = openURL("https://antigravity.google/download")
 				log.Message("Please download the Linux Antigravity IDE package to ~/Downloads.")
@@ -297,11 +300,17 @@ func installIdeArchive(archivePath, homeDir string, verbose bool) error {
 	}
 
 	if isDesktopHub && !hasIdeCLI {
-		return fmt.Errorf("the archive '%s' appears to be the Antigravity Desktop App (2.0), not the Antigravity IDE", filepath.Base(archivePath))
+		return fmt.Errorf(
+			"the archive '%s' appears to be the Antigravity Desktop App (2.0), not the Antigravity IDE",
+			filepath.Base(archivePath),
+		)
 	}
 
 	if !hasIdeCLI {
-		return fmt.Errorf("the archive '%s' does not appear to contain a valid Antigravity IDE installation", filepath.Base(archivePath))
+		return fmt.Errorf(
+			"the archive '%s' does not appear to contain a valid Antigravity IDE installation",
+			filepath.Base(archivePath),
+		)
 	}
 
 	log.Success("Archive payload verified as Antigravity IDE.")
