@@ -337,6 +337,21 @@ func installIdeArchive(archivePath, homeDir string, verbose bool) error {
 		return fmt.Errorf("failed to deploy files to %s: %w", installDir, err)
 	}
 
+	// Ensure launcher passes --no-sandbox for Linux user-space execution
+	launcherPath := filepath.Join(installDir, "bin", "antigravity-ide")
+	if launcherBytes, err := os.ReadFile(launcherPath); err == nil {
+		launcherStr := string(launcherBytes)
+		if !strings.Contains(launcherStr, "--no-sandbox") {
+			launcherStr = strings.Replace(
+				launcherStr,
+				`"$ELECTRON" "$CLI" "$@"`,
+				`"$ELECTRON" "$CLI" --no-sandbox "$@"`,
+				1,
+			)
+			_ = os.WriteFile(launcherPath, []byte(launcherStr), 0o755)
+		}
+	}
+
 	// Ensure permissions
 	_ = os.Chmod(filepath.Join(installDir, "antigravity-ide"), 0o755)
 	_ = os.Chmod(filepath.Join(installDir, "bin", "antigravity-ide"), 0o755)
