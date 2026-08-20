@@ -56,52 +56,6 @@ tasks:
   # -----------------------------------------------------------------------------
   # Release helpers
 
-  changelog:
-    desc: "[DEPRECATED] Generate changelog and commit (Now automated by release-please)"
-    cmds:
-      - echo "Generating changelog..."
-      - git-chglog -o CHANGELOG.md
-      - git add --update
-      - 'git commit -m "chore(CHANGELOG): update [skip-ci]"'
-      - "echo Changelog updated and committed. Note: release-please now automates this on main."
-    silent: true
-
-  changelog-ci:
-    desc: Generate changelog and commit (for CI)
-    cmds:
-      - task changelog
-
-  changelog-hook:
-    desc: Update changelog and amend current commit
-    cmds:
-      - echo "Updating changelog and amending commit..."
-      - git-chglog -o CHANGELOG.md
-      - git add CHANGELOG.md
-      - git commit --amend --no-edit
-      - echo "Changelog updated and commit amended."
-    silent: true
-
-  setup-hooks:
-    desc: Set up git hooks for changelog automation
-    cmds:
-      - echo "Setting up pre-commit hook for changelog..."
-      - mkdir -p .git/hooks
-      - |
-        cat > .git/hooks/pre-commit << 'EOF'
-        #!/bin/sh
-        # Auto-update changelog before commit
-        if command -v git-chglog >/dev/null 2>&1; then
-            echo "Updating changelog..."
-            git-chglog -o CHANGELOG.md >/dev/null 2>&1
-            git add CHANGELOG.md >/dev/null 2>&1
-            echo "Changelog updated."
-        else
-            echo "Warning: git-chglog not found. Install with: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest"
-        fi
-        EOF
-      - chmod +x .git/hooks/pre-commit
-      - echo "Pre-commit hook installed. Changelog will be updated automatically before each commit."
-
   release-check:
     desc: Check goreleaser configuration
     cmds:
@@ -112,17 +66,9 @@ tasks:
     desc: Run goreleaser release with --clean
     cmds:
       - echo "Running goreleaser release..."
-      # Goreleaser typically handles its own ldflags via .goreleaser.yaml
-      # Ensure your .goreleaser.yaml is configured if you use goreleaser for releases
+      # Goreleaser handles ldflags via .goreleaser.yaml
       - goreleaser release --clean
 
-  release:
-    desc: "[DEPRECATED] Perform a release (Now automated by release-please)"
-    cmds:
-      - echo "Manual release is deprecated. Releases are now automated via release-please on GitHub."
-      - echo "To release, merge the 'release-please' PR on the main branch."
-      - # task: release-clean
-      - # task: changelog
 
   # -----------------------------------------------------------------------------
   # development
@@ -165,31 +111,21 @@ tasks:
   format:
     desc: Format Go code
     cmds:
-      - |
-        if command -v golangci-lint >/dev/null 2>&1; then
-          golangci-lint fmt
-        else
-          echo "golangci-lint not found, falling back to gofmt..."
-          gofmt -w .
-        fi
+      - echo "Formatting Go code with gofmt..."
+      - gofmt -w -s .
 
   format-check:
     desc: Check Go code formatting
     cmds:
       - |
-        if command -v golangci-lint >/dev/null 2>&1; then
-          golangci-lint fmt --diff
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "The following files are not formatted:"
+          echo "$unformatted"
+          echo "Run 'task format' to fix."
+          exit 1
         else
-          echo "golangci-lint not found, falling back to gofmt..."
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "The following files are not formatted:"
-            echo "$unformatted"
-            echo "Run 'task format' to fix."
-            exit 1
-          else
-            echo "All Go files are properly formatted."
-          fi
+          echo "All Go files are properly formatted."
         fi
     silent: true
 

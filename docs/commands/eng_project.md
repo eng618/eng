@@ -45,7 +45,7 @@ eng project [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng project add](eng_project_add.md)	 - Add a new project or repository to configuration
 * [eng project fetch](eng_project_fetch.md)	 - Fetch updates for all project repositories
 * [eng project list](eng_project_list.md)	 - List configured projects and their repositories

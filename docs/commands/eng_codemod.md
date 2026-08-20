@@ -21,7 +21,7 @@ Run codemods or setup helpers for various project types.
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng codemod copilot](eng_codemod_copilot.md)	 - Setup custom Copilot instructions file
 * [eng codemod lint-setup](eng_codemod_lint-setup.md)	 - Setup linting and formatting for a Node.js project
 * [eng codemod native](eng_codemod_native.md)	 - Bootstrap a new React Native Expo project with gvtech-design

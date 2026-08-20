@@ -31,7 +31,7 @@ eng asdf [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng asdf check](eng_asdf_check.md)	 - Verify that all required tool versions in .tool-versions files are installed
 * [eng asdf prune](eng_asdf_prune.md)	 - Prune outdated asdf tool versions not listed in .tool-versions
 * [eng asdf status](eng_asdf_status.md)	 - Display an overview dashboard of installed asdf plugins, active versions, and disk usage

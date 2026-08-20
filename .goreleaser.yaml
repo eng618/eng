@@ -52,18 +52,18 @@ archives:
       - goos: windows
         formats: zip
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   # Use commit hash for snapshot version template for clarity
-  version_template: '{{ .ShortCommit }}-next'
+  version_template: "{{ .ShortCommit }}-next"
 
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '(?i)skip ci' # Exclude common skip patterns
+      - "^docs:"
+      - "^test:"
+      - "(?i)skip ci" # Exclude common skip patterns
       - '^chore\(release\):' # Exclude goreleaser's own release commits
       - '^chore\(CHANGELOG\):' # Exclude changelog update commits
 
@@ -87,5 +87,4 @@ brews:
       generate_completions_from_executable(bin/"eng", "completion")
     test: |
       assert_match version.to_s, shell_output("#{bin}/eng --version")
-      assert_match "Personal CLI", shell_output("#{bin}/eng --help")
-
+      assert_match "USAGE", shell_output("#{bin}/eng --help")

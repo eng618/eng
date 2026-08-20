@@ -33,6 +33,7 @@ import (
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/compose"
 	"github.com/eng618/eng/cmd/config"
+	"github.com/eng618/eng/cmd/doctor"
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
@@ -54,7 +55,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "eng",
-	Short: "A personal cli to facilitate my workflow.",
+	Short: "A personal CLI to facilitate workflow and system maintenance.",
 	Long: `
                                           __ __
                                          |  \  \
@@ -69,7 +70,7 @@ var rootCmd = &cobra.Command{
                    \▓▓    ▓▓
                     \▓▓▓▓▓▓
 
-This is personal cli to facilitate my workflow. An maintain my development machine.`,
+This is a personal CLI to facilitate developer workflows and maintain development machines.`,
 }
 
 // GetRootCommand returns the root cobra.Command instance (used by tools/gendocs).
@@ -135,6 +136,7 @@ func init() {
 	project.ProjectCmd.GroupID = "mgmt"
 	dashboardCmd.GroupID = "mgmt"
 
+	doctor.DoctorCmd.GroupID = "meta"
 	version.VersionCmd.GroupID = "meta"
 
 	// Add subcommands
@@ -142,6 +144,8 @@ func init() {
 	rootCmd.AddCommand(codemod.CodemodCmd)
 	rootCmd.AddCommand(compose.ComposeCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(dashboardCmd)
+	rootCmd.AddCommand(doctor.DoctorCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(files.FilesCmd)
 	rootCmd.AddCommand(gitlab.GitLabCmd)

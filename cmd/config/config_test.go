@@ -68,6 +68,7 @@ func mockAllPrompts() func() {
 func TestConfigCmd_Subcommands(t *testing.T) {
 	subcommands := ConfigCmd.Commands()
 	expected := map[string]bool{
+		"list":                    false,
 		"edit":                    false,
 		"email":                   false,
 		"dotfiles-repo":           false,
@@ -305,7 +306,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 9
+	// Subcommand Count: 10
 }
 
 // ============================================================================

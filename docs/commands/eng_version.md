@@ -33,5 +33,5 @@ eng version [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 

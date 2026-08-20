@@ -21,7 +21,7 @@ Commands that integrate with GitLab using the glab CLI.
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng gitlab auth](eng_gitlab_auth.md)	 - Manage GitLab authentication for eng
 * [eng gitlab mr-rules](eng_gitlab_mr-rules.md)	 - Manage GitLab merge request rules
 

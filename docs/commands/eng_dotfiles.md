@@ -26,7 +26,7 @@ eng dotfiles [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng dotfiles checkout](eng_dotfiles_checkout.md)	 - checkout files in your local bare repository
 * [eng dotfiles copy-changes](eng_dotfiles_copy-changes.md)	 - copy modified dotfiles to local git repo
 * [eng dotfiles fetch](eng_dotfiles_fetch.md)	 - fetch your local bare repository

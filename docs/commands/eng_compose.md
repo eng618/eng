@@ -25,7 +25,7 @@ eng compose [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng compose down](eng_compose_down.md)	 - Spin down one or more Compose stacks
 * [eng compose list](eng_compose_list.md)	 - List discovered Docker Compose stacks
 * [eng compose logs](eng_compose_logs.md)	 - View logs from a Compose stack

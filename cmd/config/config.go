@@ -42,6 +42,7 @@ It should be located at $HOME/.eng.yaml`,
 }
 
 func init() {
+	ConfigCmd.AddCommand(ListCmd)
 	ConfigCmd.AddCommand(EditCmd)
 	ConfigCmd.AddCommand(EmailCmd)
 	ConfigCmd.AddCommand(DotfilesRepoCmd)

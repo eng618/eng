@@ -144,6 +144,5 @@ var selectEditorCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(dashboardCmd)
 	dashboardCmd.AddCommand(selectEditorCmd)
 }

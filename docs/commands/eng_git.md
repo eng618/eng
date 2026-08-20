@@ -27,7 +27,7 @@ eng git [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng git branch-all](eng_git_branch-all.md)	 - Show current branch of all git repositories in development folder
 * [eng git clean-all](eng_git_clean-all.md)	 - Clean untracked files in all git repositories in development folder
 * [eng git fetch-all](eng_git_fetch-all.md)	 - Fetch all git repositories in development folder

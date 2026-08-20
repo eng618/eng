@@ -25,7 +25,7 @@ eng system [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng system compauditFix](eng_system_compauditFix.md)	 - Fix insecure directories reported by compaudit
 * [eng system gpg](eng_system_gpg.md)	 - Manage GPG keys for commit signing and encryption
 * [eng system immich](eng_system_immich.md)	 - Manage Immich photo stack, database, backups, and lifecycle

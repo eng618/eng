@@ -27,7 +27,7 @@ eng config [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal cli to facilitate my workflow.
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
 * [eng config dotfiles-bare-repo-path](eng_config_dotfiles-bare-repo-path.md)	 - Update config dotfiles bare repo path
 * [eng config dotfiles-branch](eng_config_dotfiles-branch.md)	 - Update config dotfiles branch
 * [eng config dotfiles-repo](eng_config_dotfiles-repo.md)	 - Update config dotfiles repo path
@@ -36,5 +36,6 @@ eng config [flags]
 * [eng config email](eng_config_email.md)	 - Update config email
 * [eng config git-dev-path](eng_config_git-dev-path.md)	 - Update config git dev path
 * [eng config ide-url](eng_config_ide-url.md)	 - Update Antigravity IDE download URL
+* [eng config list](eng_config_list.md)	 - Display a summary of all active configuration settings
 * [eng config verbose](eng_config_verbose.md)	 - Update config verbose setting
 

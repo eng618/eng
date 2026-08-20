@@ -1,6 +1,6 @@
 ## eng
 
-A personal cli to facilitate my workflow.
+A personal CLI to facilitate workflow and system maintenance.
 
 ### Synopsis
 
@@ -18,7 +18,7 @@ A personal cli to facilitate my workflow.
                    \▓▓    ▓▓
                     \▓▓▓▓▓▓
 
-This is personal cli to facilitate my workflow. An maintain my development machine.
+This is a personal CLI to facilitate developer workflows and maintain development machines.
 
 ### Options
 
@@ -35,6 +35,7 @@ This is personal cli to facilitate my workflow. An maintain my development machi
 * [eng compose](eng_compose.md)	 - Manage Docker Compose swarms and services
 * [eng config](eng_config.md)	 - Manage the cli's config file.
 * [eng dashboard](eng_dashboard.md)	 - Launch the interactive Project & Git Dashboard
+* [eng doctor](eng_doctor.md)	 - Check system health and verify dependencies
 * [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
 * [eng files](eng_files.md)	 - A command for managing files
 * [eng git](eng_git.md)	 - Manage multiple git repositories
