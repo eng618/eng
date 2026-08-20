@@ -94,8 +94,8 @@ func TestInstallIdeArchive_Validation(t *testing.T) {
 	// 1. Desktop App archive (has resources/app.asar, no cli.js) should fail validation
 	desktopAppTar := filepath.Join(tmpDir, "Antigravity.tar.gz")
 	createTestTarGz(t, desktopAppTar, map[string]string{
-		"Antigravity/antigravity":          "binary",
-		"Antigravity/resources/app.asar":   "asar payload",
+		"Antigravity/antigravity":        "binary",
+		"Antigravity/resources/app.asar": "asar payload",
 	})
 
 	err := installIdeArchive(desktopAppTar, homeDir, false)
@@ -109,9 +109,9 @@ func TestInstallIdeArchive_Validation(t *testing.T) {
 	// 2. Valid IDE archive (has resources/app/out/cli.js and bin/antigravity-ide)
 	ideTar := filepath.Join(tmpDir, "Antigravity IDE.tar.gz")
 	createTestTarGz(t, ideTar, map[string]string{
-		"Antigravity IDE/antigravity-ide":             "#!/bin/sh\necho 1.107.0",
-		"Antigravity IDE/bin/antigravity-ide":         "#!/bin/sh\necho 1.107.0",
-		"Antigravity IDE/resources/app/out/cli.js":   "console.log('cli');",
+		"Antigravity IDE/antigravity-ide":          "#!/bin/sh\necho 1.107.0",
+		"Antigravity IDE/bin/antigravity-ide":      "#!/bin/sh\necho 1.107.0",
+		"Antigravity IDE/resources/app/out/cli.js": "console.log('cli');",
 	})
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
