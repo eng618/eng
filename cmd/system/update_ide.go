@@ -341,7 +341,7 @@ func installIdeArchive(archivePath, homeDir string, verbose bool) error {
 	launcherPath := filepath.Join(installDir, "bin", "antigravity-ide")
 	if launcherBytes, err := os.ReadFile(launcherPath); err == nil {
 		launcherStr := string(launcherBytes)
-		if !strings.Contains(launcherStr, "--no-sandbox") {
+		if !strings.Contains(launcherStr, `"$CLI" --no-sandbox`) {
 			launcherStr = strings.Replace(
 				launcherStr,
 				`"$ELECTRON" "$CLI" "$@"`,
