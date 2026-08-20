@@ -47,3 +47,15 @@ func GetContainersConfig() ContainersConfig {
 		Path: viper.GetString("containers.path"),
 	}
 }
+
+// AntigravityConfig holds Antigravity-related configuration.
+type AntigravityConfig struct {
+	IdeDownloadURL string `mapstructure:"ide_download_url"`
+}
+
+// GetAntigravityConfig retrieves the Antigravity configuration from Viper.
+func GetAntigravityConfig() AntigravityConfig {
+	return AntigravityConfig{
+		IdeDownloadURL: viper.GetString("antigravity.ide_download_url"),
+	}
+}

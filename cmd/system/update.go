@@ -2,6 +2,7 @@ package system
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/asdf"
 	"github.com/eng618/eng/internal/cmdutil"
@@ -81,6 +83,7 @@ func init() {
 	UpdateCmd.Flags().BoolP("yes", "y", false, "Auto-approve cleanup operations without prompting")
 	UpdateCmd.Flags().Int("cleanup-timeout", 60, "Timeout in seconds for cleanup confirmation prompt")
 	UpdateCmd.AddCommand(BrewCmd)
+	UpdateCmd.AddCommand(UpdateIdeCmd)
 }
 
 func updateUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
@@ -99,6 +102,7 @@ func updateUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
 	runCleanup(isVerbose, autoApprove, cleanupTimeout)
 	updateBrew(isVerbose)
 	updateAsdf(isVerbose)
+	updateIde(isVerbose, autoApprove)
 }
 
 func updateMacOS(isVerbose bool) {
@@ -348,3 +352,33 @@ func runCleanupOperation(isVerbose bool, command, operationName string) {
 		log.Success("%s completed.", operationName)
 	}
 }
+
+func updateIde(isVerbose, autoApprove bool) {
+	homeDir, err := userHomeDir()
+	if err != nil {
+		return
+	}
+	installDir := filepath.Join(homeDir, ".local", "opt", "antigravity-ide")
+	_, errStat := stat(installDir)
+	_, errPath := lookPath("agy-ide")
+
+	if errStat != nil && errPath != nil {
+		log.Verbose(isVerbose, "Antigravity IDE is not installed, skipping IDE update.")
+		return
+	}
+
+	downloadsDir := filepath.Join(homeDir, "Downloads")
+	archive := findLatestIdeArchive(downloadsDir)
+	configURL := strings.TrimSpace(viper.GetString("antigravity.ide_download_url"))
+
+	if archive == "" && configURL == "" {
+		log.Verbose(isVerbose, "No pending Antigravity IDE archive or URL found, skipping IDE update.")
+		return
+	}
+
+	log.Message("Checking for Antigravity IDE updates...")
+	if err := RunIdeUpdate(context.Background(), "", isVerbose, autoApprove); err != nil {
+		log.Warn("Antigravity IDE update check: %v", err)
+	}
+}
+

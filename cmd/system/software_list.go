@@ -1,7 +1,9 @@
 package system
 
 import (
+	"context"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/eng618/eng/internal/log"
@@ -366,12 +368,24 @@ func getUtilityAndOtherApps() []Software {
 			Install:     installByURL("https://www.jabra.com/software-and-services/jabra-direct"),
 		},
 		{
-			Name:        "Antigravity",
-			Description: "Antigravity Tool",
+			Name:        "Antigravity IDE",
+			Description: "AI-First IDE",
 			Optional:    false,
 			URL:         "https://antigravity.google/download",
-			Check:       checkFalse,
-			Install:     installByURL("https://antigravity.google/download"),
+			Check: func() bool {
+				if checkByPath("agy-ide")() || checkByPath("antigravity-ide")() {
+					return true
+				}
+				homeDir, err := userHomeDir()
+				if err != nil {
+					return false
+				}
+				_, err = stat(filepath.Join(homeDir, ".local", "opt", "antigravity-ide"))
+				return err == nil
+			},
+			Install: func() error {
+				return RunIdeUpdate(context.Background(), "", false, false)
+			},
 		},
 	}
 }

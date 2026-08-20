@@ -330,7 +330,9 @@ System utilities for macOS and Linux, including developer setup automation.
 | `eng system killPort <port>`   | Kill process on a port                         |
 | `eng system killProcess [pid]` | Kill a process by PID or interactively         |
 | `eng system compauditFix`      | Fix insecure directories reported by compaudit |
-| `eng system update`            | Update system packages                         |
+| `eng system update`            | Update system packages, cleanup, brew, asdf, and IDE |
+| `eng system update brew`       | Update Homebrew packages only                  |
+| `eng system update ide`        | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`) |
 | `eng system proxy`             | Manage proxy settings                          |
 
 ### killProcess Flags
@@ -501,6 +503,7 @@ Manage CLI configuration stored at `$HOME/.eng.yaml`.
 | `eng config dotfiles-bare-repo-path` | Set bare repo location                       |
 | `eng config dotfiles-repo`           | Set dotfiles repo path                       |
 | `eng config email`                   | Set email address                            |
+| `eng config ide-url`                 | Set Antigravity IDE download URL             |
 | `eng config verbose`                 | Set verbose output default                   |
 
 ---

@@ -75,6 +75,7 @@ func TestConfigCmd_Subcommands(t *testing.T) {
 		"dotfiles-branch":         false,
 		"dotfiles-bare-repo-path": false,
 		"git-dev-path":            false,
+		"ide-url [url]":           false,
 		"verbose":                 false,
 	}
 
@@ -267,6 +268,33 @@ func TestEditCmd_ConfigFlags(t *testing.T) {
 	}
 }
 
+func TestIdeURLCmd(t *testing.T) {
+	setupTestViper(t)
+	restore := mockAllPrompts()
+	defer restore()
+
+	// Test Case 1: Pass URL directly as argument
+	IdeURLCmd.Run(IdeURLCmd, []string{"https://example.com/antigravity-ide.tar.gz"})
+	if viper.GetString("antigravity.ide_download_url") != "https://example.com/antigravity-ide.tar.gz" {
+		t.Errorf("expected antigravity.ide_download_url to be https://example.com/antigravity-ide.tar.gz, got %s",
+			viper.GetString("antigravity.ide_download_url"))
+	}
+
+	// Test Case 2: Interactive prompt update
+	ui.Confirm = func(_ string, _ bool) (bool, error) {
+		return false, nil // reject existing
+	}
+	ui.Input = func(_, _ string) (string, error) {
+		return "https://new.example.com/ide.tar.gz", nil
+	}
+
+	IdeURLCmd.Run(IdeURLCmd, []string{})
+	if viper.GetString("antigravity.ide_download_url") != "https://new.example.com/ide.tar.gz" {
+		t.Errorf("expected antigravity.ide_download_url to update to new url, got %s",
+			viper.GetString("antigravity.ide_download_url"))
+	}
+}
+
 // ============================================================================
 // E - Examples (Executable Documentation)
 // ============================================================================
@@ -277,7 +305,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 8
+	// Subcommand Count: 9
 }
 
 // ============================================================================
