@@ -1,5 +1,14 @@
 <a name="unreleased"></a>
 
+## [1.40.0](https://github.com/eng618/eng/compare/v1.39.1...v1.40.0) (2026-08-20)
+
+
+### Features
+
+* Enhance CLI progress feedback with detailed status updates and improved command error reporting ([c80950c](https://github.com/eng618/eng/commit/c80950c0a327036961a6abd3b6eb1cf1a791aaf4))
+* **immich:** Add immich photo stack management commands with cross-platform safety guards ([87a5125](https://github.com/eng618/eng/commit/87a51251a366771c89087c00b2597b3902d078ab))
+* **update:** Add agy-ide update support to system and config ([2d084a5](https://github.com/eng618/eng/commit/2d084a59f04f7d50743b338100a7019d156ce5d3))
+
 ## [1.39.1](https://github.com/eng618/eng/compare/v1.39.0...v1.39.1) (2026-08-14)
 
 
