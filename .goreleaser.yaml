@@ -66,3 +66,26 @@ changelog:
       - '(?i)skip ci' # Exclude common skip patterns
       - '^chore\(release\):' # Exclude goreleaser's own release commits
       - '^chore\(CHANGELOG\):' # Exclude changelog update commits
+
+brews:
+  - name: eng
+    repository:
+      owner: eng618
+      name: homebrew-eng
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: Eric N. Garcia
+      email: eng618@garciaericn.com
+    commit_msg_template: "Update eng to {{ .Tag }}"
+    directory: Formula
+    homepage: "https://github.com/eng618/eng"
+    description: "Personal CLI to help facilitate my normal workflow"
+    license: "MIT"
+    install: |
+      bin.install "eng"
+      generate_completions_from_executable(bin/"eng", "completion")
+    test: |
+      assert_match version.to_s, shell_output("#{bin}/eng --version")
+      assert_match "Personal CLI", shell_output("#{bin}/eng --help")
+
