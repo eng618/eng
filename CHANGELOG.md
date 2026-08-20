@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.40.1](https://github.com/eng618/eng/compare/v1.40.0...v1.40.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* Inject --no-sandbox flag into IDE launcher script during update ([9fb258d](https://github.com/eng618/eng/commit/9fb258d5d63d2983e68bb4c22fac9de7ce6674ad))
+
 ## [1.40.0](https://github.com/eng618/eng/compare/v1.39.1...v1.40.0) (2026-08-20)
 
 
