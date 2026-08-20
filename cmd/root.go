@@ -37,6 +37,7 @@ import (
 	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/gitlab"
+	"github.com/eng618/eng/cmd/immich"
 	"github.com/eng618/eng/cmd/project"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
@@ -127,6 +128,7 @@ func init() {
 	compose.ComposeCmd.GroupID = "envops"
 	dotfiles.DotfilesCmd.GroupID = "envops"
 	files.FilesCmd.GroupID = "envops"
+	immich.ImmichCmd.GroupID = "envops"
 	system.SystemCmd.GroupID = "envops"
 
 	config.ConfigCmd.GroupID = "mgmt"
@@ -144,6 +146,7 @@ func init() {
 	rootCmd.AddCommand(files.FilesCmd)
 	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
+	rootCmd.AddCommand(immich.ImmichCmd)
 	rootCmd.AddCommand(project.ProjectCmd)
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)

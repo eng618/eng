@@ -32,6 +32,7 @@ func init() {
 	SystemCmd.AddCommand(CompauditFixCmd)
 	SystemCmd.AddCommand(SetupCmd)
 	SystemCmd.AddCommand(GPGCmd)
+	SystemCmd.AddCommand(ImmichCmd)
 
 	// Add flags for subcommands if needed
 }
