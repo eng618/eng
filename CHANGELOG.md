@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.41.0](https://github.com/eng618/eng/compare/v1.40.1...v1.41.0) (2026-08-20)
+
+
+### Features
+
+* Implement doctor command for system diagnostics and add config list functionality ([28f3a00](https://github.com/eng618/eng/commit/28f3a00545a10d5174e5e9195e781ce53009baa2))
+
+
+### Bug Fixes
+
+* Enforce --no-sandbox flag for antigravity-ide launcher script ([894a06b](https://github.com/eng618/eng/commit/894a06bf0ac7ae08d3f27d163a627a5cdcb908f3))
+
 ## [1.40.1](https://github.com/eng618/eng/compare/v1.40.0...v1.40.1) (2026-08-20)
 
 
