@@ -85,8 +85,6 @@ homebrew_casks:
       verified: "github.com/eng618/eng"
     binaries:
       - eng
-    conflicts:
-      - formula: eng
     generate_completions_from_executable:
       args:
         - completion
