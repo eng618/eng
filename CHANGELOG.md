@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.42.0](https://github.com/eng618/eng/compare/v1.41.0...v1.42.0) (2026-08-21)
+
+
+### Features
+
+* Migrate Homebrew distribution from formula to cask and update detection logic to support cask paths ([181938e](https://github.com/eng618/eng/commit/181938e55ff51d2b8406de591b4472fdc423f16b))
+
 ## [1.41.0](https://github.com/eng618/eng/compare/v1.40.1...v1.41.0) (2026-08-20)
 
 
