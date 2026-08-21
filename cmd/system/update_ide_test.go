@@ -158,3 +158,116 @@ func TestDownloadArchive(t *testing.T) {
 		t.Errorf("unexpected content: %s, err: %v", string(content), err)
 	}
 }
+
+func TestRunIdeUpdate_CleanupPrompt(t *testing.T) {
+	origExec := execCommand
+	origHome := userHomeDir
+	origConfirm := ui.Confirm
+	ui.DisableProgress = true
+	defer func() {
+		execCommand = origExec
+		userHomeDir = origHome
+		ui.Confirm = origConfirm
+		ui.DisableProgress = false
+	}()
+
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		return origExec("echo", "1.107.0")
+	}
+
+	t.Run("prompts and deletes archive when confirmed", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		mockHome := t.TempDir()
+		userHomeDir = func() (string, error) { return mockHome, nil }
+
+		ideTar := filepath.Join(tmpDir, "Antigravity IDE.tar.gz")
+		createTestTarGz(t, ideTar, map[string]string{
+			"Antigravity IDE/antigravity-ide":          "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/bin/antigravity-ide":      "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/resources/app/out/cli.js": "console.log('cli');",
+		})
+
+		promptCalled := false
+		ui.Confirm = func(msg string, defVal bool) (bool, error) {
+			if strings.Contains(msg, "Delete downloaded release archive") {
+				promptCalled = true
+				return true, nil
+			}
+			return false, nil
+		}
+
+		err := RunIdeUpdate(context.Background(), ideTar, false, false)
+		if err != nil {
+			t.Fatalf("RunIdeUpdate failed: %v", err)
+		}
+
+		if !promptCalled {
+			t.Error("expected cleanup confirmation prompt to be called")
+		}
+
+		if _, err := os.Stat(ideTar); !os.IsNotExist(err) {
+			t.Errorf("expected archive %s to be deleted, but it still exists", ideTar)
+		}
+	})
+
+	t.Run("keeps archive when user declines prompt", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		mockHome := t.TempDir()
+		userHomeDir = func() (string, error) { return mockHome, nil }
+
+		ideTar := filepath.Join(tmpDir, "Antigravity IDE.tar.gz")
+		createTestTarGz(t, ideTar, map[string]string{
+			"Antigravity IDE/antigravity-ide":          "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/bin/antigravity-ide":      "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/resources/app/out/cli.js": "console.log('cli');",
+		})
+
+		ui.Confirm = func(msg string, defVal bool) (bool, error) {
+			if strings.Contains(msg, "Delete downloaded release archive") {
+				return false, nil
+			}
+			return false, nil
+		}
+
+		err := RunIdeUpdate(context.Background(), ideTar, false, false)
+		if err != nil {
+			t.Fatalf("RunIdeUpdate failed: %v", err)
+		}
+
+		if _, err := os.Stat(ideTar); err != nil {
+			t.Errorf("expected archive %s to be kept, but got error: %v", ideTar, err)
+		}
+	})
+
+	t.Run("auto-deletes archive when autoApprove is true", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		mockHome := t.TempDir()
+		userHomeDir = func() (string, error) { return mockHome, nil }
+
+		ideTar := filepath.Join(tmpDir, "Antigravity IDE.tar.gz")
+		createTestTarGz(t, ideTar, map[string]string{
+			"Antigravity IDE/antigravity-ide":          "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/bin/antigravity-ide":      "#!/bin/sh\necho 1.107.0",
+			"Antigravity IDE/resources/app/out/cli.js": "console.log('cli');",
+		})
+
+		promptCalled := false
+		ui.Confirm = func(msg string, defVal bool) (bool, error) {
+			promptCalled = true
+			return false, nil
+		}
+
+		err := RunIdeUpdate(context.Background(), ideTar, false, true)
+		if err != nil {
+			t.Fatalf("RunIdeUpdate failed: %v", err)
+		}
+
+		if promptCalled {
+			t.Error("expected prompt not to be called when autoApprove is true")
+		}
+
+		if _, err := os.Stat(ideTar); !os.IsNotExist(err) {
+			t.Errorf("expected archive %s to be deleted, but it still exists", ideTar)
+		}
+	})
+}

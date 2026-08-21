@@ -69,6 +69,7 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 	}
 
 	archivePath := target
+	isTempDownload := false
 
 	// 1. If target is a URL, download it
 	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
@@ -77,6 +78,7 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 			return fmt.Errorf("failed to download archive: %w", err)
 		}
 		archivePath = downloaded
+		isTempDownload = true
 		defer os.Remove(downloaded)
 	} else if archivePath == "" {
 		// 2. Check if a configured URL exists
@@ -88,6 +90,7 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 				log.Warn("Download from configured URL failed: %v", err)
 			} else {
 				archivePath = downloaded
+				isTempDownload = true
 				defer os.Remove(downloaded)
 			}
 		}
@@ -121,7 +124,35 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 		return errors.New("no Antigravity IDE archive available to install")
 	}
 
-	return installIdeArchive(archivePath, homeDir, verbose)
+	if err := installIdeArchive(archivePath, homeDir, verbose); err != nil {
+		return err
+	}
+
+	// Prompt to delete/cleanup the downloaded release archive after successful installation
+	if !isTempDownload {
+		if _, err := os.Stat(archivePath); err == nil {
+			shouldDelete := autoApprove
+			if !autoApprove {
+				confirm, err := ui.Confirm(
+					fmt.Sprintf("Delete downloaded release archive '%s'?", filepath.Base(archivePath)),
+					true,
+				)
+				if err == nil && confirm {
+					shouldDelete = true
+				}
+			}
+
+			if shouldDelete {
+				if err := os.Remove(archivePath); err != nil {
+					log.Warn("Failed to delete archive '%s': %v", filepath.Base(archivePath), err)
+				} else {
+					log.Success("Deleted downloaded release archive: %s", filepath.Base(archivePath))
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func findLatestIdeArchive(dir string) string {

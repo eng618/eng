@@ -25,7 +25,7 @@ import (
 // UpdateCmd represents the system update command.
 var UpdateCmd = &cobra.Command{
 	Use:     "update",
-	Aliases: []string{"update", "u"},
+	Aliases: []string{"upgrade", "u"},
 	Short:   "Update the system and perform maintenance",
 	Long:    `This command updates the system, Homebrew packages, asdf plugins, and performs cleanup operations.`,
 	Run: func(cmd *cobra.Command, _args []string) {
