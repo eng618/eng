@@ -322,7 +322,7 @@ func isBrewInstallation(isVerbose bool) bool {
 }
 
 // runBrewUpgrade executes the 'brew upgrade eng' command.
-// It first runs 'brew update' to refresh formula information (including taps),
+// It first runs 'brew update' to refresh package information (including taps),
 // then runs 'brew upgrade eng'.
 // When verbose is false, outputs are hidden behind progress spinners.
 // When verbose is true, outputs are streamed directly to the terminal.
@@ -355,7 +355,7 @@ func runBrewUpgrade(isVerbose bool) error {
 	// Non-verbose mode: hide raw brew outputs behind spinners
 	var updateSpinner *ui.Spinner
 	if !ui.DisableProgress {
-		updateSpinner = ui.NewSpinner("Updating Homebrew formula index...")
+		updateSpinner = ui.NewSpinner("Updating Homebrew package index...")
 		updateSpinner.Start()
 	}
 	updateCmd := execCommand(brewCmd, "update")

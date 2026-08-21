@@ -43,7 +43,13 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 
 ```sh
 brew tap eng618/eng
-brew install eng
+brew install --cask eng
+```
+
+Or directly:
+
+```sh
+brew install --cask eng618/eng/eng
 ```
 
 ### Go Install
