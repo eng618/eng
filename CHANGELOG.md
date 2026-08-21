@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.42.1](https://github.com/eng618/eng/compare/v1.42.0...v1.42.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* Migrate Homebrew distribution from formula to cask and update documentation and messaging ([0d34e7f](https://github.com/eng618/eng/commit/0d34e7f78ab9c20e181f8dde93c27c36428845dc))
+* Remove formula conflict from goreleaser configuration ([62f0ad2](https://github.com/eng618/eng/commit/62f0ad2ad7081ee3ff2686bbea77039e9c03a214))
+
 ## [1.42.0](https://github.com/eng618/eng/compare/v1.41.0...v1.42.0) (2026-08-21)
 
 
