@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.43.0](https://github.com/eng618/eng/compare/v1.42.1...v1.43.0) (2026-08-21)
+
+
+### Features
+
+* Add confirmation prompt to delete local IDE archive after installation and rename update alias to upgrade ([2844e10](https://github.com/eng618/eng/commit/2844e1047243a7feebad474d5e9d23cd908d3c9c))
+
 ## [1.42.1](https://github.com/eng618/eng/compare/v1.42.0...v1.42.1) (2026-08-21)
 
 
