@@ -67,7 +67,7 @@ changelog:
       - '^chore\(release\):' # Exclude goreleaser's own release commits
       - '^chore\(CHANGELOG\):' # Exclude changelog update commits
 
-brews:
+homebrew_casks:
   - name: eng
     repository:
       owner: eng618
@@ -78,13 +78,27 @@ brews:
       name: Eric N. Garcia
       email: eng618@garciaericn.com
     commit_msg_template: "Update eng to {{ .Tag }}"
-    directory: Formula
     homepage: "https://github.com/eng618/eng"
     description: "Personal CLI to help facilitate my normal workflow"
     license: "MIT"
-    install: |
-      bin.install "eng"
-      generate_completions_from_executable(bin/"eng", "completion")
-    test: |
-      assert_match version.to_s, shell_output("#{bin}/eng --version")
-      assert_match "USAGE", shell_output("#{bin}/eng --help")
+    url:
+      verified: "github.com/eng618/eng"
+    binaries:
+      - eng
+    conflicts:
+      - formula: eng
+    generate_completions_from_executable:
+      args:
+        - completion
+      base_name: eng
+      shell_parameter_format: cobra
+      shells:
+        - bash
+        - zsh
+        - fish
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/eng"]
+          end

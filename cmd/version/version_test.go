@@ -219,6 +219,97 @@ func TestRunBrewUpgradeMock(t *testing.T) {
 	}
 }
 
+func TestIsBrewInstallation(t *testing.T) {
+	origOsExecutable := osExecutable
+	origEvalSymlinks := evalSymlinks
+	origLookPath := lookPath
+	defer func() {
+		osExecutable = origOsExecutable
+		evalSymlinks = origEvalSymlinks
+		lookPath = origLookPath
+	}()
+
+	tests := []struct {
+		name         string
+		mockPath     string
+		mockLookErr  error
+		mockExecErr  error
+		expectedBrew bool
+	}{
+		{
+			name:         "Apple Silicon Cask installation",
+			mockPath:     "/opt/homebrew/Caskroom/eng/1.0.0/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Apple Silicon Formula installation",
+			mockPath:     "/opt/homebrew/Cellar/eng/1.0.0/bin/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Intel Mac Cask installation",
+			mockPath:     "/usr/local/Caskroom/eng/1.0.0/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Intel Mac Formula installation",
+			mockPath:     "/usr/local/Cellar/eng/1.0.0/bin/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Linuxbrew Cask installation",
+			mockPath:     "/home/linuxbrew/.linuxbrew/Caskroom/eng/1.0.0/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Linuxbrew Formula installation",
+			mockPath:     "/home/linuxbrew/.linuxbrew/Cellar/eng/1.0.0/bin/eng",
+			expectedBrew: true,
+		},
+		{
+			name:         "Standard Go install path",
+			mockPath:     "/home/eng618/go/bin/eng",
+			expectedBrew: false,
+		},
+		{
+			name:         "Brew prefix path but brew binary not in PATH",
+			mockPath:     "/opt/homebrew/Caskroom/eng/1.0.0/eng",
+			mockLookErr:  exec.ErrNotFound,
+			expectedBrew: false,
+		},
+		{
+			name:         "os.Executable returns error",
+			mockExecErr:  os.ErrNotExist,
+			expectedBrew: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			osExecutable = func() (string, error) {
+				if tt.mockExecErr != nil {
+					return "", tt.mockExecErr
+				}
+				return tt.mockPath, nil
+			}
+			evalSymlinks = func(path string) (string, error) {
+				return path, nil
+			}
+			lookPath = func(file string) (string, error) {
+				if tt.mockLookErr != nil {
+					return "", tt.mockLookErr
+				}
+				return "/opt/homebrew/bin/brew", nil
+			}
+
+			result := isBrewInstallation(false)
+			if result != tt.expectedBrew {
+				t.Errorf("Expected isBrewInstallation to be %v, got %v", tt.expectedBrew, result)
+			}
+		})
+	}
+}
+
 // TestHelperProcess isn't a real test. It's used to mock exec.Command calls.
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {

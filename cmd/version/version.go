@@ -45,6 +45,9 @@ const (
 var (
 	githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
 	execCommand  = exec.Command
+	osExecutable = os.Executable
+	evalSymlinks = filepath.EvalSymlinks
+	lookPath     = exec.LookPath
 )
 
 // Flag variable for the --update flag.
@@ -274,14 +277,14 @@ func compareAndHandleUpdate(
 // isBrewInstallation checks if the executable path suggests a Homebrew installation.
 // This is a heuristic and might not cover all edge cases or future Brew changes.
 func isBrewInstallation(isVerbose bool) bool {
-	executablePath, err := os.Executable()
+	executablePath, err := osExecutable()
 	if err != nil {
 		log.Verbose(isVerbose, "Could not get executable path: %v", err)
 		return false
 	}
 
-	// Resolve symlinks, as brew often uses them (e.g., /usr/local/bin/eng -> ../Cellar/eng/0.1.0/bin/eng)
-	resolvedPath, err := filepath.EvalSymlinks(executablePath)
+	// Resolve symlinks, as brew often uses them (e.g., /usr/local/bin/eng -> ../Caskroom/eng/0.1.0/eng or ../Cellar/eng/0.1.0/bin/eng)
+	resolvedPath, err := evalSymlinks(executablePath)
 	if err != nil {
 		// If symlink resolution fails, use the original path
 		resolvedPath = executablePath
@@ -289,16 +292,23 @@ func isBrewInstallation(isVerbose bool) bool {
 	}
 
 	// Common Homebrew installation prefixes:
-	// - macOS Intel: /usr/local/Cellar
-	// - macOS Apple Silicon: /opt/homebrew/Cellar
-	// - Linux (Linuxbrew): /home/linuxbrew/.linuxbrew/Cellar
-	brewPrefixes := []string{"/usr/local/Cellar", "/opt/homebrew/Cellar", "/home/linuxbrew/.linuxbrew/Cellar"}
+	// - macOS Intel: /usr/local/Cellar (Formula), /usr/local/Caskroom (Cask)
+	// - macOS Apple Silicon: /opt/homebrew/Cellar (Formula), /opt/homebrew/Caskroom (Cask)
+	// - Linux (Linuxbrew): /home/linuxbrew/.linuxbrew/Cellar (Formula), /home/linuxbrew/.linuxbrew/Caskroom (Cask)
+	brewPrefixes := []string{
+		"/usr/local/Cellar",
+		"/usr/local/Caskroom",
+		"/opt/homebrew/Cellar",
+		"/opt/homebrew/Caskroom",
+		"/home/linuxbrew/.linuxbrew/Cellar",
+		"/home/linuxbrew/.linuxbrew/Caskroom",
+	}
 
 	for _, prefix := range brewPrefixes {
 		if strings.HasPrefix(resolvedPath, prefix) {
 			log.Verbose(isVerbose, "Detected Homebrew installation path: %s", resolvedPath)
 			// Check if 'brew' command actually exists for higher confidence
-			_, err := exec.LookPath(brewCmd)
+			_, err := lookPath(brewCmd)
 			if err != nil {
 				log.Verbose(isVerbose, "Executable path looks like Brew, but '%s' command not found in PATH.", brewCmd)
 				return false // Path looks right, but brew command missing? Be cautious.
