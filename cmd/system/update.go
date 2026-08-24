@@ -290,8 +290,8 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 			continue
 		}
 
-		cmdStr := fmt.Sprintf("sudo %s -y", op)
-		cleanupCmd := execCommand("bash", "-c", cmdStr)
+		args := append(strings.Fields(op), "-y")
+		cleanupCmd := execCommand("sudo", args...)
 		cleanupCmd.Stdout = log.Writer()
 		cleanupCmd.Stderr = log.ErrorWriter()
 
