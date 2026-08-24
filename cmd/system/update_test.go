@@ -134,7 +134,7 @@ func TestRunCleanup_AutoApprove(t *testing.T) {
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "apt-get autoremove") {
+		if name == "sudo" && len(args) > 1 && args[0] == "apt-get" && args[1] == "autoremove" {
 			called = true
 		}
 		return exec.Command("echo", "success")
