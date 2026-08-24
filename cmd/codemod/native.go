@@ -51,12 +51,22 @@ var NativeCmd = &cobra.Command{
 		if err == nil {
 			var pkg map[string]interface{}
 			if json.Unmarshal(packageJsonBytes, &pkg) == nil {
-				pkg["resolutions"] = map[string]interface{}{
-					"lightningcss": "1.30.1",
+				if res, ok := pkg["resolutions"].(map[string]interface{}); ok {
+					res["lightningcss"] = "1.30.1"
+				} else {
+					pkg["resolutions"] = map[string]interface{}{
+						"lightningcss": "1.30.1",
+					}
 				}
-				pkg["overrides"] = map[string]interface{}{
-					"lightningcss": "1.30.1",
+
+				if overrides, ok := pkg["overrides"].(map[string]interface{}); ok {
+					overrides["lightningcss"] = "1.30.1"
+				} else {
+					pkg["overrides"] = map[string]interface{}{
+						"lightningcss": "1.30.1",
+					}
 				}
+
 				if newBytes, err := json.MarshalIndent(pkg, "", "  "); err == nil {
 					_ = os.WriteFile(packageJsonPath, newBytes, 0o644)
 				}
