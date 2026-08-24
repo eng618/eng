@@ -128,7 +128,8 @@ func parsePortOutput(output, tool, filter string) ([]PortInfo, error) {
 			}
 		}
 
-		if pi.Port != "" && (filter == "" || strings.Contains(strings.ToLower(pi.Command), strings.ToLower(filter))) {
+		if pi.Port != "" &&
+			(filter == "" || strings.Contains(strings.ToLower(pi.Command), strings.ToLower(filter))) {
 			ports = append(ports, pi)
 		}
 	}
@@ -314,7 +315,10 @@ func parsePortList(input string) ([]string, []error) {
 			continue
 		}
 		if n < 1 || n > 65535 {
-			errs = append(errs, fmt.Errorf("invalid port number %q: port must be between 1 and 65535", port))
+			errs = append(
+				errs,
+				fmt.Errorf("invalid port number %q: port must be between 1 and 65535", port),
+			)
 			continue
 		}
 		ports = append(ports, port)
@@ -324,6 +328,18 @@ func parsePortList(input string) ([]string, []error) {
 
 // killPort finds the process listening on the given port and terminates it.
 func killPort(portStr, signal string, isVerbose bool) {
+	// Strictly validate and sanitize port to prevent command injection
+	portInt, err := strconv.Atoi(portStr)
+	if err != nil || portInt < 1 || portInt > 65535 {
+		log.Error(
+			"Invalid port number for killPort: %q. Must be an integer between 1 and 65535.",
+			portStr,
+		)
+		return
+	}
+	// Reassign to ensure only numeric characters are passed to shell commands
+	portStr = strconv.Itoa(portInt)
+
 	log.Message("Attempting to find process on port %s...", portStr)
 
 	// Find PID using the tool
@@ -342,13 +358,19 @@ func killPort(portStr, signal string, isVerbose bool) {
 		lsofCmd = exec.Command(
 			"sh",
 			"-c",
-			fmt.Sprintf("ss -tulpn | grep ':%s ' | grep -o 'pid=[0-9]*' | cut -d'=' -f2 | head -1", portStr),
+			fmt.Sprintf(
+				"ss -tulpn | grep ':%s ' | grep -o 'pid=[0-9]*' | cut -d'=' -f2 | head -1",
+				portStr,
+			),
 		)
 	case "netstat":
 		lsofCmd = exec.Command(
 			"sh",
 			"-c",
-			fmt.Sprintf("netstat -tulpn | grep ':%s ' | awk '{print $7}' | cut -d'/' -f1 | head -1", portStr),
+			fmt.Sprintf(
+				"netstat -tulpn | grep ':%s ' | awk '{print $7}' | cut -d'/' -f1 | head -1",
+				portStr,
+			),
 		)
 	}
 	log.Verbose(isVerbose, "Executing: %s", lsofCmd.String())
@@ -383,7 +405,9 @@ func killPort(portStr, signal string, isVerbose bool) {
 	}
 
 	// We expect a single PID from the command. Handle multiple lines just in case.
-	pids := strings.Fields(output) // Split by whitespace, handles multiple PIDs on separate lines if any
+	pids := strings.Fields(
+		output,
+	) // Split by whitespace, handles multiple PIDs on separate lines if any
 	if len(pids) == 0 {
 		log.Warn("Command ran successfully but found no process ID on port %s.", portStr)
 		return
@@ -428,7 +452,9 @@ func killPort(portStr, signal string, isVerbose bool) {
 }
 
 func init() {
-	KillPortCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "List ports interactively for selection")
-	KillPortCmd.Flags().StringVarP(&signal, "signal", "s", "9", "Signal to send to the process (default 9 for SIGKILL)")
+	KillPortCmd.Flags().
+		BoolVarP(&interactive, "interactive", "i", false, "List ports interactively for selection")
+	KillPortCmd.Flags().
+		StringVarP(&signal, "signal", "s", "9", "Signal to send to the process (default 9 for SIGKILL)")
 	KillPortCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter ports by command name")
 }
