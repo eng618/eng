@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.43.1](https://github.com/eng618/eng/compare/v1.43.0...v1.43.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **codemod:** Safely merge package.json resolutions in native bootstrapper ([#145](https://github.com/eng618/eng/issues/145)) ([23f1bfe](https://github.com/eng618/eng/commit/23f1bfec5151c9cca9240c2d07341960f8a4cb22))
+* Handle filenames with spaces in git status output ([#146](https://github.com/eng618/eng/issues/146)) ([5733c47](https://github.com/eng618/eng/commit/5733c47e4073ab86a212e96ed970088ca7534890))
+
 ## [1.43.0](https://github.com/eng618/eng/compare/v1.42.1...v1.43.0) (2026-08-21)
 
 
