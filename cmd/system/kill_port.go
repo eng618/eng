@@ -324,6 +324,11 @@ func parsePortList(input string) ([]string, []error) {
 
 // killPort finds the process listening on the given port and terminates it.
 func killPort(portStr, signal string, isVerbose bool) {
+	if _, err := strconv.Atoi(portStr); err != nil {
+		log.Error("Invalid port string: %s", portStr)
+		return
+	}
+
 	log.Message("Attempting to find process on port %s...", portStr)
 
 	// Find PID using the tool
