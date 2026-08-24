@@ -1,7 +1,6 @@
 package dotfiles
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -110,7 +109,7 @@ var getTargetRepoPathFunc = config.TargetRepoPath
 // getModifiedFilesFunc is injectable for tests.
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
 	var buf bytes.Buffer
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain")
+	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain", "-z")
 	cmd.Stdout = &buf
 	cmd.Stderr = log.ErrorWriter()
 	err := cmd.Run()
@@ -119,9 +118,12 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 	}
 
 	var files []string
-	scanner := bufio.NewScanner(&buf)
-	for scanner.Scan() {
-		line := scanner.Text()
+	items := bytes.Split(buf.Bytes(), []byte{0})
+	for _, item := range items {
+		if len(item) == 0 {
+			continue
+		}
+		line := string(item)
 		// Git status format: XY PATH
 		// X = staged status, Y = working tree status, followed by space and path starting at index 3
 		if len(line) > 3 && (strings.HasPrefix(line, " M ") || strings.HasPrefix(line, "M ")) {
@@ -129,7 +131,7 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 		}
 	}
 
-	return files, scanner.Err()
+	return files, nil
 }
 
 // resetFile runs git checkout -- file.
