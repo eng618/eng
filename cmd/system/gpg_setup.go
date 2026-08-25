@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -31,6 +30,83 @@ var SetupGPGCmd = &cobra.Command{
 	},
 }
 
+// GPGKeyInfo represents a GPG secret key found in the local keyring.
+type GPGKeyInfo struct {
+	KeyID       string   // 16-character Long Key ID (e.g. BE363376C8A71C92)
+	Fingerprint string   // 40-character Primary Fingerprint
+	UID         string   // e.g. "Eric N. Garcia <eng618@garciaericn.com>"
+	HasMaster   bool     // true if master secret key is present (sec vs sec#)
+	Subkeys     []string // Subkey IDs / fingerprints
+}
+
+// listLocalSecretGPGKeys lists all secret keys currently present in the GPG keyring.
+func listLocalSecretGPGKeys(verbose bool) ([]GPGKeyInfo, error) {
+	cmd := execCommand("gpg", "--list-secret-keys", "--with-colons", "--keyid-format", "LONG")
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list secret keys: %w", err)
+	}
+
+	lines := strings.Split(string(out), "\n")
+	var keys []GPGKeyInfo
+	var currentKey *GPGKeyInfo
+	var lastRecordType string
+
+	for _, line := range lines {
+		fields := strings.Split(line, ":")
+		if len(fields) == 0 {
+			continue
+		}
+		recType := fields[0]
+		switch recType {
+		case "sec":
+			if currentKey != nil {
+				keys = append(keys, *currentKey)
+			}
+			keyID := ""
+			if len(fields) > 4 {
+				keyID = fields[4]
+			}
+			hasMaster := true
+			// In gpg with-colons output, dummy secret keys or keys without master secret have '#' in validity/flags
+			if len(fields) > 14 && strings.Contains(fields[14], "#") {
+				hasMaster = false
+			}
+			currentKey = &GPGKeyInfo{
+				KeyID:     keyID,
+				HasMaster: hasMaster,
+			}
+			lastRecordType = "sec"
+		case "ssb", "sub":
+			lastRecordType = recType
+			if currentKey != nil && len(fields) > 4 && fields[4] != "" {
+				currentKey.Subkeys = append(currentKey.Subkeys, fields[4])
+			}
+		case "fpr":
+			if len(fields) > 9 && fields[9] != "" {
+				fpr := fields[9]
+				if lastRecordType == "sec" && currentKey != nil {
+					if currentKey.Fingerprint == "" {
+						currentKey.Fingerprint = fpr
+					}
+				} else if (lastRecordType == "ssb" || lastRecordType == "sub") && currentKey != nil {
+					currentKey.Subkeys = append(currentKey.Subkeys, fpr)
+				}
+			}
+		case "uid":
+			if currentKey != nil && currentKey.UID == "" && len(fields) > 9 && fields[9] != "" {
+				currentKey.UID = fields[9]
+			}
+		}
+	}
+
+	if currentKey != nil {
+		keys = append(keys, *currentKey)
+	}
+
+	return keys, nil
+}
+
 // setupGPG runs the interactive GPG setup flow.
 func setupGPG(verbose bool) error {
 	log.Verbose(verbose, "Starting GPG setup...")
@@ -40,10 +116,10 @@ func setupGPG(verbose bool) error {
 		return err
 	}
 
-	// Step 2: Prompt for key files and import them
-	keyID, err := importGPGKeys(verbose)
+	// Step 2: Prompt for key files and import them (or select from existing keys)
+	keyID, keyInfo, err := importGPGKeys(verbose)
 	if err != nil {
-		return fmt.Errorf("failed to import GPG keys: %w", err)
+		return fmt.Errorf("failed to import/select GPG keys: %w", err)
 	}
 
 	// Step 3: Set trust to ultimate
@@ -57,18 +133,9 @@ func setupGPG(verbose bool) error {
 	}
 
 	// Step 5: Optional - Remove master key (subkey-only workflow)
-	removeKey, err := ui.Confirm("Remove master key and keep only subkeys for enhanced security?", true)
-	if err != nil {
-		log.Warn("Could not prompt for master key removal: %v", err)
-	}
-
-	if removeKey {
-		if err := removeGPGMasterKey(keyID, verbose); err != nil {
-			log.Error("Failed to remove master key: %v", err)
-			log.Message("You can manually remove it later by running: gpg --delete-secret-keys <keyid>")
-		} else {
-			log.Success("Master key removed - only subkeys remain for local signing and encryption")
-		}
+	removedAnyMaster := false
+	if err := promptAndRemoveMasterKeys(keyID, keyInfo, verbose, &removedAnyMaster); err != nil {
+		log.Warn("Master key removal encountered an issue: %v", err)
 	}
 
 	// Step 6: Refresh public key from keyserver
@@ -86,8 +153,91 @@ func setupGPG(verbose bool) error {
 	log.Message("Your GPG key is now configured for:")
 	log.Message("  • Signing commits")
 	log.Message("  • Encrypting files and messages")
-	if removeKey {
+	if removedAnyMaster {
 		log.Message("  • Enhanced security (subkeys only, master key offline)")
+	}
+
+	return nil
+}
+
+// promptAndRemoveMasterKeys asks user which master key(s) to remove, supporting single and multi-selection.
+func promptAndRemoveMasterKeys(activeKeyID string, activeKeyInfo GPGKeyInfo, verbose bool, removedAny *bool) error {
+	availableKeys, _ := listLocalSecretGPGKeys(verbose)
+	var keysWithMaster []GPGKeyInfo
+	for _, k := range availableKeys {
+		if k.HasMaster {
+			keysWithMaster = append(keysWithMaster, k)
+		}
+	}
+
+	if len(keysWithMaster) == 0 {
+		log.Verbose(verbose, "No secret master keys detected in local keyring to remove (keys are already subkey-only).")
+		return nil
+	}
+
+	var keysToRemove []GPGKeyInfo
+	if len(keysWithMaster) == 1 {
+		k := keysWithMaster[0]
+		keyLabel := fmt.Sprintf("%s (Key ID: %s)", k.UID, k.KeyID)
+		if k.UID == "" {
+			keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
+		}
+		removeKey, err := ui.Confirm(
+			fmt.Sprintf("Remove master key for %s and keep only subkeys for enhanced security?", keyLabel),
+			true,
+		)
+		if err != nil {
+			log.Warn("Could not prompt for master key removal: %v", err)
+			return nil
+		}
+		if removeKey {
+			keysToRemove = append(keysToRemove, k)
+		}
+	} else {
+		// Multiple keys with master secret found: provide multi-select
+		options := make([]string, len(keysWithMaster))
+		keyMap := make(map[string]GPGKeyInfo)
+		for i, k := range keysWithMaster {
+			opt := fmt.Sprintf("[%s] %s", k.KeyID, k.UID)
+			if k.UID == "" {
+				opt = fmt.Sprintf("Key ID: %s", k.KeyID)
+			}
+			options[i] = opt
+			keyMap[opt] = k
+		}
+		selected, err := ui.MultiSelect(
+			"Select GPG key(s) to remove master key for (keeping only subkeys):",
+			options,
+			[]string{options[0]},
+		)
+		if err != nil {
+			log.Warn("Multi-select canceled: %v", err)
+			return nil
+		}
+		for _, sel := range selected {
+			if k, ok := keyMap[sel]; ok {
+				keysToRemove = append(keysToRemove, k)
+			}
+		}
+	}
+
+	for _, k := range keysToRemove {
+		targetKey := k.Fingerprint
+		if targetKey == "" {
+			targetKey = k.KeyID
+		}
+		label := k.KeyID
+		if k.UID != "" {
+			label = fmt.Sprintf("%s (%s)", k.UID, k.KeyID)
+		}
+		log.Start("Removing master key for %s...", label)
+		if err := removeGPGMasterKey(targetKey, verbose); err != nil {
+			log.Error("Failed to remove master key for %s: %v", label, err)
+			log.Message("You can manually remove it later by running: gpg --delete-secret-keys %s", targetKey)
+		} else {
+			*removedAny = true
+			log.Success("Master key removed for %s - only subkeys remain for local signing/encryption", label)
+		}
 	}
 
 	return nil
@@ -139,86 +289,155 @@ func ensureGPGDependencies(verbose bool) error {
 	return nil
 }
 
-// importGPGKeys prompts user for key files and imports them, returning the key ID.
-func importGPGKeys(verbose bool) (string, error) {
+// importGPGKeys prompts user for key files, imports them if requested, and allows key selection.
+func importGPGKeys(verbose bool) (string, GPGKeyInfo, error) {
 	log.Message("")
 	log.Start("GPG Key Import")
-	log.Message("You need to provide GPG key files to import.")
-	log.Message("Typically you have:")
-	log.Message("  • A master secret key file (e.g., eng618.secret.gpg)")
-	log.Message("  • Subkeys file (e.g., eng618.secsub.gpg)")
-	log.Message("")
 
-	secretKeyPath, err := ui.Input(
-		"Path to secret key file",
-		filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
-	)
-	if err != nil {
-		return "", fmt.Errorf("canceled: %w", err)
-	}
+	// Check if keys already exist in keyring
+	existingKeys, _ := listLocalSecretGPGKeys(verbose)
+	shouldImportFiles := true
 
-	// Verify file exists
-	if _, err := os.Stat(secretKeyPath); err != nil {
-		return "", fmt.Errorf("file not found: %s", secretKeyPath)
-	}
+	if len(existingKeys) > 0 {
+		log.Message("Found %d existing secret key(s) in local GPG keyring.", len(existingKeys))
+		for _, k := range existingKeys {
+			status := "sec (master key present)"
+			if !k.HasMaster {
+				status = "sec# (subkey-only)"
+			}
+			log.Message("  • [%s] %s - %s", k.KeyID, k.UID, status)
+		}
+		log.Message("")
 
-	// Import secret key
-	log.Start("Importing secret key...")
-	cmd := execCommand("gpg", "--import", secretKeyPath)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to import secret key: %w", err)
-	}
-	log.Success("Secret key imported")
-
-	// Optional: Import subkeys
-	importSubkeys, err := ui.Confirm("Import subkeys file?", true)
-	if err == nil && importSubkeys {
-		subkeysPath, err := ui.Input(
-			"Path to subkeys file",
-			filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
-		)
+		importMore, err := ui.Confirm("Do you want to import additional GPG key files?", false)
 		if err == nil {
-			if _, err := os.Stat(subkeysPath); err == nil {
-				log.Start("Importing subkeys...")
-				cmd := execCommand("gpg", "--import", subkeysPath)
+			shouldImportFiles = importMore
+		}
+	}
+
+	if shouldImportFiles {
+		log.Message("You can provide GPG key files to import:")
+		log.Message("  • A master secret key file (e.g., eng618.secret.gpg)")
+		log.Message("  • Subkeys file (e.g., eng618.secsub.gpg)")
+		log.Message("")
+
+		secretKeyPath, err := ui.Input(
+			"Path to secret key file (leave empty to skip)",
+			filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
+		)
+		if err != nil {
+			return "", GPGKeyInfo{}, fmt.Errorf("canceled: %w", err)
+		}
+
+		secretKeyPath = strings.TrimSpace(secretKeyPath)
+		if secretKeyPath != "" {
+			if _, err := os.Stat(secretKeyPath); err != nil {
+				log.Warn("Secret key file not found at %s: %v", secretKeyPath, err)
+			} else {
+				log.Start("Importing secret key...")
+				cmd := execCommand("gpg", "--import", secretKeyPath)
 				cmd.Stdout = log.Writer()
 				cmd.Stderr = log.ErrorWriter()
 				if err := cmd.Run(); err != nil {
-					log.Warn("Failed to import subkeys: %v", err)
-				} else {
-					log.Success("Subkeys imported")
+					return "", GPGKeyInfo{}, fmt.Errorf("failed to import secret key: %w", err)
+				}
+				log.Success("Secret key imported")
+			}
+		}
+
+		// Optional: Import subkeys
+		importSubkeys, err := ui.Confirm("Import subkeys file?", true)
+		if err == nil && importSubkeys {
+			subkeysPath, err := ui.Input(
+				"Path to subkeys file",
+				filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
+			)
+			if err == nil {
+				subkeysPath = strings.TrimSpace(subkeysPath)
+				if subkeysPath != "" {
+					if _, err := os.Stat(subkeysPath); err != nil {
+						log.Warn("Subkeys file not found at %s: %v", subkeysPath, err)
+					} else {
+						log.Start("Importing subkeys...")
+						cmd := execCommand("gpg", "--import", subkeysPath)
+						cmd.Stdout = log.Writer()
+						cmd.Stderr = log.ErrorWriter()
+						if err := cmd.Run(); err != nil {
+							log.Warn("Failed to import subkeys: %v", err)
+						} else {
+							log.Success("Subkeys imported")
+						}
+					}
 				}
 			}
 		}
 	}
 
-	// Get key ID from user or list keys
-	keyID, err := ui.Input("Enter your GPG key ID (long format, e.g., 7C180F0FCB31441B)", "")
+	// Re-list secret keys from keyring
+	keys, err := listLocalSecretGPGKeys(verbose)
+	if err == nil && len(keys) > 0 {
+		if len(keys) == 1 {
+			k := keys[0]
+			keyLabel := fmt.Sprintf("%s (Key ID: %s)", k.UID, k.KeyID)
+			if k.UID == "" {
+				keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
+			}
+			log.Message("Detected GPG secret key: %s", keyLabel)
+			useDetected, err := ui.Confirm(fmt.Sprintf("Configure detected GPG key %s?", keyLabel), true)
+			if err == nil && useDetected {
+				target := k.KeyID
+				if target == "" {
+					target = k.Fingerprint
+				}
+				log.Success("Selected key: %s", keyLabel)
+				return target, k, nil
+			}
+		} else {
+			// Multi-key selection
+			options := make([]string, 0, len(keys)+1)
+			keyMap := make(map[string]GPGKeyInfo)
+			for _, k := range keys {
+				opt := fmt.Sprintf("[%s] %s", k.KeyID, k.UID)
+				if k.UID == "" {
+					opt = fmt.Sprintf("Key ID: %s", k.KeyID)
+				}
+				options = append(options, opt)
+				keyMap[opt] = k
+			}
+			options = append(options, "Enter key ID manually...")
+
+			selected, err := ui.Select("Select GPG key to configure:", options, options[0])
+			if err == nil && selected != "Enter key ID manually..." {
+				chosen := keyMap[selected]
+				target := chosen.KeyID
+				if target == "" {
+					target = chosen.Fingerprint
+				}
+				log.Success("Selected key: %s", selected)
+				return target, chosen, nil
+			}
+		}
+	}
+
+	// Fallback: manual entry
+	keyID, err := ui.Input("Enter your GPG key ID or Fingerprint (e.g., 7C180F0FCB31441B)", "")
 	if err != nil {
-		return "", fmt.Errorf("canceled: %w", err)
+		return "", GPGKeyInfo{}, fmt.Errorf("canceled: %w", err)
 	}
 
 	keyID = strings.TrimSpace(keyID)
 	if keyID == "" {
-		return "", fmt.Errorf("key ID is required")
-	}
-
-	// Validate key ID format to prevent argument injection
-	validKeyID := regexp.MustCompile(`^[0-9A-Fa-f]{16}$`)
-	if !validKeyID.MatchString(keyID) {
-		return "", fmt.Errorf("invalid GPG key ID format: must be a 16-character hexadecimal string")
+		return "", GPGKeyInfo{}, fmt.Errorf("key ID is required")
 	}
 
 	// Verify the key exists
 	listCmd := execCommand("gpg", "--list-secret-keys", "--keyid-format", "LONG", keyID)
 	if err := listCmd.Run(); err != nil {
-		return "", fmt.Errorf("key not found: %s", keyID)
+		return "", GPGKeyInfo{}, fmt.Errorf("key not found in keyring: %s", keyID)
 	}
 
-	log.Success("Key ID verified: %s", keyID)
-	return keyID, nil
+	log.Success("Key verified: %s", keyID)
+	return keyID, GPGKeyInfo{KeyID: keyID}, nil
 }
 
 // setGPGTrust sets a GPG key to ultimate trust level non-interactively.
@@ -273,9 +492,6 @@ func configureGitSigning(keyID string, verbose bool) error {
 // removeGPGMasterKey exports subkeys, removes the entire key, and re-imports subkeys only.
 // This implements the subkey-only workflow for enhanced security.
 func removeGPGMasterKey(keyID string, verbose bool) error {
-	log.Message("")
-	log.Start("Removing master key (keeping subkeys only)...")
-
 	homeDir, err := userHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not determine home directory: %w", err)
@@ -321,7 +537,6 @@ func removeGPGMasterKey(keyID string, verbose bool) error {
 		return fmt.Errorf("failed to re-import subkeys: %w", err)
 	}
 
-	log.Success("Master key removed - subkeys available for signing/encryption")
 	log.Message("Subkeys backup saved to: %s", subkeysExportPath)
 	return nil
 }

@@ -115,3 +115,8 @@ func TestResolvePrimaryFingerprint_FullFingerprint(t *testing.T) {
 		t.Errorf("expected %s, got %s", fpr, resolved)
 	}
 }
+
+func TestListLocalSecretGPGKeys(t *testing.T) {
+	// Test that listLocalSecretGPGKeys runs without panic
+	_, _ = listLocalSecretGPGKeys(false)
+}
