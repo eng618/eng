@@ -252,6 +252,14 @@ func getSecurityAndPrivacyApps() []Software {
 			Check:       checkByPath("nextdns"),
 			Install:     installByURL("https://nextdns.io/"),
 		},
+		{
+			Name:        "Surfshark",
+			Description: "VPN & Privacy Suite",
+			Optional:    true,
+			URL:         "https://surfshark.com/download",
+			Check:       checkByBundleIDOrPath("com.surfshark.vpnclient.macos", "surfshark", "surfshark-vpn"),
+			Install:     installByURL("https://surfshark.com/download"),
+		},
 	}
 }
 

@@ -10,9 +10,11 @@ func TestSyncRepo(t *testing.T) {
 	// Keep references to the original functions so we can restore them
 	origFetchRepo := FetchRepo
 	origPullRebaseRepo := PullRebaseRepo
+	origUpdateSubmodules := UpdateSubmodules
 	defer func() {
 		FetchRepo = origFetchRepo
 		PullRebaseRepo = origPullRebaseRepo
+		UpdateSubmodules = origUpdateSubmodules
 	}()
 
 	tests := []struct {
@@ -56,6 +58,9 @@ func TestSyncRepo(t *testing.T) {
 			PullRebaseRepo = func(ctx context.Context, repoPath, worktreePath string) error {
 				pullRebaseCalled = true
 				return tt.pullRebaseErr
+			}
+			UpdateSubmodules = func(ctx context.Context, repoPath, worktreePath string) error {
+				return nil
 			}
 
 			err := SyncRepo(context.Background(), "/mock/repo", "/mock/worktree", false)

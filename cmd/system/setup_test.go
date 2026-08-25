@@ -29,18 +29,22 @@ func TestSetupASDF(t *testing.T) {
 	// Set HOME to tempDir for this test
 	homeOrig := os.Getenv("HOME")
 	_ = os.Setenv("HOME", tempDir)
+	origLookPath := lookPath
+	origExec := execCommand
 	defer func() {
-		if err := os.Setenv("HOME", homeOrig); err != nil {
-			t.Fatalf("Failed to restore HOME: %v", err)
-		}
+		_ = os.Setenv("HOME", homeOrig)
+		lookPath = origLookPath
+		execCommand = origExec
 	}()
 
-	// Mock exec.Command for asdf plugin add and install
-	// This is a simple test to check the file parsing and command invocation logic
-	// For real integration, use a test double or exec wrapper
+	lookPath = func(path string) (string, error) {
+		if path == "asdf" {
+			return "/usr/local/bin/asdf", nil
+		}
+		return "", errors.New("not found")
+	}
+
 	called := []string{}
-	origExec := execCommand
-	defer func() { execCommand = origExec }()
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		called = append(called, name+" "+strings.Join(args, " "))
 		return exec.Command("echo", "mock")
@@ -59,6 +63,80 @@ func TestSetupASDF(t *testing.T) {
 	}
 	if !foundInstall {
 		t.Error("asdf install was not called")
+	}
+}
+
+func TestEnsureASDFInstalled_InstallViaBrew(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "brew" {
+			return "/usr/local/bin/brew", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	calledBrewInstall := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "brew" && len(args) >= 2 && args[0] == "install" && args[1] == "asdf" {
+			calledBrewInstall = true
+		}
+		return exec.Command("echo", "mock")
+	}
+
+	err := ensureASDFInstalled(false)
+	if err != nil {
+		t.Fatalf("ensureASDFInstalled returned error: %v", err)
+	}
+	if !calledBrewInstall {
+		t.Error("expected brew install asdf to be called when brew is available")
+	}
+}
+
+func TestEnsureASDFInstalled_InstallViaGit(t *testing.T) {
+	tempDir := t.TempDir()
+	homeOrig := os.Getenv("HOME")
+	_ = os.Setenv("HOME", tempDir)
+	origLookPath := lookPath
+	origExec := execCommand
+	origStat := stat
+	defer func() {
+		_ = os.Setenv("HOME", homeOrig)
+		lookPath = origLookPath
+		execCommand = origExec
+		stat = origStat
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "git" {
+			return "/usr/bin/git", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	stat = func(name string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	calledGitClone := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "git" && len(args) >= 2 && args[0] == "clone" {
+			calledGitClone = true
+		}
+		return exec.Command("echo", "mock")
+	}
+
+	err := ensureASDFInstalled(false)
+	if err != nil {
+		t.Fatalf("ensureASDFInstalled via git returned error: %v", err)
+	}
+	if !calledGitClone {
+		t.Error("expected git clone asdf to be called when brew is not available")
 	}
 }
 

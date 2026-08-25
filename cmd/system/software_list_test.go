@@ -168,6 +168,20 @@ func TestCategorizedSoftwareLists(t *testing.T) {
 		t.Error("getSecurityAndPrivacyApps returned empty list")
 	}
 
+	foundSurfshark := false
+	for _, s := range security {
+		if s.Name == "Surfshark" {
+			foundSurfshark = true
+			if s.URL == "" {
+				t.Error("Surfshark missing URL")
+			}
+			break
+		}
+	}
+	if !foundSurfshark {
+		t.Error("Surfshark not found in getSecurityAndPrivacyApps()")
+	}
+
 	browsers := getBrowserApps()
 	if len(browsers) == 0 {
 		t.Error("getBrowserApps returned empty list")

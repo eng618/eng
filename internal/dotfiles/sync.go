@@ -7,7 +7,7 @@ import (
 	"github.com/eng618/eng/internal/repo"
 )
 
-// SyncRepo performs the fetch and pull-rebase operations for a bare repository.
+// SyncRepo performs the fetch, pull-rebase, and submodule update operations for a bare repository.
 func SyncRepo(ctx context.Context, repoPath, worktreePath string, isVerbose bool) error {
 	log.Verbose(isVerbose, "Syncing repository at %s with worktree %s", repoPath, worktreePath)
 
@@ -21,6 +21,11 @@ func SyncRepo(ctx context.Context, repoPath, worktreePath string, isVerbose bool
 		return err
 	}
 
+	log.Info("Updating submodules")
+	if err := UpdateSubmodules(ctx, repoPath, worktreePath); err != nil {
+		log.Warn("Failed to update submodules: %v", err)
+	}
+
 	return nil
 }
 
@@ -31,4 +36,8 @@ var PullRebaseRepo = func(ctx context.Context, repoPath, worktreePath string) er
 
 var FetchRepo = func(ctx context.Context, repoPath, worktreePath string) error {
 	return repo.FetchBareRepo(ctx, repoPath, worktreePath)
+}
+
+var UpdateSubmodules = func(ctx context.Context, repoPath, worktreePath string) error {
+	return repo.InitSubmodules(ctx, repoPath, worktreePath, nil)
 }

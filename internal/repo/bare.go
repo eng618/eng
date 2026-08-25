@@ -80,47 +80,22 @@ func CheckoutWorktree(ctx context.Context, bareRepoPath, worktreeDir string) err
 
 // InitSubmodules initializes and updates git submodules for a bare repository.
 func InitSubmodules(ctx context.Context, bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) error {
-	repo, err := git.PlainOpen(bareRepoPath)
-	if err != nil {
-		return err
+	log.Start("Initializing and updating submodules")
+	cmd := exec.CommandContext(ctx, // #nosec G204
+		"git",
+		"--git-dir="+bareRepoPath,
+		"--work-tree="+worktreeDir,
+		"submodule",
+		"update",
+		"--init",
+		"--recursive",
+	)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to init and update submodules: %w", err)
 	}
-
-	w, err := repo.Worktree()
-	if err != nil {
-		// Fall back to git command line
-		cmd := exec.CommandContext(ctx, // #nosec G204
-			"git",
-			"--git-dir="+bareRepoPath,
-			"--work-tree="+worktreeDir,
-			"submodule",
-			"update",
-			"--init",
-			"--recursive",
-		)
-		cmd.Stdout = log.Writer()
-		cmd.Stderr = log.ErrorWriter()
-		return cmd.Run()
-	}
-
-	submodules, err := w.Submodules()
-	if err != nil {
-		return err
-	}
-
-	for _, submodule := range submodules {
-		if err := submodule.Init(); err != nil {
-			log.Warn("Failed to init submodule %s: %v", submodule.Config().Name, err)
-			continue
-		}
-		if err := submodule.Update(&git.SubmoduleUpdateOptions{
-			Init:              true,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-			Auth:              auth,
-		}); err != nil {
-			log.Warn("Failed to update submodule %s: %v", submodule.Config().Name, err)
-			continue
-		}
-	}
+	log.Success("Submodules initialized and updated successfully")
 	return nil
 }
 
