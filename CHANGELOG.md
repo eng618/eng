@@ -1,5 +1,19 @@
 <a name="unreleased"></a>
 
+## [1.46.0](https://github.com/eng618/eng/compare/v1.45.1...v1.46.0) (2026-08-25)
+
+
+### Features
+
+* Add submodule synchronization to repo sync and implement automated asdf installation and plugin management in system setup ([86fe6d7](https://github.com/eng618/eng/commit/86fe6d73bdf2a8d9d87f9c76a7b982be684adf3e))
+* **gpg:** Add key discovery, interactive selection, and multi-key master removal ([c96c015](https://github.com/eng618/eng/commit/c96c01590a5e0bbbe6137cee2a38430e5afccfc6))
+
+
+### Bug Fixes
+
+* Add nil checks for context across sync and submodule operations ([aa8ed74](https://github.com/eng618/eng/commit/aa8ed74e2ca1f5d005ca62310eb77f605bd8d58e))
+* Move SSH setup logic to dedicated internal package and improve key detection ([4685924](https://github.com/eng618/eng/commit/4685924bfb16dff9ef814461c50a3a1df68db741))
+
 ## [1.45.1](https://github.com/eng618/eng/compare/v1.45.0...v1.45.1) (2026-08-25)
 
 
