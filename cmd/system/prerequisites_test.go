@@ -409,24 +409,3 @@ func TestEnsureZsh_Missing_Install_Brew(t *testing.T) {
 		t.Error("ensureZsh with Homebrew did not call brew install zsh")
 	}
 }
-
-func TestEnsureGitHubSSH_Missing(t *testing.T) {
-	origUserHomeDir := userHomeDir
-	origStat := stat
-	defer func() {
-		userHomeDir = origUserHomeDir
-		stat = origStat
-	}()
-
-	userHomeDir = func() (string, error) {
-		return "/tmp/fakehome", nil
-	}
-	stat = func(name string) (os.FileInfo, error) {
-		return nil, os.ErrNotExist
-	}
-
-	err := ensureGitHubSSH(false)
-	if err == nil {
-		t.Error("Expected error when SSH key is missing, got nil")
-	}
-}

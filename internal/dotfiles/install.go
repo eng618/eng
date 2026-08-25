@@ -313,14 +313,16 @@ func printCompletionInstructions(bareRepoPath string, hasConflicts bool, backupP
 	log.Message("-----------------------------------------------------")
 }
 
-// getSSHAuth returns SSH authentication using the github SSH key.
+// getSSHAuth returns SSH authentication using the detected GitHub SSH key.
 func getSSHAuth() (*ssh.PublicKeys, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("could not determine home directory: %w", err)
 	}
 
-	sshKeyPath := filepath.Join(homeDir, ".ssh", "github")
+	sshDir := filepath.Join(homeDir, ".ssh")
+	sshKeyPath := system.FindGitHubSSHKey(sshDir)
+
 	auth, err := ssh.NewPublicKeysFromFile("git", sshKeyPath, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load SSH key from %s: %w", sshKeyPath, err)
