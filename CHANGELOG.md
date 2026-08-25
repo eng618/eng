@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.45.0](https://github.com/eng618/eng/compare/v1.44.0...v1.45.0) (2026-08-25)
+
+
+### Features
+
+* Add ensureZsh prerequisite check and automated installation logic ([efb2a17](https://github.com/eng618/eng/commit/efb2a17ba89de4767f618880b026cba3a68e670f))
+* Add non-interactive fallback for Zsh installation and improve test harness stability with proper dependency restoration ([4ddc99e](https://github.com/eng618/eng/commit/4ddc99ef70bded300ed8df0845ac4f0e4a2ab853))
+
 ## [1.44.0](https://github.com/eng618/eng/compare/v1.43.1...v1.44.0) (2026-08-25)
 
 
