@@ -225,7 +225,7 @@ func importGPGKeys(verbose bool) (string, error) {
 func setGPGTrust(keyID string, verbose bool) error {
 	log.Verbose(verbose, "Setting key trust level to ultimate for %s...", keyID)
 
-	primaryFpr, _, err := inspectGPGKey(keyID, verbose)
+	primaryFpr, err := resolvePrimaryFingerprint(keyID, verbose)
 	if err != nil || primaryFpr == "" {
 		primaryFpr = keyID
 	}
@@ -284,9 +284,14 @@ func removeGPGMasterKey(keyID string, verbose bool) error {
 	gpgDir := filepath.Join(homeDir, ".gnupg")
 	subkeysExportPath := filepath.Join(gpgDir, "subkeys-only.gpg")
 
+	primaryFpr, err := resolvePrimaryFingerprint(keyID, verbose)
+	if err != nil {
+		return fmt.Errorf("failed to resolve key fingerprint: %w", err)
+	}
+
 	// Step 1: Export subkeys
-	log.Verbose(verbose, "Exporting subkeys...")
-	cmd := execCommand("gpg", "--export-secret-subkeys", keyID)
+	log.Verbose(verbose, "Exporting subkeys for key %s...", primaryFpr)
+	cmd := execCommand("gpg", "--export-secret-subkeys", primaryFpr)
 	subkeysOutput, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to export subkeys: %w", err)
@@ -298,9 +303,9 @@ func removeGPGMasterKey(keyID string, verbose bool) error {
 	}
 	log.Verbose(verbose, "Subkeys exported to: "+subkeysExportPath)
 
-	// Step 2: Delete the entire secret key
-	log.Verbose(verbose, "Removing master key from local keyring...")
-	cmd = execCommand("gpg", "--batch", "--yes", "--delete-secret-keys", keyID)
+	// Step 2: Delete the entire secret key using full fingerprint (required by GPG in batch mode)
+	log.Verbose(verbose, "Removing master key from local keyring using fingerprint %s...", primaryFpr)
+	cmd = execCommand("gpg", "--batch", "--yes", "--delete-secret-keys", primaryFpr)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {
@@ -327,14 +332,19 @@ func refreshGPGPublicKey(keyID string, verbose bool) error {
 	log.Start("Refreshing Public Key from Keyserver")
 	log.Message("Checking for latest version of your public key on the keyserver...")
 
+	targetKey := keyID
+	if fpr, err := resolvePrimaryFingerprint(keyID, verbose); err == nil && fpr != "" {
+		targetKey = fpr
+	}
+
 	// Refresh the key from the keyserver
-	cmd := execCommand("gpg", "--keyserver", "hkps://keys.openpgp.org", "--recv-keys", keyID)
+	cmd := execCommand("gpg", "--keyserver", "hkps://keys.openpgp.org", "--recv-keys", targetKey)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {
 		log.Warn("Failed to refresh key from keyserver: %v", err)
 		log.Message("Your local key may be outdated. You can manually refresh with:")
-		log.Message("  gpg --keyserver hkps://keys.openpgp.org --recv-keys %s", keyID)
+		log.Message("  gpg --keyserver hkps://keys.openpgp.org --recv-keys %s", targetKey)
 		return nil // Non-fatal
 	}
 
@@ -356,23 +366,28 @@ func uploadPublicKeyOption(keyID string, verbose bool) error {
 		return nil // Non-fatal if user cancels
 	}
 
+	targetKey := keyID
+	if fpr, err := resolvePrimaryFingerprint(keyID, verbose); err == nil && fpr != "" {
+		targetKey = fpr
+	}
+
 	if !uploadKey {
 		log.Message("You can upload your public key manually later:")
-		log.Message("  gpg --keyserver hkps://keys.openpgp.org --send-keys %s", keyID)
+		log.Message("  gpg --keyserver hkps://keys.openpgp.org --send-keys %s", targetKey)
 		return nil
 	}
 
 	log.Start("Uploading public key to keyserver...")
 
 	// Export public key
-	cmd := execCommand("gpg", "--armor", "--export", keyID)
+	cmd := execCommand("gpg", "--armor", "--export", targetKey)
 	publicKeyBytes, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to export public key: %w", err)
 	}
 
 	// Upload to keyserver
-	cmd = execCommand("gpg", "--keyserver", "hkps://keys.openpgp.org", "--send-keys", keyID)
+	cmd = execCommand("gpg", "--keyserver", "hkps://keys.openpgp.org", "--send-keys", targetKey)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {

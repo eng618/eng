@@ -247,8 +247,12 @@ func renewGPG(verbose bool) error {
 			log.Message("")
 			log.Start("Removing master key from local keyring...")
 
+			delFpr, err := resolvePrimaryFingerprint(primaryFpr, verbose)
+			if err != nil || delFpr == "" {
+				delFpr = primaryFpr
+			}
 			// Delete entire secret key from local GPG
-			delCmd := execCommand("gpg", "--batch", "--yes", "--delete-secret-keys", primaryFpr)
+			delCmd := execCommand("gpg", "--batch", "--yes", "--delete-secret-keys", delFpr)
 			delCmd.Stdout = log.Writer()
 			delCmd.Stderr = log.ErrorWriter()
 			if err := delCmd.Run(); err != nil {
@@ -389,13 +393,17 @@ func getDefaultGitSigningKey() string {
 	return strings.TrimSpace(string(out))
 }
 
-// inspectGPGKey parses key information from gpg --list-keys --with-colons.
+// inspectGPGKey parses key information from gpg --list-keys --with-colons (falling back to --list-secret-keys).
 // Returns primary key fingerprint and slice of subkey fingerprints.
 func inspectGPGKey(keyID string, verbose bool) (string, []string, error) {
 	cmd := execCommand("gpg", "--list-keys", "--with-colons", keyID)
 	out, err := cmd.Output()
 	if err != nil {
-		return "", nil, fmt.Errorf("key not found in local keyring: %s", keyID)
+		cmd = execCommand("gpg", "--list-secret-keys", "--with-colons", keyID)
+		out, err = cmd.Output()
+		if err != nil {
+			return "", nil, fmt.Errorf("key not found in local keyring: %s", keyID)
+		}
 	}
 
 	lines := strings.Split(string(out), "\n")
@@ -442,6 +450,50 @@ func inspectGPGKey(keyID string, verbose bool) (string, []string, error) {
 	}
 
 	return primaryFpr, subkeyFprs, nil
+}
+
+// resolvePrimaryFingerprint resolves the full 40-character primary key fingerprint for a given key ID,
+// which is strictly required by GnuPG when deleting keys non-interactively in batch mode (--batch --yes).
+func resolvePrimaryFingerprint(keyID string, verbose bool) (string, error) {
+	primaryFpr, _, err := inspectGPGKey(keyID, verbose)
+	if err == nil && len(primaryFpr) >= 32 {
+		return primaryFpr, nil
+	}
+
+	// Try querying secret keys explicitly with colons output
+	cmd := execCommand("gpg", "--list-secret-keys", "--with-colons", keyID)
+	out, err := cmd.Output()
+	if err == nil {
+		lines := strings.Split(string(out), "\n")
+		var lastType string
+		for _, line := range lines {
+			fields := strings.Split(line, ":")
+			if len(fields) == 0 {
+				continue
+			}
+			if fields[0] == "sec" || fields[0] == "pub" {
+				lastType = fields[0]
+			} else if fields[0] == "fpr" && len(fields) > 9 && fields[9] != "" {
+				if lastType == "sec" || lastType == "pub" {
+					return fields[9], nil
+				}
+			}
+		}
+	}
+
+	cleaned := strings.TrimSpace(keyID)
+	if len(cleaned) == 40 {
+		return cleaned, nil
+	}
+
+	if primaryFpr != "" && primaryFpr != keyID {
+		return primaryFpr, nil
+	}
+
+	return "", fmt.Errorf(
+		"unable to resolve 40-character fingerprint for key %s (gpg requires full fingerprint in batch mode)",
+		keyID,
+	)
 }
 
 // findGitHubCLI searches for a working gh executable.
