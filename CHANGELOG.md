@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.44.0](https://github.com/eng618/eng/compare/v1.43.1...v1.44.0) (2026-08-25)
+
+
+### Features
+
+* Add Linux distribution support for system prerequisites and update routines ([884202e](https://github.com/eng618/eng/commit/884202eb8900b6454f711dc4a8ebc4c4fb3baa21))
+
 ## [1.43.1](https://github.com/eng618/eng/compare/v1.43.0...v1.43.1) (2026-08-24)
 
 
