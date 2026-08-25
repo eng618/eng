@@ -250,7 +250,12 @@ func ensureZsh(verbose bool) error {
 	log.Warn("Zsh is not installed")
 	confirm, err := ui.Confirm("Would you like to install Zsh now?", true)
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "user aborted") {
+			return fmt.Errorf("zsh installation aborted: %w", err)
+		}
+		// Non-interactive / headless environment (e.g. CI): proceed with default (true)
+		log.Verbose(verbose, "Non-interactive confirmation fallback: %v", err)
+		confirm = true
 	}
 	if !confirm {
 		return fmt.Errorf("zsh installation declined - zsh is required for shell and dotfiles setup")

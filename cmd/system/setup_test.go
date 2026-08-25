@@ -39,11 +39,12 @@ func TestSetupASDF(t *testing.T) {
 	// This is a simple test to check the file parsing and command invocation logic
 	// For real integration, use a test double or exec wrapper
 	called := []string{}
+	origExec := execCommand
+	defer func() { execCommand = origExec }()
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		called = append(called, name+" "+strings.Join(args, " "))
 		return exec.Command("echo", "mock")
 	}
-	defer func() { execCommand = exec.Command }()
 
 	setupASDF(false)
 
@@ -65,7 +66,17 @@ func TestSetupOhMyZsh(t *testing.T) {
 	tempDir := t.TempDir()
 	homeOrig := os.Getenv("HOME")
 	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", homeOrig) }()
+	origLookPath := lookPath
+	origExec := execCommand
+	defer func() {
+		_ = os.Setenv("HOME", homeOrig)
+		lookPath = origLookPath
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "/bin/" + path, nil
+	}
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
@@ -74,7 +85,6 @@ func TestSetupOhMyZsh(t *testing.T) {
 		}
 		return exec.Command("echo", "mock")
 	}
-	defer func() { execCommand = exec.Command }()
 
 	setupOhMyZsh(false)
 
@@ -136,6 +146,8 @@ func TestSetupDotfiles(t *testing.T) {
 	defer viper.Reset()
 
 	called := false
+	origExec := execCommand
+	defer func() { execCommand = origExec }()
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		// setupDotfiles calls the executable with "dotfiles", "install"
 		for _, arg := range args {
@@ -145,7 +157,6 @@ func TestSetupDotfiles(t *testing.T) {
 		}
 		return exec.Command("echo", "mock")
 	}
-	defer func() { execCommand = exec.Command }()
 
 	// We expect this to fail in test because os.Executable() might not be what we expect or we don't handle it
 	// But we want to see if execCommand is called
