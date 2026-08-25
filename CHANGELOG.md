@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.45.1](https://github.com/eng618/eng/compare/v1.45.0...v1.45.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **gpg:** Resolve full fingerprint for batch secret key removal ([5ae4c15](https://github.com/eng618/eng/commit/5ae4c158a4795394cc69ed624389fbd4356b863c))
+
 ## [1.45.0](https://github.com/eng618/eng/compare/v1.44.0...v1.45.0) (2026-08-25)
 
 
