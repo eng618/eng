@@ -4,7 +4,7 @@ Update the system and perform maintenance
 
 ### Synopsis
 
-This command updates the system, Homebrew packages, asdf plugins, and performs cleanup operations.
+This command updates the system, Homebrew packages, asdf plugins, flatpak packages, and performs cleanup operations.
 
 ```
 eng system update [flags]

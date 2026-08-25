@@ -1,6 +1,7 @@
 package system
 
 import (
+	"errors"
 	"os/exec"
 	"testing"
 )
@@ -35,21 +36,125 @@ func TestGetSoftwareList_Checks(t *testing.T) {
 	}
 }
 
+func TestCheckByBundleIDOrPath_Linux(t *testing.T) {
+	origLookPath := lookPath
+	defer func() { lookPath = origLookPath }()
+
+	lookPath = func(path string) (string, error) {
+		if path == "signal-desktop" {
+			return "/usr/bin/signal-desktop", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	checker := checkByBundleIDOrPath("org.whispersystems.signal-desktop", "signal-desktop", "signal")
+	if !checker() {
+		t.Error("expected checkByBundleIDOrPath to return true when linux binary exists")
+	}
+}
+
+func TestBitwardenCLI_Install_Brew(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "brew" {
+			return "/usr/bin/brew", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	calledBrew := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "brew" && len(args) >= 2 && args[0] == "install" && args[1] == "bitwarden-cli" {
+			calledBrew = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	cliTools := getCLITools()
+	var bwTool *Software
+	for i := range cliTools {
+		if cliTools[i].Name == "Bitwarden CLI" {
+			bwTool = &cliTools[i]
+			break
+		}
+	}
+
+	if bwTool == nil {
+		t.Fatal("Bitwarden CLI not found in getCLITools()")
+	}
+
+	if err := bwTool.Install(); err != nil {
+		t.Fatalf("Install failed: %v", err)
+	}
+
+	if !calledBrew {
+		t.Error("expected bitwarden-cli to install via brew when brew is available")
+	}
+}
+
+func TestBitwardenCLI_Install_NPM(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "npm" {
+			return "/usr/bin/npm", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	calledNPM := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "npm" && len(args) >= 3 && args[0] == "install" && args[1] == "-g" && args[2] == "@bitwarden/cli" {
+			calledNPM = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	cliTools := getCLITools()
+	var bwTool *Software
+	for i := range cliTools {
+		if cliTools[i].Name == "Bitwarden CLI" {
+			bwTool = &cliTools[i]
+			break
+		}
+	}
+
+	if bwTool == nil {
+		t.Fatal("Bitwarden CLI not found in getCLITools()")
+	}
+
+	if err := bwTool.Install(); err != nil {
+		t.Fatalf("Install failed: %v", err)
+	}
+
+	if !calledNPM {
+		t.Error("expected bitwarden-cli to install via npm when brew is absent and npm is available")
+	}
+}
+
 func TestOpenURL(t *testing.T) {
 	origExec := execCommand
 	defer func() { execCommand = origExec }()
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		// Just verify it attempts to call a command that looks like a URL opener
 		if name == "open" || name == "xdg-open" || name == "cmd" {
 			called = true
 		}
 		return exec.Command("echo", "success")
 	}
 
-	// Note: this might fail Start() because echo doesn't take the same args as open,
-	// but we just want to see if it was called.
 	_ = openURL("https://example.com")
 
 	if !called {

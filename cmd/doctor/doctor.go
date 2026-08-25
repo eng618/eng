@@ -86,12 +86,27 @@ func checkTools() {
 		path, err := execLookPath(tool.Binary)
 		var statusText string
 		if err == nil {
-			statusText = fmt.Sprintf("  %s %-16s %s", theme.SuccessText.Render("✔"), tool.Name, theme.MutedText.Render(path))
+			statusText = fmt.Sprintf(
+				"  %s %-16s %s",
+				theme.SuccessText.Render("✔"),
+				tool.Name,
+				theme.MutedText.Render(path),
+			)
 		} else if tool.Required {
 			allRequiredPassed = false
-			statusText = fmt.Sprintf("  %s %-16s %s", theme.ErrorText.Render("✖"), tool.Name, theme.ErrorText.Render("Not Found (Required)"))
+			statusText = fmt.Sprintf(
+				"  %s %-16s %s",
+				theme.ErrorText.Render("✖"),
+				tool.Name,
+				theme.ErrorText.Render("Not Found (Required)"),
+			)
 		} else {
-			statusText = fmt.Sprintf("  %s %-16s %s", theme.MutedText.Render("○"), tool.Name, theme.MutedText.Render("Not Installed (Optional)"))
+			statusText = fmt.Sprintf(
+				"  %s %-16s %s",
+				theme.MutedText.Render("○"),
+				tool.Name,
+				theme.MutedText.Render("Not Installed (Optional)"),
+			)
 		}
 		cardLines = append(cardLines, statusText)
 	}
@@ -118,12 +133,36 @@ func checkConfigPaths() {
 	cfgFile := viper.ConfigFileUsed()
 	if cfgFile != "" {
 		if _, err := osStat(cfgFile); err == nil {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.SuccessText.Render("✔"), "Config File:", theme.MutedText.Render(cfgFile)))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.SuccessText.Render("✔"),
+					"Config File:",
+					theme.MutedText.Render(cfgFile),
+				),
+			)
 		} else {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.ErrorText.Render("✖"), "Config File:", theme.ErrorText.Render("Not Accessible")))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.ErrorText.Render("✖"),
+					"Config File:",
+					theme.ErrorText.Render("Not Accessible"),
+				),
+			)
 		}
 	} else {
-		cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.MutedText.Render("○"), "Config File:", theme.MutedText.Render("None loaded (using defaults)")))
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.MutedText.Render("○"),
+				"Config File:",
+				theme.MutedText.Render("None loaded (using defaults)"),
+			),
+		)
 	}
 
 	// Check Git Dev Path
@@ -132,12 +171,36 @@ func checkConfigPaths() {
 	if devPath != "" {
 		devPath = os.ExpandEnv(devPath)
 		if fi, err := osStat(devPath); err == nil && fi.IsDir() {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.SuccessText.Render("✔"), "Git Dev Path:", theme.MutedText.Render(devPath)))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.SuccessText.Render("✔"),
+					"Git Dev Path:",
+					theme.MutedText.Render(devPath),
+				),
+			)
 		} else {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.ErrorText.Render("✖"), "Git Dev Path:", theme.ErrorText.Render(fmt.Sprintf("%s (Directory not found)", devPath))))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.ErrorText.Render("✖"),
+					"Git Dev Path:",
+					theme.ErrorText.Render(fmt.Sprintf("%s (Directory not found)", devPath)),
+				),
+			)
 		}
 	} else {
-		cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.MutedText.Render("○"), "Git Dev Path:", theme.MutedText.Render("Not set (set with 'eng config git-dev-path')")))
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.MutedText.Render("○"),
+				"Git Dev Path:",
+				theme.MutedText.Render("Not set (set with 'eng config git-dev-path')"),
+			),
+		)
 	}
 
 	// Check Dotfiles Bare Repo Path
@@ -146,9 +209,25 @@ func checkConfigPaths() {
 	if barePath != "" {
 		barePath = os.ExpandEnv(barePath)
 		if fi, err := osStat(barePath); err == nil && fi.IsDir() {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.SuccessText.Render("✔"), "Dotfiles Bare Path:", theme.MutedText.Render(barePath)))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.SuccessText.Render("✔"),
+					"Dotfiles Bare Path:",
+					theme.MutedText.Render(barePath),
+				),
+			)
 		} else {
-			cardLines = append(cardLines, fmt.Sprintf("  %s %-20s %s", theme.MutedText.Render("○"), "Dotfiles Bare Path:", theme.MutedText.Render(fmt.Sprintf("%s (Not found)", barePath))))
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.MutedText.Render("○"),
+					"Dotfiles Bare Path:",
+					theme.MutedText.Render(fmt.Sprintf("%s (Not found)", barePath)),
+				),
+			)
 		}
 	}
 
@@ -166,9 +245,18 @@ func checkVersionStatus() {
 	var cardLines []string
 	cardLines = append(cardLines, theme.BoldText.Render("Runtime & Installation:"))
 
-	cardLines = append(cardLines, fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Current Version:"), theme.PrimaryText.Render(version.Version)))
-	cardLines = append(cardLines, fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Build Commit:"), theme.MutedText.Render(version.Commit)))
-	cardLines = append(cardLines, fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Build Date:"), theme.MutedText.Render(version.Date)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Current Version:"), theme.PrimaryText.Render(version.Version)),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Build Commit:"), theme.MutedText.Render(version.Commit)),
+	)
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Build Date:"), theme.MutedText.Render(version.Date)),
+	)
 
 	execPath, err := os.Executable()
 	if err == nil {
@@ -176,7 +264,10 @@ func checkVersionStatus() {
 		if err == nil {
 			execPath = resolvedPath
 		}
-		cardLines = append(cardLines, fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Executable:"), theme.MutedText.Render(execPath)))
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf("  %-22s %s", theme.BoldText.Render("Executable:"), theme.MutedText.Render(execPath)),
+		)
 	}
 
 	if !ui.DisableProgress {

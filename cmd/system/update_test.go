@@ -5,8 +5,39 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/eng618/eng/internal/sysinfo"
 	"github.com/eng618/eng/internal/ui"
 )
+
+func TestUpdateCmd_Fedora(t *testing.T) {
+	origExec := execCommand
+	ui.DisableProgress = true
+	defer func() {
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
+
+	called := []string{}
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		cmdStr := name + " " + strings.Join(args, " ")
+		called = append(called, cmdStr)
+		return exec.Command("echo", "success")
+	}
+
+	updateFedora(false, true, 60)
+
+	expected := "bash -c sudo dnf upgrade --refresh -y"
+	found := false
+	for _, c := range called {
+		if c == expected {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected command %q to be called, but it wasn't. Called: %v", expected, called)
+	}
+}
 
 func TestUpdateCmd_Ubuntu(t *testing.T) {
 	origExec := execCommand
@@ -20,19 +51,10 @@ func TestUpdateCmd_Ubuntu(t *testing.T) {
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		cmdStr := name + " " + strings.Join(args, " ")
 		called = append(called, cmdStr)
-
-		// Mock uname -a to return Ubuntu
-		if name == "uname" {
-			return exec.Command("echo", "Linux ubuntu 5.4.0")
-		}
-		// Mock other commands to succeed
 		return exec.Command("echo", "success")
 	}
 
-	// We can't easily run the actual cobra command here without setting up flags,
-	// but we can test the logic by calling the Run function directly if we had access.
-	// For now, let's test the updateUbuntu function directly.
-	updateUbuntu(false, true, 60)
+	updateDebianUbuntu(false, true, 60)
 
 	expected := "bash -c sudo apt-get update && sudo apt-get upgrade -y"
 	found := false
@@ -44,6 +66,104 @@ func TestUpdateCmd_Ubuntu(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("Expected command %q to be called, but it wasn't. Called: %v", expected, called)
+	}
+}
+
+func TestUpdateCmd_Dispatch_Fedora(t *testing.T) {
+	origDetect := detectDistro
+	origExec := execCommand
+	ui.DisableProgress = true
+	defer func() {
+		detectDistro = origDetect
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
+
+	detectDistro = func() sysinfo.DistroInfo {
+		return sysinfo.DistroInfo{
+			ID:         "fedora",
+			PrettyName: "Fedora Linux 41",
+			RawOS:      "linux",
+		}
+	}
+
+	calledDNF := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "bash" && len(args) > 1 && strings.Contains(args[1], "dnf upgrade") {
+			calledDNF = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	UpdateCmd.Run(UpdateCmd, []string{})
+
+	if !calledDNF {
+		t.Error("UpdateCmd dispatch for Fedora did not execute dnf upgrade")
+	}
+}
+
+func TestUpdateCmd_Dispatch_Ubuntu(t *testing.T) {
+	origDetect := detectDistro
+	origExec := execCommand
+	ui.DisableProgress = true
+	defer func() {
+		detectDistro = origDetect
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
+
+	detectDistro = func() sysinfo.DistroInfo {
+		return sysinfo.DistroInfo{
+			ID:         "ubuntu",
+			PrettyName: "Ubuntu 24.04",
+			RawOS:      "linux",
+		}
+	}
+
+	calledAPT := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "bash" && len(args) > 1 && strings.Contains(args[1], "apt-get update") {
+			calledAPT = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	UpdateCmd.Run(UpdateCmd, []string{})
+
+	if !calledAPT {
+		t.Error("UpdateCmd dispatch for Ubuntu did not execute apt-get update")
+	}
+}
+
+func TestUpdateFlatpak(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	ui.DisableProgress = true
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "flatpak" {
+			return "/usr/bin/flatpak", nil
+		}
+		return "", exec.ErrNotFound
+	}
+
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "flatpak" && len(args) > 0 && args[0] == "update" {
+			called = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	updateFlatpak(false)
+
+	if !called {
+		t.Error("updateFlatpak did not call flatpak update")
 	}
 }
 
@@ -110,21 +230,44 @@ func TestUpdateRaspberryPi(t *testing.T) {
 	lookPath = func(path string) (string, error) {
 		return "/usr/bin/" + path, nil
 	}
-	calledBrew := false
+	calledAPT := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "brew update") {
-			calledBrew = true
+		if name == "bash" && strings.Contains(args[1], "apt-get update") {
+			calledAPT = true
 		}
 		return exec.Command("echo", "success")
 	}
 
 	updateRaspberryPi(false)
-	if !calledBrew {
-		t.Error("updateRaspberryPi should have called updateBrew")
+	if !calledAPT {
+		t.Error("updateRaspberryPi should have called apt-get update")
 	}
 }
 
-func TestRunCleanup_AutoApprove(t *testing.T) {
+func TestRunDnfCleanup_AutoApprove(t *testing.T) {
+	origExec := execCommand
+	ui.DisableProgress = true
+	defer func() {
+		execCommand = origExec
+		ui.DisableProgress = false
+	}()
+
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "sudo" && len(args) > 1 && args[0] == "dnf" && args[1] == "autoremove" {
+			called = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	runDnfCleanup(false, true, 60)
+
+	if !called {
+		t.Error("runDnfCleanup with autoApprove should have called dnf autoremove")
+	}
+}
+
+func TestRunAptCleanup_AutoApprove(t *testing.T) {
 	origExec := execCommand
 	ui.DisableProgress = true
 	defer func() {
@@ -140,9 +283,9 @@ func TestRunCleanup_AutoApprove(t *testing.T) {
 		return exec.Command("echo", "success")
 	}
 
-	runCleanup(false, true, 60)
+	runAptCleanup(false, true, 60)
 
 	if !called {
-		t.Error("runCleanup with autoApprove should have called apt-get autoremove")
+		t.Error("runAptCleanup with autoApprove should have called apt-get autoremove")
 	}
 }

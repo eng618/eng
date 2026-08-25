@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
-	"github.com/stretchr/testify/assert"
 )
 
 type mockFileInfo struct {
@@ -19,7 +20,7 @@ type mockFileInfo struct {
 
 func (m mockFileInfo) Name() string       { return "mock" }
 func (m mockFileInfo) Size() int64        { return 0 }
-func (m mockFileInfo) Mode() fs.FileMode  { return 0755 }
+func (m mockFileInfo) Mode() fs.FileMode  { return 0o755 }
 func (m mockFileInfo) ModTime() time.Time { return time.Now() }
 func (m mockFileInfo) IsDir() bool        { return m.isDir }
 func (m mockFileInfo) Sys() any           { return nil }

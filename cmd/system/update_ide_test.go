@@ -163,11 +163,14 @@ func TestRunIdeUpdate_CleanupPrompt(t *testing.T) {
 	origExec := execCommand
 	origHome := userHomeDir
 	origConfirm := ui.Confirm
+	origTargetOS := ideTargetOS
 	ui.DisableProgress = true
+	ideTargetOS = "linux"
 	defer func() {
 		execCommand = origExec
 		userHomeDir = origHome
 		ui.Confirm = origConfirm
+		ideTargetOS = origTargetOS
 		ui.DisableProgress = false
 	}()
 

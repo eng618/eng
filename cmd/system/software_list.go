@@ -2,7 +2,6 @@ package system
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -67,13 +66,27 @@ func checkByBundleID(bundleID string) func() bool {
 	}
 }
 
-func checkByBundleIDOrPath(bundleID, linuxPath string) func() bool {
+func checkByBundleIDOrPath(bundleID string, linuxPaths ...string) func() bool {
 	return func() bool {
 		if runtime.GOOS == "darwin" {
 			return execCommand("mdfind", "kMDItemCFBundleIdentifier == '"+bundleID+"'").Run() == nil
 		}
-		_, err := lookPath(linuxPath)
-		return err == nil
+		for _, path := range linuxPaths {
+			if _, err := lookPath(path); err == nil {
+				return true
+			}
+		}
+		// Check Flatpak system and user application paths
+		if _, err := stat("/var/lib/flatpak/app/" + bundleID); err == nil {
+			return true
+		}
+		homeDir, err := userHomeDir()
+		if err == nil {
+			if _, err := stat(filepath.Join(homeDir, ".local", "share", "flatpak", "app", bundleID)); err == nil {
+				return true
+			}
+		}
+		return false
 	}
 }
 
@@ -84,22 +97,49 @@ func checkObsidian() bool {
 			"kMDItemCFBundleIdentifier == 'com.obsidian.md' || kMDItemCFBundleIdentifier == 'md.obsidian'",
 		).Run() == nil
 	}
-	_, err := lookPath("obsidian")
-	return err == nil
+	if _, err := lookPath("obsidian"); err == nil {
+		return true
+	}
+	if _, err := stat("/var/lib/flatpak/app/md.obsidian.Obsidian"); err == nil {
+		return true
+	}
+	homeDir, err := userHomeDir()
+	if err == nil {
+		if _, err := stat(
+			filepath.Join(homeDir, ".local", "share", "flatpak", "app", "md.obsidian.Obsidian"),
+		); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func checkAndroidStudio() bool {
 	if runtime.GOOS == "darwin" {
-		_, err := os.Stat("/Applications/Android Studio.app")
+		_, err := stat("/Applications/Android Studio.app")
 		return err == nil
 	}
 	if runtime.GOOS == "linux" {
-		_, err := lookPath("studio")
-		if err == nil {
+		if _, err := lookPath("studio"); err == nil {
 			return true
 		}
-		_, err = lookPath("studio.sh")
-		return err == nil
+		if _, err := lookPath("studio.sh"); err == nil {
+			return true
+		}
+		if _, err := stat("/opt/android-studio/bin/studio.sh"); err == nil {
+			return true
+		}
+		if _, err := stat("/var/lib/flatpak/app/com.google.AndroidStudio"); err == nil {
+			return true
+		}
+		homeDir, err := userHomeDir()
+		if err == nil {
+			if _, err := stat(
+				filepath.Join(homeDir, ".local", "share", "flatpak", "app", "com.google.AndroidStudio"),
+			); err == nil {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -113,7 +153,7 @@ func getCoreSoftware() []Software {
 			Description: "Code Editor",
 			Optional:    true,
 			URL:         "https://code.visualstudio.com/Download",
-			Check:       checkByPath("code"),
+			Check:       checkByBundleIDOrPath("com.microsoft.VSCode", "code"),
 			Install:     installByURL("https://code.visualstudio.com/Download"),
 		},
 		{
@@ -139,13 +179,14 @@ func getCoreSoftware() []Software {
 			Description: "Zsh configuration framework",
 			Optional:    false,
 			Check: func() bool {
-				// Checked in setup.go usually, but good to have here
-				cmd := execCommand("sh", "-c", "[ -d \"$HOME/.oh-my-zsh\" ]")
-				return cmd.Run() == nil
+				homeDir, err := userHomeDir()
+				if err != nil {
+					return false
+				}
+				_, err = stat(filepath.Join(homeDir, ".oh-my-zsh"))
+				return err == nil
 			},
 			Install: func() error {
-				// This is handled by setupOhMyZsh in setup.go, but we could unify.
-				// For now, let's keep it consistent with the list.
 				return nil
 			},
 		},
@@ -159,7 +200,7 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "Encrypted Photo Backup",
 			Optional:    true,
 			URL:         "https://ente.io/download",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("io.ente.photos", "ente"),
 			Install:     installByURL("https://ente.io/download"),
 		},
 		{
@@ -167,7 +208,7 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "Ente Authenticator (2FA)",
 			Optional:    true,
 			URL:         "https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("io.ente.auth", "ente-auth"),
 			Install:     installByURL("https://github.com/ente-io/ente/releases?q=tag%3Aauth-v4"),
 		},
 		{
@@ -175,13 +216,13 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "Ente Password Manager",
 			Optional:    true,
 			URL:         "https://ente.io/locker/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("io.ente.locker", "ente-locker"),
 			Install:     installByURL("https://ente.io/locker/"),
 		},
 		{
 			Name:        "GPGTools",
 			Description: "OpenPGP Suite",
-			Optional:    false, // Seem important for dotfiles
+			Optional:    false,
 			URL:         "https://gpgtools.org/",
 			OS:          "darwin",
 			Check:       checkByBundleID("org.gpgtools.gpgkeychain"),
@@ -192,7 +233,7 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "YubiKey Configuration",
 			Optional:    true,
 			URL:         "https://www.yubico.com/support/download/yubikey-manager/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("com.yubico.ykman", "ykman-gui", "ykman"),
 			Install:     installByURL("https://www.yubico.com/support/download/yubikey-manager/"),
 		},
 		{
@@ -208,7 +249,7 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "DNS Security",
 			Optional:    true,
 			URL:         "https://nextdns.io/",
-			Check:       checkFalse,
+			Check:       checkByPath("nextdns"),
 			Install:     installByURL("https://nextdns.io/"),
 		},
 	}
@@ -221,7 +262,7 @@ func getBrowserApps() []Software {
 			Description: "Web Browser",
 			Optional:    true,
 			URL:         "https://www.google.com/chrome/",
-			Check:       checkByBundleIDOrPath("com.google.Chrome", "google-chrome"),
+			Check:       checkByBundleIDOrPath("com.google.Chrome", "google-chrome", "google-chrome-stable"),
 			Install:     installByURL("https://www.google.com/chrome/"),
 		},
 		{
@@ -229,7 +270,7 @@ func getBrowserApps() []Software {
 			Description: "Privacy Browser",
 			Optional:    true,
 			URL:         "https://brave.com/download/",
-			Check:       checkByBundleIDOrPath("com.brave.Browser", "brave-browser"),
+			Check:       checkByBundleIDOrPath("com.brave.Browser", "brave-browser", "brave"),
 			Install:     installByURL("https://brave.com/download/"),
 		},
 	}
@@ -251,7 +292,7 @@ func getDeveloperAndTerminalApps() []Software {
 			Description: "Remote Desktop",
 			Optional:    true,
 			URL:         "https://www.realvnc.com/en/connect/download/viewer/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("com.realvnc.vncviewer", "vncviewer"),
 			Install:     installByURL("https://www.realvnc.com/en/connect/download/viewer/"),
 		},
 		{
@@ -259,7 +300,7 @@ func getDeveloperAndTerminalApps() []Software {
 			Description: "Container Management",
 			Optional:    true,
 			URL:         "https://rancherdesktop.io/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("io.rancherdesktop.app", "rancher-desktop"),
 			Install:     installByURL("https://rancherdesktop.io/"),
 		},
 		{
@@ -289,7 +330,7 @@ func getProductivityApps() []Software {
 			Description: "Notes & Collaboration",
 			Optional:    true,
 			URL:         "https://www.notion.so/desktop",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("notion.id", "notion-app", "notion"),
 			Install:     installByURL("https://www.notion.so/desktop"),
 		},
 		{
@@ -319,7 +360,7 @@ func getMediaAndCommunicationApps() []Software {
 			Description: "Secure Messaging",
 			Optional:    true,
 			URL:         "https://signal.org/download/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("org.whispersystems.signal-desktop", "signal-desktop", "signal"),
 			Install:     installByURL("https://signal.org/download/"),
 		},
 		{
@@ -335,7 +376,7 @@ func getMediaAndCommunicationApps() []Software {
 			Description: "Screen Recorder",
 			Optional:    true,
 			URL:         "https://obsproject.com/",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("com.obsproject.Studio", "obs", "obs-studio"),
 			Install:     installByURL("https://obsproject.com/"),
 		},
 		{
@@ -343,7 +384,7 @@ func getMediaAndCommunicationApps() []Software {
 			Description: "Video Transcoder",
 			Optional:    true,
 			URL:         "https://handbrake.fr/downloads.php",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("fr.handbrake.ghb", "ghb", "handbrake", "HandBrake"),
 			Install:     installByURL("https://handbrake.fr/downloads.php"),
 		},
 		{
@@ -364,7 +405,7 @@ func getUtilityAndOtherApps() []Software {
 			Description: "Headset Software",
 			Optional:    true,
 			URL:         "https://www.jabra.com/software-and-services/jabra-direct",
-			Check:       checkFalse,
+			Check:       checkByBundleIDOrPath("com.jabra.directonline", "jabra-direct"),
 			Install:     installByURL("https://www.jabra.com/software-and-services/jabra-direct"),
 		},
 		{
@@ -409,11 +450,23 @@ func getCLITools() []Software {
 			Optional:    false,
 			Check:       checkByPath("bw"),
 			Install: func() error {
-				log.Info("Installing bitwarden-cli via brew...")
-				cmd := execCommand("brew", "install", "bitwarden-cli")
-				cmd.Stdout = log.Writer()
-				cmd.Stderr = log.ErrorWriter()
-				return cmd.Run()
+				if _, err := lookPath("brew"); err == nil {
+					log.Info("Installing bitwarden-cli via Homebrew...")
+					cmd := execCommand("brew", "install", "bitwarden-cli")
+					cmd.Stdout = log.Writer()
+					cmd.Stderr = log.ErrorWriter()
+					return cmd.Run()
+				}
+				if _, err := lookPath("npm"); err == nil {
+					log.Info("Installing bitwarden-cli via npm...")
+					cmd := execCommand("npm", "install", "-g", "@bitwarden/cli")
+					cmd.Stdout = log.Writer()
+					cmd.Stderr = log.ErrorWriter()
+					return cmd.Run()
+				}
+				log.Warn("Neither brew nor npm was found to install bitwarden-cli automatically.")
+				log.Message("Please install bitwarden-cli manually or install Homebrew/npm.")
+				return openURL("https://bitwarden.com/help/cli/")
 			},
 		},
 	}

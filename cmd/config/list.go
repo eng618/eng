@@ -46,14 +46,20 @@ func PrintConfigSummary() {
 	if cfgFile == "" {
 		cfgFile = "None loaded (using defaults)"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Config File:"), theme.MutedText.Render(cfgFile)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Config File:"), theme.MutedText.Render(cfgFile)),
+	)
 
 	// User Email
 	userEmail := viper.GetString("user-email")
 	if userEmail == "" {
 		userEmail = "Not set"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("User Email:"), theme.PrimaryText.Render(userEmail)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("User Email:"), theme.PrimaryText.Render(userEmail)),
+	)
 
 	// Git Dev Path
 	gitCfg := config.GetGitConfig()
@@ -63,7 +69,10 @@ func PrintConfigSummary() {
 	} else {
 		devPath = "Not set"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Git Dev Path:"), theme.BaseText.Render(devPath)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Git Dev Path:"), theme.BaseText.Render(devPath)),
+	)
 
 	// Dotfiles
 	dotfilesCfg := config.GetDotfilesConfig()
@@ -71,13 +80,19 @@ func PrintConfigSummary() {
 	if dotfilesRepoURL == "" {
 		dotfilesRepoURL = "Not set"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Repo URL:"), theme.BaseText.Render(dotfilesRepoURL)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Repo URL:"), theme.BaseText.Render(dotfilesRepoURL)),
+	)
 
 	dotfilesBranch := dotfilesCfg.Branch
 	if dotfilesBranch == "" {
 		dotfilesBranch = "main"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Branch:"), theme.BaseText.Render(dotfilesBranch)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Branch:"), theme.BaseText.Render(dotfilesBranch)),
+	)
 
 	barePath := dotfilesCfg.BareRepoPath
 	if barePath != "" {
@@ -85,14 +100,20 @@ func PrintConfigSummary() {
 	} else {
 		barePath = "Not set"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Bare Path:"), theme.MutedText.Render(barePath)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Dotfiles Bare Path:"), theme.MutedText.Render(barePath)),
+	)
 
 	// IDE URL
 	ideURL := viper.GetString("antigravity.ide_download_url")
 	if ideURL == "" {
 		ideURL = "Default"
 	}
-	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("IDE Download URL:"), theme.MutedText.Render(ideURL)))
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("IDE Download URL:"), theme.MutedText.Render(ideURL)),
+	)
 
 	// Verbose Mode
 	verbose := viper.GetBool("verbose")

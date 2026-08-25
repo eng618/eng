@@ -16,17 +16,19 @@ import (
 // EnsurePrerequisites checks and installs core prerequisites needed for setup flows.
 // SSH is handled contextually by callers that need GitHub access.
 func EnsurePrerequisites(verbose bool) error {
-	log.Verbose(verbose, "Checking prerequisites for dotfiles installation")
+	log.Verbose(verbose, "Checking prerequisites for dotfiles and system setup")
 
-	// Sequential checks with progress logging
+	// 1. Homebrew check / offer
 	if err := ensureHomebrew(verbose); err != nil {
 		return err
 	}
 
+	// 2. Git check / installation
 	if err := ensureGit(verbose); err != nil {
 		return err
 	}
 
+	// 3. Bash check / installation
 	if err := ensureBash(verbose); err != nil {
 		return err
 	}
@@ -45,19 +47,45 @@ func ensureHomebrew(verbose bool) error {
 		return nil
 	}
 
-	log.Warn("Homebrew is not installed")
-	log.Message("Homebrew is required to install Git and Bash")
+	// Check Linuxbrew default location if not in PATH yet
+	if _, err := stat("/home/linuxbrew/.linuxbrew/bin/brew"); err == nil {
+		_ = os.Setenv("PATH", os.Getenv("PATH")+":/home/linuxbrew/.linuxbrew/bin")
+		log.Verbose(verbose, "Found Homebrew at /home/linuxbrew/.linuxbrew/bin/brew")
+		return nil
+	}
 
-	confirm, err := ui.Confirm("Would you like to install Homebrew now?", true)
-	cobra.CheckErr(err)
+	distro := detectDistro()
+	isMac := distro.IsMacOS()
+
+	if isMac {
+		log.Warn("Homebrew is not installed")
+		log.Message("Homebrew is required on macOS to install Git and Bash")
+	} else {
+		log.Message("Homebrew (Linuxbrew) is not currently installed")
+	}
+
+	confirmPrompt := "Would you like to install Homebrew now?"
+	if !isMac {
+		confirmPrompt = "Would you like to install Homebrew (Linuxbrew) now?"
+	}
+
+	confirm, err := ui.Confirm(confirmPrompt, isMac)
+	if err != nil {
+		if isMac {
+			cobra.CheckErr(err)
+		}
+		return nil
+	}
 
 	if !confirm {
-		return fmt.Errorf("homebrew installation declined - cannot proceed without homebrew")
+		if isMac {
+			return fmt.Errorf("homebrew installation declined - cannot proceed on macOS without homebrew")
+		}
+		log.Verbose(verbose, "Homebrew installation skipped on Linux; continuing with native tools")
+		return nil
 	}
 
 	log.Start("Installing Homebrew (this may take a few minutes)")
-
-	// Default to system-wide installation
 	log.Message("Installing Homebrew system-wide (may require sudo)...")
 
 	// Check for bash
@@ -66,8 +94,7 @@ func ensureHomebrew(verbose bool) error {
 		return fmt.Errorf("bash is required for homebrew installation but was not found: %w", err)
 	}
 
-	// Download the install script to a temporary file to ensure we can run it
-	// without piping (which breaks sudo password prompts).
+	// Download the install script to a temporary file
 	tmpDir := os.TempDir()
 	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
 
@@ -100,11 +127,16 @@ func ensureHomebrew(verbose bool) error {
 		return fmt.Errorf("homebrew installation failed: %w", err)
 	}
 
+	// If on Linux, update PATH for current process
+	if _, err := stat("/home/linuxbrew/.linuxbrew/bin/brew"); err == nil {
+		_ = os.Setenv("PATH", os.Getenv("PATH")+":/home/linuxbrew/.linuxbrew/bin")
+	}
+
 	log.Success("Homebrew installed successfully")
 	return nil
 }
 
-// ensureGit checks if Git is installed, and if not, installs it via Homebrew.
+// ensureGit checks if Git is installed, and if not, installs it via available package manager.
 func ensureGit(verbose bool) error {
 	log.Verbose(verbose, "Checking for Git")
 
@@ -115,22 +147,44 @@ func ensureGit(verbose bool) error {
 	}
 
 	log.Warn("Git is not installed")
-	log.Start("Installing Git via Homebrew")
+	distro := detectDistro()
 
-	cmd := execCommand("brew", "install", "git")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-
-	if err := cmd.Run(); err != nil {
-		log.Error("Failed to install Git: %v", err)
-		return fmt.Errorf("git installation failed: %w", err)
+	if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Git via Homebrew")
+		cmd := execCommand("brew", "install", "git")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Git via Homebrew: %v", err)
+			return fmt.Errorf("git installation failed: %w", err)
+		}
+	} else if distro.IsFedora() {
+		log.Start("Installing Git via DNF")
+		cmd := execCommand("sudo", "dnf", "install", "-y", "git")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Git via DNF: %v", err)
+			return fmt.Errorf("git installation failed: %w", err)
+		}
+	} else if distro.IsDebianUbuntu() {
+		log.Start("Installing Git via APT")
+		cmd := execCommand("sudo", "apt-get", "install", "-y", "git")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Git via APT: %v", err)
+			return fmt.Errorf("git installation failed: %w", err)
+		}
+	} else {
+		return fmt.Errorf("git is not installed and no supported package manager (brew, dnf, apt) was found")
 	}
 
 	log.Success("Git installed successfully")
 	return nil
 }
 
-// ensureBash checks if Bash is installed, and if not, installs it via Homebrew.
+// ensureBash checks if Bash is installed, and if not, installs it via available package manager.
 func ensureBash(verbose bool) error {
 	log.Verbose(verbose, "Checking for Bash")
 
@@ -141,15 +195,37 @@ func ensureBash(verbose bool) error {
 	}
 
 	log.Warn("Bash is not installed")
-	log.Start("Installing Bash via Homebrew")
+	distro := detectDistro()
 
-	cmd := execCommand("brew", "install", "bash")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-
-	if err := cmd.Run(); err != nil {
-		log.Error("Failed to install Bash: %v", err)
-		return fmt.Errorf("bash installation failed: %w", err)
+	if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Bash via Homebrew")
+		cmd := execCommand("brew", "install", "bash")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Bash via Homebrew: %v", err)
+			return fmt.Errorf("bash installation failed: %w", err)
+		}
+	} else if distro.IsFedora() {
+		log.Start("Installing Bash via DNF")
+		cmd := execCommand("sudo", "dnf", "install", "-y", "bash")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Bash via DNF: %v", err)
+			return fmt.Errorf("bash installation failed: %w", err)
+		}
+	} else if distro.IsDebianUbuntu() {
+		log.Start("Installing Bash via APT")
+		cmd := execCommand("sudo", "apt-get", "install", "-y", "bash")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Bash via APT: %v", err)
+			return fmt.Errorf("bash installation failed: %w", err)
+		}
+	} else {
+		return fmt.Errorf("bash is not installed and no supported package manager (brew, dnf, apt) was found")
 	}
 
 	log.Success("Bash installed successfully")

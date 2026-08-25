@@ -18,16 +18,19 @@ import (
 	"github.com/eng618/eng/internal/asdf"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/sysinfo"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
+
+var detectDistro = sysinfo.Detect
 
 // UpdateCmd represents the system update command.
 var UpdateCmd = &cobra.Command{
 	Use:     "update",
 	Aliases: []string{"upgrade", "u"},
 	Short:   "Update the system and perform maintenance",
-	Long:    `This command updates the system, Homebrew packages, asdf plugins, and performs cleanup operations.`,
+	Long:    `This command updates the system, Homebrew packages, asdf plugins, flatpak packages, and performs cleanup operations.`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		headerStyle := lipgloss.NewStyle().
 			Bold(true).
@@ -42,28 +45,29 @@ var UpdateCmd = &cobra.Command{
 		cleanupTimeout, _ := cmd.Flags().GetInt("cleanup-timeout")
 		log.Verbose(isVerbose, "Checking system type...")
 
-		checkCmd := execCommand("uname", "-a")
-		output, err := checkCmd.Output()
-		if err != nil {
-			log.Error("Error checking system type: %s", err)
-			return
-		}
+		distro := detectDistro()
+		log.Verbose(isVerbose, "System detected: %s (OS: %s, ID: %s)", distro.PrettyName, distro.RawOS, distro.ID)
 
-		uname := strings.ToLower(string(output))
-		log.Verbose(isVerbose, "System type detected: %s", strings.TrimSpace(string(output)))
-
-		if strings.Contains(uname, "ubuntu") || strings.Contains(uname, "linux") {
-			log.Verbose(isVerbose, "Detected Ubuntu/Linux system, running system update...")
-			updateUbuntu(isVerbose, autoApprove, cleanupTimeout)
-		} else if strings.Contains(uname, "darwin") {
+		if distro.IsFedora() {
+			log.Verbose(isVerbose, "Detected Fedora/RHEL system, running DNF system update...")
+			updateFedora(isVerbose, autoApprove, cleanupTimeout)
+		} else if distro.IsDebianUbuntu() {
+			log.Verbose(isVerbose, "Detected Debian/Ubuntu system, running APT system update...")
+			updateDebianUbuntu(isVerbose, autoApprove, cleanupTimeout)
+		} else if distro.IsMacOS() {
 			log.Verbose(isVerbose, "Detected macOS system, running macOS update...")
 			updateMacOS(isVerbose)
-		} else if strings.Contains(uname, "raspberrypi") || strings.Contains(uname, "raspbian") {
+		} else if distro.IsRaspberryPi() {
 			log.Verbose(isVerbose, "Detected Raspberry Pi system, running Raspberry Pi update...")
 			updateRaspberryPi(isVerbose)
+		} else if distro.IsLinux() {
+			log.Verbose(isVerbose, "Detected generic Linux system, running general maintenance...")
+			updateGenericLinux(isVerbose, autoApprove, cleanupTimeout)
 		} else {
-			log.Warn("This system is not yet supported for updates.")
-			log.Verbose(isVerbose, "Unsupported system type: %s", strings.TrimSpace(string(output)))
+			log.Warn("This system is not yet configured for automated OS updates.")
+			log.Verbose(isVerbose, "System type: %s", distro.PrettyName)
+			updateBrew(isVerbose)
+			updateAsdf(isVerbose)
 		}
 	},
 }
@@ -86,20 +90,57 @@ func init() {
 	UpdateCmd.AddCommand(UpdateIdeCmd)
 }
 
-func updateUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
-	log.Message("Running system update for Ubuntu/Linux...")
+func updateFedora(isVerbose, autoApprove bool, cleanupTimeout int) {
+	log.Message("Running system update for Fedora/RHEL...")
+	log.Message("About to run a command with sudo. You may be prompted for your system password.")
+
+	updateCmd := execCommand("bash", "-c", "sudo dnf upgrade --refresh -y")
+	updateCmd.Stdout = log.Writer()
+	updateCmd.Stderr = log.ErrorWriter()
+	if err := updateCmd.Run(); err != nil {
+		log.Error("Error updating system with DNF: %s", err)
+		return
+	}
+	log.Success("System updated successfully.")
+
+	runDnfCleanup(isVerbose, autoApprove, cleanupTimeout)
+	updateFlatpak(isVerbose)
+	updateBrew(isVerbose)
+	updateAsdf(isVerbose)
+	updateIde(isVerbose, autoApprove)
+}
+
+func updateDebianUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
+	log.Message("Running system update for Ubuntu/Debian...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
 	updateCmd := execCommand("bash", "-c", "sudo apt-get update && sudo apt-get upgrade -y")
 	updateCmd.Stdout = log.Writer()
 	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
-		log.Error("Error updating system: %s", err)
+		log.Error("Error updating system with APT: %s", err)
 		return
 	}
 	log.Success("System updated successfully.")
 
-	runCleanup(isVerbose, autoApprove, cleanupTimeout)
+	runAptCleanup(isVerbose, autoApprove, cleanupTimeout)
+	updateFlatpak(isVerbose)
+	updateBrew(isVerbose)
+	updateAsdf(isVerbose)
+	updateIde(isVerbose, autoApprove)
+}
+
+func updateGenericLinux(isVerbose, autoApprove bool, cleanupTimeout int) {
+	if _, err := lookPath("dnf"); err == nil {
+		updateFedora(isVerbose, autoApprove, cleanupTimeout)
+		return
+	}
+	if _, err := lookPath("apt-get"); err == nil {
+		updateDebianUbuntu(isVerbose, autoApprove, cleanupTimeout)
+		return
+	}
+
+	updateFlatpak(isVerbose)
 	updateBrew(isVerbose)
 	updateAsdf(isVerbose)
 	updateIde(isVerbose, autoApprove)
@@ -111,8 +152,41 @@ func updateMacOS(isVerbose bool) {
 }
 
 func updateRaspberryPi(isVerbose bool) {
-	updateBrew(isVerbose)
-	updateAsdf(isVerbose)
+	updateDebianUbuntu(isVerbose, false, 60)
+}
+
+func updateFlatpak(isVerbose bool) {
+	_, err := lookPath("flatpak")
+	if err != nil {
+		return
+	}
+
+	log.Verbose(isVerbose, "Checking for Flatpak updates...")
+	var spinner *ui.Spinner
+	if !ui.DisableProgress {
+		spinner = ui.NewSpinner("Updating Flatpak packages...")
+		spinner.Start()
+	}
+
+	updateCmd := execCommand("flatpak", "update", "-y")
+	if isVerbose {
+		updateCmd.Stdout = log.Writer()
+		updateCmd.Stderr = log.ErrorWriter()
+	} else {
+		var stderrBuf bytes.Buffer
+		updateCmd.Stderr = &stderrBuf
+	}
+
+	runErr := updateCmd.Run()
+	if spinner != nil {
+		spinner.Stop()
+	}
+
+	if runErr != nil {
+		log.Verbose(isVerbose, "Flatpak update notice: %v", runErr)
+	} else {
+		theme.SuccessMessage("Flatpak packages updated successfully.")
+	}
 }
 
 func updateBrew(isVerbose bool) {
@@ -192,30 +266,61 @@ func updateAsdf(isVerbose bool) {
 	}
 }
 
-func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
-	operations := []string{
-		"apt-get autoremove --purge",
-		"apt-get autoclean",
-	}
+type cleanupOperation struct {
+	Label   string
+	Command string
+	IsRaw   bool
+}
 
-	_, dockerErr := lookPath("docker")
-	if dockerErr == nil {
-		operations = append(operations, "docker system prune")
+func runDnfCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
+	ops := []cleanupOperation{
+		{Label: "Remove unneeded packages (dnf autoremove)", Command: "dnf autoremove"},
+		{Label: "Clean package cache (dnf clean all)", Command: "dnf clean all"},
 	}
+	if _, dockerErr := lookPath("docker"); dockerErr == nil {
+		ops = append(
+			ops,
+			cleanupOperation{
+				Label:   "Prune Docker system (docker system prune)",
+				Command: "docker system prune",
+				IsRaw:   true,
+			},
+		)
+	}
+	executeCleanupOperations(ops, isVerbose, autoApprove, cleanupTimeout)
+}
 
-	var selectedOperations []string
+func runAptCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
+	ops := []cleanupOperation{
+		{Label: "Remove unneeded packages (apt-get autoremove --purge)", Command: "apt-get autoremove --purge"},
+		{Label: "Clean package cache (apt-get autoclean)", Command: "apt-get autoclean"},
+	}
+	if _, dockerErr := lookPath("docker"); dockerErr == nil {
+		ops = append(
+			ops,
+			cleanupOperation{
+				Label:   "Prune Docker system (docker system prune)",
+				Command: "docker system prune",
+				IsRaw:   true,
+			},
+		)
+	}
+	executeCleanupOperations(ops, isVerbose, autoApprove, cleanupTimeout)
+}
+
+func executeCleanupOperations(availableOps []cleanupOperation, isVerbose, autoApprove bool, cleanupTimeout int) {
+	var selectedOps []cleanupOperation
 	if autoApprove {
-		selectedOperations = operations
+		selectedOps = availableOps
 	} else {
-		resultCh := make(chan []string, 1)
+		resultCh := make(chan []cleanupOperation, 1)
 
 		go func() {
-			options := []string{
-				"Remove unneeded packages (apt-get autoremove --purge)",
-				"Clean package cache (apt-get autoclean)",
-			}
-			if dockerErr == nil {
-				options = append(options, "Prune Docker system (docker system prune)")
+			var options []string
+			opMap := make(map[string]cleanupOperation)
+			for _, op := range availableOps {
+				options = append(options, op.Label)
+				opMap[op.Label] = op
 			}
 
 			selected, err := ui.MultiSelect("Select cleanup operations to run:", options, options)
@@ -224,16 +329,10 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 				return
 			}
 
-			var mapped []string
+			var mapped []cleanupOperation
 			for _, s := range selected {
-				if strings.Contains(s, "autoremove") {
-					mapped = append(mapped, "apt-get autoremove --purge")
-				}
-				if strings.Contains(s, "autoclean") {
-					mapped = append(mapped, "apt-get autoclean")
-				}
-				if strings.Contains(s, "Docker") {
-					mapped = append(mapped, "docker system prune")
+				if op, ok := opMap[s]; ok {
+					mapped = append(mapped, op)
 				}
 			}
 			resultCh <- mapped
@@ -241,14 +340,14 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 
 		select {
 		case res := <-resultCh:
-			selectedOperations = res
+			selectedOps = res
 		case <-time.After(time.Duration(cleanupTimeout) * time.Second):
 			log.Message("\nTimeout reached (%d seconds). Auto-selecting all cleanup operations...", cleanupTimeout)
-			selectedOperations = operations
+			selectedOps = availableOps
 		}
 	}
 
-	if len(selectedOperations) == 0 {
+	if len(selectedOps) == 0 {
 		log.Message("No cleanup operations selected.")
 		return
 	}
@@ -260,13 +359,13 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 		}
 	}()
 
-	for _, op := range selectedOperations {
+	for _, op := range selectedOps {
 		var opSpinner ui.ProgressSpinner
 		if multiSpinner != nil {
-			opSpinner = multiSpinner.AddSpinner(fmt.Sprintf("Running %s...", op))
+			opSpinner = multiSpinner.AddSpinner(fmt.Sprintf("Running %s...", op.Command))
 		}
 
-		if op == "docker system prune" {
+		if op.Command == "docker system prune" {
 			pruneCmd := execCommand("docker", "system", "prune", "-f")
 			out, err := pruneCmd.CombinedOutput()
 			if err != nil {
@@ -290,22 +389,23 @@ func runCleanup(isVerbose, autoApprove bool, cleanupTimeout int) {
 			continue
 		}
 
-		args := append(strings.Fields(op), "-y")
-		cleanupCmd := execCommand("sudo", args...)
+		args := append([]string{"sudo"}, strings.Fields(op.Command)...)
+		args = append(args, "-y")
+		cleanupCmd := execCommand(args[0], args[1:]...)
 		cleanupCmd.Stdout = log.Writer()
 		cleanupCmd.Stderr = log.ErrorWriter()
 
 		if err := cleanupCmd.Run(); err != nil {
 			if opSpinner != nil {
-				opSpinner.Fail(fmt.Sprintf("Failed %s: %v", op, err))
+				opSpinner.Fail(fmt.Sprintf("Failed %s: %v", op.Command, err))
 			} else {
-				log.Error("Failed %s: %v", op, err)
+				log.Error("Failed %s: %v", op.Command, err)
 			}
 		} else {
 			if opSpinner != nil {
-				opSpinner.Success(fmt.Sprintf("Completed %s", op))
+				opSpinner.Success(fmt.Sprintf("Completed %s", op.Command))
 			} else {
-				log.Success("Completed %s", op)
+				log.Success("Completed %s", op.Command)
 			}
 		}
 	}
@@ -319,38 +419,6 @@ func parseDockerPruneSpace(output string) string {
 		return match[1]
 	}
 	return ""
-}
-
-func runCleanupOperationWithSpinner(isVerbose bool, command, operationName string, spinner ui.ProgressSpinner) {
-	log.Verbose(isVerbose, "Running: %s", command)
-
-	cleanupCmd := execCommand("bash", "-c", command)
-	cleanupCmd.Stdout = log.Writer()
-	cleanupCmd.Stderr = log.ErrorWriter()
-
-	if err := cleanupCmd.Run(); err != nil {
-		spinner.Fail(fmt.Sprintf("Error running %s: %s", operationName, err))
-	} else {
-		spinner.Success(fmt.Sprintf("%s completed", operationName))
-	}
-}
-
-func runCleanupOperation(isVerbose bool, command, operationName string) {
-	log.Verbose(isVerbose, "Running: %s", command)
-
-	progress := ui.NewProgressSpinner(fmt.Sprintf("Running %s...", operationName))
-	cleanupCmd := execCommand("bash", "-c", command)
-	cleanupCmd.Stdout = log.Writer()
-	cleanupCmd.Stderr = log.ErrorWriter()
-
-	if err := cleanupCmd.Run(); err != nil {
-		progress.Stop()
-		log.Error("Error running %s: %s", operationName, err)
-	} else {
-		progress.SetProgressBar(1.0, fmt.Sprintf("%s completed", operationName))
-		progress.Stop()
-		log.Success("%s completed.", operationName)
-	}
 }
 
 func updateIde(isVerbose, autoApprove bool) {

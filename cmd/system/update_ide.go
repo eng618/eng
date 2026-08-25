@@ -56,9 +56,11 @@ func init() {
 	UpdateIdeCmd.Flags().BoolP("yes", "y", false, "Auto-approve update operations without prompting")
 }
 
+var ideTargetOS = runtime.GOOS
+
 // RunIdeUpdate orchestrates finding, downloading, extracting, validating, and installing the IDE.
 func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool) error {
-	if runtime.GOOS != "linux" {
+	if ideTargetOS != "linux" {
 		log.Warn("Antigravity IDE automated tarball installation is currently configured for Linux.")
 		return nil
 	}

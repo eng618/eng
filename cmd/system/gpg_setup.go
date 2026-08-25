@@ -97,17 +97,42 @@ func setupGPG(verbose bool) error {
 func ensureGPGDependencies(verbose bool) error {
 	log.Verbose(verbose, "Checking for GPG dependencies...")
 
+	distro := detectDistro()
+
 	// Check for gnupg
 	if _, err := lookPath("gpg"); err != nil {
+		if distro.IsFedora() {
+			return fmt.Errorf("gpg is not installed - please install it via: sudo dnf install -y gnupg2")
+		} else if distro.IsDebianUbuntu() {
+			return fmt.Errorf("gpg is not installed - please install it via: sudo apt-get install -y gnupg")
+		}
 		return fmt.Errorf("gpg is not installed - please install it via: brew install gnupg")
 	}
 	log.Verbose(verbose, "gnupg is installed")
 
-	// Check for pinentry
-	if _, err := lookPath("pinentry-mac"); err != nil {
-		if _, err := lookPath("pinentry"); err != nil {
-			return fmt.Errorf("pinentry is not installed - please install it via: brew install pinentry-mac")
+	// Check for pinentry (pinentry-mac on macOS, pinentry / pinentry-curses / pinentry-gnome3 / pinentry-qt on Linux)
+	foundPinentry := false
+	pinentryCandidates := []string{"pinentry", "pinentry-curses", "pinentry-gnome3", "pinentry-qt", "pinentry-mac"}
+	if distro.IsMacOS() {
+		pinentryCandidates = []string{"pinentry-mac", "pinentry"}
+	}
+	for _, candidate := range pinentryCandidates {
+		if _, err := lookPath(candidate); err == nil {
+			foundPinentry = true
+			log.Verbose(verbose, "found pinentry binary: %s", candidate)
+			break
 		}
+	}
+
+	if !foundPinentry {
+		if distro.IsFedora() {
+			return fmt.Errorf("pinentry is not installed - please install it via: sudo dnf install -y pinentry")
+		} else if distro.IsDebianUbuntu() {
+			return fmt.Errorf(
+				"pinentry is not installed - please install it via: sudo apt-get install -y pinentry-curses",
+			)
+		}
+		return fmt.Errorf("pinentry is not installed - please install it via: brew install pinentry-mac")
 	}
 	log.Verbose(verbose, "pinentry is installed")
 
