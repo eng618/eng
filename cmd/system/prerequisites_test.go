@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/eng618/eng/internal/sysinfo"
@@ -245,6 +246,167 @@ func TestEnsureBash_DNF(t *testing.T) {
 	}
 	if !calledDNF {
 		t.Error("ensureBash on Fedora did not call sudo dnf install -y bash")
+	}
+}
+
+func TestEnsureZsh_Success(t *testing.T) {
+	origLookPath := lookPath
+	defer func() { lookPath = origLookPath }()
+
+	lookPath = func(path string) (string, error) {
+		if path == "zsh" {
+			return "/usr/bin/zsh", nil
+		}
+		return "", errors.New("not found")
+	}
+
+	if err := ensureZsh(false); err != nil {
+		t.Errorf("expected nil error when zsh is installed, got %v", err)
+	}
+}
+
+func TestEnsureZsh_Missing_PromptDeclined(t *testing.T) {
+	origLookPath := lookPath
+	origUIConfirm := ui.Confirm
+	defer func() {
+		lookPath = origLookPath
+		ui.Confirm = origUIConfirm
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "", errors.New("not found")
+	}
+	ui.Confirm = func(msg string, defVal bool) (bool, error) {
+		return false, nil // user declines
+	}
+
+	err := ensureZsh(false)
+	if err == nil {
+		t.Fatal("expected error when user declines zsh installation, got nil")
+	}
+	if !strings.Contains(err.Error(), "declined") {
+		t.Errorf("expected declined message, got %v", err)
+	}
+}
+
+func TestEnsureZsh_Missing_Install_DNF(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	origDetect := detectDistro
+	origUIConfirm := ui.Confirm
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+		detectDistro = origDetect
+		ui.Confirm = origUIConfirm
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "", errors.New("not found")
+	}
+	detectDistro = func() sysinfo.DistroInfo {
+		return sysinfo.DistroInfo{ID: "fedora", RawOS: "linux"}
+	}
+	ui.Confirm = func(msg string, defVal bool) (bool, error) {
+		return true, nil
+	}
+
+	calledDNF := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "sudo" && len(args) >= 3 && args[0] == "dnf" && args[1] == "install" && args[len(args)-1] == "zsh" {
+			calledDNF = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	err := ensureZsh(false)
+	if err != nil {
+		t.Fatalf("ensureZsh failed: %v", err)
+	}
+	if !calledDNF {
+		t.Error("ensureZsh on Fedora did not call sudo dnf install -y zsh")
+	}
+}
+
+func TestEnsureZsh_Missing_Install_APT(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	origDetect := detectDistro
+	origUIConfirm := ui.Confirm
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+		detectDistro = origDetect
+		ui.Confirm = origUIConfirm
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "", errors.New("not found")
+	}
+	detectDistro = func() sysinfo.DistroInfo {
+		return sysinfo.DistroInfo{ID: "ubuntu", RawOS: "linux"}
+	}
+	ui.Confirm = func(msg string, defVal bool) (bool, error) {
+		return true, nil
+	}
+
+	calledAPT := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "sudo" && len(args) >= 3 && args[0] == "apt-get" && args[1] == "install" &&
+			args[len(args)-1] == "zsh" {
+			calledAPT = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	err := ensureZsh(false)
+	if err != nil {
+		t.Fatalf("ensureZsh failed: %v", err)
+	}
+	if !calledAPT {
+		t.Error("ensureZsh on Ubuntu did not call sudo apt-get install -y zsh")
+	}
+}
+
+func TestEnsureZsh_Missing_Install_Brew(t *testing.T) {
+	origLookPath := lookPath
+	origExec := execCommand
+	origDetect := detectDistro
+	origUIConfirm := ui.Confirm
+	defer func() {
+		lookPath = origLookPath
+		execCommand = origExec
+		detectDistro = origDetect
+		ui.Confirm = origUIConfirm
+	}()
+
+	lookPath = func(path string) (string, error) {
+		if path == "brew" {
+			return "/usr/local/bin/brew", nil
+		}
+		return "", errors.New("not found")
+	}
+	detectDistro = func() sysinfo.DistroInfo {
+		return sysinfo.DistroInfo{ID: "macos", RawOS: "darwin"}
+	}
+	ui.Confirm = func(msg string, defVal bool) (bool, error) {
+		return true, nil
+	}
+
+	calledBrew := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		if name == "brew" && len(args) >= 2 && args[0] == "install" && args[1] == "zsh" {
+			calledBrew = true
+		}
+		return exec.Command("echo", "success")
+	}
+
+	err := ensureZsh(false)
+	if err != nil {
+		t.Fatalf("ensureZsh failed: %v", err)
+	}
+	if !calledBrew {
+		t.Error("ensureZsh with Homebrew did not call brew install zsh")
 	}
 }
 

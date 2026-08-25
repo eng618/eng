@@ -33,6 +33,11 @@ func EnsurePrerequisites(verbose bool) error {
 		return err
 	}
 
+	// 4. Zsh check / installation
+	if err := ensureZsh(verbose); err != nil {
+		return err
+	}
+
 	log.Verbose(verbose, "All prerequisites satisfied")
 	return nil
 }
@@ -229,6 +234,62 @@ func ensureBash(verbose bool) error {
 	}
 
 	log.Success("Bash installed successfully")
+	return nil
+}
+
+// ensureZsh checks if Zsh is installed, and if not, prompts to install it via available package manager.
+func ensureZsh(verbose bool) error {
+	log.Verbose(verbose, "Checking for Zsh")
+
+	_, err := lookPath("zsh")
+	if err == nil {
+		log.Verbose(verbose, "Zsh is installed")
+		return nil
+	}
+
+	log.Warn("Zsh is not installed")
+	confirm, err := ui.Confirm("Would you like to install Zsh now?", true)
+	if err != nil {
+		return err
+	}
+	if !confirm {
+		return fmt.Errorf("zsh installation declined - zsh is required for shell and dotfiles setup")
+	}
+
+	distro := detectDistro()
+
+	if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Zsh via Homebrew")
+		cmd := execCommand("brew", "install", "zsh")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Zsh via Homebrew: %v", err)
+			return fmt.Errorf("zsh installation failed: %w", err)
+		}
+	} else if distro.IsFedora() {
+		log.Start("Installing Zsh via DNF")
+		cmd := execCommand("sudo", "dnf", "install", "-y", "zsh")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Zsh via DNF: %v", err)
+			return fmt.Errorf("zsh installation failed: %w", err)
+		}
+	} else if distro.IsDebianUbuntu() {
+		log.Start("Installing Zsh via APT")
+		cmd := execCommand("sudo", "apt-get", "install", "-y", "zsh")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Zsh via APT: %v", err)
+			return fmt.Errorf("zsh installation failed: %w", err)
+		}
+	} else {
+		return fmt.Errorf("zsh is not installed and no supported package manager (brew, dnf, apt) was found")
+	}
+
+	log.Success("Zsh installed successfully")
 	return nil
 }
 

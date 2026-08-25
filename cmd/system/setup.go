@@ -359,6 +359,12 @@ func setupOhMyZsh(verbose bool) {
 		return
 	}
 
+	// Ensure Zsh is installed before running Oh My Zsh installer
+	if err := ensureZsh(verbose); err != nil {
+		log.Error("Cannot install Oh My Zsh: %v", err)
+		return
+	}
+
 	log.Start("Installing Oh My Zsh...")
 	// Use --unattended to prevent switching shell immediately
 	cmd := execCommand(
