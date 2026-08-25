@@ -80,6 +80,9 @@ func CheckoutWorktree(ctx context.Context, bareRepoPath, worktreeDir string) err
 
 // InitSubmodules initializes and updates git submodules for a bare repository.
 func InitSubmodules(ctx context.Context, bareRepoPath, worktreeDir string, auth *ssh.PublicKeys) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	log.Start("Initializing and updating submodules")
 	cmd := exec.CommandContext(ctx, // #nosec G204
 		"git",

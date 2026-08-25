@@ -9,6 +9,9 @@ import (
 
 // SyncRepo performs the fetch, pull-rebase, and submodule update operations for a bare repository.
 func SyncRepo(ctx context.Context, repoPath, worktreePath string, isVerbose bool) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	log.Verbose(isVerbose, "Syncing repository at %s with worktree %s", repoPath, worktreePath)
 
 	log.Info("Fetching dotfiles")

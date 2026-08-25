@@ -45,13 +45,22 @@ func TestSyncCmd_FetchThenPull(t *testing.T) {
 	}
 	defer func() { dotfiles.PullRebaseRepo = originalPullRebaseRepo }()
 
+	// Override updateSubmodules
+	originalUpdateSubmodules := dotfiles.UpdateSubmodules
+	dotfiles.UpdateSubmodules = func(ctx context.Context, repoPath, worktreePath string) error {
+		calls = append(calls, "submodules")
+		return nil
+	}
+	defer func() { dotfiles.UpdateSubmodules = originalUpdateSubmodules }()
+
 	cmd := &cobra.Command{}
+	cmd.SetContext(context.Background())
 	// First run: fetch ok, pull fails
 	SyncCmd.Run(cmd, []string{})
-	// Second run: fetch ok, pull succeeds
+	// Second run: fetch ok, pull succeeds, submodules updated
 	SyncCmd.Run(cmd, []string{})
 
 	if len(calls) < 4 {
-		t.Fatalf("expected at least 4 calls (fetch,pull x2), got %v", calls)
+		t.Fatalf("expected at least 4 calls, got %v", calls)
 	}
 }
