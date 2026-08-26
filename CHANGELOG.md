@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.47.0](https://github.com/eng618/eng/compare/v1.46.0...v1.47.0) (2026-08-26)
+
+
+### Features
+
+* **cleanup:** Add cross-platform host and docker cleanup commands (compose clean, system clean) ([35d3cc7](https://github.com/eng618/eng/commit/35d3cc7a888584f4cc929bf4af2b46fc4c64ae0d))
+
 ## [1.46.0](https://github.com/eng618/eng/compare/v1.45.1...v1.46.0) (2026-08-25)
 
 
