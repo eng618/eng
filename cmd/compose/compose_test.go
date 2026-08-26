@@ -16,7 +16,7 @@ func TestComposeCommandStructure(t *testing.T) {
 	}
 
 	output := buf.String()
-	expectedSubcommands := []string{"list", "up", "down", "pull", "status", "logs"}
+	expectedSubcommands := []string{"list", "up", "down", "pull", "status", "logs", "clean"}
 	for _, sub := range expectedSubcommands {
 		if !bytes.Contains([]byte(output), []byte(sub)) {
 			t.Errorf("expected subcommand %q in help output", sub)

@@ -21,4 +21,5 @@ func init() {
 	ComposeCmd.AddCommand(pullCmd)
 	ComposeCmd.AddCommand(statusCmd)
 	ComposeCmd.AddCommand(logsCmd)
+	ComposeCmd.AddCommand(cleanCmd)
 }

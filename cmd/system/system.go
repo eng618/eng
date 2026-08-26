@@ -33,6 +33,7 @@ func init() {
 	SystemCmd.AddCommand(SetupCmd)
 	SystemCmd.AddCommand(GPGCmd)
 	SystemCmd.AddCommand(ImmichCmd)
+	SystemCmd.AddCommand(CleanCmd)
 
 	// Add flags for subcommands if needed
 }
