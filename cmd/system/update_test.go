@@ -73,10 +73,12 @@ func TestUpdateCmd_Dispatch_Fedora(t *testing.T) {
 	origDetect := detectDistro
 	origExec := execCommand
 	ui.DisableProgress = true
+	_ = UpdateCmd.Flags().Set("yes", "true")
 	defer func() {
 		detectDistro = origDetect
 		execCommand = origExec
 		ui.DisableProgress = false
+		_ = UpdateCmd.Flags().Set("yes", "false")
 	}()
 
 	detectDistro = func() sysinfo.DistroInfo {
@@ -106,10 +108,12 @@ func TestUpdateCmd_Dispatch_Ubuntu(t *testing.T) {
 	origDetect := detectDistro
 	origExec := execCommand
 	ui.DisableProgress = true
+	_ = UpdateCmd.Flags().Set("yes", "true")
 	defer func() {
 		detectDistro = origDetect
 		execCommand = origExec
 		ui.DisableProgress = false
+		_ = UpdateCmd.Flags().Set("yes", "false")
 	}()
 
 	detectDistro = func() sysinfo.DistroInfo {
@@ -238,7 +242,7 @@ func TestUpdateRaspberryPi(t *testing.T) {
 		return exec.Command("echo", "success")
 	}
 
-	updateRaspberryPi(false)
+	updateRaspberryPi(false, true, 60)
 	if !calledAPT {
 		t.Error("updateRaspberryPi should have called apt-get update")
 	}

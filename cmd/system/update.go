@@ -59,7 +59,7 @@ var UpdateCmd = &cobra.Command{
 			updateMacOS(isVerbose)
 		} else if distro.IsRaspberryPi() {
 			log.Verbose(isVerbose, "Detected Raspberry Pi system, running Raspberry Pi update...")
-			updateRaspberryPi(isVerbose)
+			updateRaspberryPi(isVerbose, autoApprove, cleanupTimeout)
 		} else if distro.IsLinux() {
 			log.Verbose(isVerbose, "Detected generic Linux system, running general maintenance...")
 			updateGenericLinux(isVerbose, autoApprove, cleanupTimeout)
@@ -151,8 +151,8 @@ func updateMacOS(isVerbose bool) {
 	updateAsdf(isVerbose)
 }
 
-func updateRaspberryPi(isVerbose bool) {
-	updateDebianUbuntu(isVerbose, false, 60)
+func updateRaspberryPi(isVerbose, autoApprove bool, cleanupTimeout int) {
+	updateDebianUbuntu(isVerbose, autoApprove, cleanupTimeout)
 }
 
 func updateFlatpak(isVerbose bool) {
