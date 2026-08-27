@@ -1,6 +1,6 @@
 # Releasing and Homebrew Publication
 
-This document describes the automated process for releasing new versions of `eng` and publishing the Homebrew/Linuxbrew Cask.
+This document describes the automated process for releasing new versions of `eng` and publishing the Homebrew/Linuxbrew formula.
 
 ## Overview
 
@@ -26,7 +26,7 @@ This workflow is triggered when a new tag `v*` is created.
 - **Job: `release` (GoReleaser)**:
   - Builds multi-platform binaries.
   - Generates checksums and uploads compiled release assets.
-  - Generates and publishes the Homebrew Cask to the [eng618/homebrew-eng](https://github.com/eng618/homebrew-eng) tap repository.
+  - Generates and publishes the Homebrew Formula to the [eng618/homebrew-eng](https://github.com/eng618/homebrew-eng) tap repository.
 
 ## Requirements
 
