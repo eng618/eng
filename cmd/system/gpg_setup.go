@@ -21,7 +21,8 @@ var SetupGPGCmd = &cobra.Command{
   - Import master key and subkeys
   - Set ultimate trust on the key
   - Configure Git to use your GPG key for signing
-  - Optionally remove the master key (keeping only subkeys for security)`,
+  - Optionally remove the master key (keeping only subkeys for security)
+  - Configure ~/.gnupg and wrapper permissions and restart gpg-agent`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := setupGPG(cmdutil.IsVerbose(cmd)); err != nil {
 			return fmt.Errorf("gpg setup failed: %w", err)
@@ -147,6 +148,9 @@ func setupGPG(verbose bool) error {
 	if err := uploadPublicKeyOption(keyID, verbose); err != nil {
 		log.Error("Failed to upload public key: %v", err)
 	}
+
+	// Step 8: Ensure GPG directory permissions and agent configuration
+	ensureGPGConfiguration(verbose)
 
 	log.Success("GPG setup completed successfully!")
 	log.Message("")
@@ -648,4 +652,54 @@ func uploadPublicKeyOption(keyID string, verbose bool) error {
 	}
 
 	return nil
+}
+
+// ensureGPGConfiguration ensures ~/.gnupg has 0700 permissions, config files have 0600 permissions,
+// ~/.local/bin/pinentry wrapper is executable if present, and restarts gpg-agent to apply changes.
+func ensureGPGConfiguration(verbose bool) {
+	log.Message("")
+	log.Start("Configuring GPG environment and permissions...")
+
+	homeDir, err := userHomeDir()
+	if err != nil {
+		log.Error("Could not determine home directory: %v", err)
+		return
+	}
+
+	gpgDir := filepath.Join(homeDir, ".gnupg")
+	if err := os.MkdirAll(gpgDir, 0o700); err != nil {
+		log.Warn("Failed to ensure .gnupg directory permissions: %v", err)
+	} else {
+		_ = os.Chmod(gpgDir, 0o700)
+	}
+
+	// Ensure config files inside ~/.gnupg have 0600 permissions
+	for _, confFile := range []string{"gpg-agent.conf", "dirmngr.conf", "gpg.conf"} {
+		confPath := filepath.Join(gpgDir, confFile)
+		if _, err := stat(confPath); err == nil {
+			_ = os.Chmod(confPath, 0o600)
+			log.Verbose(verbose, "Set permissions 0600 on %s", confPath)
+		}
+	}
+
+	// Ensure ~/.local/bin/pinentry is executable if present
+	pinentryWrapper := filepath.Join(homeDir, ".local", "bin", "pinentry")
+	if _, err := stat(pinentryWrapper); err == nil {
+		_ = os.Chmod(pinentryWrapper, 0o755)
+		log.Verbose(verbose, "Set permissions 0755 on %s", pinentryWrapper)
+	}
+
+	// Restart gpg-agent to pick up any configuration / pinentry changes
+	log.Verbose(verbose, "Restarting gpg-agent to apply configuration...")
+	killCmd := execCommand("gpgconf", "--kill", "gpg-agent")
+	_ = killCmd.Run()
+
+	launchCmd := execCommand("gpgconf", "--launch", "gpg-agent")
+	if err := launchCmd.Run(); err != nil {
+		log.Verbose(verbose, "gpgconf --launch gpg-agent output: %v", err)
+	} else {
+		log.Success("GPG agent restarted with updated configuration")
+	}
+
+	log.Success("GPG environment and directory permissions configured")
 }

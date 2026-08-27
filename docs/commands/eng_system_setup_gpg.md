@@ -10,6 +10,7 @@ Setup GPG keys for signing commits and encryption. This command will:
   - Set ultimate trust on the key
   - Configure Git to use your GPG key for signing
   - Optionally remove the master key (keeping only subkeys for security)
+  - Configure ~/.gnupg and wrapper permissions and restart gpg-agent
 
 ```
 eng system setup gpg [flags]
