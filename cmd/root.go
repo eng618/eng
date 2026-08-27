@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -46,6 +47,7 @@ import (
 	"github.com/eng618/eng/internal/cmdutil"
 	configUtils "github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -86,7 +88,20 @@ func ExecuteContext(ctx context.Context) {
 	// Silence usage printing on errors to avoid noisy output
 	rootCmd.SilenceUsage = true
 
+	startTime := time.Now()
 	err := rootCmd.ExecuteContext(ctx)
+	duration := time.Since(startTime)
+
+	// Determine targeted command for accurate telemetry tracking
+	targetCmd, targetArgs, findErr := rootCmd.Find(os.Args[1:])
+	if findErr != nil || targetCmd == nil {
+		targetCmd = rootCmd
+		targetArgs = os.Args[1:]
+	}
+
+	telemetry.TrackCommand(targetCmd, targetArgs, duration, err)
+	telemetry.Drain(400 * time.Millisecond)
+
 	if err != nil {
 		theme.HandleError(err)
 		os.Exit(1)
@@ -200,4 +215,7 @@ func initConfig() {
 
 	// Run migration to ensure keys are standardized
 	configUtils.MigrateConfig()
+
+	// Initialize telemetry with effective config
+	telemetry.Init(configUtils.GetEffectiveTelemetryConfig(), cmdutil.IsVerbose(rootCmd))
 }

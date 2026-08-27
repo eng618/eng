@@ -18,5 +18,10 @@ proxies:
       noproxy: ''
       title: My custom proxy
       value: myproxy.example.com:8080
+telemetry:
+    # Set to false to disable anonymous telemetry (or use DO_NOT_TRACK=1 env var)
+    enabled: true
+    # Locally generated anonymous profile ID (auto-generated if empty)
+    profile_id: ''
 user-email: myemail@example.com
 verbose: false

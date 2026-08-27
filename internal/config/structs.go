@@ -59,3 +59,23 @@ func GetAntigravityConfig() AntigravityConfig {
 		IdeDownloadURL: viper.GetString("antigravity.ide_download_url"),
 	}
 }
+
+// TelemetryConfig holds all telemetry and analytics related configuration.
+type TelemetryConfig struct {
+	Enabled      bool   `mapstructure:"enabled"`
+	APIURL       string `mapstructure:"-"`
+	ClientID     string `mapstructure:"-"`
+	ClientSecret string `mapstructure:"-"`
+	ProfileID    string `mapstructure:"profile_id"`
+}
+
+// GetTelemetryConfig retrieves the telemetry configuration from Viper.
+func GetTelemetryConfig() TelemetryConfig {
+	return TelemetryConfig{
+		Enabled:      IsTelemetryEnabled(),
+		APIURL:       DefaultAPIURL,
+		ClientID:     DefaultClientID,
+		ClientSecret: DefaultClientSecret,
+		ProfileID:    viper.GetString("telemetry.profile_id"),
+	}
+}

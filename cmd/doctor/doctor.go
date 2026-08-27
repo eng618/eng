@@ -16,6 +16,7 @@ import (
 	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -61,6 +62,7 @@ func runDoctor() {
 
 	checkTools()
 	checkConfigPaths()
+	checkTelemetry()
 	checkVersionStatus()
 }
 
@@ -229,6 +231,86 @@ func checkConfigPaths() {
 				),
 			)
 		}
+	}
+
+	if !ui.DisableProgress {
+		fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(cardLines, "\n")))
+	} else {
+		for _, l := range cardLines {
+			log.Message("%s", l)
+		}
+		log.Message("")
+	}
+}
+
+func checkTelemetry() {
+	var cardLines []string
+	cardLines = append(cardLines, theme.BoldText.Render("Telemetry & Diagnostics:"))
+
+	cfg := config.GetEffectiveTelemetryConfig()
+	if cfg.Enabled {
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.SuccessText.Render("✔"),
+				"Status:",
+				theme.SuccessText.Render("Enabled (OpenPanel)"),
+			),
+		)
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.SuccessText.Render("✔"),
+				"Endpoint:",
+				theme.MutedText.Render(cfg.APIURL),
+			),
+		)
+
+		// Test connection reachability
+		status, err := telemetry.TestConnection(cfg)
+		if err == nil {
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.SuccessText.Render("✔"),
+					"Reachability:",
+					theme.SuccessText.Render(fmt.Sprintf("Connected (HTTP %d)", status)),
+				),
+			)
+		} else {
+			cardLines = append(
+				cardLines,
+				fmt.Sprintf(
+					"  %s %-20s %s",
+					theme.MutedText.Render("○"),
+					"Reachability:",
+					theme.MutedText.Render("Offline / Endpoint unreachable"),
+				),
+			)
+		}
+	} else if !config.IsTelemetryConfigured() {
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.MutedText.Render("○"),
+				"Status:",
+				theme.MutedText.Render("Disabled (Unset credentials / Dev build)"),
+			),
+		)
+	} else {
+		cardLines = append(
+			cardLines,
+			fmt.Sprintf(
+				"  %s %-20s %s",
+				theme.MutedText.Render("○"),
+				"Status:",
+				theme.MutedText.Render("Disabled (DNT/Opt-Out)"),
+			),
+		)
 	}
 
 	if !ui.DisableProgress {

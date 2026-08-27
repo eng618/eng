@@ -34,6 +34,9 @@ builds:
       - -X github.com/eng618/eng/cmd/version.Version={{.Version}}
       - -X github.com/eng618/eng/cmd/version.Commit={{.ShortCommit}} # Use ShortCommit for brevity
       - -X github.com/eng618/eng/cmd/version.Date={{.Date}} # Use GoReleaser's build date
+      - -X github.com/eng618/eng/internal/config.DefaultClientID={{.Env.OPENPANEL_CLIENT_ID}}
+      - -X github.com/eng618/eng/internal/config.DefaultClientSecret={{.Env.OPENPANEL_CLIENT_SECRET}}
+
 
 archives:
   - formats:

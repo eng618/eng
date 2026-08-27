@@ -125,6 +125,18 @@ func PrintConfigSummary() {
 	}
 	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Verbose Mode:"), verboseStr))
 
+	// Telemetry Status
+	telemetryEnabled := config.IsTelemetryEnabled()
+	var telemetryStr string
+	if telemetryEnabled && config.IsTelemetryConfigured() {
+		telemetryStr = theme.SuccessText.Render("true (OpenPanel)")
+	} else if !config.IsTelemetryConfigured() {
+		telemetryStr = theme.MutedText.Render("false (unconfigured dev build)")
+	} else {
+		telemetryStr = theme.MutedText.Render("false (disabled)")
+	}
+	cardLines = append(cardLines, fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Telemetry:"), telemetryStr))
+
 	if !ui.DisableProgress {
 		fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(cardLines, "\n")))
 	} else {

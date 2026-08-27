@@ -77,6 +77,7 @@ func TestConfigCmd_Subcommands(t *testing.T) {
 		"dotfiles-bare-repo-path": false,
 		"git-dev-path":            false,
 		"ide-url [url]":           false,
+		"telemetry":               false,
 		"verbose":                 false,
 	}
 
@@ -296,6 +297,34 @@ func TestIdeURLCmd(t *testing.T) {
 	}
 }
 
+func TestTelemetryCmd(t *testing.T) {
+	setupTestViper(t)
+	restore := mockAllPrompts()
+	defer restore()
+
+	// Test Case: Run telemetry enable and disable
+	for _, sub := range TelemetryCmd.Commands() {
+		if sub.Name() == "enable" {
+			err := sub.RunE(sub, []string{})
+			if err != nil {
+				t.Fatalf("enable command failed: %v", err)
+			}
+			if !viper.GetBool("telemetry.enabled") {
+				t.Error("expected telemetry.enabled to be true")
+			}
+		}
+		if sub.Name() == "disable" {
+			err := sub.RunE(sub, []string{})
+			if err != nil {
+				t.Fatalf("disable command failed: %v", err)
+			}
+			if viper.GetBool("telemetry.enabled") {
+				t.Error("expected telemetry.enabled to be false")
+			}
+		}
+	}
+}
+
 // ============================================================================
 // E - Examples (Executable Documentation)
 // ============================================================================
@@ -306,7 +335,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 10
+	// Subcommand Count: 11
 }
 
 // ============================================================================
