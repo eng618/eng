@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.49.0](https://github.com/eng618/eng/compare/v1.48.1...v1.49.0) (2026-08-27)
+
+
+### Features
+
+* **system:** Ensure gpg configuration, permissions, and agent reload in setup command ([55b9df8](https://github.com/eng618/eng/commit/55b9df8ddfacd492a43941d54ab19ccb12bbc6a4))
+
+
+### Bug Fixes
+
+* **system,telemetry:** Resolve test failures in distro detection and telemetry config ([6f8cdcc](https://github.com/eng618/eng/commit/6f8cdcc8a1dce145846e3d78cb5dfe5c98c1ef33))
+
 ## [1.48.1](https://github.com/eng618/eng/compare/v1.48.0...v1.48.1) (2026-08-27)
 
 
