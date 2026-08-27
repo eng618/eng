@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.48.0](https://github.com/eng618/eng/compare/v1.47.0...v1.48.0) (2026-08-27)
+
+
+### Features
+
+* Implement anonymous telemetry tracking and user configuration support via OpenPanel ([cd1dabe](https://github.com/eng618/eng/commit/cd1dabe14eac7b23187b84b11dfa5e374b32c78f))
+
 ## [1.47.0](https://github.com/eng618/eng/compare/v1.46.0...v1.47.0) (2026-08-26)
 
 
