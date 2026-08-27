@@ -133,12 +133,14 @@ func (d DistroInfo) IsFedora() bool {
 			return true
 		}
 	}
-	// Fallback to DNF presence
-	if _, err := LookPath("dnf"); err == nil {
-		return true
-	}
-	if _, err := LookPath("dnf5"); err == nil {
-		return true
+	// Fallback to DNF presence only when ID is not set or generic linux
+	if d.ID == "" || d.ID == "linux" {
+		if _, err := LookPath("dnf"); err == nil {
+			return true
+		}
+		if _, err := LookPath("dnf5"); err == nil {
+			return true
+		}
 	}
 	return false
 }
@@ -156,8 +158,11 @@ func (d DistroInfo) IsDebianUbuntu() bool {
 			return true
 		}
 	}
-	if _, err := LookPath("apt-get"); err == nil {
-		return true
+	// Fallback to apt-get presence only when ID is not set or generic linux
+	if d.ID == "" || d.ID == "linux" {
+		if _, err := LookPath("apt-get"); err == nil {
+			return true
+		}
 	}
 	return false
 }

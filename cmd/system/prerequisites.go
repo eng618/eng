@@ -153,16 +153,7 @@ func ensureGit(verbose bool) error {
 	log.Warn("Git is not installed")
 	distro := detectDistro()
 
-	if _, err := lookPath("brew"); err == nil {
-		log.Start("Installing Git via Homebrew")
-		cmd := execCommand("brew", "install", "git")
-		cmd.Stdout = log.Writer()
-		cmd.Stderr = log.ErrorWriter()
-		if err := cmd.Run(); err != nil {
-			log.Error("Failed to install Git via Homebrew: %v", err)
-			return fmt.Errorf("git installation failed: %w", err)
-		}
-	} else if distro.IsFedora() {
+	if distro.IsFedora() {
 		log.Start("Installing Git via DNF")
 		cmd := execCommand("sudo", "dnf", "install", "-y", "git")
 		cmd.Stdout = log.Writer()
@@ -180,8 +171,17 @@ func ensureGit(verbose bool) error {
 			log.Error("Failed to install Git via APT: %v", err)
 			return fmt.Errorf("git installation failed: %w", err)
 		}
+	} else if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Git via Homebrew")
+		cmd := execCommand("brew", "install", "git")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Git via Homebrew: %v", err)
+			return fmt.Errorf("git installation failed: %w", err)
+		}
 	} else {
-		return fmt.Errorf("git is not installed and no supported package manager (brew, dnf, apt) was found")
+		return fmt.Errorf("git is not installed and no supported package manager (dnf, apt, brew) was found")
 	}
 
 	log.Success("Git installed successfully")
@@ -201,16 +201,7 @@ func ensureBash(verbose bool) error {
 	log.Warn("Bash is not installed")
 	distro := detectDistro()
 
-	if _, err := lookPath("brew"); err == nil {
-		log.Start("Installing Bash via Homebrew")
-		cmd := execCommand("brew", "install", "bash")
-		cmd.Stdout = log.Writer()
-		cmd.Stderr = log.ErrorWriter()
-		if err := cmd.Run(); err != nil {
-			log.Error("Failed to install Bash via Homebrew: %v", err)
-			return fmt.Errorf("bash installation failed: %w", err)
-		}
-	} else if distro.IsFedora() {
+	if distro.IsFedora() {
 		log.Start("Installing Bash via DNF")
 		cmd := execCommand("sudo", "dnf", "install", "-y", "bash")
 		cmd.Stdout = log.Writer()
@@ -228,8 +219,17 @@ func ensureBash(verbose bool) error {
 			log.Error("Failed to install Bash via APT: %v", err)
 			return fmt.Errorf("bash installation failed: %w", err)
 		}
+	} else if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Bash via Homebrew")
+		cmd := execCommand("brew", "install", "bash")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Bash via Homebrew: %v", err)
+			return fmt.Errorf("bash installation failed: %w", err)
+		}
 	} else {
-		return fmt.Errorf("bash is not installed and no supported package manager (brew, dnf, apt) was found")
+		return fmt.Errorf("bash is not installed and no supported package manager (dnf, apt, brew) was found")
 	}
 
 	log.Success("Bash installed successfully")
@@ -262,16 +262,7 @@ func ensureZsh(verbose bool) error {
 
 	distro := detectDistro()
 
-	if _, err := lookPath("brew"); err == nil {
-		log.Start("Installing Zsh via Homebrew")
-		cmd := execCommand("brew", "install", "zsh")
-		cmd.Stdout = log.Writer()
-		cmd.Stderr = log.ErrorWriter()
-		if err := cmd.Run(); err != nil {
-			log.Error("Failed to install Zsh via Homebrew: %v", err)
-			return fmt.Errorf("zsh installation failed: %w", err)
-		}
-	} else if distro.IsFedora() {
+	if distro.IsFedora() {
 		log.Start("Installing Zsh via DNF")
 		cmd := execCommand("sudo", "dnf", "install", "-y", "zsh")
 		cmd.Stdout = log.Writer()
@@ -289,8 +280,17 @@ func ensureZsh(verbose bool) error {
 			log.Error("Failed to install Zsh via APT: %v", err)
 			return fmt.Errorf("zsh installation failed: %w", err)
 		}
+	} else if _, err := lookPath("brew"); err == nil {
+		log.Start("Installing Zsh via Homebrew")
+		cmd := execCommand("brew", "install", "zsh")
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.ErrorWriter()
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed to install Zsh via Homebrew: %v", err)
+			return fmt.Errorf("zsh installation failed: %w", err)
+		}
 	} else {
-		return fmt.Errorf("zsh is not installed and no supported package manager (brew, dnf, apt) was found")
+		return fmt.Errorf("zsh is not installed and no supported package manager (dnf, apt, brew) was found")
 	}
 
 	log.Success("Zsh installed successfully")

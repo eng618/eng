@@ -106,6 +106,8 @@ func TestIsTelemetryEnabled(t *testing.T) {
 
 func TestGetEffectiveTelemetryConfig(t *testing.T) {
 	setupTestConfig(t)
+	t.Setenv("OPENPANEL_CLIENT_ID", "")
+	t.Setenv("OPENPANEL_CLIENT_SECRET", "")
 
 	cfg := config.GetEffectiveTelemetryConfig()
 	assert.Equal(t, config.DefaultAPIURL, cfg.APIURL)
