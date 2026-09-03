@@ -85,7 +85,7 @@ Ensure new users (and existing users discovering new features) have a frictionle
 
 ### 4.3 Dynamic Auto-Completion
 
-- **Status**: `[/]`
+- **Status**: `[x]`
 - **Task**: Implement Cobra's `ValidArgsFunction` across commands to provide dynamic shell auto-completion for project names, dotfile templates, and git branches.
-- **Progress**: `--project` flag completes from configured projects (`cmd/project/project.go`); `compose up/down/pull/status/logs` complete discovered stack names (`cmd/compose/compose.go`). Remaining: dotfile templates, git branches.
+- **Progress**: `--project` flag completes from configured projects (`cmd/project/project.go`); `compose up/down/pull/status/logs` complete discovered stack names and `up --env` completes `dev/staging/prod` (`cmd/compose/`); `proxy use/edit/remove/test` complete configured proxy titles for args and `--title` (`cmd/system/proxy.go`, with log output silenced during completion); `files shred --method` completes methods. Git branches: no `eng` command accepts a branch argument, so there is nothing to complete (branch display only). Dotfiles paths/UUIDs and numeric PIDs/ports are left to default file completion.
 - **Impact**: High (Massively speeds up daily usage).

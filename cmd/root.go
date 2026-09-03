@@ -174,6 +174,15 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Shell completion (`eng __complete ...`) parses stdout for candidates,
+	// so route all log output to stderr to keep completions clean.
+	for _, a := range os.Args {
+		if a == "__complete" {
+			log.SetWriters(os.Stderr, os.Stderr)
+			break
+		}
+	}
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)

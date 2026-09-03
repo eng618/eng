@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -201,6 +202,29 @@ func resolveProxyIndex(target string, idxFlag int, titleFlag string, proxies []c
 		return config.FindProxyIndexByTitle(proxies, titleFlag)
 	}
 	return -1
+}
+
+// completeProxyNames offers configured proxy titles for positional args.
+// GetProxyConfigs logs to stdout, which would corrupt shell completion
+// output, so log writers are silenced while completing and restored after.
+func completeProxyNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	prevOut, prevErr := log.Out, log.Err
+	log.SetWriters(io.Discard, io.Discard)
+	defer log.SetWriters(prevOut, prevErr)
+
+	proxies, _ := config.GetProxyConfigs()
+	var names []string
+	for _, p := range proxies {
+		if strings.HasPrefix(p.Title, toComplete) {
+			names = append(names, p.Title)
+		}
+	}
+	return names, cobra.ShellCompDirectiveNoFileComp
+}
+
+// completeProxyTitles offers configured proxy titles for --title flags.
+func completeProxyTitles(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return completeProxyNames(cmd, args, toComplete)
 }
 
 var addCmd = &cobra.Command{
@@ -634,6 +658,13 @@ func init() {
 	ProxyCmd.AddCommand(toggleCmd)
 	ProxyCmd.AddCommand(testCmd)
 
+	// Dynamic completion for proxy names (positional args and --title flags).
+	// GetProxyConfigs logs to stdout, which would corrupt `eng __complete`
+	// output, so silence log writers while completing.
+	for _, c := range []*cobra.Command{useCmd, editCmd, removeCmd, testCmd} {
+		c.ValidArgsFunction = completeProxyNames
+	}
+
 	// Persistent flags to control listing style
 	ProxyCmd.PersistentFlags().Bool("compact", true, "Show compact status output")
 	ProxyCmd.PersistentFlags().Bool("env", false, "Include environment variables in status output")
@@ -676,4 +707,10 @@ func init() {
 	toggleCmd.Flags().Bool("quiet", false, "Suppress status output after toggling")
 	toggleCmd.Flags().Int("index", -1, "Enable proxy by index")
 	toggleCmd.Flags().String("title", "", "Enable proxy by title")
+
+	// Flag completion must be registered after the flags exist, otherwise
+	// cobra rejects it with "flag does not exist".
+	for _, c := range []*cobra.Command{useCmd, editCmd, removeCmd, testCmd, toggleCmd} {
+		_ = c.RegisterFlagCompletionFunc("title", completeProxyTitles)
+	}
 }

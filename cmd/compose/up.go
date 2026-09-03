@@ -59,4 +59,10 @@ func init() {
 	upCmd.Flags().BoolVarP(&allFlagUp, "all", "a", false, "Spin up all discovered stacks")
 	upCmd.Flags().BoolVarP(&detachFlag, "detach", "d", true, "Run containers in background")
 	upCmd.Flags().BoolVar(&buildFlag, "build", false, "Build images before starting containers")
+	_ = upCmd.RegisterFlagCompletionFunc(
+		"env",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return []string{"dev", "staging", "prod"}, cobra.ShellCompDirectiveNoFileComp
+		},
+	)
 }
