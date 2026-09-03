@@ -59,6 +59,30 @@ type ActionItem struct {
 	FullPath string
 }
 
+// ActionStatus is the Docker-like per-repo state shown in the action modal.
+type ActionStatus int
+
+const (
+	// ActionPending marks a queued repo that has not started yet.
+	ActionPending ActionStatus = iota
+	// ActionRunning marks the repo currently being processed.
+	ActionRunning
+	// ActionDone marks a repo that completed successfully.
+	ActionDone
+	// ActionSkipped marks a repo that was skipped (not cloned / already cloned).
+	ActionSkipped
+	// ActionFailed marks a repo whose action returned an error.
+	ActionFailed
+)
+
+// ActionRow is one stable row in the action modal.
+type ActionRow struct {
+	RepoName   string
+	PrettyName string
+	Status     ActionStatus
+	Detail     string
+}
+
 type configUpdateFinishedMsg struct {
 	projects      []config.Project
 	addedRepo     string
@@ -78,9 +102,16 @@ type Model struct {
 	selectedRepoIndex int
 	repoScrollOffset  int
 
-	actionState string // empty if idle, otherwise the loading message
+	actionState string // empty if idle, otherwise the fixed action title
 	actionQueue []ActionItem
 	actionLogs  []string
+	// actionRows mirrors the queue as stable Docker-like rows.
+	actionRows []ActionRow
+	// actionCurrent is the index into actionRows currently running (-1 when idle).
+	actionCurrent int
+	// actionTail is the single-line truncated tail of live output.
+	actionTail  string
+	actionTitle string
 	spinner     spinner.Model
 
 	// Toast notification fields
@@ -130,6 +161,7 @@ func NewModel(projects []config.Project, devPath, editor string) Model {
 		editor:            editor,
 		focusedPane:       FocusLeft,
 		selectedRepoIndex: 0,
+		actionCurrent:     -1,
 		spinner:           s,
 	}
 	return m

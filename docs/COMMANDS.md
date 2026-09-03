@@ -160,6 +160,8 @@ eng dashboard
 
 _Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e`, `E`, `t`, and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
 
+_Batch progress:_ multi-repo actions show a fixed-size Docker-like modal with one row per repository (`○` queued, spinner running, `✓` done / `Up to date`, `−` skipped, `✗` error) plus an overall `n/m` bar and a single-line output tail. The box never resizes with repo-name length.
+
 ### Status & Branch Tracking
 
 #### Responsive Layouts

@@ -295,6 +295,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.hasError = true
 			m.lastError = msg.err
 		}
+		if m.actionCurrent >= 0 && m.actionCurrent < len(m.actionRows) {
+			row := &m.actionRows[m.actionCurrent]
+			switch {
+			case msg.err != nil:
+				row.Status = ActionFailed
+				row.Detail = shortErr(msg.err)
+			case row.Status != ActionSkipped:
+				row.Status = ActionDone
+				if strings.Contains(m.actionTail, "Already up to date") {
+					row.Detail = "Up to date"
+				} else if row.Detail == "" || row.Detail == "Working…" {
+					row.Detail = "Done"
+				}
+			}
+		}
 		m.completedActions++
 
 		if len(m.actionQueue) > 0 {
@@ -303,6 +318,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		} else {
 			m.actionState = ""
+			m.actionCurrent = -1
 			cmds = append(cmds, m.forceRefreshSelectedProjectStatusesCmd())
 
 			m.notificationID++
@@ -349,6 +365,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case logLineMsg:
 		m.actionLogs = append(m.actionLogs, msg.line)
+		if tail := tailLine(msg.line); tail != "" {
+			m.actionTail = tail
+		}
 		cmds = append(cmds, readLogCmd(msg.scanner))
 
 	case statusMsg:
@@ -483,6 +502,10 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 
 	m.actionQueue = []ActionItem{}
 	m.actionLogs = []string{}
+	m.actionRows = nil
+	m.actionCurrent = -1
+	m.actionTail = ""
+	m.actionTitle = ""
 	m.hasError = false
 	m.lastError = nil
 
@@ -539,10 +562,65 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	m.totalActions = len(m.actionQueue)
 	m.completedActions = 0
 
+	// Build one stable row per queued repo; the modal title stays fixed.
+	m.actionRows = make([]ActionRow, len(m.actionQueue))
+	for i, q := range m.actionQueue {
+		pretty, err := config.RepoNameFromURL(q.RepoName)
+		if err != nil || pretty == "" {
+			pretty = q.RepoName
+		}
+		m.actionRows[i] = ActionRow{RepoName: q.RepoName, PrettyName: pretty, Status: ActionPending}
+	}
+	m.actionTitle = actionTitle(action, len(m.actionQueue))
+
 	var cmd tea.Cmd
 	m, cmd = m.popAndRunNextAction()
 
 	return m, tea.Batch(m.spinner.Tick, cmd)
+}
+
+// actionTitle returns a fixed modal title that never includes a repo name,
+// so the modal width stays stable while rows update underneath.
+func actionTitle(action string, n int) string {
+	var verb string
+	switch action {
+	case "f":
+		verb = "Fetching"
+	case "p":
+		verb = "Pulling"
+	case "s":
+		verb = "Syncing"
+	case "c":
+		verb = "Cloning"
+	case "o":
+		verb = "Opening"
+	default:
+		verb = "Working"
+	}
+	if n == 1 {
+		return verb + " 1 repository"
+	}
+	return fmt.Sprintf("%s %d repositories", verb, n)
+}
+
+// tailLine condenses a raw log line into a short single-line tail.
+// It strips log prefixes/emojis so the modal footer stays stable.
+func tailLine(line string) string {
+	s := strings.TrimSpace(line)
+	for _, p := range []string{"✓ ", "→ ", "··· ", "⚠ ", "✗ ", "==> ", "==x ", "--- "} {
+		s = strings.TrimPrefix(s, p)
+	}
+	s = strings.Join(strings.Fields(s), " ")
+	return s
+}
+
+// shortErr condenses an error for the fixed-width Detail column.
+func shortErr(err error) string {
+	if err == nil {
+		return ""
+	}
+	s := strings.Join(strings.Fields(strings.TrimSpace(err.Error())), " ")
+	return s
 }
 
 type logLineMsg struct {
@@ -570,26 +648,40 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 	item := m.actionQueue[0]
 	m.actionQueue = m.actionQueue[1:]
 
-	var actionName string
-	switch item.Action {
-	case "f":
-		actionName = "Fetching"
-	case "p":
-		actionName = "Pulling"
-	case "s":
-		actionName = "Syncing"
-	case "c":
-		actionName = "Setting up"
-	case "o":
-		actionName = "Opening"
-	}
-
 	prettyName, err := config.RepoNameFromURL(item.RepoName)
-	if err != nil {
+	if err != nil || prettyName == "" {
 		prettyName = item.RepoName
 	}
 
-	m.actionState = fmt.Sprintf("%s %s...", actionName, prettyName)
+	// Fixed title keeps the modal box stable; per-repo progress lives in rows.
+	if m.actionTitle == "" {
+		m.actionTitle = actionTitle(item.Action, m.totalActions)
+	}
+	m.actionState = m.actionTitle
+	m.actionCurrent++
+	if m.actionCurrent >= 0 && m.actionCurrent < len(m.actionRows) {
+		m.actionRows[m.actionCurrent].Status = ActionRunning
+		m.actionRows[m.actionCurrent].Detail = "Working…"
+	}
+	m.actionTail = prettyName
+
+	// Fast-path skips stay sequential but never spawn a pipe: mark the row
+	// now so the modal shows Skipped instead of a flickering Running state.
+	cloned := repo.IsCloned(item.FullPath)
+	if item.Action == "c" && cloned {
+		if m.actionCurrent >= 0 && m.actionCurrent < len(m.actionRows) {
+			m.actionRows[m.actionCurrent].Status = ActionSkipped
+			m.actionRows[m.actionCurrent].Detail = "Already cloned"
+		}
+		return m, func() tea.Msg { return actionDoneMsg{} }
+	}
+	if item.Action != "c" && item.Action != "o" && !cloned {
+		if m.actionCurrent >= 0 && m.actionCurrent < len(m.actionRows) {
+			m.actionRows[m.actionCurrent].Status = ActionSkipped
+			m.actionRows[m.actionCurrent].Detail = "Not cloned"
+		}
+		return m, func() tea.Msg { return actionDoneMsg{} }
+	}
 
 	pr, pw := io.Pipe()
 

@@ -37,56 +37,161 @@ func (m Model) View() string {
 	}
 
 	if m.actionState != "" {
-		// Render Modal Overlay
-		var logLines string
-		if len(m.actionLogs) > 0 {
-			// Show up to the last 8 lines
-			startIdx := 0
-			if len(m.actionLogs) > 8 {
-				startIdx = len(m.actionLogs) - 8
-			}
-			logLines = strings.Join(m.actionLogs[startIdx:], "\n")
-		}
-
-		var progressLine string
-		if m.totalActions > 0 {
-			pct := float64(m.completedActions) / float64(m.totalActions)
-			if pct > 1.0 {
-				pct = 1.0
-			}
-			progressBar := renderProgressBar(30, pct)
-			progressInfo := fmt.Sprintf(
-				"%d of %d repositories processed (%d%%)",
-				m.completedActions,
-				m.totalActions,
-				int(pct*100),
-			)
-			progressLine = lipgloss.JoinVertical(lipgloss.Center,
-				progressBar,
-				progressInfoStyle.Render(progressInfo),
-				"",
-			)
-		}
-
-		modalContent := lipgloss.JoinVertical(lipgloss.Center,
-			m.spinner.View(),
-			"",
-			projectNameStyle.Render(m.actionState),
-			"",
-			progressLine,
-			logLines,
-		)
-
-		modal := modalStyle.Render(modalContent)
-
-		// Place the modal in the center of the main view
+		// Fixed-size Docker-like progress modal: box dimensions derive only
+		// from the window size, never from repo-name or log-line lengths.
 		return overlayStyle.
 			Width(m.windowWidth).
 			Height(m.windowHeight).
-			Render(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, modal, lipgloss.WithWhitespaceChars(" ")))
+			Render(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, m.renderActionModal(), lipgloss.WithWhitespaceChars(" ")))
 	}
 
 	return mainView
+}
+
+// actionModalSize returns fixed dimensions derived from the window only.
+func (m Model) actionModalSize() (width, height int) {
+	width = m.windowWidth - 8
+	if width > 76 {
+		width = 76
+	}
+	if width < 40 {
+		width = 40
+	}
+	// Header (2) + progress (2) + rows + tail (1) + hint (1), clamped.
+	want := 6 + len(m.actionRows)
+	if want < 8 {
+		want = 8
+	}
+	height = m.windowHeight - 6
+	if height > want {
+		height = want
+	}
+	if height < 8 {
+		height = 8
+	}
+	return width, height
+}
+
+func (m Model) renderActionModal() string {
+	modalWidth, _ := m.actionModalSize()
+	inner := modalWidth - 4 // modal padding (1,2) on each side
+	if inner < 20 {
+		inner = 20
+	}
+
+	title := m.actionTitle
+	if title == "" {
+		title = m.actionState
+	}
+	pct := 0.0
+	if m.totalActions > 0 {
+		pct = float64(m.completedActions) / float64(m.totalActions)
+		if pct > 1.0 {
+			pct = 1.0
+		}
+	}
+
+	var b strings.Builder
+	header := fmt.Sprintf("%s  %s", m.spinner.View(), truncate(title, inner-4))
+	b.WriteString(projectNameStyle.Render(header))
+	b.WriteString("\n")
+	b.WriteString(renderProgressBar(inner-12, pct))
+	b.WriteString(" ")
+	b.WriteString(progressInfoStyle.Render(fmt.Sprintf("%d/%d", m.completedActions, m.totalActions)))
+	b.WriteString("\n")
+
+	// Visible row window around the running row; box height never changes.
+	maxRows := m.windowHeight - 12
+	if maxRows > len(m.actionRows) {
+		maxRows = len(m.actionRows)
+	}
+	if maxRows < 1 {
+		maxRows = 1
+	}
+	start := 0
+	if len(m.actionRows) > maxRows {
+		center := m.actionCurrent - maxRows/2
+		if center < 0 {
+			center = 0
+		}
+		if center > len(m.actionRows)-maxRows {
+			center = len(m.actionRows) - maxRows
+		}
+		start = center
+	}
+	end := start + maxRows
+	if end > len(m.actionRows) {
+		end = len(m.actionRows)
+	}
+
+	detailWidth := 12
+	nameWidth := inner - detailWidth - 5
+	if nameWidth < 12 {
+		nameWidth = 12
+	}
+
+	for i := start; i < end; i++ {
+		b.WriteString("\n")
+		b.WriteString(renderActionRow(m.actionRows[i], m.spinner.View(), nameWidth, detailWidth))
+	}
+	if len(m.actionRows) > maxRows {
+		b.WriteString("\n")
+		b.WriteString(statusMutedStyle.Render(fmt.Sprintf("▲▼ showing %d/%d", end-start, len(m.actionRows))))
+	}
+
+	tail := truncate(m.actionTail, inner)
+	b.WriteString("\n")
+	if tail != "" {
+		b.WriteString(statusMutedStyle.Render("› " + tail))
+	} else {
+		b.WriteString(statusMutedStyle.Render("›"))
+	}
+
+	return modalStyle.Width(modalWidth).Render(b.String())
+}
+
+func renderActionRow(row ActionRow, spinnerView string, nameWidth, detailWidth int) string {
+	var glyph, detail string
+	var style lipgloss.Style
+	switch row.Status {
+	case ActionRunning:
+		glyph = spinnerView
+		detail = "Working…"
+		if row.Detail != "" && row.Detail != "Working…" {
+			detail = row.Detail
+		}
+		style = actionRowRunningStyle
+	case ActionDone:
+		glyph = "✓"
+		detail = row.Detail
+		if detail == "" {
+			detail = "Done"
+		}
+		style = actionRowSuccessStyle
+	case ActionFailed:
+		glyph = "✗"
+		detail = row.Detail
+		if detail == "" {
+			detail = "Error"
+		}
+		style = actionRowErrorStyle
+	case ActionSkipped:
+		glyph = "−"
+		detail = row.Detail
+		if detail == "" {
+			detail = "Skipped"
+		}
+		style = actionRowSkippedStyle
+	default:
+		glyph = "○"
+		detail = "Queued"
+		style = actionRowPendingStyle
+	}
+	name := truncate(row.PrettyName, nameWidth)
+	detail = truncate(detail, detailWidth)
+	// Fixed columns: glyph (2) + name (nameWidth) + detail (right-aligned).
+	line := fmt.Sprintf("%s %-*s %*s", glyph, nameWidth, name, detailWidth, detail)
+	return style.Render(line)
 }
 
 func (m Model) renderFullDashboard() string {

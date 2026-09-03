@@ -390,6 +390,17 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	if m.completedActions != 0 {
 		t.Errorf("Expected completedActions to start at 0, got %d", m.completedActions)
 	}
+	if len(m.actionRows) != 2 {
+		t.Errorf("Expected 2 action rows, got %d", len(m.actionRows))
+	}
+	if m.actionTitle == "" {
+		t.Error("Expected fixed action title to be set")
+	}
+	for _, row := range m.actionRows {
+		if strings.Contains(row.PrettyName, "https://") {
+			t.Errorf("Expected pretty repo name, got %q", row.PrettyName)
+		}
+	}
 
 	// Wait for the first background goroutine to exit (it skips and exits immediately)
 	time.Sleep(50 * time.Millisecond)
@@ -399,6 +410,25 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	if m.completedActions != 1 {
 		t.Errorf("Expected completedActions to increment to 1, got %d", m.completedActions)
 	}
+	if m.actionRows[0].Status != ActionDone && m.actionRows[0].Status != ActionSkipped {
+		t.Errorf("Expected first row Done/Skipped after actionDoneMsg, got %v", m.actionRows[0].Status)
+	}
+
+	// Fixed modal box: same dimensions regardless of repo-name length.
+	w1, h1 := m.actionModalSize()
+	m.actionTail = strings.Repeat("x", 500)
+	modalA := m.renderActionModal()
+	m.actionTail = "ok"
+	m.actionRows[0].PrettyName = "a-very-long-repository-name-that-would-have-stretched-the-old-modal"
+	modalB := m.renderActionModal()
+	w2, h2 := m.actionModalSize()
+	if w1 != w2 || h1 != h2 {
+		t.Errorf("Expected fixed modal size, got %dx%d vs %dx%d", w1, h1, w2, h2)
+	}
+	if strings.Contains(modalA, strings.Repeat("x", 200)) {
+		t.Error("Expected long tail to be truncated to modal width")
+	}
+	_ = modalB
 
 	// Wait for the second background goroutine to exit too
 	time.Sleep(50 * time.Millisecond)

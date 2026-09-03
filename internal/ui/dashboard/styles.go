@@ -39,8 +39,14 @@ var (
 	modalStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(theme.Primary).
-			Padding(1, 4).
-			Align(lipgloss.Center)
+			Padding(1, 2).
+			Align(lipgloss.Left)
+
+	actionRowPendingStyle = lipgloss.NewStyle().Foreground(theme.MutedForeground)
+	actionRowRunningStyle = lipgloss.NewStyle().Foreground(theme.Primary).Bold(true)
+	actionRowSuccessStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
+	actionRowErrorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive).Bold(true)
+	actionRowSkippedStyle = lipgloss.NewStyle().Foreground(theme.MutedForeground)
 
 	helpModalStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
