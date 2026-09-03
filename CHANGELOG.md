@@ -1,5 +1,16 @@
 <a name="unreleased"></a>
 
+## [1.51.0](https://github.com/eng618/eng/compare/v1.50.0...v1.51.0) (2026-09-03)
+
+
+### Features
+
+* Add doc alias to doctor command ([310b988](https://github.com/eng618/eng/commit/310b988f1f26c6d1e763bd05154b70357157f485))
+* Enhance dashboard UI with dynamic status indicators and context-aware footers while updating CLI command documentation. ([bed6dc4](https://github.com/eng618/eng/commit/bed6dc4ad257890068c8576db2506d8ec288be95))
+* Implement dynamic shell completion for projects and compose stacks, enhance doctor exit codes, and improve onboarding experience. ([4e09fde](https://github.com/eng618/eng/commit/4e09fde1f322cc0217145131d8ec492f3e05e094))
+* Implement dynamic shell completion for proxy and compose commands while suppressing log output during completion ([bdb8c62](https://github.com/eng618/eng/commit/bdb8c62842d44cc1e2eaef851b2c0cf4c1679931))
+* Implement fixed-size Docker-style progress modal with stable per-repository status rows ([6ed1e8b](https://github.com/eng618/eng/commit/6ed1e8bc428e315edee135a159fa49d964ef608d))
+
 ## [1.50.0](https://github.com/eng618/eng/compare/v1.49.0...v1.50.0) (2026-09-03)
 
 
