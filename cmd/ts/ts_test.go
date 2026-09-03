@@ -3,26 +3,21 @@ package ts
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/eng618/eng/internal/log"
 )
 
-// captureStdout redirects os.Stdout to a buffer during function execution.
+// captureOutput captures log output during function execution.
 func captureStdout(f func()) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
 
 	f()
 
-	_ = w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	return buf.String()
 }
 

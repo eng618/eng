@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/eng618/eng/internal/log"
 )
 
 var execCommand = exec.Command
@@ -129,8 +131,8 @@ func (m *Manager) Up(stackNames []string, envName string, detach, build bool) er
 		}
 
 		cmd := execCommand("docker", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = log.Out
+		cmd.Stderr = log.Err
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("error starting stack %s: %w", s.Name, err)
 		}
@@ -152,8 +154,8 @@ func (m *Manager) Down(stackNames []string, removeVolumes bool) error {
 		}
 
 		cmd := execCommand("docker", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = log.Out
+		cmd.Stderr = log.Err
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("error stopping stack %s: %w", s.Name, err)
 		}
@@ -170,8 +172,8 @@ func (m *Manager) Pull(stackNames []string) error {
 
 	for _, s := range targetStacks {
 		cmd := execCommand("docker", "compose", "-f", s.File, "pull")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = log.Out
+		cmd.Stderr = log.Err
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("error pulling stack %s: %w", s.Name, err)
 		}
@@ -221,8 +223,8 @@ func (m *Manager) Logs(stackName string, follow bool, tail string) error {
 	}
 
 	cmd := execCommand("docker", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Out
+	cmd.Stderr = log.Err
 	return cmd.Run()
 }
 

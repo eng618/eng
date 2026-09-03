@@ -37,7 +37,7 @@ var UpdateCmd = &cobra.Command{
 			Foreground(theme.Primary).
 			MarginBottom(1)
 		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("🚀 System Maintenance & Update"))
+			fmt.Fprintln(log.Out, headerStyle.Render("🚀 System Maintenance & Update"))
 		}
 
 		isVerbose := cmdutil.IsVerbose(cmd)

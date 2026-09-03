@@ -30,7 +30,7 @@ var statusCmd = &cobra.Command{
 			Bold(true).
 			Foreground(theme.Primary).
 			MarginBottom(1)
-		if !ui.DisableProgress {
+		if !ui.DisableProgress && !jsonFlag {
 			fmt.Fprintln(log.Out, headerStyle.Render("📊 Docker Compose Swarms Status"))
 		}
 		cfg := config.GetContainersConfig()
@@ -50,11 +50,14 @@ var statusCmd = &cobra.Command{
 			}
 
 			if jsonFlag {
+				if details == nil {
+					details = map[string][]containers.ContainerDetail{}
+				}
 				out, err := json.MarshalIndent(details, "", "  ")
 				if err != nil {
 					return err
 				}
-				fmt.Println(string(out))
+				fmt.Fprintln(log.Out, string(out))
 				return nil
 			}
 
@@ -68,8 +71,8 @@ var statusCmd = &cobra.Command{
 			}
 
 			theme.InfoMessage("Compose Swarms Status (Detailed):")
-			fmt.Println()
-			fmt.Print(rendered)
+			fmt.Fprintln(log.Out)
+			fmt.Fprint(log.Out, rendered)
 			return nil
 		}
 
@@ -79,11 +82,14 @@ var statusCmd = &cobra.Command{
 		}
 
 		if jsonFlag {
+			if stacks == nil {
+				stacks = []containers.Stack{}
+			}
 			out, err := json.MarshalIndent(stacks, "", "  ")
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(out))
+			fmt.Fprintln(log.Out, string(out))
 			return nil
 		}
 
@@ -93,8 +99,8 @@ var statusCmd = &cobra.Command{
 		}
 
 		theme.InfoMessage("Compose Swarms Status:")
-		fmt.Println()
-		fmt.Println(ui.RenderStackTable(stacks, termWidth))
+		fmt.Fprintln(log.Out)
+		fmt.Fprintln(log.Out, ui.RenderStackTable(stacks, termWidth))
 		return nil
 	},
 }

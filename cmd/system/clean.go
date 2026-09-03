@@ -78,7 +78,7 @@ Use the --yes (-y) flag to run all available cleanup operations without promptin
 		if report != nil {
 			summary := report.RenderSummaryTable()
 			if summary != "" {
-				fmt.Println(summary)
+				fmt.Fprintln(log.Out, summary)
 			}
 		}
 

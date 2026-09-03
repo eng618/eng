@@ -54,7 +54,7 @@ var immichStatusCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(data))
+			fmt.Fprintln(log.Out, string(data))
 			return nil
 		}
 
@@ -65,7 +65,7 @@ var immichStatusCmd = &cobra.Command{
 			return ui.RunContainersPager(rendered)
 		}
 
-		fmt.Print(rendered)
+		fmt.Fprint(log.Out, rendered)
 		return nil
 	},
 }
@@ -83,7 +83,7 @@ var immichBackupCmd = &cobra.Command{
 			Foreground(theme.Primary).
 			MarginBottom(1)
 		if !ui.DisableProgress {
-			fmt.Println(headerStyle.Render("📦 Running Immich Full Backup"))
+			fmt.Fprintln(log.Out, headerStyle.Render("📦 Running Immich Full Backup"))
 		}
 
 		var spinner *ui.Spinner
@@ -102,10 +102,10 @@ var immichBackupCmd = &cobra.Command{
 		}
 
 		theme.SuccessMessage("Immich backup completed successfully!")
-		fmt.Printf("\n  %s %s (%s)\n", theme.BoldText.Render("DB Archive:"), res.BackupFile, res.Size)
-		fmt.Printf("  %s %s\n", theme.BoldText.Render("Checksum:"), res.ChecksumFile)
-		fmt.Printf("  %s %s\n", theme.BoldText.Render("Config Snapshot:"), res.ConfigArchive)
-		fmt.Printf("  %s %s\n\n", theme.BoldText.Render("Duration:"), res.Duration.Round(100*1000000))
+		fmt.Fprintf(log.Out, "\n  %s %s (%s)\n", theme.BoldText.Render("DB Archive:"), res.BackupFile, res.Size)
+		fmt.Fprintf(log.Out, "  %s %s\n", theme.BoldText.Render("Checksum:"), res.ChecksumFile)
+		fmt.Fprintf(log.Out, "  %s %s\n", theme.BoldText.Render("Config Snapshot:"), res.ConfigArchive)
+		fmt.Fprintf(log.Out, "  %s %s\n\n", theme.BoldText.Render("Duration:"), res.Duration.Round(100*1000000))
 		return nil
 	},
 }

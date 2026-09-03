@@ -56,7 +56,9 @@ func MigrateConfig() {
 		if err := viper.WriteConfig(); err != nil {
 			log.Warn("Failed to save migrated configuration: %v", err)
 		} else {
-			log.Success("Configuration migrated to latest version")
+			// Verbose-only: keeps machine-consumed stdout (eval, --json,
+			// __complete) clean on first run after an upgrade.
+			log.Verbose(isVerbose, "Configuration migrated to latest version")
 		}
 	} else {
 		log.Verbose(isVerbose, "Configuration is up to date, no migration needed")

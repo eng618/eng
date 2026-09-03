@@ -136,7 +136,7 @@ Examples:
 		}
 
 		if !ui.DisableProgress {
-			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+			fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		} else {
 			log.Message("Files to shred:")
 			for _, fm := range fileInfos {

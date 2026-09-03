@@ -63,7 +63,7 @@ func RunDockerCleanup(opts DockerCleanOptions) (*Report, error) {
 		}
 
 		log.Message("\n--- Docker Disk Usage (Dry-Run Preview) ---")
-		fmt.Println(dfOut)
+		fmt.Fprintln(log.Out, dfOut)
 
 		report.Add(ItemResult{
 			Name:        "Docker Disk Analysis (Dry-Run)",

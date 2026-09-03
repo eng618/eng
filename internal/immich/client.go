@@ -20,6 +20,7 @@ import (
 	"github.com/dustin/go-humanize"
 
 	"github.com/eng618/eng/internal/containers"
+	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -457,8 +458,8 @@ func (m *Manager) RunRestore(ctx context.Context, backupFile string, autoConfirm
 	}
 
 	cmd := execCommandContext(ctx, m.RestoreScript, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Out
+	cmd.Stderr = log.Err
 	cmd.Stdin = os.Stdin
 	return cmd.Run()
 }
@@ -545,8 +546,8 @@ func (m *Manager) Logs(ctx context.Context, service string, follow bool, tail in
 			args = append(args, "-n", strconv.Itoa(tail))
 		}
 		cmd := execCommandContext(ctx, "journalctl", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = log.Out
+		cmd.Stderr = log.Err
 		return cmd.Run()
 	}
 
@@ -563,8 +564,8 @@ func (m *Manager) Logs(ctx context.Context, service string, follow bool, tail in
 	}
 
 	cmd := execCommandContext(ctx, "docker", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Out
+	cmd.Stderr = log.Err
 	return cmd.Run()
 }
 

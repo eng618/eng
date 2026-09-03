@@ -2,8 +2,6 @@ package system
 
 import (
 	"bytes"
-	"io"
-	"os"
 	"strings"
 	"testing"
 
@@ -29,18 +27,13 @@ func TestListProxyConfigurations(t *testing.T) {
 	testCmd.Flags().Bool("env", false, "")
 	testCmd.Flags().Bool("lowercase-env", false, "")
 
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
 
 	listProxyConfigurations(testCmd)
 
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, "Test Proxy") {
@@ -60,19 +53,14 @@ func TestExportCmd_Enabled(t *testing.T) {
 	}
 	viper.Set("proxies", proxies)
 
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
 
 	// Run export subcommand logic
 	exportCmd.Run(exportCmd, []string{})
 
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, "export HTTP_PROXY='http://test:8080'") {
@@ -88,18 +76,13 @@ func TestExportCmd_Disabled(t *testing.T) {
 	}
 	viper.Set("proxies", proxies)
 
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
 
 	exportCmd.Run(exportCmd, []string{})
 
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, "unset HTTP_PROXY") {

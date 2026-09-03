@@ -625,7 +625,7 @@ func setupSoftware(verbose bool) {
 			if err := sw.Install(); err != nil {
 				log.Error("Failed to open URL: %v", err)
 			}
-			fmt.Printf("Press Enter after installing %s to continue...", sw.Name)
+			fmt.Fprintf(log.Out, "Press Enter after installing %s to continue...", sw.Name)
 			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 		} else {
 			if err := sw.Install(); err != nil {

@@ -67,7 +67,7 @@ Use the --volumes (-v) flag to also prune unused anonymous volumes.`,
 		if report != nil {
 			summary := report.RenderSummaryTable()
 			if summary != "" {
-				fmt.Println(summary)
+				fmt.Fprintln(log.Out, summary)
 			}
 		}
 

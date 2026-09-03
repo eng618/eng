@@ -113,7 +113,7 @@ var CleanAllCmd = &cobra.Command{
 		}
 
 		if !ui.DisableProgress {
-			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+			fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		}
 
 		if setup.DryRun {

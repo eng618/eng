@@ -172,7 +172,7 @@ func runUpdateLatest(_cmd *cobra.Command, _args []string) error {
 
 	if !ui.DisableProgress {
 		boxContent := strings.Join(tableLines, "\n")
-		fmt.Println(theme.InfoBox.Render(boxContent))
+		fmt.Fprintln(log.Out, theme.InfoBox.Render(boxContent))
 	}
 
 	var selectedToUpgrade []ToolUpgrade

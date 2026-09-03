@@ -92,7 +92,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 			}
 
 			if !ui.DisableProgress {
-				fmt.Println(theme.InfoBox.Render(strings.Join(extLines, "\n")))
+				fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(extLines, "\n")))
 			} else {
 				log.Message("File extensions found in %s:", dir)
 				for _, ext := range extensions {
@@ -247,7 +247,7 @@ filename, --glob for glob patterns, or --ext for file extensions.
 		))
 
 		if !ui.DisableProgress {
-			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+			fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		}
 
 		// Prepare MultiSelect options with itemized file sizes

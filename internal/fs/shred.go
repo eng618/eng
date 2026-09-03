@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/eng618/eng/internal/log"
 )
 
 // ShredMethod defines the overwrite pattern to use.
@@ -174,7 +176,7 @@ func ShredFileWithMethod(path string, passes int, method ShredMethod, progress S
 
 	if err := os.Rename(path, randomName); err != nil {
 		// Non-fatal: if rename fails, we still delete the original
-		fmt.Fprintf(os.Stderr, "warning: could not rename %s: %v\n", path, err)
+		fmt.Fprintf(log.Err, "warning: could not rename %s: %v\n", path, err)
 	} else {
 		path = randomName
 	}
@@ -382,7 +384,7 @@ func shredSingleFileWithStatus(
 	}
 
 	if err := os.Rename(path, randomName); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not rename %s: %v\n", path, err)
+		fmt.Fprintf(log.Err, "warning: could not rename %s: %v\n", path, err)
 	} else {
 		path = randomName
 	}

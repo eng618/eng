@@ -25,8 +25,9 @@ Create a consistent visual language across the entire application that prioritiz
 
 ### 1.2 Rich Command Output
 
-- **Status**: `[/]`
+- **Status**: `[x]`
 - **Task**: Replace standard `fmt.Printf` and plain text logging with Lipgloss-styled components (e.g., success banners, info boxes, warning callouts) aligned with the global theme. (Partially completed in proxy and native commands).
+- **Progress**: All production `fmt.Print*` calls now go through the unified `log.Out`/`log.Err` writers (or `log.*`/`theme.*` helpers), so output honors writer overrides (tests, capture, `__complete` silencing). Subprocess streaming (`containers`, `immich`, interactive re-execs excluded) follows the same writers. Machine-consumed stdout stays clean: `compose status --json` prints only JSON (`[]`/`{}` instead of `null`, no header banner), `proxy export` silences config-load chatter for `eval`, and config migration notices are verbose-only. Interactive children (editors, `dotfiles install` re-exec, password prompts) intentionally keep real stdio.
 - **Impact**: Medium (Makes reading command output easier and more pleasant).
 
 ---

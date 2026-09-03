@@ -130,7 +130,7 @@ It calculates folder disk space, lists folder contents, and prompts for confirma
 		}
 
 		if !ui.DisableProgress {
-			fmt.Println(theme.InfoBox.Render(strings.Join(boxLines, "\n")))
+			fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(boxLines, "\n")))
 		}
 
 		// Prepare MultiSelect options
