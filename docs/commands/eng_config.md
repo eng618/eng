@@ -37,5 +37,6 @@ eng config [flags]
 * [eng config git-dev-path](eng_config_git-dev-path.md)	 - Update config git dev path
 * [eng config ide-url](eng_config_ide-url.md)	 - Update Antigravity IDE download URL
 * [eng config list](eng_config_list.md)	 - Display a summary of all active configuration settings
+* [eng config telemetry](eng_config_telemetry.md)	 - Manage OpenPanel telemetry and analytics settings
 * [eng config verbose](eng_config_verbose.md)	 - Update config verbose setting
 
