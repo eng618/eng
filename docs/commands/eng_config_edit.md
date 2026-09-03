@@ -12,6 +12,13 @@ By default, this command launches the interactive editor. Use --interactive=fals
 eng config edit [flags]
 ```
 
+### Examples
+
+```
+  eng config edit
+  eng config edit --interactive
+```
+
 ### Options
 
 ```

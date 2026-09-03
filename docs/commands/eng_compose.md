@@ -10,6 +10,14 @@ Audit, inspect, start, stop, pull, and monitor Docker Compose service stacks.
 eng compose [flags]
 ```
 
+### Examples
+
+```
+  eng compose list
+  eng compose status --all
+  eng compose up media -e dev
+```
+
 ### Options
 
 ```

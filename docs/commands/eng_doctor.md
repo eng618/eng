@@ -9,8 +9,16 @@ Inspects your workstation environment and verifies the availability and health o
   - Configured workspace paths and dotfiles
   - Installation and update status
 
+Exits non-zero when a required tool is missing, so CI can gate on it.
+
 ```
 eng doctor [flags]
+```
+
+### Examples
+
+```
+  eng doctor
 ```
 
 ### Options
