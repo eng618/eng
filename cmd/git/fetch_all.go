@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -41,6 +42,10 @@ var FetchAllCmd = &cobra.Command{
 		}
 
 		log.Info("Found %d git repositories", len(repos))
+
+		logPath, stopLog := runlog.Start("git-fetch-all")
+		defer stopLog()
+		defer runlog.Finish(logPath)
 
 		var successCount atomic.Int32
 		var failureCount atomic.Int32

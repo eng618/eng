@@ -40,6 +40,7 @@ import (
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/gitlab"
 	"github.com/eng618/eng/cmd/immich"
+	"github.com/eng618/eng/cmd/logs"
 	"github.com/eng618/eng/cmd/project"
 	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/cmd/ts"
@@ -152,6 +153,7 @@ func init() {
 	dashboardCmd.GroupID = "mgmt"
 
 	doctor.DoctorCmd.GroupID = "meta"
+	logs.LogsCmd.GroupID = "meta"
 	version.VersionCmd.GroupID = "meta"
 
 	// Add subcommands
@@ -166,6 +168,7 @@ func init() {
 	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
 	rootCmd.AddCommand(immich.ImmichCmd)
+	rootCmd.AddCommand(logs.LogsCmd)
 	rootCmd.AddCommand(project.ProjectCmd)
 	rootCmd.AddCommand(system.SystemCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)

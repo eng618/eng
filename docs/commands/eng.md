@@ -41,6 +41,7 @@ This is a personal CLI to facilitate developer workflows and maintain developmen
 * [eng git](eng_git.md)	 - Manage multiple git repositories
 * [eng gitlab](eng_gitlab.md)	 - Interact with GitLab via glab
 * [eng immich](eng_immich.md)	 - Manage Immich photo stack, database, backups, and lifecycle
+* [eng logs](eng_logs.md)	 - View session logs from verbose commands
 * [eng project](eng_project.md)	 - Manage project-based repository collections
 * [eng system](eng_system.md)	 - A command for managing the system
 * [eng tailscale](eng_tailscale.md)	 - A helper for the tailscale command

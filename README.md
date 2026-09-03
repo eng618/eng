@@ -177,6 +177,8 @@ If those prerequisites are not met, the restore step is skipped safely.
 | `eng gitlab`    | GitLab integration (mr-rules, auth)                                |
 | `eng version`   | Show version, check for updates                                    |
 | `eng config`    | Manage CLI configuration                                           |
+| `eng logs`      | View session logs from verbose commands (list, show, clean)        |
+| `eng doctor`    | Check system health and verify dependencies — alias: `doc`         |
 
 For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
 

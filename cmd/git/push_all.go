@@ -10,6 +10,7 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -61,6 +62,10 @@ var PushAllCmd = &cobra.Command{
 		}
 
 		log.Info("Found %d git repositories", len(repos))
+
+		logPath, stopLog := runlog.Start("git-push-all")
+		defer stopLog()
+		defer runlog.Finish(logPath)
 
 		successCount := 0
 		failureCount := 0

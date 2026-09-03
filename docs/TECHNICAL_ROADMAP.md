@@ -44,8 +44,9 @@ Transform how the CLI communicates failures to the user.
 
 ### 2.2 Progressive Disclosure for Logs
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: For verbose commands (like git syncs or system updates), show a clean summary by default. Log the verbose output to a file, and provide a command to view the logs, preventing the terminal from being overwhelmed with text.
+- **Progress**: `internal/log` + `internal/ui/theme` tee plain (ANSI-stripped) output to a session file; `internal/runlog` manages timestamped sessions under the OS cache dir (`ENG_LOG_DIR` override, 20-run rotation). Wired into `git sync/fetch/pull/push-all`, `project fetch/pull/sync`, and `system update`; each run ends with a `Full log:` pointer. `eng logs list/show (--tail/-f)/clean` inspects runs without re-running. Machine output kept clean (`--json` prints only JSON, `proxy export` silences chatter for `eval`).
 - **Impact**: Medium (Keeps the terminal clean while preserving debuggability).
 
 ---

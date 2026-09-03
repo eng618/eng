@@ -19,7 +19,19 @@ var outMu sync.RWMutex
 var (
 	Out io.Writer = os.Stdout
 	Err io.Writer = os.Stderr
+
+	// fileOut receives plain copies of banner messages when set.
+	// See SetFileLog. Guarded by outMu.
+	fileOut io.Writer
 )
+
+// SetFileLog tees plain copies of banner messages to w (nil disables).
+// The caller owns w: it is never closed here.
+func SetFileLog(w io.Writer) {
+	outMu.Lock()
+	defer outMu.Unlock()
+	fileOut = w
+}
 
 // SetWriters replaces Out/Err in a thread-safe way.
 func SetWriters(out, errOut io.Writer) {
@@ -96,11 +108,22 @@ var (
 			MarginRight(1)
 )
 
+// fileWrite writes a plain banner line to the file tee, if enabled.
+func fileWrite(banner, msg string) {
+	outMu.RLock()
+	defer outMu.RUnlock()
+	if fileOut == nil {
+		return
+	}
+	_, _ = fmt.Fprintf(fileOut, "%s %s\n", banner, msg)
+}
+
 // SuccessMessage prints a formatted success message.
 func SuccessMessage(msg string) {
 	banner := SuccessBanner.Render("SUCCESS")
 	text := BaseText.Render(msg)
 	fmt.Fprintf(getOut(), "%s %s\n", banner, text)
+	fileWrite("SUCCESS", msg)
 }
 
 // InfoMessage prints a formatted informational message.
@@ -114,6 +137,7 @@ func InfoMessage(msg string) {
 		Render("INFO")
 	text := BaseText.Render(msg)
 	fmt.Fprintf(getOut(), "%s %s\n", banner, text)
+	fileWrite("INFO", msg)
 }
 
 // ErrorMessage prints a formatted error message.
@@ -121,6 +145,7 @@ func ErrorMessage(msg string) {
 	banner := ErrorBanner.Render("ERROR")
 	text := ErrorText.Render(msg)
 	fmt.Fprintf(getErr(), "%s %s\n", banner, text)
+	fileWrite("ERROR", msg)
 }
 
 // WarningMessage prints a formatted warning message.
@@ -128,4 +153,5 @@ func WarningMessage(msg string) {
 	banner := WarningBanner.Render("WARN")
 	text := BaseText.Render(msg)
 	fmt.Fprintf(getOut(), "%s %s\n", banner, text)
+	fileWrite("WARN", msg)
 }

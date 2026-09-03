@@ -11,6 +11,7 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -42,6 +43,10 @@ var PullAllCmd = &cobra.Command{
 		}
 
 		log.Info("Found %d git repositories", len(repos))
+
+		logPath, stopLog := runlog.Start("git-pull-all")
+		defer stopLog()
+		defer runlog.Finish(logPath)
 
 		var successCount atomic.Int32
 		var failureCount atomic.Int32

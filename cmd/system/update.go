@@ -18,6 +18,7 @@ import (
 	"github.com/eng618/eng/internal/asdf"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/sysinfo"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -43,6 +44,11 @@ var UpdateCmd = &cobra.Command{
 		isVerbose := cmdutil.IsVerbose(cmd)
 		autoApprove, _ := cmd.Flags().GetBool("yes")
 		cleanupTimeout, _ := cmd.Flags().GetInt("cleanup-timeout")
+
+		logPath, stopLog := runlog.Start("system-update")
+		defer stopLog()
+		defer runlog.Finish(logPath)
+
 		log.Verbose(isVerbose, "Checking system type...")
 
 		distro := detectDistro()

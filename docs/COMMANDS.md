@@ -16,6 +16,7 @@ Complete documentation for all `eng` CLI commands and their options.
 - [GitLab Integration](#gitlab-integration)
 - [Version](#version)
 - [Config](#config)
+- [Session Logs](#session-logs)
 
 ---
 
@@ -554,6 +555,29 @@ Manage CLI configuration stored at `$HOME/.eng.yaml`.
 | `eng config email`                   | Set email address                            |
 | `eng config ide-url`                 | Set Antigravity IDE download URL             |
 | `eng config verbose`                 | Set verbose output default                   |
+
+---
+
+## Session Logs
+
+Verbose commands (`eng git sync-all/fetch-all/pull-all/push-all`, `eng project fetch/pull/sync`,
+`eng system update`) show a clean summary in the terminal and capture full detail to a
+timestamped log file (kept under the OS cache dir, latest 20 runs; override with `ENG_LOG_DIR`).
+Each run ends with a `Full log: <path>` pointer.
+
+| Command                          | Description                                              |
+| -------------------------------- | -------------------------------------------------------- |
+| `eng logs` / `eng logs list`     | List recent session logs, newest first                   |
+| `eng logs show [name]`           | Show a session log (latest by default; prefix matching)  |
+| `eng logs show --tail N`         | Show only the last N lines                               |
+| `eng logs show -f`               | Stream new lines until interrupted                       |
+| `eng logs clean`                 | Delete all session logs                                  |
+
+```sh
+eng git sync-all        # summary in terminal, details in log file
+eng logs show           # inspect the latest run
+eng logs show git-sync-all --tail 50
+```
 
 ---
 

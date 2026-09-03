@@ -11,6 +11,7 @@ import (
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	internalProject "github.com/eng618/eng/internal/project"
+	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -46,6 +47,10 @@ Example:
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		force, _ := cmd.Flags().GetBool("force")
 		projectFilter, _ := cmd.Flags().GetString("project")
+
+		logPath, stopLog := runlog.Start("project-fetch")
+		defer stopLog()
+		defer runlog.Finish(logPath)
 
 		opts := internalProject.FetchOptions{
 			DryRun:        dryRun,
