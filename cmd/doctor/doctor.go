@@ -36,8 +36,9 @@ type ToolCheck struct {
 
 // DoctorCmd represents the doctor diagnostic command.
 var DoctorCmd = &cobra.Command{
-	Use:   "doctor",
-	Short: "Check system health and verify dependencies",
+	Use:     "doctor",
+	Aliases: []string{"doc"},
+	Short:   "Check system health and verify dependencies",
 	Long: `Inspects your workstation environment and verifies the availability and health of:
   - Core CLI tools (git, brew, docker, asdf, tailscale, bw, gpg, gh, glab)
   - Configured workspace paths and dotfiles
