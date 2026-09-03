@@ -10,8 +10,9 @@ and target OS/Architecture.
 It also checks the GitHub repository (eng618/eng) for the latest official release
 and compares it with the currently running version.
 
-If a newer version is available and eng was installed via Homebrew,
-you can use the --update flag to attempt an automatic upgrade.
+If a newer version is available, you can use the --update flag to attempt
+an automatic upgrade via Homebrew (if installed that way) or via the
+install script (if installed via curl).
 
 ```
 eng version [flags]
@@ -21,7 +22,7 @@ eng version [flags]
 
 ```
   -h, --help     help for version
-  -u, --update   Attempt to update eng to the latest version (requires Homebrew)
+  -u, --update   Attempt to update eng to the latest version (Homebrew or install script)
 ```
 
 ### Options inherited from parent commands

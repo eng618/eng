@@ -310,6 +310,106 @@ func TestIsBrewInstallation(t *testing.T) {
 	}
 }
 
+func TestGetInstallSource(t *testing.T) {
+	origOsExecutable := osExecutable
+	origEvalSymlinks := evalSymlinks
+	origLookPath := lookPath
+	defer func() {
+		osExecutable = origOsExecutable
+		evalSymlinks = origEvalSymlinks
+		lookPath = origLookPath
+	}()
+
+	home, _ := os.UserHomeDir()
+	tests := []struct {
+		name     string
+		mockPath string
+		expected string
+	}{
+		{"Brew cellar", "/opt/homebrew/Cellar/eng/1.0.0/bin/eng", "Homebrew"},
+		{"Curl default", "/usr/local/bin/eng", "Install Script (curl)"},
+		{"Curl user local", home + "/.local/bin/eng", "Install Script (curl)"},
+		{"Go install", "/home/eng618/go/bin/eng", "Binary / Go Install"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			osExecutable = func() (string, error) { return tt.mockPath, nil }
+			evalSymlinks = func(path string) (string, error) { return path, nil }
+			lookPath = func(file string) (string, error) { return "/opt/homebrew/bin/brew", nil }
+			if got := getInstallSource(false); got != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, got)
+			}
+		})
+	}
+}
+
+func TestDownloadInstallScript(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("#!/bin/sh\necho hi\n"))
+	}))
+	defer ts.Close()
+
+	path, err := downloadInstallScript(ts.URL)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	defer os.Remove(path)
+	content, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(content), "echo hi") {
+		t.Errorf("Downloaded script content mismatch: %v %q", err, string(content))
+	}
+
+	badTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer badTS.Close()
+	if _, err := downloadInstallScript(badTS.URL); err == nil {
+		t.Errorf("Expected error for 404 script download")
+	}
+}
+
+func TestRunScriptUpgradeMock(t *testing.T) {
+	origExecCommand := execCommand
+	origOsExecutable := osExecutable
+	origEvalSymlinks := evalSymlinks
+	origScriptURL := installScriptURL
+	origDisableProgress := ui.DisableProgress
+	defer func() {
+		execCommand = origExecCommand
+		osExecutable = origOsExecutable
+		evalSymlinks = origEvalSymlinks
+		installScriptURL = origScriptURL
+		ui.DisableProgress = origDisableProgress
+	}()
+	ui.DisableProgress = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("#!/bin/sh\necho upgraded\n"))
+	}))
+	defer ts.Close()
+	installScriptURL = ts.URL
+
+	osExecutable = func() (string, error) { return "/usr/local/bin/eng", nil }
+	evalSymlinks = func(path string) (string, error) { return path, nil }
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		if name != "sh" {
+			t.Errorf("Expected sh command, got %s", name)
+		}
+		cs := []string{"-test.run=TestHelperProcess", "--", name}
+		cs = append(cs, arg...)
+		cmd := exec.Command(os.Args[0], cs...)
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		return cmd
+	}
+
+	if err := runScriptUpgrade(false); err != nil {
+		t.Fatalf("Expected runScriptUpgrade to succeed with mock, got: %v", err)
+	}
+	if err := runScriptUpgrade(true); err != nil {
+		t.Fatalf("Expected verbose runScriptUpgrade to succeed with mock, got: %v", err)
+	}
+}
+
 // TestHelperProcess isn't a real test. It's used to mock exec.Command calls.
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {

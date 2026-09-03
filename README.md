@@ -39,7 +39,33 @@ A modern, modular CLI tool for developer automation, dotfiles management, system
 
 ## Installation
 
-### Homebrew (Recommended)
+### One-line script (curl)
+
+Works on macOS and Linux without Go or Homebrew. Downloads the matching
+release asset from GitHub Releases, verifies its SHA256 checksum, and installs
+to `/usr/local/bin` (uses `sudo` only when needed):
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | sh
+```
+
+Pin a version or install user-local (no `sudo`, ensure the dir is on `PATH`):
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | sh -s -- -v v0.17.5
+curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | INSTALL_DIR=$HOME/.local/bin sh
+ENG_VERSION=v0.17.5 INSTALL_DIR=$HOME/.local/bin sh install.sh
+```
+
+Update anytime with:
+
+```sh
+eng version -u
+```
+
+On Windows, run the same command from Git Bash (requires `unzip`).
+
+### Homebrew
 
 ```sh
 brew tap eng618/eng

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -40,14 +41,18 @@ const (
 	requestTimeout  = 5 * time.Second // Timeout for the GitHub API request.
 	brewCmd         = "brew"          // Command for Homebrew
 	brewPkgName     = "eng"           // Package name in Homebrew
+	scriptTimeout   = 60 * time.Second
 )
 
 var (
 	githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
-	execCommand  = exec.Command
-	osExecutable = os.Executable
-	evalSymlinks = filepath.EvalSymlinks
-	lookPath     = exec.LookPath
+	// installScriptURL is the canonical install.sh used for curl installs and
+	// script-based self-updates (overridable in tests).
+	installScriptURL = "https://raw.githubusercontent.com/eng618/eng/main/install.sh"
+	execCommand      = exec.Command
+	osExecutable     = os.Executable
+	evalSymlinks     = filepath.EvalSymlinks
+	lookPath         = exec.LookPath
 )
 
 // Flag variable for the --update flag.
@@ -72,8 +77,9 @@ and target OS/Architecture.
 It also checks the GitHub repository (eng618/eng) for the latest official release
 and compares it with the currently running version.
 
-If a newer version is available and eng was installed via Homebrew,
-you can use the --update flag to attempt an automatic upgrade.`,
+If a newer version is available, you can use the --update flag to attempt
+an automatic upgrade via Homebrew (if installed that way) or via the
+install script (if installed via curl).`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		isVerbose, _ := cmd.Flags().GetBool("verbose")
 
@@ -119,18 +125,45 @@ you can use the --update flag to attempt an automatic upgrade.`,
 func init() {
 	// Add the --update flag
 	VersionCmd.Flags().
-		BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (requires Homebrew)")
+		BoolVarP(&updateFlag, "update", "u", false, "Attempt to update eng to the latest version (Homebrew or install script)")
 
 	// Note: You would typically add VersionCmd to your root command in cmd/root.go
 	// Example: rootCmd.AddCommand(version.VersionCmd)
 }
 
+// getInstallSource returns a human-readable install source based on the
+// executable path heuristic.
+func getInstallSource(isVerbose bool) string {
+	if isBrewInstallation(isVerbose) {
+		return "Homebrew"
+	}
+	if dir, err := currentInstallDir(); err == nil {
+		home, _ := os.UserHomeDir()
+		switch dir {
+		case "/usr/local/bin", "/opt/homebrew/bin", "/usr/bin", "/opt/local/bin",
+			filepath.Join(home, ".local", "bin"):
+			return "Install Script (curl)"
+		}
+	}
+	return "Binary / Go Install"
+}
+
+// currentInstallDir returns the directory containing the running executable,
+// resolving symlinks when possible.
+func currentInstallDir() (string, error) {
+	executablePath, err := osExecutable()
+	if err != nil {
+		return "", err
+	}
+	if resolved, err := evalSymlinks(executablePath); err == nil {
+		executablePath = resolved
+	}
+	return filepath.Dir(executablePath), nil
+}
+
 // printVersionInfo displays the static build and runtime information.
 func printVersionInfo(isVerbose bool) {
-	installSource := "Binary / Go Install"
-	if isBrewInstallation(isVerbose) {
-		installSource = "Homebrew"
-	}
+	installSource := getInstallSource(isVerbose)
 
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -248,17 +281,21 @@ func compareAndHandleUpdate(
 				// to avoid printing redundant "Get it here" messages.
 				return
 			}
-			log.Warn("--update flag specified, but cannot automatically update.")
-			log.Info("  Installation method not recognized as Homebrew.")
-			log.Info("  Try updating manually with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
-			log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
+			log.Info("Attempting update via install script...")
+			if err := runScriptUpgrade(isVerbose); err != nil {
+				log.Error("Install-script update failed: %v", err)
+				log.Info("  Try manually: curl -sSfL %s | sh", installScriptURL)
+				log.Info("  Or get it from GitHub: %s", latestRelease.HTMLURL)
+			}
 			return
 		}
 		// Just inform the user how to update
 		if brewDetected {
 			log.Info("Run `eng version --update` or `eng version -u` to attempt an automatic update via Homebrew.")
-		} else { // If not brew detected, suggest go install
-			log.Info("Try updating with: go install %s/%s@latest", githubRepoOwner, githubRepoName)
+		} else {
+			log.Info(
+				"Run `eng version --update` or `eng version -u` to attempt an automatic update via the install script.",
+			)
 		}
 	} else if latestSemVer.Equal(currentSemVer) {
 		log.Success("You are running the latest version.")
@@ -391,6 +428,110 @@ func runBrewUpgrade(isVerbose bool) error {
 
 	log.Success("Homebrew upgrade successful! %s upgraded to latest version.", brewPkgName)
 	return nil
+}
+
+// runScriptUpgrade self-updates a curl/binary installation by downloading
+// install.sh and re-executing it into the current install directory.
+// The install script handles checksum verification, sudo, and PATH checks.
+func runScriptUpgrade(isVerbose bool) error {
+	destDir, err := currentInstallDir()
+	if err != nil {
+		return fmt.Errorf("could not determine install directory: %w", err)
+	}
+	if destDir == "" {
+		return fmt.Errorf("empty install directory")
+	}
+
+	if isVerbose {
+		log.Info("Downloading install script from %s...", installScriptURL)
+	}
+
+	var sp *ui.Spinner
+	if !isVerbose && !ui.DisableProgress {
+		sp = ui.NewSpinner("Downloading install script...")
+		sp.Start()
+	}
+
+	tmpFile, err := downloadInstallScript(installScriptURL)
+	if sp != nil {
+		sp.Stop()
+	}
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	args := []string{tmpFile, "--to", destDir}
+	log.Verbose(isVerbose, "Executing: sh %s --to %s", tmpFile, destDir)
+
+	var upgradeSpinner *ui.Spinner
+	if !isVerbose && !ui.DisableProgress {
+		upgradeSpinner = ui.NewSpinner(fmt.Sprintf("Upgrading eng in %s...", destDir))
+		upgradeSpinner.Start()
+	}
+	upgradeCmd := execCommand("sh", args...)
+	if isVerbose {
+		upgradeCmd.Stdout = log.Writer()
+		upgradeCmd.Stderr = log.ErrorWriter()
+	} else {
+		var stderrBuf bytes.Buffer
+		upgradeCmd.Stderr = &stderrBuf
+		err = upgradeCmd.Run()
+		if upgradeSpinner != nil {
+			upgradeSpinner.Stop()
+		}
+		if err != nil {
+			if out := strings.TrimSpace(stderrBuf.String()); out != "" {
+				log.Error("Install script error output:\n%s", out)
+			}
+			return fmt.Errorf("install script failed: %w", err)
+		}
+		log.Success("eng upgraded successfully in %s.", destDir)
+		return nil
+	}
+
+	err = upgradeCmd.Run()
+	if err != nil {
+		return fmt.Errorf("install script failed: %w", err)
+	}
+	log.Success("eng upgraded successfully in %s.", destDir)
+	return nil
+}
+
+// downloadInstallScript fetches the install script URL to a temp file.
+func downloadInstallScript(url string) (string, error) {
+	client := &http.Client{Timeout: scriptTimeout}
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to download install script: %w", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to download install script: unexpected status %d", resp.StatusCode)
+	}
+	tmp, err := os.CreateTemp("", "eng-install-*.sh")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+	if _, err := io.Copy(tmp, resp.Body); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+		return "", fmt.Errorf("failed to write install script: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return "", fmt.Errorf("failed to close install script: %w", err)
+	}
+	if err := os.Chmod(tmpName, 0o755); err != nil {
+		_ = os.Remove(tmpName)
+		return "", fmt.Errorf("failed to chmod install script: %w", err)
+	}
+	return tmpName, nil
 }
 
 // getLatestRelease fetches the latest release information for a given GitHub repository.

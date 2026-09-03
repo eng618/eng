@@ -529,7 +529,7 @@ eng gitlab auth doctor --host gitlab.example.com --project group/sub/repo --quie
 | Command                | Description                                      |
 | ---------------------- | ------------------------------------------------ |
 | `eng version`          | Show version, build info, check for updates      |
-| `eng version --update` | Auto-update via Homebrew (if installed that way) |
+| `eng version --update` | Auto-update via Homebrew or install script |
 
 ---
 
