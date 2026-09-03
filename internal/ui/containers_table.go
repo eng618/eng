@@ -25,6 +25,11 @@ func GetTerminalWidth() int {
 
 // RenderStackTable renders a Lip Gloss table showing high-level status for Compose stacks.
 func RenderStackTable(stacks []containers.Stack, termWidth int) string {
+	if len(stacks) == 0 {
+		return theme.MutedText.Render(
+			"No compose stacks found. Check your containers path with 'eng config containers-path'.",
+		)
+	}
 	if termWidth <= 0 {
 		termWidth = GetTerminalWidth()
 	}
@@ -167,13 +172,13 @@ func formatStackStatusBadge(status string) string {
 
 	switch {
 	case strings.HasPrefix(lower, "running"):
-		return badge.Background(lipgloss.Color("#10B981")).Foreground(lipgloss.Color("#000000")).Render(" RUNNING ")
+		return badge.Background(theme.Secondary).Foreground(theme.Background).Render(" RUNNING ")
 	case strings.HasPrefix(lower, "partial"):
-		return badge.Background(lipgloss.Color("#F59E0B")).
-			Foreground(lipgloss.Color("#000000")).
+		return badge.Background(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}).
+			Foreground(theme.Background).
 			Render(fmt.Sprintf(" %s ", strings.ToUpper(status)))
 	case strings.HasPrefix(lower, "stopped"):
-		return badge.Background(lipgloss.Color("#6B7280")).Foreground(lipgloss.Color("#FFFFFF")).Render(" STOPPED ")
+		return badge.Background(theme.MutedForeground).Foreground(theme.Background).Render(" STOPPED ")
 	default:
 		return badge.Background(theme.MutedForeground).
 			Foreground(theme.Background).
@@ -188,18 +193,18 @@ func formatContainerStatusBadge(state, health string) string {
 
 	switch {
 	case st == "running" && (hl == "" || hl == "healthy"):
-		return badge.Background(lipgloss.Color("#10B981")).Foreground(lipgloss.Color("#000000")).Render(" RUNNING ")
+		return badge.Background(theme.Secondary).Foreground(theme.Background).Render(" RUNNING ")
 	case hl == "unhealthy":
-		return badge.Background(lipgloss.Color("#EF4444")).Foreground(lipgloss.Color("#FFFFFF")).Render(" UNHEALTHY ")
+		return badge.Background(theme.Destructive).Foreground(theme.Background).Render(" UNHEALTHY ")
 	case st == "exited":
-		return badge.Background(lipgloss.Color("#6B7280")).Foreground(lipgloss.Color("#FFFFFF")).Render(" EXITED ")
+		return badge.Background(theme.MutedForeground).Foreground(theme.Background).Render(" EXITED ")
 	default:
 		lbl := strings.ToUpper(state)
 		if health != "" {
 			lbl += fmt.Sprintf(" (%s)", strings.ToUpper(health))
 		}
-		return badge.Background(lipgloss.Color("#F59E0B")).
-			Foreground(lipgloss.Color("#000000")).
+		return badge.Background(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}).
+			Foreground(theme.Background).
 			Render(fmt.Sprintf(" %s ", lbl))
 	}
 }
@@ -235,11 +240,15 @@ func formatCompactPublishers(pubs []containers.Publisher, maxColWidth int) strin
 }
 
 func truncateString(s string, maxLen int) string {
-	if maxLen <= 3 {
-		return s
+	runes := []rune(s)
+	if maxLen <= 1 {
+		return string(runes[:min(1, len(runes))])
 	}
-	if len(s) > maxLen {
-		return s[:maxLen-3] + "..."
+	if len(runes) > maxLen {
+		if maxLen <= 3 {
+			return string(runes[:maxLen])
+		}
+		return string(runes[:maxLen-3]) + "..."
 	}
 	return s
 }

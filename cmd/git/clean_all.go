@@ -20,7 +20,10 @@ import (
 var CleanAllCmd = &cobra.Command{
 	Use:   "clean-all",
 	Short: "Clean untracked files in all git repositories in development folder",
-	Long:  `This command removes untracked files and directories for all git repositories found in your development folder.`,
+	Long:  `Preview untracked files across all repos, confirm, then clean. Use --dry-run to preview only, --force with --yes to skip confirmation.`,
+	Example: `  eng git clean-all --dry-run
+  eng git clean-all
+  eng git clean-all --force --yes -d`,
 	Run: func(cmd *cobra.Command, _args []string) {
 		printHeader("🧹 Clean Development Repositories")
 
@@ -31,6 +34,8 @@ var CleanAllCmd = &cobra.Command{
 		}
 
 		force, _ := cmd.Flags().GetBool("force")
+		assumeYes, _ := cmd.Flags().GetBool("yes")
+		skipConfirm := force || assumeYes
 		directories, _ := cmd.Flags().GetBool("directories")
 
 		var scanSpinner *ui.Spinner
@@ -39,12 +44,13 @@ var CleanAllCmd = &cobra.Command{
 				"Scanning git repositories in %s for untracked files...",
 				setup.DevPath,
 			))
+			scanSpinner.Start()
 		}
 
 		repos, err := findGitRepositories(setup.DevPath)
 		if err != nil {
 			if scanSpinner != nil {
-				scanSpinner.Stop()
+				scanSpinner.Fail("Scan failed")
 			}
 			log.Error("Failed to find git repositories: %s", err)
 			return
@@ -75,7 +81,7 @@ var CleanAllCmd = &cobra.Command{
 		}
 
 		if scanSpinner != nil {
-			scanSpinner.Stop()
+			scanSpinner.Success(fmt.Sprintf("Scanned %d repositories", len(repos)))
 		}
 
 		if len(reposToClean) == 0 {
@@ -87,7 +93,8 @@ var CleanAllCmd = &cobra.Command{
 
 		// Render Callout Box
 		var boxLines []string
-		boxLines = append(boxLines, fmt.Sprintf("Found %s repository(ies) with untracked files reclaiming %s space:",
+		boxLines = append(boxLines, fmt.Sprintf(
+			"Found %s repository(ies) with untracked files reclaiming %s space:",
 			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(reposToClean))),
 			theme.SuccessText.Bold(true).Render(totalSizeStr),
 		))
@@ -97,7 +104,8 @@ var CleanAllCmd = &cobra.Command{
 			if r.SizeBytes > 0 {
 				sizeStr = fmt.Sprintf(" (%s)", humanize.Bytes(uint64(r.SizeBytes)))
 			}
-			boxLines = append(boxLines, fmt.Sprintf("  • %s: %s untracked file(s)%s",
+			boxLines = append(boxLines, fmt.Sprintf(
+				"  • %s: %s untracked file(s)%s",
 				theme.BoldText.Render(r.Name),
 				theme.MutedText.Render(fmt.Sprintf("%d", r.UntrackedCount)),
 				theme.MutedText.Render(sizeStr),
@@ -119,15 +127,15 @@ var CleanAllCmd = &cobra.Command{
 			return
 		}
 
-		if !force {
+		if !skipConfirm {
 			confirmMsg := fmt.Sprintf(
-				"Are you sure you want to clean untracked files across these %d repository(ies) to reclaim %s?",
+				"Clean untracked files across %d repository(ies) to reclaim %s?",
 				len(reposToClean),
 				totalSizeStr,
 			)
 			confirmed, err := ui.Confirm(confirmMsg, false)
 			if err != nil || !confirmed {
-				log.Message("Clean operation cancelled.")
+				log.Info("Clean operation canceled.")
 				return
 			}
 		}
@@ -200,8 +208,9 @@ var CleanAllCmd = &cobra.Command{
 }
 
 func init() {
-	CleanAllCmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
-	CleanAllCmd.Flags().Bool("force", false, "Force clean untracked files (required for actual cleaning)")
+	CleanAllCmd.Flags().BoolP("dry-run", "n", false, "Preview what would be cleaned without making changes")
+	CleanAllCmd.Flags().Bool("force", false, "Skip confirmation prompt (use with --yes in scripts)")
+	CleanAllCmd.Flags().BoolP("yes", "y", false, "Skip confirmation prompt")
 	CleanAllCmd.Flags().BoolP("directories", "d", false, "Also remove untracked directories")
 }
 

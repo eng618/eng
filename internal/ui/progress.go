@@ -95,14 +95,55 @@ func (s *charmSpinner) Info(text ...interface{}) {
 	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
 }
 
-// dummySpinner is a no-op implementation of ProgressSpinner.
-type dummySpinner struct{}
+// dummySpinner logs completion banners even when animation is disabled
+// (tests, CI, --dry-run) so results stay visible instead of silent.
+type dummySpinner struct {
+	text string
+	out  io.Writer
+}
 
-func (s *dummySpinner) UpdateText(text string)      {}
-func (s *dummySpinner) Success(text ...interface{}) {}
-func (s *dummySpinner) Fail(text ...interface{})    {}
-func (s *dummySpinner) Warning(text ...interface{}) {}
-func (s *dummySpinner) Info(text ...interface{})    {}
+func (s *dummySpinner) outOrDefault() io.Writer {
+	if s.out != nil {
+		return s.out
+	}
+	return log.Writer()
+}
+
+func (s *dummySpinner) UpdateText(text string) { s.text = text }
+func (s *dummySpinner) Success(text ...interface{}) {
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.SuccessBanner.Render("SUCCESS")
+	fmt.Fprintf(s.outOrDefault(), "%s %s\n", banner, theme.BaseText.Render(msg))
+}
+
+func (s *dummySpinner) Fail(text ...interface{}) {
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.ErrorBanner.Render("ERROR")
+	fmt.Fprintf(s.outOrDefault(), "%s %s\n", banner, theme.ErrorText.Render(msg))
+}
+
+func (s *dummySpinner) Warning(text ...interface{}) {
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	banner := theme.WarningBanner.Render("WARN")
+	fmt.Fprintf(s.outOrDefault(), "%s %s\n", banner, theme.BaseText.Render(msg))
+}
+
+func (s *dummySpinner) Info(text ...interface{}) {
+	msg := fmt.Sprint(text...)
+	if msg == "" {
+		msg = s.text
+	}
+	fmt.Fprintf(s.outOrDefault(), "%s\n", theme.BaseText.Render(msg))
+}
 
 // MultiSpinner manages multiple concurrent progress indicators.
 type MultiSpinner struct {
@@ -117,7 +158,7 @@ func NewMultiSpinner() (*MultiSpinner, error) {
 // AddSpinner adds a new spinner to the display.
 func (m *MultiSpinner) AddSpinner(text string) ProgressSpinner {
 	if DisableProgress {
-		return &dummySpinner{}
+		return &dummySpinner{text: text, out: log.Writer()}
 	}
 	sp := &charmSpinner{
 		text:   text,
@@ -125,6 +166,8 @@ func (m *MultiSpinner) AddSpinner(text string) ProgressSpinner {
 		out:    log.Writer(),
 	}
 	m.spinners = append(m.spinners, sp)
+	// Emit a start line so non-animated runs still show progress.
+	fmt.Fprintf(sp.out, "%s\n", theme.MutedText.Render("… "+text))
 	return sp
 }
 
@@ -241,8 +284,33 @@ func (m *MultiProgressBar) SetOverallMessage(msg string) {
 }
 
 // renderLocked renders all progress bars (must hold mutex).
+// In non-terminal mode it falls back to single-line log output instead of silence.
 func (m *MultiProgressBar) renderLocked() {
-	if m.out == nil || !m.terminal {
+	if m.out == nil {
+		return
+	}
+
+	if !m.terminal {
+		// Plain fallback: log the latest bar state once per update.
+		if len(m.bars) > 0 {
+			bar := m.bars[len(m.bars)-1]
+			status := "…"
+			if bar.Error != nil {
+				status = "✗"
+			} else if bar.Done {
+				status = "✓"
+			}
+			msg := bar.Label
+			if bar.Detail != "" {
+				msg += " — " + bar.Detail
+			}
+			if m.overallMsg != "" {
+				msg = m.overallMsg + " | " + msg
+			}
+			fmt.Fprintf(m.out, "%s %s (%.0f%%)\n", status, msg, bar.Percent*100)
+		} else if m.overallMsg != "" {
+			fmt.Fprintf(m.out, "%s\n", m.overallMsg)
+		}
 		return
 	}
 

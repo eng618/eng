@@ -17,5 +17,5 @@ var (
 	// Muted foreground text (e.g. descriptions, secondary info)
 	MutedForeground = lipgloss.AdaptiveColor{Light: "#65758b", Dark: "#b3b3b3"}
 	// Destructive/Error color
-	Destructive = lipgloss.AdaptiveColor{Light: "#ef4444", Dark: "#7f1d1d"}
+	Destructive = lipgloss.AdaptiveColor{Light: "#dc2626", Dark: "#f87171"}
 )

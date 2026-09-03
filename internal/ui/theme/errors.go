@@ -3,7 +3,6 @@ package theme
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -53,8 +52,9 @@ var ErrorBoxStyle = lipgloss.NewStyle().
 	MarginTop(1).
 	MarginBottom(1)
 
-// HandleError takes an error, styles it into a rich CLI box, prints it to stderr, and exits.
-// If the error implements ActionableError, it appends the suggestion.
+// HandleError takes an error, styles it into a rich CLI box and prints it to the
+// configured Err writer. If the error implements ActionableError, it appends the suggestion.
+// Callers are responsible for exiting (e.g. os.Exit(1)) after calling this.
 func HandleError(err error) {
 	if err == nil {
 		return
@@ -74,5 +74,5 @@ func HandleError(err error) {
 	}
 
 	// Print the styled box
-	fmt.Fprintln(os.Stderr, ErrorBoxStyle.Render(content.String()))
+	fmt.Fprintln(getErr(), ErrorBoxStyle.Render(content.String()))
 }

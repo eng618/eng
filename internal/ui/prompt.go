@@ -19,14 +19,14 @@ var (
 
 // ConfirmImpl prompts the user with a yes/no question using the default theme.
 func ConfirmImpl(message string, defaultVal bool) (bool, error) {
-	var val bool
+	val := defaultVal
 	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title(message).
 				Value(&val).
-				Affirmative("Yes!").
-				Negative("No."),
+				Affirmative("Yes").
+				Negative("No"),
 		),
 	).WithTheme(theme.EngTheme()).Run()
 	if err != nil {
@@ -39,12 +39,14 @@ func ConfirmImpl(message string, defaultVal bool) (bool, error) {
 }
 
 // InputImpl prompts the user for text input using the default theme.
+// defaultVal is pre-filled as the current value; empty input keeps it.
 func InputImpl(message, defaultVal string) (string, error) {
-	var val string
+	val := defaultVal
 	err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title(message).
+				Description("Press Enter to accept the default").
 				Value(&val).
 				Placeholder(defaultVal),
 		),
@@ -63,7 +65,18 @@ func InputImpl(message, defaultVal string) (string, error) {
 
 // SelectImpl prompts the user to select an option from a list using the default theme.
 func SelectImpl(message string, options []string, defaultVal string) (string, error) {
-	var val string
+	val := defaultVal
+	// Fall back to first option when no default matches, so Enter always works.
+	matched := false
+	for _, opt := range options {
+		if opt == defaultVal {
+			matched = true
+			break
+		}
+	}
+	if !matched && len(options) > 0 {
+		val = options[0]
+	}
 
 	huhOptions := make([]huh.Option[string], len(options))
 	for i, opt := range options {

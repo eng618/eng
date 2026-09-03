@@ -103,6 +103,43 @@ func (s *Spinner) Stop() {
 	s.clearLineLocked()
 }
 
+// Success clears the spinner and leaves a ✓ completion trace.
+func (s *Spinner) Success(msg string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clearLineLocked()
+	if Out == nil {
+		return
+	}
+	if msg == "" {
+		msg = s.currentMessage
+	}
+	line := lipgloss.NewStyle().Foreground(theme.Secondary).Render("✓ " + msg)
+	if IsTerminal(Out) {
+		fmt.Fprintln(Out, line)
+		s.rendered = false
+	} else {
+		fmt.Fprintln(Out, line)
+		s.rendered = false
+	}
+}
+
+// Fail clears the spinner and leaves a ✗ completion trace.
+func (s *Spinner) Fail(msg string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clearLineLocked()
+	if Out == nil {
+		return
+	}
+	if msg == "" {
+		msg = s.currentMessage
+	}
+	line := lipgloss.NewStyle().Foreground(theme.Destructive).Render("✗ " + msg)
+	fmt.Fprintln(Out, line)
+	s.rendered = false
+}
+
 // UpdateMessage updates the message displayed next to the progress bar.
 func (s *Spinner) UpdateMessage(msg string) {
 	s.mu.Lock()

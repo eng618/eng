@@ -69,10 +69,10 @@ func TestList(t *testing.T) {
 			},
 			expectedOut: []string{
 				"Project: ProjectA",
-				"✓ repo1",
-				"✗ repo2 (not cloned)",
+				"repo1 (cloned)",
+				"repo2 (not cloned)",
 				"Project: ProjectB",
-				"✗ repo3 (not cloned)",
+				"repo3 (not cloned)",
 			},
 		},
 		{

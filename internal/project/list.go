@@ -70,7 +70,7 @@ func List(opts ListOptions) {
 			for _, repoItem := range sortedRepos {
 				repoPath, err := repoItem.GetEffectivePath()
 				if err != nil {
-					log.Error("    ✗ %s (invalid path)", repoItem.URL)
+					log.Error("    %s (invalid path)", repoItem.URL)
 					continue
 				}
 
@@ -78,9 +78,9 @@ func List(opts ListOptions) {
 				cloned := repo.IsCloned(fullRepoPath)
 
 				if cloned {
-					log.Success("    ✓ %s", repoPath)
+					log.Success("    %s (cloned)", repoPath)
 				} else {
-					log.Warn("    ✗ %s (not cloned)", repoPath)
+					log.Warn("    %s (not cloned)", repoPath)
 				}
 
 				log.Info("      URL: %s", repoItem.URL)

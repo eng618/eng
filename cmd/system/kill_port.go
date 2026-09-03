@@ -15,6 +15,7 @@ import (
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -230,9 +231,11 @@ func selectPort(ports []PortInfo) (PortInfo, error) {
 }
 
 var (
-	interactive bool
-	signal      string
-	filter      string
+	interactive   bool
+	signal        string
+	filter        string
+	killDryRun    bool
+	killAssumeYes bool
 
 	lsofPortRe = regexp.MustCompile(`:(\d+)`)
 	ssPidRe    = regexp.MustCompile(`pid=(\d+)`)
@@ -240,17 +243,15 @@ var (
 )
 
 var KillPortCmd = &cobra.Command{
-	Use:   "killPort [port]",
-	Short: "Find and kill the process listening on a specific port",
-	Long: `This command finds the process ID (PID) listening on the specified network port
-using available tools (lsof, ss, netstat) and then terminates that process.
-
-A comma-separated list of ports may be provided to kill processes on multiple ports, e.g.
-"eng system killPort 3000,8080".
-
-If no port is provided or --interactive is used, it lists listening ports for selection.
-Requires appropriate tools to be available on the system.
-Primarily intended for Unix-like systems (Linux, macOS).`,
+	Use:     "kill-port [port]",
+	Aliases: []string{"killPort"},
+	Short:   "Find and kill the process listening on a specific port",
+	Long: `Find the process listening on the specified port and terminate it.
+Prompts for confirmation unless --yes is given. Use --dry-run to preview,
+--signal to choose a gentler signal (default 9 SIGKILL), --interactive to pick from a list.`,
+	Example: `  eng system kill-port 3000 --dry-run
+  eng system kill-port 3000,8080 --yes
+  eng system kill-port --interactive`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		isVerbose := cmdutil.IsVerbose(cmd) // Get verbosity flag
@@ -288,7 +289,7 @@ Primarily intended for Unix-like systems (Linux, macOS).`,
 		}
 
 		for _, portStr := range portList {
-			killPort(portStr, signal, isVerbose)
+			killPort(portStr, signal, isVerbose, killDryRun, killAssumeYes)
 		}
 	},
 }
@@ -327,7 +328,7 @@ func parsePortList(input string) ([]string, []error) {
 }
 
 // killPort finds the process listening on the given port and terminates it.
-func killPort(portStr, signal string, isVerbose bool) {
+func killPort(portStr, signal string, isVerbose, dryRun, assumeYes bool) {
 	// Strictly validate and sanitize port to prevent command injection
 	portInt, err := strconv.Atoi(portStr)
 	if err != nil || portInt < 1 || portInt > 65535 {
@@ -417,7 +418,24 @@ func killPort(portStr, signal string, isVerbose bool) {
 	killedCount := 0
 	errorCount := 0
 	for _, pid := range pids {
-		log.Info("Found process with PID %s on port %s. Attempting to kill...", pid, portStr)
+		log.Info("Found process with PID %s on port %s.", pid, portStr)
+
+		if dryRun {
+			log.Info("[DRY RUN] Would send kill signal %s to PID %s on port %s.", signal, pid, portStr)
+			killedCount++
+			continue
+		}
+
+		if !assumeYes {
+			confirmed, err := ui.Confirm(
+				fmt.Sprintf("Send kill signal %s to PID %s on port %s?", signal, pid, portStr),
+				false,
+			)
+			if err != nil || !confirmed {
+				log.Info("Kill operation canceled for PID %s.", pid)
+				continue
+			}
+		}
 
 		// Use 'kill -<signal> <pid>' to terminate.
 		killCmd := exec.Command("kill", "-"+signal, pid)
@@ -431,14 +449,18 @@ func killPort(portStr, signal string, isVerbose bool) {
 			}
 			errorCount++
 		} else {
-			log.Success("Successfully sent kill signal %s to process with PID %s.", signal, pid)
+			log.Warn("Sent kill signal %s to process with PID %s on port %s.", signal, pid, portStr)
 			killedCount++
 		}
 	}
 
 	// --- Final Summary ---
 	if killedCount > 0 && errorCount == 0 {
-		log.Success("Finished killing process(es) on port %s.", portStr)
+		if dryRun {
+			log.Info("[DRY RUN] Would kill %d process(es) on port %s.", killedCount, portStr)
+		} else {
+			log.Warn("Killed %d process(es) on port %s.", killedCount, portStr)
+		}
 	} else if killedCount > 0 && errorCount > 0 {
 		log.Warn(
 			"Finished attempting to kill process(es) on port %s, but encountered %d error(s).",
@@ -457,4 +479,6 @@ func init() {
 	KillPortCmd.Flags().
 		StringVarP(&signal, "signal", "s", "9", "Signal to send to the process (default 9 for SIGKILL)")
 	KillPortCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter ports by command name")
+	KillPortCmd.Flags().BoolVarP(&killDryRun, "dry-run", "n", false, "Preview what would be killed without killing")
+	KillPortCmd.Flags().BoolVarP(&killAssumeYes, "yes", "y", false, "Skip confirmation prompt")
 }

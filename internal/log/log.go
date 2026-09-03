@@ -2,12 +2,12 @@
 Package log is a wrapper around colorizing the log output. It has functions
 that allow you to simply write output to the screen for various scenarios.
 
-- Start     ==> Blue/Primary
-- Success   ==> Green/Secondary
-- Info      ==> Cyan/Primary
-- Debug     ==> Magenta
-- Warn      ==> Yellow
-- Error     ==> Red/Destructive
+- Start     ==> Blue/Primary (action starting)
+- Success   ✓ Green/Secondary (action succeeded)
+- Info      → Cyan/Primary (informational)
+- Debug     ··· Magenta (debugging, verbose only in spirit)
+- Warn      ⚠ Yellow (to stderr, non-fatal)
+- Error     ✗ Red/Destructive (to stderr, fatal-ish)
 */
 package log
 
@@ -38,8 +38,8 @@ var (
 
 // Message prints a formatted message to the configured Out writer.
 func Message(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
+	mu.Lock()
+	defer mu.Unlock()
 	s := fmt.Sprintf(format, a...)
 	_, _ = fmt.Fprintln(Out, s)
 }
@@ -49,8 +49,8 @@ type CMDWriter struct{}
 
 // Write implements io.Writer for LogWriter, printing output as an info message.
 func (w *CMDWriter) Write(p []byte) (n int, err error) {
-	mu.RLock()
-	defer mu.RUnlock()
+	mu.Lock()
+	defer mu.Unlock()
 	// Write directly to Out to preserve raw output semantics
 	return Out.Write(p)
 }
@@ -65,8 +65,8 @@ type CMDErrorWriter struct{}
 
 // Write implements io.Writer for LogErrorWriter, printing output as an error message.
 func (w *CMDErrorWriter) Write(p []byte) (n int, err error) {
-	mu.RLock()
-	defer mu.RUnlock()
+	mu.Lock()
+	defer mu.Unlock()
 	return Err.Write(p)
 }
 
@@ -77,49 +77,49 @@ func ErrorWriter() *CMDErrorWriter {
 
 // Start prints a message to the terminal in blue, indicating a starting action.
 func Start(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
+	mu.Lock()
+	defer mu.Unlock()
 	msg := fmt.Sprintf("==> "+format, a...)
 	_, _ = fmt.Fprintln(Out, startStyle.Render(msg))
 }
 
 // Success prints a message to the terminal in green, indicating a successful action.
 func Success(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
-	msg := fmt.Sprintf("==> "+format, a...)
+	mu.Lock()
+	defer mu.Unlock()
+	msg := fmt.Sprintf("✓ "+format, a...)
 	_, _ = fmt.Fprintln(Out, successStyle.Render(msg))
 }
 
 // Info prints a message to the terminal in cyan, indicating informational output.
 func Info(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
-	msg := fmt.Sprintf("==> "+format, a...)
+	mu.Lock()
+	defer mu.Unlock()
+	msg := fmt.Sprintf("→ "+format, a...)
 	_, _ = fmt.Fprintln(Out, infoStyle.Render(msg))
 }
 
 // Debug prints a message to the terminal in magenta, for debugging output.
 func Debug(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
-	msg := fmt.Sprintf("==> "+format, a...)
+	mu.Lock()
+	defer mu.Unlock()
+	msg := fmt.Sprintf("··· "+format, a...)
 	_, _ = fmt.Fprintln(Out, debugStyle.Render(msg))
 }
 
-// Warn prints a message to the terminal in yellow, indicating a warning.
+// Warn prints a message to stderr in yellow, indicating a warning.
 func Warn(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
-	msg := fmt.Sprintf("==x "+format, a...)
-	_, _ = fmt.Fprintln(Out, warnStyle.Render(msg))
+	mu.Lock()
+	defer mu.Unlock()
+	msg := fmt.Sprintf("⚠ "+format, a...)
+	_, _ = fmt.Fprintln(Err, warnStyle.Render(msg))
 }
 
-// Error prints a message to the terminal in red, indicating an error.
+// Error prints a message to stderr in red, indicating an error.
 func Error(format string, a ...any) {
-	mu.RLock()
-	defer mu.RUnlock()
-	msg := fmt.Sprintf("==x "+format, a...)
+	mu.Lock()
+	defer mu.Unlock()
+	msg := fmt.Sprintf("✗ "+format, a...)
 	_, _ = fmt.Fprintln(Err, errorStyle.Render(msg))
 }
 
@@ -131,14 +131,17 @@ func Verbose(v bool, format string, a ...any) {
 }
 
 // SetWriters allows tests to replace the output writers.
+// It also propagates to theme writers so banner messages stay unified.
 func SetWriters(out, errOut io.Writer) {
 	mu.Lock()
 	defer mu.Unlock()
 	if out != nil {
 		Out = out
+		theme.SetWriters(out, nil)
 	}
 	if errOut != nil {
 		Err = errOut
+		theme.SetWriters(nil, errOut)
 	}
 }
 
@@ -148,4 +151,5 @@ func ResetWriters() {
 	defer mu.Unlock()
 	Out = os.Stdout
 	Err = os.Stderr
+	theme.SetWriters(os.Stdout, os.Stderr)
 }

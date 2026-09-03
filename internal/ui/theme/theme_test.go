@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -18,35 +17,27 @@ func stripANSI(str string) string {
 	return ansiRegex.ReplaceAllString(str, "")
 }
 
-// captureStderr redirects os.Stderr to a buffer during function execution.
+// captureStderr redirects Err to a buffer during function execution.
 func captureStderr(f func()) string {
-	old := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	var buf bytes.Buffer
+	oldOut, oldErr := getOut(), getErr()
+	SetWriters(oldOut, &buf)
+	defer SetWriters(oldOut, oldErr)
 
 	f()
 
-	_ = w.Close()
-	os.Stderr = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	return buf.String()
 }
 
-// captureStdout redirects os.Stdout to a buffer during function execution.
+// captureStdout redirects Out to a buffer during function execution.
 func captureStdout(f func()) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	var buf bytes.Buffer
+	oldOut, oldErr := getOut(), getErr()
+	SetWriters(&buf, oldErr)
+	defer SetWriters(oldOut, oldErr)
 
 	f()
 
-	_ = w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	return buf.String()
 }
 
@@ -196,9 +187,16 @@ func TestMessages(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output := captureStdout(func() {
-				tt.msgFunc(tt.msg)
-			})
+			var output string
+			if tt.name == "ErrorMessage" {
+				output = captureStderr(func() {
+					tt.msgFunc(tt.msg)
+				})
+			} else {
+				output = captureStdout(func() {
+					tt.msgFunc(tt.msg)
+				})
+			}
 			cleanOut := stripANSI(output)
 
 			for _, sub := range tt.expectContains {
