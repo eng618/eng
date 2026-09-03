@@ -20,7 +20,7 @@ eng system gpg renew [flags]
       --duration string   Expiration duration (e.g., 1y, 2y, 6m) (default "1y")
   -h, --help              help for renew
       --keep-master       Keep master key in local keyring (do not strip to subkeys-only)
-  -d, --key-dir string    Directory containing GPG key backups (default "/home/eng618/Downloads/gpg")
+  -d, --key-dir string    Directory containing GPG key backups (default "/Users/engarcia/Downloads/gpg")
 ```
 
 ### Options inherited from parent commands

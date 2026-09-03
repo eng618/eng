@@ -69,7 +69,6 @@ tasks:
       # Goreleaser handles ldflags via .goreleaser.yaml
       - goreleaser release --clean
 
-
   # -----------------------------------------------------------------------------
   # development
 
@@ -93,7 +92,7 @@ tasks:
     desc: Run linter with auto-fix
     cmds:
       - echo "Running linter with auto-fix..."
-      - golangci-lint run --fix
+      - golangci-lint run ./... --fix
 
   test:
     desc: Run tests

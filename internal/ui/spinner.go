@@ -2,36 +2,14 @@ package ui
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"strings"
 	"sync"
 
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/lipgloss"
-	"golang.org/x/term"
 
 	"github.com/eng618/eng/internal/ui/theme"
 )
-
-// Out is the writer used for spinner output. Tests may replace it.
-var Out io.Writer = os.Stderr
-
-// forceTTY allows overriding TTY detection during unit testing.
-var forceTTY *bool
-
-func isTerminal(w io.Writer) bool {
-	if forceTTY != nil {
-		return *forceTTY
-	}
-	if f, ok := w.(*os.File); ok {
-		return term.IsTerminal(int(f.Fd()))
-	}
-	if f, ok := w.(interface{ Fd() uintptr }); ok {
-		return term.IsTerminal(int(f.Fd()))
-	}
-	return false
-}
 
 // Spinner manages progress bars and status updates using Lip Gloss and Bubbles.
 type Spinner struct {
@@ -89,7 +67,7 @@ func (s *Spinner) renderLocked() {
 		line = lipgloss.NewStyle().Foreground(theme.Primary).Render("... " + s.currentMessage)
 	}
 
-	if isTerminal(Out) {
+	if IsTerminal(Out) {
 		if s.rendered {
 			fmt.Fprint(Out, "\r\033[2K")
 		}
@@ -105,7 +83,7 @@ func (s *Spinner) clearLineLocked() {
 	if Out == nil {
 		return
 	}
-	if isTerminal(Out) && s.rendered {
+	if IsTerminal(Out) && s.rendered {
 		fmt.Fprint(Out, "\r\033[2K")
 		s.rendered = false
 	}

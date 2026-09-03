@@ -349,10 +349,11 @@ File management utilities for finding and cleaning up files.
 
 ### Commands
 
-| Command                                     | Description                   |
-| ------------------------------------------- | ----------------------------- |
-| `eng files findAndDelete [directory]`       | Find and delete files by type |
-| `eng files findNonMovieFolders [--dry-run]` | Find/delete non-movie folders |
+| Command                                     | Description                              |
+| ------------------------------------------- | ---------------------------------------- |
+| `eng files findAndDelete [directory]`       | Find and delete files by type            |
+| `eng files findNonMovieFolders [--dry-run]` | Find/delete non-movie folders            |
+| `eng files shred [paths...]`               | Securely delete files/dirs by overwriting |
 
 ### findAndDelete Flags
 
@@ -360,6 +361,49 @@ File management utilities for finding and cleaning up files.
 - `--filename <name>` / `-f` — Match specific filename (e.g., `package.json`)
 - `--ext <extension>` / `-e` — Match file extension (e.g., `.json`)
 - `--glob <pattern>` / `-g` — Match glob pattern (e.g., `*.bak`)
+
+### shred Flags
+
+- `--passes <n>` / `-p` — Number of overwrite passes (default: 3, 0 = method default)
+- `--recursive` / `-r` — **Required** for directories (like `rm -r`)
+- `--force` / `-f` — Skip confirmation prompt
+- `--dry-run` / `-n` — Preview what would be shredded
+- `--method <method>` / `-m` — Overwrite method: `auto`, `random`, `zero`, `dod`, `gutmann` (default: `auto`)
+- `--use-system` — Use system `shred` on Linux (default: true)
+- `--verify` — Verify overwrites by reading back
+- `--follow-symlinks` — Follow symlinks and shred targets
+
+### shred Methods
+
+| Method | Passes | Description |
+| -------- | -------- | ------------- |
+| `auto` | 3 | Platform-optimized default (random) |
+| `random` | 3 | Cryptographically random bytes |
+| `zero` | 1 | All zeros (fast) |
+| `dod` | 3 | DoD 5220.22-M (random, complement, random) |
+| `gutmann` | 35 | Full 35-pass Gutmann method |
+
+### shred Examples
+
+```sh
+# Shred a single file (default 3-pass random)
+eng files shred sensitive.txt
+
+# Shred directory recursively
+eng files shred -r secrets/
+
+# DoD 5220.22-M 3-pass method
+eng files shred -m dod credentials.json
+
+# Gutmann 35-pass for maximum security
+eng files shred -m gutmann -p 35 classified.dat
+
+# Preview without deleting
+eng files shred --dry-run -r /path/to/data
+
+# Force (no confirmation) for scripts
+eng files shred -f -r /tmp/sensitive-data
+```
 
 ---
 

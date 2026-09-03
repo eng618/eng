@@ -20,6 +20,7 @@ func init() {
 
 	FilesCmd.AddCommand(FindAndDeleteCmd)
 	FilesCmd.AddCommand(FindNonMovieFoldersCmd)
+	FilesCmd.AddCommand(ShredCmd)
 
 	FindAndDeleteCmd.Flags().
 		StringVarP(&globPattern, "glob", "g", "", "Glob pattern to match files (e.g., '*.bak'). Bypasses extension selection.")
