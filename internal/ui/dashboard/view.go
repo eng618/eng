@@ -3,6 +3,7 @@ package dashboard
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 
@@ -12,7 +13,7 @@ import (
 
 func (m Model) View() string {
 	if !m.ready {
-		return "Initializing Dashboard..."
+		return m.spinner.View() + " Initializing Dashboard…"
 	}
 
 	if m.isFallbackMode() {
@@ -20,7 +21,7 @@ func (m Model) View() string {
 	}
 
 	if m.showHelp {
-		modalContent := m.renderHelpModal()
+		modalContent := limitLines(m.renderHelpModal(), m.windowHeight-4)
 		modal := helpModalStyle.Render(modalContent)
 		return overlayStyle.
 			Width(m.windowWidth).
@@ -94,8 +95,10 @@ func (m Model) renderFullDashboard() string {
 
 	if m.focusedPane == FocusLeft {
 		leftStyle = activePaneStyle
+		m.list.Title = "● Projects"
 	} else {
 		rightStyle = activePaneStyle
+		m.list.Title = "Projects"
 	}
 
 	totalPanesWidth := m.windowWidth - 4
@@ -154,6 +157,8 @@ func (m Model) renderCompactDashboard() string {
 
 	if m.focusedPane == FocusLeft {
 		b.WriteString(limitLines(m.list.View(), contentHeight))
+		b.WriteString("\n")
+		b.WriteString(truncate("[1/2] Switch tabs  [/] Filter  [a] Add  [?] Help", m.windowWidth-8))
 	} else {
 		b.WriteString(limitLines(m.renderRightPane(), contentHeight))
 	}
@@ -174,7 +179,7 @@ func (m Model) renderCompactDashboard() string {
 func (m Model) renderRightPane() string {
 	item, ok := m.list.SelectedItem().(ProjectItem)
 	if !ok {
-		return "No project selected."
+		return "No project selected.\n\nPress / to filter, Esc to clear filter."
 	}
 	p := item.Project
 
@@ -194,12 +199,17 @@ func (m Model) renderRightPane() string {
 
 	projectName := fmt.Sprintf("Project: %s", p.Name)
 	projectName = truncate(projectName, innerRightWidth)
+	if m.focusedPane == FocusRight {
+		projectName = "● " + projectName
+	}
 	b.WriteString(projectNameStyle.Render(projectName))
 	b.WriteString("\n\n")
 
 	if len(p.Repos) == 0 {
-		noReposStr := truncate("No repositories configured for this project.", innerRightWidth)
+		noReposStr := truncate("No repositories yet — press [a] to add one.", innerRightWidth)
 		b.WriteString(statusMutedStyle.Render(noReposStr))
+		b.WriteString("\n")
+		b.WriteString(m.renderFooter(innerRightWidth))
 		return b.String()
 	}
 
@@ -249,21 +259,54 @@ func (m Model) renderRightPane() string {
 			prefix = "⚠ "
 		}
 		footerText = prefix + m.notification
+		if m.notificationType == NotifyError {
+			footerText += "  [r] Retry"
+		}
 		footerText = truncate(footerText, innerRightWidth)
 		b.WriteString("\n")
 		b.WriteString(m.notificationStyle.Render(footerText))
 	} else {
-		if m.focusedPane == FocusRight {
-			footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [r] Refresh  [a] Add Repo  [?] Help  [Esc] Back"
-		} else {
-			footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit All  [t] Term All  [r] Refresh All  [a] Add  [?] Help"
-		}
-		footerText = truncate(footerText, innerRightWidth)
 		b.WriteString("\n")
-		b.WriteString(statusMutedStyle.Render(footerText))
+		b.WriteString(m.renderFooter(innerRightWidth))
 	}
 
 	return b.String()
+}
+
+// renderFooter builds the context-aware hint bar. It always mentions filter
+// (/) and help (?) so key discovery doesn't depend on terminal width.
+func (m Model) renderFooter(innerRightWidth int) string {
+	var footerText string
+	if m.focusedPane == FocusRight {
+		footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help  [Esc] Back"
+	} else {
+		footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help"
+	}
+	if scrollHint := m.scrollIndicator(); scrollHint != "" {
+		footerText += "  " + scrollHint
+	}
+	footerText = truncate(footerText, innerRightWidth)
+	return statusMutedStyle.Render(footerText)
+}
+
+// scrollIndicator reports position like "3/12" plus ▲▼ when content overflows.
+func (m Model) scrollIndicator() string {
+	item, ok := m.list.SelectedItem().(ProjectItem)
+	if !ok || len(item.Project.Repos) <= 1 {
+		return ""
+	}
+	total := len(item.Project.Repos)
+	current := m.selectedRepoIndex + 1
+	if current < 1 {
+		current = 1
+	}
+	if current > total {
+		current = total
+	}
+	if m.repoScrollOffset > 0 || total > 5 {
+		return fmt.Sprintf("%d/%d ▲▼", current, total)
+	}
+	return fmt.Sprintf("%d/%d", current, total)
 }
 
 func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
@@ -310,11 +353,11 @@ func (m Model) getRepoLines() (allLines []string, repoStarts, repoEnds []int) {
 		status, exists := m.repoStatuses[key]
 
 		if !exists || status.Loading {
-			checkingStr := truncate("  [ Checking status... ]", innerRightWidth)
+			checkingStr := truncate("  ↻ Checking status…", innerRightWidth)
 			repoLines = append(repoLines, statusMutedStyle.Render(checkingStr))
 			repoLines = append(repoLines, "")
 		} else if status.Error != nil {
-			errStr := fmt.Sprintf("  ✗ Error: %s", status.Error.Error())
+			errStr := fmt.Sprintf("  ✗ Error: %s  [r] Retry", status.Error.Error())
 			errStr = truncate(errStr, innerRightWidth)
 			repoLines = append(repoLines, statusErrorStyle.Render(errStr))
 			repoLines = append(repoLines, "")
@@ -427,6 +470,24 @@ func truncate(s string, maxLen int) string {
 	return string(runes[:maxLen-3]) + "..."
 }
 
+// relativeTime renders "just now", "2m ago", "3h ago", falling back to date.
+func relativeTime(t time.Time) string {
+	d := time.Since(t)
+	if d < time.Minute {
+		return "just now"
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%dm ago", int(d.Minutes()))
+	}
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%dh ago", int(d.Hours()))
+	}
+	if d < 7*24*time.Hour {
+		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+	}
+	return t.Format("2006-01-02")
+}
+
 func limitLines(s string, maxLines int) string {
 	if maxLines <= 0 {
 		return ""
@@ -463,29 +524,32 @@ func (m Model) renderHelpModal() string {
 	keyStyle := lipgloss.NewStyle().Foreground(theme.Primary).Bold(true)
 	descStyle := lipgloss.NewStyle().Foreground(theme.Foreground)
 
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("?     "), descStyle.Render("Toggle Help Menu"))
-	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("q/Ctrl+C"), descStyle.Render("Quit Application"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("?/Esc "), descStyle.Render("Open / close this help"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("q     "), descStyle.Render("Quit (Ctrl+C always quits)"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("1/2   "), descStyle.Render("Switch Projects / Repos tabs"))
 
 	b.WriteString(statusMutedStyle.Render("Navigation:"))
 	b.WriteString("\n\n")
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("h/Left"), descStyle.Render("Focus Projects Pane (Left)"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("l/Right"), descStyle.Render("Focus Repositories Pane (Right)"))
-	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("j/k/Up/Down"), descStyle.Render("Navigate Lists"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("Tab   "), descStyle.Render("Switch focused pane"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("Enter/l"), descStyle.Render("Focus Repositories pane"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("Esc/h "), descStyle.Render("Back to Projects pane"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("/     "), descStyle.Render("Filter projects (Esc clears)"))
+	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("j/k   "), descStyle.Render("Navigate repositories"))
 
-	b.WriteString(statusMutedStyle.Render("Actions (Context-aware):"))
+	b.WriteString(statusMutedStyle.Render("Actions (context-aware: single repo vs whole project):"))
 	b.WriteString("\n\n")
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("f     "), descStyle.Render("Fetch repository (or all)"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("p     "), descStyle.Render("Pull repository (or all)"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("s     "), descStyle.Render("Sync repository (or all)"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("c     "), descStyle.Render("Clone/Setup repository (or all)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("f     "), descStyle.Render("Fetch (git fetch --all --prune)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("p     "), descStyle.Render("Pull (git pull)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("s     "), descStyle.Render("Sync (stash, pull --rebase, pop)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("c     "), descStyle.Render("Clone missing repository"))
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("o     "), descStyle.Render("Open in Finder / File Explorer"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("e     "), descStyle.Render("Open in Configured Editor"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("E     "), descStyle.Render("Choose Editor to Open in..."))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("t     "), descStyle.Render("Open in Terminal Window"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("r     "), descStyle.Render("Refresh repository statuses"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("e     "), descStyle.Render("Open in configured editor"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("E     "), descStyle.Render("Choose editor to open in…"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("t     "), descStyle.Render("Open new terminal here"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("r     "), descStyle.Render("Refresh statuses ([r] retries errors)"))
 	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("a     "), descStyle.Render("Add project or repository"))
 
-	b.WriteString(statusMutedStyle.Render("Press any key to close"))
+	b.WriteString(statusMutedStyle.Render("Press Esc, ?, or q to close"))
 
 	return b.String()
 }
@@ -634,7 +698,7 @@ func renderStatusCell(status RepoStatus, isSelected bool, wStatus int) string {
 		statusText = "Missing"
 		statusColor = statusErrorStyle
 	} else if status.Loading {
-		statusText = "Checking..."
+		statusText = "↻ Checking…"
 		statusColor = statusMutedStyle
 	} else if status.Error != nil {
 		statusText = "Error"
@@ -718,7 +782,7 @@ func renderUpdatedCell(status RepoStatus, isSelected bool, wUpdated int) string 
 	if !status.IsCloned || status.LastUpdated.IsZero() {
 		updatedText = "—"
 	} else {
-		updatedText = status.LastUpdated.Format("15:04:56")
+		updatedText = relativeTime(status.LastUpdated)
 	}
 
 	updatedTextFormatted := fmt.Sprintf("%*s", wUpdated, truncate(updatedText, wUpdated))

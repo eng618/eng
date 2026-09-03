@@ -4,10 +4,17 @@ Check status of all git repositories in development folder
 
 ### Synopsis
 
-This command checks the status of all git repositories found in your development folder.
+Check working-tree status across all git repositories in your development folder. Use --current to scan the current directory.
 
 ```
 eng git status-all [flags]
+```
+
+### Examples
+
+```
+  eng git status-all
+  eng git status-all --current
 ```
 
 ### Options

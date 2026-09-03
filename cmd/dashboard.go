@@ -20,7 +20,11 @@ var dashboardCmd = &cobra.Command{
 	Short: "Launch the interactive Project & Git Dashboard",
 	Long: `Opens a full-screen "mission control" interface to view all configured projects.
 It displays your projects in a list, and shows the live status of their repositories
-(cloned state, current branch, and uncommitted changes) in real-time.`,
+(cloned state, current branch, and uncommitted changes) in real-time.
+
+Press ? inside for all shortcuts. Quick keys: Tab switch panes, 1/2 switch tabs,
+/ filter projects, r refresh, a add, q quit.`,
+	Example: `  eng dashboard`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return dashboard.Run()
 	},

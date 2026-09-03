@@ -29,8 +29,8 @@ func Run() error {
 
 	m := NewModel(projects, gitDevPath, config.GetGitConfig().Editor)
 
-	// Use alternate screen buffer
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	// Alternate screen + mouse support so clicks can focus panes/select repos.
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("failed to run dashboard: %w", err)

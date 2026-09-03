@@ -140,9 +140,12 @@ eng dashboard
 
 - **Navigation**:
   - `Tab`, `Enter`, or `l`: Focus the right pane to select individual repositories within a project (or switch tabs in Compact mode).
-  - `Esc` or `h`: Focus the left pane to navigate projects.
+  - `1` / `2`: Jump directly to Projects / Repos tabs.
+  - `/`: Filter projects (type to filter, `Esc` clears). Filter input captures all keys; `Ctrl+C` still quits.
+  - `Esc` or `h`: Focus the left pane to navigate projects, or close the help overlay.
   - `j` / `k` (or `Up`/`Down`): Navigate through the lists.
-- **Actions**:
+  - `q`: Quit (disabled mid-action to avoid orphaning background work; `Ctrl+C` force-quits). `q`/`Esc`/`?` close the help overlay instead of quitting.
+- **Actions** (context-aware: right pane = single repo, left pane = whole project):
   - `f` - Fetch: Runs `git fetch --all --prune`
   - `p` - Pull: Runs `git pull`
   - `s` - Sync: Runs stash, pull rebase, and stash pop.
@@ -151,9 +154,9 @@ eng dashboard
   - `e` - Edit: Opens the selected project or repository in your configured text editor.
   - `E` - Edit Picker: Prompts to select an editor from available graphical/CLI options to open the target directory.
   - `t` - Terminal: Opens a new terminal window/tab (supporting Ghostty, iTerm, and Terminal app) in the target directory.
-  - `r` - Refresh: Manually refreshes repository statuses for the selected project.
+  - `r` - Refresh: Manually refreshes repository statuses for the selected project (retries errors).
   - `a` - Add: Launches interactive prompt to add new projects or repositories.
-  - `?` - Help: Toggles the keyboard shortcut help overlay.
+  - `?` - Help: Opens the keyboard shortcut overlay (`Esc`/`?`/`q` to close).
 
 _Context-aware Execution:_ Actions triggered from the left pane affect all repositories within that project sequentially (or opens the full project folder for the `e`, `E`, `t`, and `o` actions). Pressing `a` on the left pane prompts to select/create a project; pressing `a` on the right pane pre-selects the current project and adds a repository directly to it.
 
@@ -163,7 +166,7 @@ _Context-aware Execution:_ Actions triggered from the left pane affect all repos
 
 The dashboard adaptively updates its layout based on the terminal window's dimensions:
 
-- **Full Table Dashboard (Wide & Tall Screens, `Width >= 60`, `Height >= 14`, Right Pane `>= 75`)**: Renders a split-pane interface with a structured multi-column table displaying repository name, branch, status, ahead/behind counts, and updated timestamp.
+- **Full Table Dashboard (Wide & Tall Screens, `Width >= 60`, `Height >= 14`, Right Pane `>= 75`)**: Renders a split-pane interface with a structured multi-column table displaying repository name, branch, status, ahead/behind counts, and relative updated time (`just now`, `2m ago`).
 - **Full Stacked Dashboard (Standard Split-Pane, `Width >= 60`, `Height >= 14`)**: Renders a split-pane layout with multi-line stacked repository cards.
 - **Compact Dashboard (Compact Screens, `50 <= Width < 60` or `10 <= Height < 14`)**: Renders a single active pane with tab switcher (`1: Projects` | `2: Repos`) to maximize visible content without truncating items or hiding them behind footers.
 - **Instruction Fallback Screen (`Width < 50` or `Height < 10`)**: Displays a clear warning modal asking the user to expand their terminal window to view the dashboard.

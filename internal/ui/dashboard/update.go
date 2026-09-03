@@ -31,8 +31,9 @@ type statusMsg struct {
 }
 
 func (m Model) Init() tea.Cmd {
-	// Automatically trigger loading statuses for the initially selected project.
-	return m.loadSelectedProjectStatusesCmd()
+	// Tick the spinner so the "Initializing..." view animates,
+	// and automatically load statuses for the initially selected project.
+	return tea.Batch(m.spinner.Tick, m.loadSelectedProjectStatusesCmd())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -73,13 +74,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ready = true
 
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" || msg.String() == "q" {
-			return m, tea.Quit
+		// While the project list filter input is active, let the list consume
+		// all keys (so typing q/f/p/s/c/o/e/t/r/a filters instead of triggering
+		// actions or quitting). Ctrl+C still forces quit.
+		if m.list.FilterState() == list.Filtering {
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
 		}
 
+		// Help overlay closes first — q/Esc/? close it instead of quitting.
+		// Any other key also dismisses it (keeps discoverability high).
 		if m.showHelp {
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
 			m.showHelp = false
 			return m, nil
+		}
+
+		if msg.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
+		if msg.String() == "q" {
+			// Don't accidentally quit mid-action (background io.Pipe
+			// goroutine would be orphaned). Ctrl+C still force-quits.
+			if m.actionState != "" {
+				return m, nil
+			}
+			return m, tea.Quit
 		}
 
 		if m.actionState != "" {
@@ -98,6 +124,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.focusedPane = FocusLeft
 			}
+			m.clampScrollOffset()
+			return m, nil
+		case "1":
+			m.focusedPane = FocusLeft
+			m.clampScrollOffset()
+			return m, nil
+		case "2":
+			m.focusedPane = FocusRight
+			m.selectedRepoIndex = 0
 			m.clampScrollOffset()
 			return m, nil
 		case "enter", "l", "right":
@@ -170,7 +205,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.clampScrollOffset()
 			return m, cmd
 		case "r":
-			return m, m.forceRefreshSelectedProjectStatusesCmd()
+			m.notificationID++
+			m.notification = "Refreshing statuses…"
+			m.notificationStyle = notificationWarnStyle
+			m.notificationType = NotifyWarn
+			return m, tea.Batch(
+				m.delayClearNotificationCmd(m.notificationID),
+				m.forceRefreshSelectedProjectStatusesCmd(),
+			)
 		case "a":
 			cmd := m.addProjectOrRepoCmd()
 			return m, cmd
@@ -297,10 +339,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case spinner.TickMsg:
-		if m.actionState != "" {
-			var cmd tea.Cmd
-			m.spinner, cmd = m.spinner.Update(msg)
-			cmds = append(cmds, cmd)
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+		if m.actionState != "" || !m.ready {
+			// Keep ticking while actions run or while initializing.
+			cmds = append(cmds, m.spinner.Tick)
 		}
 
 	case logLineMsg:

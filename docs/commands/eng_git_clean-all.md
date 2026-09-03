@@ -4,19 +4,28 @@ Clean untracked files in all git repositories in development folder
 
 ### Synopsis
 
-This command removes untracked files and directories for all git repositories found in your development folder.
+Preview untracked files across all repos, confirm, then clean. Use --dry-run to preview only, --force with --yes to skip confirmation.
 
 ```
 eng git clean-all [flags]
+```
+
+### Examples
+
+```
+  eng git clean-all --dry-run
+  eng git clean-all
+  eng git clean-all --force --yes -d
 ```
 
 ### Options
 
 ```
   -d, --directories   Also remove untracked directories
-      --dry-run       Perform a dry run without making actual changes
-      --force         Force clean untracked files (required for actual cleaning)
+  -n, --dry-run       Preview what would be cleaned without making changes
+      --force         Skip confirmation prompt (use with --yes in scripts)
   -h, --help          help for clean-all
+  -y, --yes           Skip confirmation prompt
 ```
 
 ### Options inherited from parent commands
