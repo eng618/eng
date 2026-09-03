@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.50.0](https://github.com/eng618/eng/compare/v1.49.0...v1.50.0) (2026-09-03)
+
+
+### Features
+
+* Add shred command, multi-progress bar UI, and telemetry documentation ([#160](https://github.com/eng618/eng/issues/160)) ([9a817d0](https://github.com/eng618/eng/commit/9a817d05dd2b9186a9afcdcc0eef5bd0f5cf7de7))
+* Implement automatic updates for curl installations using a new install script helper ([85e474d](https://github.com/eng618/eng/commit/85e474d9ef7e4f19ef9365e6741d3581ae5107a4))
+
 ## [1.49.0](https://github.com/eng618/eng/compare/v1.48.1...v1.49.0) (2026-08-27)
 
 
