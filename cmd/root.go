@@ -194,7 +194,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		log.Verbose(cmdutil.IsVerbose(rootCmd), "Using config file: %s", viper.ConfigFileUsed())
 	} else if errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		// Config file not found, create it
+		// First run: no config file yet. Create it, then print a one-time
+		// welcome pointing at the fastest path to a working setup.
 		configFilePath := viper.ConfigFileUsed()
 		if configFilePath == "" {
 			// Construct the default config file path if not already set by viper
@@ -207,6 +208,8 @@ func initConfig() {
 			log.Warn("Error creating config file %s: %v", configFilePath, err)
 		} else {
 			log.Verbose(cmdutil.IsVerbose(rootCmd), "Created new config file: %s", configFilePath)
+			theme.InfoMessage("Welcome to eng! Created " + configFilePath)
+			log.Info("Next steps: eng doctor, eng config edit --interactive, eng project add")
 		}
 	} else {
 		// Config file was found but another error was produced

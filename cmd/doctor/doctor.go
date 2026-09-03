@@ -41,14 +41,16 @@ var DoctorCmd = &cobra.Command{
 	Long: `Inspects your workstation environment and verifies the availability and health of:
   - Core CLI tools (git, brew, docker, asdf, tailscale, bw, gpg, gh, glab)
   - Configured workspace paths and dotfiles
-  - Installation and update status`,
+  - Installation and update status
+
+Exits non-zero when a required tool is missing, so CI can gate on it.`,
+	Example: `  eng doctor`,
 	RunE: func(cmd *cobra.Command, _args []string) error {
-		runDoctor()
-		return nil
+		return runDoctor()
 	},
 }
 
-func runDoctor() {
+func runDoctor() error {
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(theme.Primary).
@@ -60,13 +62,22 @@ func runDoctor() {
 		log.Info("eng Workstation Diagnostics")
 	}
 
-	checkTools()
+	requiredOK := checkTools()
 	checkConfigPaths()
 	checkTelemetry()
 	checkVersionStatus()
+
+	if requiredOK {
+		theme.SuccessMessage("Doctor PASS: all required tools found.")
+		return nil
+	}
+	theme.WarningMessage(
+		"Doctor FAIL: some required tools are missing. Run `eng system setup` to install prerequisites.",
+	)
+	return fmt.Errorf("doctor found missing required tools")
 }
 
-func checkTools() {
+func checkTools() bool {
 	tools := []ToolCheck{
 		{Name: "Git", Binary: "git", Description: "Version control system", Required: true},
 		{Name: "Homebrew", Binary: "brew", Description: "Package manager", Required: true},
@@ -125,6 +136,7 @@ func checkTools() {
 	if !allRequiredPassed {
 		log.Warn("Some required tools are missing. Run `eng system setup` to install prerequisites.")
 	}
+	return allRequiredPassed
 }
 
 func checkConfigPaths() {

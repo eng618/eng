@@ -138,7 +138,7 @@ func getWorkingPath(cmd *cobra.Command) (string, error) {
 	devPath := gitCfg.DevPath
 	if devPath == "" {
 		return "", fmt.Errorf(
-			"development folder path is not set. Use 'eng config git-dev-path' to set it, or use the --current flag",
+			"development folder path is not set. Run 'eng config git-dev-path ~/Development' (or 'eng config edit --interactive'), use the --current flag, or run 'eng doctor' to diagnose",
 		)
 	}
 

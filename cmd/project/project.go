@@ -3,6 +3,8 @@
 package project
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -84,4 +86,18 @@ func init() {
 	ProjectCmd.AddCommand(FetchCmd)
 	ProjectCmd.AddCommand(PullCmd)
 	ProjectCmd.AddCommand(SyncCmd)
+
+	// Dynamic completion for --project from configured projects.
+	_ = ProjectCmd.RegisterFlagCompletionFunc(
+		"project",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			var names []string
+			for _, p := range config.GetProjects() {
+				if strings.HasPrefix(p.Name, toComplete) {
+					names = append(names, p.Name)
+				}
+			}
+			return names, cobra.ShellCompDirectiveNoFileComp
+		},
+	)
 }

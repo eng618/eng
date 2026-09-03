@@ -21,6 +21,8 @@ var EditCmd = &cobra.Command{
 	Long: `Launch a beautiful TUI wizard to easily update your .eng.yaml configuration settings.
 
 By default, this command launches the interactive editor. Use --interactive=false if you want to bypass the wizard in the future (though currently, the interactive editor is the primary function of this command).`,
+	Example: `  eng config edit
+  eng config edit --interactive`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		headerStyle := lipgloss.NewStyle().
 			Bold(true).

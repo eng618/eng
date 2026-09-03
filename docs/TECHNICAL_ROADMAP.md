@@ -85,6 +85,7 @@ Ensure new users (and existing users discovering new features) have a frictionle
 
 ### 4.3 Dynamic Auto-Completion
 
-- **Status**: `[ ]`
+- **Status**: `[/]`
 - **Task**: Implement Cobra's `ValidArgsFunction` across commands to provide dynamic shell auto-completion for project names, dotfile templates, and git branches.
+- **Progress**: `--project` flag completes from configured projects (`cmd/project/project.go`); `compose up/down/pull/status/logs` complete discovered stack names (`cmd/compose/compose.go`). Remaining: dotfile templates, git branches.
 - **Impact**: High (Massively speeds up daily usage).
