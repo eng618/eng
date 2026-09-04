@@ -75,8 +75,9 @@ Ensure new users (and existing users discovering new features) have a frictionle
 
 ### 4.1 First-Run Onboarding Wizard
 
-- **Status**: `[ ]`
+- **Status**: `[x]`
 - **Task**: Detect if `.eng.yaml` is missing or incomplete on first run. Instead of failing, automatically launch a welcoming, step-by-step TUI wizard to configure essential paths and preferences.
+- **Progress**: `initConfig` prints a one-time welcome with next steps on creation; `maybeRunOnboarding` (`cmd/root.go`) offers the existing `RunInteractiveEditor` huh wizard via a single confirm prompt. Strictly guarded by `config.ShouldAutoOnboard` (true first run only, TTY stdin+stdout, sane `TERM`, never for config/doctor/version/logs/system/help/completion, `ENG_NO_ONBOARDING` escape hatch). Declining/aborting continues to the requested command, whose actionable errors guide manual setup. Later runs with missing settings rely on those errors rather than nagging.
 - **Impact**: High (Creates a magical first impression).
 
 ### 4.2 Overhaul Cobra Help & Usage

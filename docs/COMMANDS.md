@@ -543,6 +543,12 @@ eng gitlab auth doctor --host gitlab.example.com --project group/sub/repo --quie
 
 Manage CLI configuration stored at `$HOME/.eng.yaml`.
 
+On true first run (fresh config, interactive terminal), `eng` offers a quick
+setup wizard (email, dev folder, defaults) before running your command. It never
+fires for `config`/`doctor`/`version`/`logs`/`system`/help/completion, in pipes
+or CI, or when `ENG_NO_ONBOARDING` is set. Declining just continues — later
+errors point at `eng config edit --interactive`.
+
 | Command                              | Description                                  |
 | ------------------------------------ | -------------------------------------------- |
 | `eng config`                         | Show current config                          |

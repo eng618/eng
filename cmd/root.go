@@ -222,6 +222,7 @@ func initConfig() {
 			log.Verbose(cmdutil.IsVerbose(rootCmd), "Created new config file: %s", configFilePath)
 			theme.InfoMessage("Welcome to eng! Created " + configFilePath)
 			log.Info("Next steps: eng doctor, eng config edit --interactive, eng project add")
+			firstRunConfigCreated = true
 		}
 	} else {
 		// Config file was found but another error was produced
@@ -233,4 +234,41 @@ func initConfig() {
 
 	// Initialize telemetry with effective config
 	telemetry.Init(configUtils.GetEffectiveTelemetryConfig(), cmdutil.IsVerbose(rootCmd))
+
+	maybeRunOnboarding()
+}
+
+// firstRunConfigCreated tracks whether initConfig created a fresh config file
+// this invocation (true first run). Consumed by maybeRunOnboarding.
+var firstRunConfigCreated bool
+
+// maybeRunOnboarding offers the interactive setup wizard on true first run.
+// It is a one-time, strictly-guarded prompt: interactive terminals only,
+// never for config/meta/help/completion commands, and always skippable —
+// declining (or aborting) simply continues to the requested command, whose
+// actionable errors guide manual setup afterwards.
+func maybeRunOnboarding() {
+	if !configUtils.ShouldAutoOnboard(
+		os.Args,
+		ui.IsTerminal(os.Stdin),
+		ui.IsTerminal(os.Stdout),
+		firstRunConfigCreated,
+	) {
+		return
+	}
+	runOnboardingPrompt(ui.Confirm, configUtils.RunInteractiveEditor)
+}
+
+// runOnboardingPrompt runs the confirm-then-wizard flow with injectable
+// confirm/edit steps so the branching is unit-testable without a TTY.
+func runOnboardingPrompt(confirm func(string, bool) (bool, error), edit func() error) {
+	confirmed, err := confirm("First run detected. Run quick setup now (email, dev folder, defaults)?", true)
+	if err != nil || !confirmed {
+		log.Info("Skipped — run 'eng config edit --interactive' anytime to configure.")
+		return
+	}
+	if err := edit(); err != nil {
+		log.Info("Setup exited — run 'eng config edit --interactive' anytime to retry.")
+		return
+	}
 }
