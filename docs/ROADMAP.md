@@ -82,8 +82,9 @@ Ensure new users (and existing users discovering new features) have a frictionle
 
 ### 4.2 Overhaul Cobra Help & Usage
 
-- **Status**: `[ ]`
+- **Status**: `[!] Dropped`
 - **Task**: Customize Cobra's help templates to use colored headers, aligned columns, and examples. Consider integrating `charmbracelet/glamour` to render markdown-based command documentation directly in the terminal.
+- **Rationale**: Help output is already custom-styled (colored headers, aligned columns, `EXAMPLES` sections now populated across commands). Glamour would add a heavy dependency for marginal gain on top of the current Lipgloss rendering.
 - **Impact**: Medium (Improves discoverability of flags and subcommands).
 
 ### 4.3 Dynamic Auto-Completion

@@ -180,7 +180,7 @@ If those prerequisites are not met, the restore step is skipped safely.
 | `eng logs`      | View session logs from verbose commands (list, show, clean)        |
 | `eng doctor`    | Check system health and verify dependencies — alias: `doc`         |
 
-For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
+For detailed command documentation, see [docs/reference/commands.md](docs/reference/commands.md).
 
 ### Global Flags
 
@@ -192,10 +192,13 @@ For detailed command documentation, see [docs/COMMANDS.md](docs/COMMANDS.md).
 
 ## Documentation
 
-- [Command Reference](docs/COMMANDS.md) — Complete documentation for all commands
-- [Architecture](docs/ARCHITECTURE.md) — Technical architecture and design
-- [Roadmap](docs/TECHNICAL_ROADMAP.md) — Technical improvements and UI/UX roadmap
-- [Releasing](docs/RELEASING.md) — Automated release and Homebrew publication process
+Full index: [docs/README.md](docs/README.md) (Diátaxis: tutorials, how-tos, reference, explanation).
+
+- [Getting started](docs/tutorials/getting-started.md) — Install, first run, first project (~10 minutes)
+- [Command Reference](docs/reference/commands.md) — Complete documentation for all commands
+- [Architecture](docs/explanation/architecture.md) — Technical architecture and design
+- [Roadmap](docs/ROADMAP.md) — Completed UI/UX roadmap
+- [Releasing](docs/how-to/release.md) — Automated release and Homebrew publication process
 - [Changelog](CHANGELOG.md) — Version history and release notes
 
 ## Support

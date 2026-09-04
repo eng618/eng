@@ -180,7 +180,7 @@ tasks:
   # Tools (Maintenance & Automation)
 
   docs:
-    desc: Generate Markdown documentation for all CLI commands in docs/commands
+    desc: Generate Markdown documentation for all CLI commands in docs/reference/cli
     cmds:
       - echo "Generating CLI documentation..."
       - go run ./tools/gendocs
