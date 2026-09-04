@@ -1,5 +1,18 @@
 <a name="unreleased"></a>
 
+## [1.52.0](https://github.com/eng618/eng/compare/v1.51.0...v1.52.0) (2026-09-04)
+
+
+### Features
+
+* Add interactive first-run onboarding wizard to root command flow ([e592c76](https://github.com/eng618/eng/commit/e592c76c9d024d4bc6b794b7c5184897e0854b05))
+* Implement session logging to capture and manage verbose command output via new `logs` command group ([c603bad](https://github.com/eng618/eng/commit/c603bad02ba75ee74b931d33310625d32d5fb4a2))
+
+
+### Bug Fixes
+
+* Migrate direct stdout/stderr usage to dedicated logging framework and implement consistent output redirection in tests ([d7aa24d](https://github.com/eng618/eng/commit/d7aa24d1ca1aaa0e5149121e6acd18f80c1a8232))
+
 ## [1.51.0](https://github.com/eng618/eng/compare/v1.50.0...v1.51.0) (2026-09-03)
 
 
