@@ -12,7 +12,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 )
 
 // TagClobberError is returned when a git fetch fails due to tag conflicts.
@@ -355,36 +354,6 @@ func fetchAllPruneWithForce(ctx context.Context, repoPath string, force bool) er
 		return fmt.Errorf("git fetch failed: %w\n%s", err, outStr)
 	}
 	return nil
-}
-
-// FetchAllPruneWithPrompt performs git fetch --all --prune and prompts the user
-// to force overwrite tags if a tag clobber error occurs.
-func FetchAllPruneWithPrompt(ctx context.Context, repoPath string) error {
-	err := FetchAllPrune(ctx, repoPath)
-	if err == nil {
-		return nil
-	}
-
-	clobberErr, ok := err.(*TagClobberError)
-	if !ok {
-		return err
-	}
-
-	// Prompt user to force overwrite
-	proceed, promptErr := ui.Confirm(
-		"Tag clobber detected. Overwrite local tags with remote tags?",
-		false,
-	)
-	if promptErr != nil {
-		return clobberErr
-	}
-
-	if !proceed {
-		return clobberErr
-	}
-
-	// Retry with force flag
-	return fetchAllPruneWithForce(ctx, repoPath, true)
 }
 
 // IsCloned checks if a git repository is cloned at the given path by checking if the `.git` directory exists.

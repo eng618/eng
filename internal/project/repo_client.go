@@ -2,8 +2,10 @@ package project
 
 import (
 	"context"
+	"errors"
 
 	"github.com/eng618/eng/internal/repo"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // RepoClient defines the interface for repository operations to allow testing.
@@ -38,5 +40,23 @@ func (d *defaultRepoClient) FetchWithOptions(ctx context.Context, repoPath strin
 	if force {
 		return repo.FetchAllPruneWithForce(ctx, repoPath)
 	}
-	return repo.FetchAllPruneWithPrompt(ctx, repoPath)
+	err := repo.FetchAllPrune(ctx, repoPath)
+	if err == nil {
+		return nil
+	}
+	var clobberErr *repo.TagClobberError
+	if !errors.As(err, &clobberErr) {
+		return err
+	}
+	// Tag clobber needs a human decision: prompt here (this package
+	// already owns presentation) rather than inside internal/repo,
+	// which must stay free of UI imports.
+	proceed, promptErr := ui.Confirm(
+		"Tag clobber detected. Overwrite local tags with remote tags?",
+		false,
+	)
+	if promptErr != nil || !proceed {
+		return clobberErr
+	}
+	return repo.FetchAllPruneWithForce(ctx, repoPath)
 }
