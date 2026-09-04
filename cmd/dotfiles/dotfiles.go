@@ -9,7 +9,9 @@ import (
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
+	internaldotfiles "github.com/eng618/eng/internal/dotfiles"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // DotfilesCmd serves as the base command for all dotfiles related operations.
@@ -67,6 +69,11 @@ func init() {
 	DotfilesCmd.AddCommand(CopyChangesCmd)
 	DotfilesCmd.AddCommand(CheckoutCmd)
 	DotfilesCmd.AddCommand(SecretsCmd)
+
+	// Wire the select prompt consumed by internal/dotfiles.
+	// The hook lives in internal/dotfiles so that package stays free of
+	// UI imports; this init assigns the real huh-backed implementation.
+	internaldotfiles.SelectPrompt = ui.Select
 }
 
 // getDotfilesConfig retrieves the repository and worktree paths from configuration.

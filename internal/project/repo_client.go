@@ -5,8 +5,14 @@ import (
 	"errors"
 
 	"github.com/eng618/eng/internal/repo"
-	"github.com/eng618/eng/internal/ui"
 )
+
+// ConfirmPrompt asks a yes/no question. Wired by the command layer
+// (cmd/project init) so this package never imports presentation code;
+// tests override it per-case. Defaults fail loudly instead of hanging.
+var ConfirmPrompt = func(string, bool) (bool, error) {
+	return false, errors.New("ConfirmPrompt not wired: command layer must assign it")
+}
 
 // RepoClient defines the interface for repository operations to allow testing.
 type RepoClient interface {
@@ -48,10 +54,9 @@ func (d *defaultRepoClient) FetchWithOptions(ctx context.Context, repoPath strin
 	if !errors.As(err, &clobberErr) {
 		return err
 	}
-	// Tag clobber needs a human decision: prompt here (this package
-	// already owns presentation) rather than inside internal/repo,
-	// which must stay free of UI imports.
-	proceed, promptErr := ui.Confirm(
+	// Tag clobber needs a human decision: prompt through the injected hook
+	// (this package must stay free of UI imports).
+	proceed, promptErr := ConfirmPrompt(
 		"Tag clobber detected. Overwrite local tags with remote tags?",
 		false,
 	)

@@ -8,6 +8,8 @@ import (
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	internalProject "github.com/eng618/eng/internal/project"
+	"github.com/eng618/eng/internal/ui"
 )
 
 // ProjectCmd serves as the base command for all project management operations.
@@ -97,4 +99,9 @@ func init() {
 			return cmdutil.CompletePrefix(names, toComplete)
 		},
 	)
+
+	// Wire the tag-clobber confirm prompt consumed by internal/project.
+	// The hook lives in internal/project so the repo layer stays UI-free;
+	// this init assigns the real huh-backed implementation.
+	internalProject.ConfirmPrompt = ui.Confirm
 }

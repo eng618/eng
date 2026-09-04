@@ -15,7 +15,6 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
-	"github.com/eng618/eng/internal/ui"
 )
 
 // InstallOptions holds configuration for installing dotfiles.
@@ -48,7 +47,7 @@ var (
 	ConfigureBareRepo      = repo.ConfigureBareRepo
 	Stat                   = os.Stat
 	EnsureSSH              = ensureSSHIfRequired
-	UISelect               = ui.Select
+	SelectPrompt           = selectUnwired
 	BareClone              = repo.BareClone
 )
 
@@ -165,7 +164,7 @@ func handleExistingRepo(bareRepoPath string) (string, error) {
 		"fresh - Delete and re-clone repository",
 	}
 
-	action, err := UISelect("What would you like to do?", options, options[0])
+	action, err := SelectPrompt("What would you like to do?", options, options[0])
 	if err != nil {
 		return "", err
 	}
@@ -365,4 +364,8 @@ func ensureSSHIfRequired(repoURL string, verbose bool) error {
 
 func isSSHRepoURL(repoURL string) bool {
 	return strings.HasPrefix(repoURL, "git@") || strings.HasPrefix(repoURL, "ssh://")
+}
+
+func selectUnwired(string, []string, string) (string, error) {
+	return "", errors.New("SelectPrompt not wired: command layer must assign it")
 }

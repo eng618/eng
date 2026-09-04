@@ -165,7 +165,7 @@ Layering keeps the codebase navigable. Enforced by inspection (and CI grep in th
 1. **`cmd/` composes `internal/`** — commands wire services together; they never contain reusable logic that another command needs.
 2. **Never `internal/` → `cmd/`** — shared services stay importable without pulling in the CLI. Build metadata lives in the leaf package `internal/version` (stamped via ldflags) so `internal/telemetry` and `cmd/doctor` read it without touching `cmd/version`.
 3. **No sibling `cmd/` imports** (except parent→child aggregation: `root`, and `gitlab` → `gitlab/auth`) — shared command trees are built by factories in `internal/` (e.g. `internal/immich.NewCommand` backs both `eng immich` and `eng system immich` with independent flag state).
-4. **`ui` never imports domain** — presentation renders plain structs/DTOs; `config`, `repo`, and `containers` types are mapped at the `cmd/` boundary. Interactive steps needed by workflows are injected as hook variables (see `cmd/system/dotfiles_hooks.go`), never imported.
+4. **`ui` never imports domain** — presentation renders plain structs/DTOs; `config`, `repo`, and `containers` types are mapped at the `cmd/` boundary. Interactive steps needed by workflows are injected as hook variables with loud unwired defaults (see `cmd/system/dotfiles_hooks.go`, `cmd/system/cleanup_hooks.go`, `cmd/config/prompts.go`), never imported.
 5. **Output goes through `log`/`theme` writers** — no direct `os.Stdout` in display or library code (interactive children are the exception), so tests, pipes, and `__complete` stay clean.
 
 ## Configuration

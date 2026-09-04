@@ -3,9 +3,11 @@ package compose
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/internal/cleanup"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/containers"
+	"github.com/eng618/eng/internal/ui"
 )
 
 var ComposeCmd = &cobra.Command{
@@ -48,4 +50,8 @@ func init() {
 	for _, c := range []*cobra.Command{upCmd, downCmd, pullCmd, statusCmd, logsCmd} {
 		c.ValidArgsFunction = completeStackNames
 	}
+
+	// Wire the task-selection prompt consumed by internal/cleanup (shared
+	// with cmd/system, which wires the same hook for its clean command).
+	cleanup.MultiSelectPrompt = ui.MultiSelect
 }

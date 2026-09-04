@@ -232,8 +232,8 @@ func TestIsSSHRepoURL(t *testing.T) {
 }
 
 func TestHandleExistingRepo(t *testing.T) {
-	origUISelect := UISelect
-	defer func() { UISelect = origUISelect }()
+	origSelectPrompt := SelectPrompt
+	defer func() { SelectPrompt = origSelectPrompt }()
 
 	tests := []struct {
 		name      string
@@ -250,7 +250,7 @@ func TestHandleExistingRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			UISelect = func(label string, options []string, defaultOpt string) (string, error) {
+			SelectPrompt = func(label string, options []string, defaultOpt string) (string, error) {
 				return tt.selectVal, tt.selectErr
 			}
 			res, err := handleExistingRepo("/mock/path")
