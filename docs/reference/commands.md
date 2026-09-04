@@ -458,7 +458,7 @@ Commands that integrate with GitLab using the `glab` CLI.
 Apply Merge Request rules to a project using a JSON rules file:
 
 ```sh
-# Example rules.json (see also docs/gitlab-rules.example.json)
+# Example rules.json (see also gitlab-rules.example.json)
 cat > rules.json <<'JSON'
 {
   "schemaVersion": "1",

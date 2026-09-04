@@ -21,7 +21,7 @@ func disableAutoGenTag(c *cobra.Command) {
 }
 
 func main() {
-	outputDir := "./docs/commands"
+	outputDir := "./docs/reference/cli"
 	if len(os.Args) > 1 {
 		outputDir = os.Args[1]
 	}
