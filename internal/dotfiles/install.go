@@ -2,6 +2,7 @@ package dotfiles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 
-	"github.com/eng618/eng/cmd/system"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
@@ -28,8 +28,16 @@ type InstallOptions struct {
 }
 
 // Test hooks and mockable dependencies
+//
+// The workstation-setup hooks (EnsurePrerequisites, FindGitHubSSHKey,
+// SetupSSHForGitHub) are wired by the command layer (cmd/system init) to
+// keep this package free of imports outside internal/. Their defaults fail
+// loudly so an unwired composition surfaces immediately instead of silently
+// skipping setup steps. Tests override them per-case.
 var (
-	EnsurePrerequisites    = system.EnsurePrerequisites
+	EnsurePrerequisites    = ensurePrerequisitesUnwired
+	FindGitHubSSHKey       = findGitHubSSHKeyUnwired
+	SetupSSHForGitHub      = setupSSHForGitHubUnwired
 	HandleExistingRepo     = handleExistingRepo
 	UpdateBareRepoWorktree = updateBareRepoWorktree
 	FreshInstall           = freshInstall
@@ -43,6 +51,18 @@ var (
 	UISelect               = ui.Select
 	BareClone              = repo.BareClone
 )
+
+func ensurePrerequisitesUnwired(bool) error {
+	return errors.New("EnsurePrerequisites not wired: command layer must assign it")
+}
+
+func findGitHubSSHKeyUnwired(string) string {
+	return ""
+}
+
+func setupSSHForGitHubUnwired(bool) error {
+	return errors.New("SetupSSHForGitHub not wired: command layer must assign it")
+}
 
 // Install orchestrates the complete dotfiles installation workflow.
 func Install(ctx context.Context, opts InstallOptions) error {
@@ -321,7 +341,7 @@ func getSSHAuth() (*ssh.PublicKeys, error) {
 	}
 
 	sshDir := filepath.Join(homeDir, ".ssh")
-	sshKeyPath := system.FindGitHubSSHKey(sshDir)
+	sshKeyPath := FindGitHubSSHKey(sshDir)
 
 	auth, err := ssh.NewPublicKeysFromFile("git", sshKeyPath, "")
 	if err != nil {
@@ -336,7 +356,7 @@ func ensureSSHIfRequired(repoURL string, verbose bool) error {
 		return nil
 	}
 
-	if err := system.SetupSSHForGitHub(verbose); err != nil {
+	if err := SetupSSHForGitHub(verbose); err != nil {
 		return fmt.Errorf("unable to setup GitHub SSH access: %w", err)
 	}
 

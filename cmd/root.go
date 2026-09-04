@@ -51,6 +51,7 @@ import (
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
+	appversion "github.com/eng618/eng/internal/version"
 )
 
 var cfgFile string
@@ -125,7 +126,7 @@ func init() {
 	)
 
 	// Set the version string for the root command's --version flag
-	rootCmd.Version = version.Version
+	rootCmd.Version = appversion.Version
 
 	// Persistent flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.eng.yaml)")

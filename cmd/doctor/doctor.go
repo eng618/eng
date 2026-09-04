@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
+	"github.com/eng618/eng/internal/version"
 )
 
 var (

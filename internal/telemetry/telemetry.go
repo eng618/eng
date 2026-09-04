@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/version"
 )
 
 var (

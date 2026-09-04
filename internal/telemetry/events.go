@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
 
-	"github.com/eng618/eng/cmd/version"
+	"github.com/eng618/eng/internal/version"
 )
 
 // Event names

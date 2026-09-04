@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "appversion",
     "Bitwarden",
     "Codemod",
     "codemods",
@@ -9,6 +10,7 @@
     "iregex",
     "repopath",
     "tailscale",
+    "Unwired",
     "Worktree"
   ]
 }

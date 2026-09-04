@@ -22,17 +22,7 @@ import (
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
-)
-
-// Build-time variables
-// These variables are populated during the build process using ldflags.
-var (
-	// Version holds the application's version string (e.g., "0.1.0" or "dev").
-	Version = "dev"
-	// Commit holds the Git commit hash from which the application was built.
-	Commit = "none"
-	// Date holds the build date of the application.
-	Date = "unknown"
+	appversion "github.com/eng618/eng/internal/version"
 )
 
 const (
@@ -105,12 +95,12 @@ install script (if installed via curl).`,
 			return
 		}
 
-		if Version == "dev" {
+		if appversion.Version == "dev" {
 			handleDevVersion(latestRelease)
 			return
 		}
 
-		currentSemVer, latestSemVer, err := parseVersions(Version, latestRelease.TagName)
+		currentSemVer, latestSemVer, err := parseVersions(appversion.Version, latestRelease.TagName)
 		if err != nil {
 			// Errors are logged within parseVersions, just provide latest release info
 			log.Info("Latest release is %s: %s", latestRelease.TagName, latestRelease.HTMLURL)
@@ -173,9 +163,9 @@ func printVersionInfo(isVerbose bool) {
 	if !ui.DisableProgress {
 		fmt.Fprintln(log.Out, headerStyle.Render("📌 eng CLI Version Details"))
 	} else {
-		log.Info("eng version: %s", Version)
-		log.Message("  Git Commit: %s", Commit)
-		log.Message("  Build Date: %s", Date)
+		log.Info("eng version: %s", appversion.Version)
+		log.Message("  Git Commit: %s", appversion.Commit)
+		log.Message("  Build Date: %s", appversion.Date)
 		log.Message("  Go Version: %s", runtime.Version())
 		log.Message("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
 		log.Message("  Install Source: %s", installSource)
@@ -186,15 +176,19 @@ func printVersionInfo(isVerbose bool) {
 	var cardLines []string
 	cardLines = append(
 		cardLines,
-		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Version:"), theme.PrimaryText.Bold(true).Render(Version)),
+		fmt.Sprintf(
+			"  %-16s %s",
+			theme.BoldText.Render("Version:"),
+			theme.PrimaryText.Bold(true).Render(appversion.Version),
+		),
 	)
 	cardLines = append(
 		cardLines,
-		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Git Commit:"), theme.MutedText.Render(Commit)),
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Git Commit:"), theme.MutedText.Render(appversion.Commit)),
 	)
 	cardLines = append(
 		cardLines,
-		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Build Date:"), theme.MutedText.Render(Date)),
+		fmt.Sprintf("  %-16s %s", theme.BoldText.Render("Build Date:"), theme.MutedText.Render(appversion.Date)),
 	)
 	cardLines = append(
 		cardLines,

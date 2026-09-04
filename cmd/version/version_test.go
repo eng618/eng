@@ -14,6 +14,7 @@ import (
 
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
+	appversion "github.com/eng618/eng/internal/version"
 )
 
 func TestPrintVersionInfo(t *testing.T) {
@@ -26,18 +27,18 @@ func TestPrintVersionInfo(t *testing.T) {
 	defer func() { ui.DisableProgress = origDisableProgress }()
 
 	// Backup original values and restore them after the test
-	origVersion := Version
-	origCommit := Commit
-	origDate := Date
+	origVersion := appversion.Version
+	origCommit := appversion.Commit
+	origDate := appversion.Date
 	defer func() {
-		Version = origVersion
-		Commit = origCommit
-		Date = origDate
+		appversion.Version = origVersion
+		appversion.Commit = origCommit
+		appversion.Date = origDate
 	}()
 
-	Version = "1.2.3"
-	Commit = "abcdef"
-	Date = "2023-10-27"
+	appversion.Version = "1.2.3"
+	appversion.Commit = "abcdef"
+	appversion.Date = "2023-10-27"
 
 	printVersionInfo(false)
 
