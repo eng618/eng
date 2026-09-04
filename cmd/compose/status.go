@@ -63,7 +63,7 @@ var statusCmd = &cobra.Command{
 
 			var rendered string
 			for stackName, containersList := range details {
-				rendered += ui.RenderContainerTable(stackName, containersList, termWidth) + "\n\n"
+				rendered += ui.RenderContainerTable(stackName, toContainerRows(containersList), termWidth) + "\n\n"
 			}
 
 			if pagerFlag {
@@ -94,15 +94,44 @@ var statusCmd = &cobra.Command{
 		}
 
 		if pagerFlag {
-			rendered := ui.RenderStackTable(stacks, termWidth)
+			rendered := ui.RenderStackTable(toStackRows(stacks), termWidth)
 			return ui.RunContainersPager(rendered)
 		}
 
 		theme.InfoMessage("Compose Swarms Status:")
 		fmt.Fprintln(log.Out)
-		fmt.Fprintln(log.Out, ui.RenderStackTable(stacks, termWidth))
+		fmt.Fprintln(log.Out, ui.RenderStackTable(toStackRows(stacks), termWidth))
 		return nil
 	},
+}
+
+// toStackRows maps domain stacks to presentation rows for ui.RenderStackTable.
+func toStackRows(stacks []containers.Stack) []ui.StackRow {
+	rows := make([]ui.StackRow, len(stacks))
+	for i, s := range stacks {
+		rows[i] = ui.StackRow{Name: s.Name, Containers: s.Containers, Status: s.Status, File: s.File}
+	}
+	return rows
+}
+
+// toContainerRows maps domain containers to presentation rows for ui.RenderContainerTable.
+func toContainerRows(list []containers.ContainerDetail) []ui.ContainerRow {
+	rows := make([]ui.ContainerRow, len(list))
+	for i, c := range list {
+		ports := make([]ui.PortMapping, len(c.Publishers))
+		for j, p := range c.Publishers {
+			ports[j] = ui.PortMapping{PublishedPort: p.PublishedPort, TargetPort: p.TargetPort}
+		}
+		rows[i] = ui.ContainerRow{
+			Name:    c.Name,
+			Service: c.Service,
+			State:   c.State,
+			Health:  c.Health,
+			Image:   c.Image,
+			Ports:   ports,
+		}
+	}
+	return rows
 }
 
 func init() {

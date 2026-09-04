@@ -3,20 +3,17 @@ package ui
 import (
 	"strings"
 	"testing"
-
-	"github.com/eng618/eng/internal/containers"
 )
 
 func TestRenderContainerTable_Widths(t *testing.T) {
-	mockContainers := []containers.ContainerDetail{
+	mockContainers := []ContainerRow{
 		{
-			ID:      "123",
 			Name:    "extremely-long-container-name-for-testing-purpose",
 			Service: "extremely-long-service-name",
 			State:   "running",
 			Health:  "healthy",
 			Image:   "docker.io/library/very-long-image-name-with-deep-registry-path:v1.0.0-rc.1",
-			Publishers: []containers.Publisher{
+			Ports: []PortMapping{
 				{TargetPort: 80, PublishedPort: 8080},
 				{TargetPort: 443, PublishedPort: 8443},
 				{TargetPort: 9000, PublishedPort: 9000},

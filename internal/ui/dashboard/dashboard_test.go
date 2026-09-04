@@ -11,16 +11,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/eng618/eng/internal/config"
 )
 
 func TestDashboardResponsiveLayout(t *testing.T) {
 	// 1. Setup mock projects
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name: "TestProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/repo1"},
 				{URL: "https://github.com/test/repo2"},
 				{URL: "https://github.com/test/repo3"},
@@ -28,7 +26,7 @@ func TestDashboardResponsiveLayout(t *testing.T) {
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 
 	// 2. Simulate terminal window resize
 	width := 120
@@ -92,21 +90,21 @@ func TestDashboardResponsiveLayout(t *testing.T) {
 
 func TestDashboardViewportScrolling(t *testing.T) {
 	// Create a project with 40 repositories
-	repos := make([]config.ProjectRepo, 40)
+	repos := make([]Repo, 40)
 	for i := 0; i < 40; i++ {
-		repos[i] = config.ProjectRepo{
+		repos[i] = Repo{
 			URL: fmt.Sprintf("https://github.com/test/repo%d", i),
 		}
 	}
 
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name:  "LargeProject",
 			Repos: repos,
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 
 	// Resize window to height 20
 	// innerRightHeight = 20 - 6 = 14.
@@ -196,16 +194,16 @@ func executeCmd(cmd tea.Cmd) {
 }
 
 func TestDashboardMinimumSizeFallback(t *testing.T) {
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name: "TestProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/repo1"},
 			},
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 
 	// 1. Resize terminal below the threshold (e.g. 45 width, 8 height)
 	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 45, Height: 8})
@@ -234,17 +232,17 @@ func TestDashboardMinimumSizeFallback(t *testing.T) {
 }
 
 func TestDashboardCompactMode(t *testing.T) {
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name: "TestProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/repo1"},
 				{URL: "https://github.com/test/repo2"},
 			},
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 
 	// 1. Resize terminal to compact range (e.g. 55 width, 12 height)
 	m, _ = updateModel(m, tea.WindowSizeMsg{Width: 55, Height: 12})
@@ -277,10 +275,10 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	tempDev := t.TempDir()
 
 	// Set up a project with one cloned and one not cloned repo
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name: "TestProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/cloned-repo"},
 				{URL: "https://github.com/test/not-cloned-repo"},
 			},
@@ -293,7 +291,7 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 		t.Fatalf("failed to create mock git dir: %v", err)
 	}
 
-	m := NewModel(projects, tempDev, "code")
+	m := NewModel(projects, tempDev, "code", nil)
 	m.focusedPane = FocusRight
 	m.ready = true
 	m.windowWidth = 100
@@ -441,17 +439,17 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 		t.Error("Expected tea.Cmd to be returned when pressing 'a'")
 	}
 
-	newProjects := []config.Project{
+	newProjects := []Project{
 		{
 			Name: "TestProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/cloned-repo"},
 				{URL: "https://github.com/test/not-cloned-repo"},
 			},
 		},
 		{
 			Name: "NewProject",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/added-repo"},
 			},
 		},
@@ -485,16 +483,16 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 }
 
 func TestDashboardStatusRendering(t *testing.T) {
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name: "TestProj",
-			Repos: []config.ProjectRepo{
+			Repos: []Repo{
 				{URL: "https://github.com/test/repo1"},
 			},
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 	m.focusedPane = FocusRight
 	m.ready = true
 	m.windowWidth = 100
@@ -591,21 +589,21 @@ func TestDashboardStatusRendering(t *testing.T) {
 }
 
 func TestTableScrollVisibility(t *testing.T) {
-	repos := make([]config.ProjectRepo, 30)
+	repos := make([]Repo, 30)
 	for i := 0; i < 30; i++ {
-		repos[i] = config.ProjectRepo{
+		repos[i] = Repo{
 			URL: fmt.Sprintf("https://github.com/test/repo%d", i),
 		}
 	}
 
-	projects := []config.Project{
+	projects := []Project{
 		{
 			Name:  "TestProject",
 			Repos: repos,
 		},
 	}
 
-	m := NewModel(projects, "/tmp/dev", "")
+	m := NewModel(projects, "/tmp/dev", "", nil)
 	m.ready = true
 	m.windowWidth = 120
 	m.windowHeight = 25

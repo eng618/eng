@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 
+	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -90,7 +91,7 @@ func (r *Report) RenderSummaryTable() string {
 			freedStr = item.ReclaimText
 		}
 
-		opCol := cellOpStyle.Render(fmt.Sprintf("%-43s", truncate(item.Name, 43)))
+		opCol := cellOpStyle.Render(fmt.Sprintf("%-43s", ui.Truncate(item.Name, 43)))
 		freedCol := cellFreedStyle.Render(freedStr)
 
 		rows = append(rows, fmt.Sprintf("%s %-14s %s", opCol, statusText, freedCol))
@@ -118,13 +119,6 @@ func (r *Report) RenderSummaryTable() string {
 		Render(strings.Join(rows, "\n"))
 
 	return fmt.Sprintf("\n%s\n%s", headerStyle.Render("🧹 Host & Docker Cleanup Summary"), box)
-}
-
-func truncate(str string, length int) string {
-	if len(str) <= length {
-		return str
-	}
-	return str[:length-3] + "..."
 }
 
 // DockerCleanOptions holds configuration options for Docker cleanup.

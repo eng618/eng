@@ -26,8 +26,37 @@ Press ? inside for all shortcuts. Quick keys: Tab switch panes, 1/2 switch tabs,
 / filter projects, r refresh, a add, q quit.`,
 	Example: `  eng dashboard`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return dashboard.Run()
+		return dashboard.Run(dashboardProjects(), dashboardDevPath(), dashboardEditor(), dashboardProjects)
 	},
+}
+
+// dashboardProjects adapts configured projects to dashboard DTOs.
+// The dashboard never reads config storage itself; all mapping lives here
+// in the command layer, alongside the reload provider below.
+func dashboardProjects() []dashboard.Project {
+	configured := config.GetProjects()
+	projects := make([]dashboard.Project, len(configured))
+	for i, p := range configured {
+		repos := make([]dashboard.Repo, len(p.Repos))
+		for j, r := range p.Repos {
+			repos[j] = dashboard.Repo{URL: r.URL, Path: r.Path}
+		}
+		projects[i] = dashboard.Project{Name: p.Name, Repos: repos}
+	}
+	return projects
+}
+
+func dashboardDevPath() string {
+	devPath := config.GetGitConfig().DevPath
+	if devPath == "" {
+		home, _ := os.UserHomeDir()
+		devPath = home + "/Development"
+	}
+	return os.ExpandEnv(devPath)
+}
+
+func dashboardEditor() string {
+	return config.GetGitConfig().Editor
 }
 
 // selectEditorCmd represents the hidden command for selecting an editor inside the dashboard.

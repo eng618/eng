@@ -6,8 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/eng618/eng/internal/config"
 )
 
 type PaneFocus int
@@ -44,9 +42,28 @@ type RepoStatus struct {
 	LastUpdated    time.Time
 }
 
-// ProjectItem adapts config.Project to the list.Item interface.
+// Repo is a dashboard-local view of a repository: its clone URL plus an
+// optional custom directory name. It mirrors config.ProjectRepo without
+// importing the config package, keeping presentation decoupled from domain.
+type Repo struct {
+	URL  string
+	Path string
+}
+
+// Project is a dashboard-local view of a project: a named group of repos.
+type Project struct {
+	Name  string
+	Repos []Repo
+}
+
+// ProjectProvider reloads the current project list (e.g. after the
+// `eng project add` subprocess adds a repository). Injected by the caller
+// so the dashboard never reads configuration storage directly.
+type ProjectProvider func() []Project
+
+// ProjectItem adapts Project to the list.Item interface.
 type ProjectItem struct {
-	Project config.Project
+	Project Project
 }
 
 func (i ProjectItem) Title() string       { return i.Project.Name }
@@ -84,7 +101,7 @@ type ActionRow struct {
 }
 
 type configUpdateFinishedMsg struct {
-	projects      []config.Project
+	projects      []Project
 	addedRepo     string
 	targetProject string
 	err           error
@@ -93,7 +110,8 @@ type configUpdateFinishedMsg struct {
 // Model is the Bubble Tea model for the dashboard.
 type Model struct {
 	list         list.Model
-	projects     []config.Project
+	projects     []Project
+	listProjects ProjectProvider
 	repoStatuses map[string]RepoStatus // Keyed by project.Name + repo.URL
 	devPath      string
 	editor       string
@@ -133,8 +151,10 @@ type Model struct {
 	ready        bool
 }
 
-// NewModel initializes the dashboard model with configured projects.
-func NewModel(projects []config.Project, devPath, editor string) Model {
+// NewModel initializes the dashboard model with the given projects.
+// provider reloads projects after mutations (may be nil only in tests that
+// never add projects; add flows with a nil provider keep current state).
+func NewModel(projects []Project, devPath, editor string, provider ProjectProvider) Model {
 	items := make([]list.Item, len(projects))
 	for i, p := range projects {
 		items[i] = ProjectItem{Project: p}
@@ -156,6 +176,7 @@ func NewModel(projects []config.Project, devPath, editor string) Model {
 	m := Model{
 		list:              l,
 		projects:          projects,
+		listProjects:      provider,
 		repoStatuses:      make(map[string]RepoStatus),
 		devPath:           devPath,
 		editor:            editor,

@@ -274,7 +274,10 @@ func init() {
 	_ = ShredCmd.RegisterFlagCompletionFunc(
 		"method",
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			return []string{"auto", "random", "zero", "dod", "gutmann"}, cobra.ShellCompDirectiveNoFileComp
+			return cmdutil.CompletePrefix(
+				[]string{"auto", "random", "zero", "dod", "gutmann"},
+				toComplete,
+			)
 		},
 	)
 }

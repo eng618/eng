@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -147,7 +146,7 @@ func Telemetry() bool {
 	log.Start("Checking telemetry configuration")
 
 	enabled := IsTelemetryEnabled()
-	confirm, err := ui.Confirm(
+	confirm, err := ConfirmPrompt(
 		fmt.Sprintf("Telemetry enabled: %s?", theme.PrimaryText.Render(fmt.Sprintf("%t", enabled))),
 		enabled,
 	)

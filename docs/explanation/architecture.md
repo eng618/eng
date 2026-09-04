@@ -138,6 +138,7 @@ eng/
 │   ├── secrets/             # Dotfiles secrets (Bitwarden Secrets Manager)
 │   ├── sysinfo/             # OS/distro detection
 │   ├── telemetry/           # Async OpenPanel telemetry client
+│   ├── version/             # Build metadata leaf (Version/Commit/Date via ldflags)
 │   └── ui/                  # Lipgloss theme, prompts, spinners, tables, dashboard TUI
 ├── docs/                    # Documentation (Diátaxis layout, see docs/README.md)
 └── tools/gendocs/           # CLI reference generator (`task docs`)
@@ -145,7 +146,7 @@ eng/
 
 ## Key Design Principles
 
-1. **Modular Commands**: Each command group is in its own package under `cmd/`, making it easy to add, modify, or remove features independently.
+1. **Modular Commands**: Each command group is in its own package under `cmd/`, making it easy to add, modify, or remove features independently. When two paths need the same tree (`eng immich` and `eng system immich`), a factory in `internal/` builds it (`internal/immich.NewCommand`) so each registration gets independent flag state instead of sharing copies.
 
 2. **Shared Services**: Common functionality lives in `internal/` packages (`log`, `config`, `repo`, `ui`, `runlog`, …) to avoid duplication.
 

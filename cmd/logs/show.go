@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -54,13 +55,11 @@ lines like 'tail -f' until interrupted.`,
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		var names []string
-		for _, e := range entries {
-			if strings.HasPrefix(e.Name, toComplete) {
-				names = append(names, e.Name)
-			}
+		names := make([]string, len(entries))
+		for i, e := range entries {
+			names[i] = e.Name
 		}
-		return names, cobra.ShellCompDirectiveNoFileComp
+		return cmdutil.CompletePrefix(names, toComplete)
 	},
 }
 

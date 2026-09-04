@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -26,7 +25,7 @@ func GitDevPath() string {
 		updateGitDevPath()
 	} else {
 		// Verify this is the correct dev path they are expecting to use.
-		dConfirm, err := ui.Confirm(
+		dConfirm, err := ConfirmPrompt(
 			fmt.Sprintf("Confirm development folder path: %s?", theme.PrimaryText.Render(devPath)),
 			true,
 		)
@@ -46,7 +45,7 @@ func GitDevPath() string {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateGitDevPath() {
-	d, err := ui.Input("What is your development folder path?", os.ExpandEnv("$HOME/Development"))
+	d, err := InputPrompt("What is your development folder path?", os.ExpandEnv("$HOME/Development"))
 	cobra.CheckErr(err)
 
 	viper.Set("git.dev_path", d)

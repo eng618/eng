@@ -2,17 +2,18 @@ package dashboard
 
 import (
 	"fmt"
-	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // Run launches the interactive project and git dashboard.
-func Run() error {
-	projects := config.GetProjects()
+//
+// Projects are passed in as plain DTOs plus a provider for reloading them
+// after mutations, so this package never reads configuration storage.
+// Callers in cmd/ adapt config types (see FromConfigProjects) before calling.
+func Run(projects []Project, devPath, editor string, provider ProjectProvider) error {
 	if len(projects) == 0 {
 		return theme.NewActionableError(
 			fmt.Errorf("no projects configured"),
@@ -20,14 +21,7 @@ func Run() error {
 		)
 	}
 
-	gitDevPath := config.GetGitConfig().DevPath
-	if gitDevPath == "" {
-		home, _ := os.UserHomeDir()
-		gitDevPath = home + "/Development"
-	}
-	gitDevPath = os.ExpandEnv(gitDevPath)
-
-	m := NewModel(projects, gitDevPath, config.GetGitConfig().Editor)
+	m := NewModel(projects, devPath, editor, provider)
 
 	// Alternate screen + mouse support so clicks can focus panes/select repos.
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())

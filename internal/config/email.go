@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -25,7 +24,7 @@ func Email() string {
 		updateEmail()
 	} else {
 		// Verify this is the correct email they are expecting to use.
-		eConfirm, err := ui.Confirm(fmt.Sprintf("Confirm email: %s?", theme.PrimaryText.Render(email)), true)
+		eConfirm, err := ConfirmPrompt(fmt.Sprintf("Confirm email: %s?", theme.PrimaryText.Render(email)), true)
 		cobra.CheckErr(err)
 
 		if !eConfirm {
@@ -58,7 +57,7 @@ func GetEmail() {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateEmail() {
-	e, err := ui.Input("What is your email?", "")
+	e, err := InputPrompt("What is your email?", "")
 	cobra.CheckErr(err)
 
 	viper.Set("user-email", e)

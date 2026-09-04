@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/ui"
+	internalconfig "github.com/eng618/eng/internal/config"
 )
 
 func setupTestViper(t *testing.T) string {
@@ -30,34 +30,29 @@ func setupTestViper(t *testing.T) string {
 
 // mockAllPrompts stubs all interactive ui prompt wrappers to return default values immediately.
 func mockAllPrompts() func() {
-	oldConfirm := ui.Confirm
-	oldInput := ui.Input
-	oldSelect := ui.Select
-	oldMultiSelect := ui.MultiSelect
-	oldPassword := ui.Password
+	oldConfirm := internalconfig.ConfirmPrompt
+	oldInput := internalconfig.InputPrompt
+	oldSelect := internalconfig.SelectPrompt
+	oldMultiSelect := internalconfig.MultiSelectPrompt
 
-	ui.Confirm = func(_ string, defaultVal bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, defaultVal bool) (bool, error) {
 		return defaultVal, nil
 	}
-	ui.Input = func(_, defaultVal string) (string, error) {
+	internalconfig.InputPrompt = func(_, defaultVal string) (string, error) {
 		return defaultVal, nil
 	}
-	ui.Select = func(_ string, _ []string, defaultVal string) (string, error) {
+	internalconfig.SelectPrompt = func(_ string, _ []string, defaultVal string) (string, error) {
 		return defaultVal, nil
 	}
-	ui.MultiSelect = func(_ string, _, defaultSelected []string) ([]string, error) {
+	internalconfig.MultiSelectPrompt = func(_ string, _, defaultSelected []string) ([]string, error) {
 		return defaultSelected, nil
-	}
-	ui.Password = func(_ string) (string, error) {
-		return "secret", nil
 	}
 
 	return func() {
-		ui.Confirm = oldConfirm
-		ui.Input = oldInput
-		ui.Select = oldSelect
-		ui.MultiSelect = oldMultiSelect
-		ui.Password = oldPassword
+		internalconfig.ConfirmPrompt = oldConfirm
+		internalconfig.InputPrompt = oldInput
+		internalconfig.SelectPrompt = oldSelect
+		internalconfig.MultiSelectPrompt = oldMultiSelect
 	}
 }
 
@@ -102,7 +97,7 @@ func TestConfigCmd_RunAll(t *testing.T) {
 	defer restore()
 
 	// Override specific values returned by mock for this test so we don't fall into infinite loops or default writes
-	ui.Confirm = func(_ string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, _ bool) (bool, error) {
 		return true, nil
 	}
 
@@ -120,7 +115,7 @@ func TestVerboseCmd(t *testing.T) {
 
 	// Test Case 1: User confirms the current setting
 	viper.Set("verbose", true)
-	ui.Confirm = func(msg string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(msg string, _ bool) (bool, error) {
 		return true, nil // User confirms
 	}
 
@@ -130,7 +125,7 @@ func TestVerboseCmd(t *testing.T) {
 	}
 
 	// Test Case 2: User denies, changes setting to false
-	ui.Confirm = func(msg string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(msg string, _ bool) (bool, error) {
 		return false, nil
 	}
 
@@ -147,7 +142,7 @@ func TestEmailCmd(t *testing.T) {
 
 	// Test Case 1: Confirm existing
 	viper.Set("user-email", "old@example.com")
-	ui.Confirm = func(_ string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, _ bool) (bool, error) {
 		return true, nil
 	}
 
@@ -157,10 +152,10 @@ func TestEmailCmd(t *testing.T) {
 	}
 
 	// Test Case 2: Reject existing, update to new
-	ui.Confirm = func(_ string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, _ bool) (bool, error) {
 		return false, nil
 	}
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "new@example.com", nil
 	}
 
@@ -177,7 +172,7 @@ func TestDotfilesRepoCmd(t *testing.T) {
 
 	// Keep bare_repo_path empty to trigger prompt and update
 	viper.Set("dotfiles.bare_repo_path", "")
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "/new/path", nil
 	}
 
@@ -193,7 +188,7 @@ func TestDotfilesRepoURLCmd(t *testing.T) {
 	defer restore()
 
 	viper.Set("dotfiles.repo_url", "")
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "git@github.com:new/dotfiles.git", nil
 	}
 
@@ -209,7 +204,7 @@ func TestDotfilesBranchCmd(t *testing.T) {
 	defer restore()
 
 	viper.Set("dotfiles.branch", "")
-	ui.Select = func(_ string, _ []string, _ string) (string, error) {
+	internalconfig.SelectPrompt = func(_ string, _ []string, _ string) (string, error) {
 		return "main", nil
 	}
 
@@ -225,7 +220,7 @@ func TestDotfilesBareRepoPathCmd(t *testing.T) {
 	defer restore()
 
 	viper.Set("dotfiles.bare_repo_path", "")
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "~/.new-bare", nil
 	}
 
@@ -242,10 +237,10 @@ func TestGitDevPathCmd(t *testing.T) {
 
 	viper.Set("git.dev_path", "/old/dev")
 	// Confirm prompt returns false, triggering update prompt
-	ui.Confirm = func(_ string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, _ bool) (bool, error) {
 		return false, nil
 	}
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "/new/dev", nil
 	}
 
@@ -283,10 +278,10 @@ func TestIdeURLCmd(t *testing.T) {
 	}
 
 	// Test Case 2: Interactive prompt update
-	ui.Confirm = func(_ string, _ bool) (bool, error) {
+	internalconfig.ConfirmPrompt = func(_ string, _ bool) (bool, error) {
 		return false, nil // reject existing
 	}
-	ui.Input = func(_, _ string) (string, error) {
+	internalconfig.InputPrompt = func(_, _ string) (string, error) {
 		return "https://new.example.com/ide.tar.gz", nil
 	}
 

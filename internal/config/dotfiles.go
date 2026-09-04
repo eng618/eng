@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -27,7 +27,10 @@ func RepoURL() string {
 
 // UpdateRepoURL prompts the user to input their dotfiles repository URL.
 func UpdateRepoURL() {
-	url, err := ui.Input("What is your dotfiles repository URL? (e.g., https://github.com/username/dotfiles.git)", "")
+	url, err := InputPrompt(
+		"What is your dotfiles repository URL? (e.g., https://github.com/username/dotfiles.git)",
+		"",
+	)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.repo_url", url)
@@ -46,7 +49,7 @@ func Branch() string {
 
 // UpdateBranch prompts the user to select their dotfiles branch.
 func UpdateBranch() {
-	branch, err := ui.Select("Which branch should be used for dotfiles?", []string{"main", "work", "server"}, "main")
+	branch, err := SelectPrompt("Which branch should be used for dotfiles?", []string{"main", "work", "server"}, "main")
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.branch", branch)
@@ -70,7 +73,7 @@ func UpdateBareRepoPath() {
 
 	defaultPath := filepath.Join(homeDir, ".eng-cfg")
 
-	path, err := ui.Input("Where should the bare repository be stored?", defaultPath)
+	path, err := InputPrompt("Where should the bare repository be stored?", defaultPath)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.bare_repo_path", path)
@@ -92,7 +95,7 @@ func UpdateWorktreePath() {
 	homeDir, err := os.UserHomeDir()
 	cobra.CheckErr(err)
 
-	path, err := ui.Input("What is your worktree path (usually home)?", homeDir)
+	path, err := InputPrompt("What is your worktree path (usually home)?", homeDir)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.worktree_path", path)
@@ -131,7 +134,7 @@ func TargetRepoPath(devPath string) string {
 	dotfilesCfg := GetDotfilesConfig()
 	targetRepoName := "eng-cfg"
 	if dotfilesCfg.RepoURL != "" {
-		if name, err := RepoNameFromURL(dotfilesCfg.RepoURL); err == nil && name != "" {
+		if name, err := repo.RepoNameFromURL(dotfilesCfg.RepoURL); err == nil && name != "" {
 			targetRepoName = name
 		}
 	}
@@ -216,7 +219,7 @@ func UpdateTargetRepoPath() {
 	gitCfg := GetGitConfig()
 	defaultPath := TargetRepoPath(gitCfg.DevPath)
 
-	path, err := ui.Input("Where is your target dotfiles git repository located?", defaultPath)
+	path, err := InputPrompt("Where is your target dotfiles git repository located?", defaultPath)
 	cobra.CheckErr(err)
 
 	viper.Set("dotfiles.target_repo_path", path)

@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -29,7 +28,7 @@ func IdeURL(optionalURL ...string) string {
 		return updateIdeURL()
 	}
 
-	confirmed, err := ui.Confirm(
+	confirmed, err := ConfirmPrompt(
 		fmt.Sprintf("Confirm Antigravity IDE download URL: %s?", theme.PrimaryText.Render(currentURL)),
 		true,
 	)
@@ -44,7 +43,7 @@ func IdeURL(optionalURL ...string) string {
 }
 
 func updateIdeURL() string {
-	inputURL, err := ui.Input("Enter Antigravity IDE download URL (e.g. https://.../Antigravity-IDE.tar.gz):", "")
+	inputURL, err := InputPrompt("Enter Antigravity IDE download URL (e.g. https://.../Antigravity-IDE.tar.gz):", "")
 	cobra.CheckErr(err)
 
 	SetIdeURL(inputURL)

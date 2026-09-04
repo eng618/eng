@@ -5,6 +5,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -96,7 +97,7 @@ Example:
 		}
 
 		// Derive default path from URL
-		defaultPath, err := config.RepoNameFromURL(repoURL)
+		defaultPath, err := repo.RepoNameFromURL(repoURL)
 		if err != nil {
 			log.Error("Could not parse repository URL: %s", err)
 			return

@@ -1,10 +1,9 @@
 package compose
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/containers"
 )
@@ -30,13 +29,11 @@ func completeStackNames(cmd *cobra.Command, args []string, toComplete string) ([
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
-	var names []string
-	for _, s := range stacks {
-		if strings.HasPrefix(s.Name, toComplete) {
-			names = append(names, s.Name)
-		}
+	names := make([]string, len(stacks))
+	for i, s := range stacks {
+		names[i] = s.Name
 	}
-	return names, cobra.ShellCompDirectiveNoFileComp
+	return cmdutil.CompletePrefix(names, toComplete)
 }
 
 func init() {

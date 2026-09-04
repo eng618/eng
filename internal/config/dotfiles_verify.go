@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -40,7 +39,7 @@ func VerifyDotfilesConfig() (string, string, string, string, error) {
 		fmt.Sprintf("Worktree: %s", theme.PrimaryText.Render(worktreePath)),
 	}
 
-	selected, err := ui.MultiSelect(
+	selected, err := MultiSelectPrompt(
 		"Which values would you like to update? (Select none if all are correct)",
 		options,
 		nil,

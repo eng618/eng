@@ -3,8 +3,6 @@
 package project
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
@@ -91,13 +89,12 @@ func init() {
 	_ = ProjectCmd.RegisterFlagCompletionFunc(
 		"project",
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			var names []string
-			for _, p := range config.GetProjects() {
-				if strings.HasPrefix(p.Name, toComplete) {
-					names = append(names, p.Name)
-				}
+			projects := config.GetProjects()
+			names := make([]string, len(projects))
+			for i, p := range projects {
+				names[i] = p.Name
 			}
-			return names, cobra.ShellCompDirectiveNoFileComp
+			return cmdutil.CompletePrefix(names, toComplete)
 		},
 	)
 }

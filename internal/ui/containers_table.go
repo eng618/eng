@@ -10,9 +10,34 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 	"golang.org/x/term"
 
-	"github.com/eng618/eng/internal/containers"
 	"github.com/eng618/eng/internal/ui/theme"
 )
+
+// StackRow is a presentation DTO for one compose stack row. Callers map
+// domain types (e.g. containers.Stack) to rows so this package never
+// imports domain packages.
+type StackRow struct {
+	Name       string
+	Containers int
+	Status     string
+	File       string
+}
+
+// PortMapping is a presentation DTO for one published container port.
+type PortMapping struct {
+	PublishedPort int
+	TargetPort    int
+}
+
+// ContainerRow is a presentation DTO for one container table row.
+type ContainerRow struct {
+	Name    string
+	Service string
+	State   string
+	Health  string
+	Image   string
+	Ports   []PortMapping
+}
 
 // GetTerminalWidth returns the current terminal width in columns, defaulting to 100 if unparseable.
 func GetTerminalWidth() int {
@@ -24,7 +49,7 @@ func GetTerminalWidth() int {
 }
 
 // RenderStackTable renders a Lip Gloss table showing high-level status for Compose stacks.
-func RenderStackTable(stacks []containers.Stack, termWidth int) string {
+func RenderStackTable(stacks []StackRow, termWidth int) string {
 	if len(stacks) == 0 {
 		return theme.MutedText.Render(
 			"No compose stacks found. Check your containers path with 'eng config containers-path'.",
@@ -81,10 +106,10 @@ func RenderStackTable(stacks []containers.Stack, termWidth int) string {
 
 	for _, s := range stacks {
 		t.Row(
-			truncateString(s.Name, colStack),
+			Truncate(s.Name, colStack),
 			strconv.Itoa(s.Containers),
 			formatStackStatusBadge(s.Status),
-			truncateString(s.File, colFile),
+			Truncate(s.File, colFile),
 		)
 	}
 
@@ -92,7 +117,7 @@ func RenderStackTable(stacks []containers.Stack, termWidth int) string {
 }
 
 // RenderContainerTable renders a detailed Lip Gloss table for containers in a specific stack.
-func RenderContainerTable(stackName string, containerList []containers.ContainerDetail, termWidth int) string {
+func RenderContainerTable(stackName string, containerList []ContainerRow, termWidth int) string {
 	if len(containerList) == 0 {
 		return theme.MutedText.Render(fmt.Sprintf("No running or registered containers in stack %s.", stackName))
 	}
@@ -154,11 +179,11 @@ func RenderContainerTable(stackName string, containerList []containers.Container
 
 	for _, c := range containerList {
 		t.Row(
-			theme.BoldText.Render(truncateString(c.Name, colName)),
-			truncateString(c.Service, colService),
+			theme.BoldText.Render(Truncate(c.Name, colName)),
+			Truncate(c.Service, colService),
 			formatContainerStatusBadge(c.State, c.Health),
-			theme.MutedText.Render(formatCompactPublishers(c.Publishers, colPorts)),
-			theme.MutedText.Render(truncateString(c.Image, colImage)),
+			theme.MutedText.Render(formatCompactPublishers(c.Ports, colPorts)),
+			theme.MutedText.Render(Truncate(c.Image, colImage)),
 		)
 	}
 
@@ -209,7 +234,7 @@ func formatContainerStatusBadge(state, health string) string {
 	}
 }
 
-func formatCompactPublishers(pubs []containers.Publisher, maxColWidth int) string {
+func formatCompactPublishers(pubs []PortMapping, maxColWidth int) string {
 	if len(pubs) == 0 {
 		return "-"
 	}
@@ -225,7 +250,7 @@ func formatCompactPublishers(pubs []containers.Publisher, maxColWidth int) strin
 
 	fullStr := strings.Join(parts, ", ")
 	if len(fullStr) <= maxColWidth || len(parts) == 1 {
-		return truncateString(fullStr, maxColWidth)
+		return Truncate(fullStr, maxColWidth)
 	}
 
 	// Compact multiple ports
@@ -237,20 +262,6 @@ func formatCompactPublishers(pubs []containers.Publisher, maxColWidth int) strin
 	}
 
 	return fmt.Sprintf("%d ports", len(parts))
-}
-
-func truncateString(s string, maxLen int) string {
-	runes := []rune(s)
-	if maxLen <= 1 {
-		return string(runes[:min(1, len(runes))])
-	}
-	if len(runes) > maxLen {
-		if maxLen <= 3 {
-			return string(runes[:maxLen])
-		}
-		return string(runes[:maxLen-3]) + "..."
-	}
-	return s
 }
 
 func clamp(val, min, max int) int {

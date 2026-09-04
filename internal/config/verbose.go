@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -27,7 +26,7 @@ func Verbose() bool {
 	verbose := viper.GetBool("verbose")
 
 	// Verify this is the correct verbose setting they are expecting to use.
-	vConfirm, err := ui.Confirm(
+	vConfirm, err := ConfirmPrompt(
 		fmt.Sprintf("Confirm verbose mode: %s?", theme.PrimaryText.Render(fmt.Sprintf("%t", verbose))),
 		verbose,
 	)
@@ -47,7 +46,7 @@ func Verbose() bool {
 // back to the configuration file. If any error occurs during the process,
 // it is handled appropriately.
 func updateVerbose() {
-	verbose, err := ui.Confirm("Enable verbose mode?", false)
+	verbose, err := ConfirmPrompt("Enable verbose mode?", false)
 	cobra.CheckErr(err)
 
 	viper.Set("verbose", verbose)
