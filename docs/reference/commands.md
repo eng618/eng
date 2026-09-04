@@ -231,6 +231,7 @@ eng config dotfiles-repo-url          # Set repository URL
 eng config dotfiles-branch            # Set branch (main/work/server)
 eng config dotfiles-bare-repo-path    # Set bare repo location
 eng config dotfiles-repo              # Set dotfiles repo path
+eng config dotfiles-target-repo-path [path]  # Show or pin the copy-changes destination repo
 ```
 
 ### Commands
@@ -240,11 +241,21 @@ eng config dotfiles-repo              # Set dotfiles repo path
 - `eng dotfiles sync` — Fetch and pull latest dotfiles
 - `eng dotfiles fetch` — Fetch latest dotfiles without merging
 - `eng dotfiles checkout` — Checkout files from the bare repository
-- `eng dotfiles copy-changes` — Copy modified dotfiles to local git repo
+- `eng dotfiles copy-changes [--repo <path>]` — Copy modified dotfiles to local git repo
 - `eng dotfiles status` — Check the status of your dotfiles repository
 - `eng dotfiles secrets backup` — Backup manifest-managed env values into `bws`
 - `eng dotfiles secrets restore` — Restore env files from templates and `bws`
 - `eng dotfiles secrets doctor` — Validate templates and secrets for all manifest entries
+
+### Copying changes back
+
+`eng dotfiles copy-changes` copies modified files from the worktree into the
+destination git repository (preserving relative paths) and optionally resets
+the worktree copies. The destination resolves as: `--repo` flag, explicit
+config (`eng config dotfiles-target-repo-path`), then dev-folder heuristics —
+so repositories living outside the dev folder just need the explicit path set
+once. When nothing resolves to a git repository, the command offers to locate
+one interactively and persists the choice.
 
 ### Dotfiles Secrets
 
@@ -549,18 +560,19 @@ fires for `config`/`doctor`/`version`/`logs`/`system`/help/completion, in pipes
 or CI, or when `ENG_NO_ONBOARDING` is set. Declining just continues — later
 errors point at `eng config edit --interactive`.
 
-| Command                              | Description                                  |
-| ------------------------------------ | -------------------------------------------- |
-| `eng config`                         | Show current config                          |
-| `eng config edit`                    | Edit config file                             |
-| `eng config git-dev-path`            | Set development folder path for git commands |
-| `eng config dotfiles-repo-url`       | Set dotfiles repository URL                  |
-| `eng config dotfiles-branch`         | Set dotfiles branch                          |
-| `eng config dotfiles-bare-repo-path` | Set bare repo location                       |
-| `eng config dotfiles-repo`           | Set dotfiles repo path                       |
-| `eng config email`                   | Set email address                            |
-| `eng config ide-url`                 | Set Antigravity IDE download URL             |
-| `eng config verbose`                 | Set verbose output default                   |
+| Command                                       | Description                                   |
+| --------------------------------------------- | --------------------------------------------- |
+| `eng config`                                  | Show current config                           |
+| `eng config edit`                             | Edit config file                              |
+| `eng config git-dev-path`                     | Set development folder path for git commands  |
+| `eng config dotfiles-repo-url`                | Set dotfiles repository URL                   |
+| `eng config dotfiles-branch`                  | Set dotfiles branch                           |
+| `eng config dotfiles-bare-repo-path`          | Set bare repo location                        |
+| `eng config dotfiles-target-repo-path [path]` | Show or pin the copy-changes destination repo |
+| `eng config dotfiles-repo`                    | Set dotfiles repo path                        |
+| `eng config email`                            | Set email address                             |
+| `eng config ide-url`                          | Set Antigravity IDE download URL              |
+| `eng config verbose`                          | Set verbose output default                    |
 
 ---
 

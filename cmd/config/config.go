@@ -49,6 +49,7 @@ func init() {
 	ConfigCmd.AddCommand(DotfilesRepoURLCmd)
 	ConfigCmd.AddCommand(DotfilesBranchCmd)
 	ConfigCmd.AddCommand(DotfilesBareRepoPathCmd)
+	ConfigCmd.AddCommand(DotfilesTargetRepoPathCmd)
 	ConfigCmd.AddCommand(GitDevPathCmd)
 	ConfigCmd.AddCommand(IdeURLCmd)
 	ConfigCmd.AddCommand(TelemetryCmd)

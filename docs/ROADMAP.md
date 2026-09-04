@@ -1,95 +1,89 @@
-# Technical Roadmap & Action Plan (UI/UX Focus)
+# eng Running Plan
 
-This document serves as the authoritative roadmap for elevating the user experience (UX) and user interface (UI) of the `eng` CLI. With foundational architecture and basic TUIs in place, the next evolution focuses on premium aesthetics, cohesive theming, and advanced interactive workflows using the Charm ecosystem (Bubble Tea, Lipgloss, Huh).
+A living list of where this project stands and what's next. Items move from
+**Active** to **Completed** (never deleted); **Dropped** records decisions
+with rationale so they aren't relitigated.
 
-**Aesthetic Goal**: Follow a minimalist aesthetic leveraging the `gv-tech` brand tokens and design system ([GV Tech Theming Reference](https://design.garciaericn.com/docs/theming#token-reference)).
-
-## Status Tracking Mechanism
-
-- `[ ]` Not Started
-- `[/]` In Progress
-- `[!]` Blocked
-- `[x]` Complete
+Status key: `[ ]` not started · `[/]` in progress · `[x]` complete · `[!]` dropped
 
 ---
 
-## 1. Phase 6: Foundational Theming & Styling
+## Active next
 
-Create a consistent visual language across the entire application that prioritizes general usability and consistency.
-
-### 1.1 Global Design System (Lipgloss)
-
-- **Status**: `[x]`
-- **Task**: Introduce an `internal/ui/theme` package defining a global, branded color palette, typography (bolding/italics), and border styles using `charmbracelet/lipgloss`. Utilize the `gv-tech` brand tokens to ensure a minimalist, professional aesthetic.
-- **Impact**: High (Ensures the CLI looks consistent and recognizable).
-
-### 1.2 Rich Command Output
-
-- **Status**: `[x]`
-- **Task**: Replace standard `fmt.Printf` and plain text logging with Lipgloss-styled components (e.g., success banners, info boxes, warning callouts) aligned with the global theme. (Partially completed in proxy and native commands).
-- **Progress**: All production `fmt.Print*` calls now go through the unified `log.Out`/`log.Err` writers (or `log.*`/`theme.*` helpers), so output honors writer overrides (tests, capture, `__complete` silencing). Subprocess streaming (`containers`, `immich`, interactive re-execs excluded) follows the same writers. Machine-consumed stdout stays clean: `compose status --json` prints only JSON (`[]`/`{}` instead of `null`, no header banner), `proxy export` silences config-load chatter for `eval`, and config migration notices are verbose-only. Interactive children (editors, `dotfiles install` re-exec, password prompts) intentionally keep real stdio.
-- **Impact**: Medium (Makes reading command output easier and more pleasant).
-
----
-
-## 2. Phase 7: Error UX & Actionable Feedback
-
-Transform how the CLI communicates failures to the user.
-
-### 2.1 Smart, Styled Error Handling
-
-- **Status**: `[x]`
-- **Task**: Create a custom error formatter. When an error occurs, output a styled error box that not only explains _what_ failed, but provides _actionable suggestions_ on how to fix it (e.g., pointing to the exact `eng system setup` command needed).
-- **Impact**: High (Drastically reduces user frustration during setup or edge cases).
-
-### 2.2 Progressive Disclosure for Logs
-
-- **Status**: `[x]`
-- **Task**: For verbose commands (like git syncs or system updates), show a clean summary by default. Log the verbose output to a file, and provide a command to view the logs, preventing the terminal from being overwhelmed with text.
-- **Progress**: `internal/log` + `internal/ui/theme` tee plain (ANSI-stripped) output to a session file; `internal/runlog` manages timestamped sessions under the OS cache dir (`ENG_LOG_DIR` override, 20-run rotation). Wired into `git sync/fetch/pull/push-all`, `project fetch/pull/sync`, and `system update`; each run ends with a `Full log:` pointer. `eng logs list/show (--tail/-f)/clean` inspects runs without re-running. Machine output kept clean (`--json` prints only JSON, `proxy export` silences chatter for `eval`).
-- **Impact**: Medium (Keeps the terminal clean while preserving debuggability).
+- [x] **Dotfiles target-repo resolution** — `copy-changes` only found its
+      destination via dev-folder heuristics; repos outside `devPath` broke it.
+      Shipped: `eng config dotfiles-target-repo-path [path]`,
+      `copy-changes --repo`, no devPath requirement with explicit targets,
+      fail-loud validation, interactive locate-and-persist fallback.
+- [ ] **A4 docs content gaps** — `reference/commands.md` drift (Dashboard TOC
+      entry, `compose clean`, codemod `native`/`web`, full config rows,
+      `immich`/`doctor` sections; explain `eng immich` vs `eng system immich`);
+      second tutorial.
+- [ ] **Deferred file splits** — `cmd/system/gpg_setup.go`,
+      `cmd/system/ssh_setup.go`, `internal/immich/client.go` (large but cohesive;
+      split when they next change).
+- [ ] **Progress-display interface** — spinners/pagers/terminal-width are still
+      imported directly by 7 internal packages (`project`, `cleanup`,
+      `dotfiles`, `secrets`, `immich`, `runlog`); prompts are already
+      hook-injected. A `cmd/`-boundary progress interface is the remaining step
+      if the coupling ever bites (untested interactive paths, reuse outside eng).
+- [ ] **`cmdutil → config` wrinkle** — `IsVerbose` falls back to viper,
+      keeping the helper from being a true leaf. Fix by pushing the fallback to
+      callers if it ever matters.
 
 ---
 
-## 3. Phase 8: Interactive Dashboards (Advanced TUIs)
+## Completed
 
-Introduce full-screen, interactive applications for complex workflows.
+### UI/UX foundations (Phases 6–9)
 
-### 3.1 Project & Git Dashboard
+- [x] **6.1 Global design system** — `internal/ui/theme` brand tokens,
+      typography, borders (`gv-tech`).
+- [x] **6.2 Rich command output** — all production output flows through
+      unified `log.Out`/`log.Err` writers; machine stdout stays clean (`--json`
+      prints only JSON, `proxy export` silences chatter for `eval`).
+- [x] **7.1 Actionable errors** — styled error boxes with next-step
+      suggestions; `eng doctor` exits non-zero for CI gating.
+- [x] **7.2 Progressive disclosure** — session log files (`internal/runlog`,
+      20-run rotation) + `eng logs list/show/clean`; verbose commands print
+      summaries with a `Full log:` pointer.
+- [x] **8.1 Project & git dashboard** — Bubble Tea mission control with
+      fixed-size Docker-style action modal, compact/responsive layouts.
+- [x] **8.2 Interactive config editor** — `eng config edit --interactive`
+      huh TUI.
+- [x] **9.1 First-run wizard** — one-time guarded setup offer
+      (`config.ShouldAutoOnboard`: true first run, TTY, sane `TERM`, skips
+      config/meta/help/completion, `ENG_NO_ONBOARDING` escape).
+- [x] **9.3 Dynamic auto-completion** — project names, compose stacks,
+      proxy titles, shred methods, log names, `up --env`.
 
-- **Status**: `[x]`
-- **Task**: Build an `eng dashboard` or interactive `eng project view` using `charmbracelet/bubbletea`. Show real-time statuses of repositories (branches, uncommitted changes, sync state) in a navigable, split-pane view.
-- **Impact**: High (Provides a "mission control" feel for managing multiple repositories).
+### Docs (Diátaxis)
 
-### 3.2 Interactive Configuration Editor
+- [x] Restructure (`tutorials/`, `how-to/`, `reference/`, `explanation/`,
+      index) with refreshed architecture doc.
+- [x] Automation: `gendocs --check/--prune`, `task docs:check` in
+      `validate`, markdownlint + prettier + link-check tasks, docs CI workflow.
 
-- **Status**: `[x]`
-- **Task**: Create `eng config edit --interactive`. Instead of manually editing `.eng.yaml`, provide a beautiful TUI form (via `huh`) to toggle settings, set paths, and validate input dynamically.
-- **Impact**: Medium (Reduces misconfiguration errors).
+### Separation of concerns (B1–B4)
+
+- [x] **B1 layering repairs** — `internal/version` leaf (ldflags updated);
+      dotfiles setup steps injected via `cmd/system/dotfiles_hooks.go` instead
+      of `internal → cmd` imports; immich tree built once by
+      `internal/immich.NewCommand` with independent flag state per path.
+- [x] **B2 UI decoupling** — dashboard DTOs + provider (`ui` no longer
+      imports `config`/`containers`); config/dotfiles prompts via hook vars;
+      URL helpers moved to `internal/repo`; tag-clobber prompt moved to
+      `internal/project`.
+- [x] **B3 dedup** — single `ui.Truncate`; single `cmdutil.CompletePrefix`.
+- [x] **B4 splits** — dashboard `update`/`view` → `actions`/`status`/
+      `commands`/`modal`/`table`; `proxy.go` → view/commands;
+      `config/proxy.go` → env/manage/prompt.
+- [x] **Dependency rules** recorded in `explanation/architecture.md`.
 
 ---
 
-## 4. Phase 9: Onboarding & Discoverability
+## Dropped
 
-Ensure new users (and existing users discovering new features) have a frictionless experience.
-
-### 4.1 First-Run Onboarding Wizard
-
-- **Status**: `[x]`
-- **Task**: Detect if `.eng.yaml` is missing or incomplete on first run. Instead of failing, automatically launch a welcoming, step-by-step TUI wizard to configure essential paths and preferences.
-- **Progress**: `initConfig` prints a one-time welcome with next steps on creation; `maybeRunOnboarding` (`cmd/root.go`) offers the existing `RunInteractiveEditor` huh wizard via a single confirm prompt. Strictly guarded by `config.ShouldAutoOnboard` (true first run only, TTY stdin+stdout, sane `TERM`, never for config/doctor/version/logs/system/help/completion, `ENG_NO_ONBOARDING` escape hatch). Declining/aborting continues to the requested command, whose actionable errors guide manual setup. Later runs with missing settings rely on those errors rather than nagging.
-- **Impact**: High (Creates a magical first impression).
-
-### 4.2 Overhaul Cobra Help & Usage
-
-- **Status**: `[!] Dropped`
-- **Task**: Customize Cobra's help templates to use colored headers, aligned columns, and examples. Consider integrating `charmbracelet/glamour` to render markdown-based command documentation directly in the terminal.
-- **Rationale**: Help output is already custom-styled (colored headers, aligned columns, `EXAMPLES` sections now populated across commands). Glamour would add a heavy dependency for marginal gain on top of the current Lipgloss rendering.
-- **Impact**: Medium (Improves discoverability of flags and subcommands).
-
-### 4.3 Dynamic Auto-Completion
-
-- **Status**: `[x]`
-- **Task**: Implement Cobra's `ValidArgsFunction` across commands to provide dynamic shell auto-completion for project names, dotfile templates, and git branches.
-- **Progress**: `--project` flag completes from configured projects (`cmd/project/project.go`); `compose up/down/pull/status/logs` complete discovered stack names and `up --env` completes `dev/staging/prod` (`cmd/compose/`); `proxy use/edit/remove/test` complete configured proxy titles for args and `--title` (`cmd/system/proxy.go`, with log output silenced during completion); `files shred --method` completes methods. Git branches: no `eng` command accepts a branch argument, so there is nothing to complete (branch display only). Dotfiles paths/UUIDs and numeric PIDs/ports are left to default file completion.
-- **Impact**: High (Massively speeds up daily usage).
+- [!] **9.2 Glamour help rendering** — help is already custom-styled
+  (colored headers, aligned columns, populated `EXAMPLES`); Glamour would
+  add a heavy dependency for marginal gain.

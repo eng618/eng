@@ -2,6 +2,7 @@ package dotfiles
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -20,7 +21,14 @@ import (
 var CopyChangesCmd = &cobra.Command{
 	Use:   "copy-changes",
 	Short: "copy modified dotfiles to local git repo",
-	Long:  `This command copies modified dotfiles from the worktree to the local git repository for committing.`,
+	Long: `This command copies modified dotfiles from the worktree to the local git repository for committing.
+
+The destination resolves as: --repo flag, explicit config
+('eng config dotfiles-target-repo-path'), then dev-folder heuristics.
+When nothing resolves to a git repository, it offers to locate one
+interactively and persists the choice.`,
+	Example: `  eng dotfiles copy-changes
+  eng dotfiles copy-changes --repo ~/Development/dotfiles`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Start("Copying modified dotfiles")
 
@@ -34,15 +42,12 @@ var CopyChangesCmd = &cobra.Command{
 		log.Verbose(isVerbose, "Repository path: %s", repoPath)
 		log.Verbose(isVerbose, "Worktree path:   %s", worktreePath)
 
-		gitCfg := config.GetGitConfig()
-		devPath := os.ExpandEnv(gitCfg.DevPath)
-		if devPath == "" {
-			log.Error("Development folder path is not set in configuration")
+		repoFlag, _ := cmd.Flags().GetString("repo")
+		targetRepoPath, err := resolveCopyTarget(repoFlag)
+		if err != nil {
+			log.Error("%s", err)
 			return
 		}
-		log.Verbose(isVerbose, "Development path: %s", devPath)
-
-		targetRepoPath := getTargetRepoPathFunc(devPath)
 		log.Verbose(isVerbose, "Target repository path: %s", targetRepoPath)
 
 		// Get modified files
@@ -103,8 +108,104 @@ var CopyChangesCmd = &cobra.Command{
 	},
 }
 
+// resolveCopyTarget determines where modified files are copied.
+// Precedence: --repo flag, explicit config, dev-folder heuristics. A
+// resolved path must be a git repository; otherwise (or when nothing
+// resolves) it falls back to interactive location, which persists the
+// choice. devPath is only required for the heuristic search.
+func resolveCopyTarget(repoFlag string) (string, error) {
+	if flag := strings.TrimSpace(repoFlag); flag != "" {
+		target := os.ExpandEnv(flag)
+		if !config.IsGitRepo(target) {
+			return "", fmt.Errorf(
+				"not a git repository: %s — check --repo, or persist one with 'eng config dotfiles-target-repo-path <path>'",
+				target,
+			)
+		}
+		return target, nil
+	}
+
+	if explicit := config.ExplicitTargetRepoPath(); explicit != "" {
+		if !config.IsGitRepo(explicit) {
+			return locateTargetInteractively(explicit)
+		}
+		return explicit, nil
+	}
+
+	devPath := os.ExpandEnv(config.GetGitConfig().DevPath)
+	if devPath == "" {
+		return "", fmt.Errorf(
+			"development folder path is not set and no target repository is configured — set one with 'eng config dotfiles-target-repo-path <path>' or 'eng config git-dev-path <path>'",
+		)
+	}
+	target := getTargetRepoPathFunc(devPath)
+	if !config.IsGitRepo(target) {
+		return locateTargetInteractively(target)
+	}
+	return target, nil
+}
+
+// locateTargetInteractively helps the user point copy-changes at the right
+// repository when automatic resolution fails, then persists the choice so
+// the problem stays fixed. badTarget is the rejected path, if any.
+func locateTargetInteractively(badTarget string) (string, error) {
+	devPath := os.ExpandEnv(config.GetGitConfig().DevPath)
+	var options []string
+	if devPath != "" {
+		options = append(options, config.TargetRepoCandidates(devPath)...)
+	}
+	options = append(options, "Enter a path manually")
+
+	if badTarget != "" {
+		log.Warn("Dotfiles target repo not found: %s", badTarget)
+	}
+	selected, err := selectTargetFunc(
+		"Where should dotfile changes be copied?",
+		options,
+		options[0],
+	)
+	if err != nil {
+		return "", fmt.Errorf(
+			"no target repository selected — set one with 'eng config dotfiles-target-repo-path <path>': %w",
+			err,
+		)
+	}
+	if selected == "Enter a path manually" {
+		selected, err = inputTargetFunc("Target repository path:", "")
+		if err != nil {
+			return "", fmt.Errorf(
+				"no target repository entered — set one with 'eng config dotfiles-target-repo-path <path>': %w",
+				err,
+			)
+		}
+		selected = strings.TrimSpace(selected)
+	}
+	if !config.IsGitRepo(selected) {
+		return "", fmt.Errorf(
+			"not a git repository: %s — pick a directory containing .git",
+			selected,
+		)
+	}
+	if err := config.SetTargetRepoPath(selected); err != nil {
+		return "", err
+	}
+	log.Info("Saved target repository path for future runs")
+	return os.ExpandEnv(selected), nil
+}
+
 // getTargetRepoPathFunc is injectable for tests.
 var getTargetRepoPathFunc = config.TargetRepoPath
+
+// selectTargetFunc and inputTargetFunc are injectable for tests.
+var (
+	selectTargetFunc = ui.Select
+	inputTargetFunc  = ui.Input
+)
+
+func init() {
+	CopyChangesCmd.Flags().
+		String("repo", "", "Destination git repository path (overrides config and heuristics)")
+}
 
 // getModifiedFilesFunc is injectable for tests.
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {

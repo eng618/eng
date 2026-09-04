@@ -118,65 +118,78 @@ func GetDotfilesRepo() {
 	log.Success("Dotfiles repository path: %s", path)
 }
 
-// TargetRepoPath resolves the destination git repository path for copying dotfile changes.
-// It checks explicit config first, then project configuration, then scans project directories under devPath,
-// and finally falls back to legacy path under devPath.
-func TargetRepoPath(devPath string) string {
-	if explicitPath := viper.GetString("dotfiles.target_repo_path"); explicitPath != "" {
-		return os.ExpandEnv(explicitPath)
+// ExplicitTargetRepoPath returns the configured override, if any.
+// Two keys are honored for backward compatibility; target_repo_path wins.
+func ExplicitTargetRepoPath() string {
+	if p := viper.GetString("dotfiles.target_repo_path"); p != "" {
+		return os.ExpandEnv(p)
 	}
-	if explicitPath := viper.GetString("dotfiles.local_repo_path"); explicitPath != "" {
-		return os.ExpandEnv(explicitPath)
+	if p := viper.GetString("dotfiles.local_repo_path"); p != "" {
+		return os.ExpandEnv(p)
 	}
+	return ""
+}
 
-	devPath = os.ExpandEnv(devPath)
-
-	dotfilesCfg := GetDotfilesConfig()
-	targetRepoName := "eng-cfg"
-	if dotfilesCfg.RepoURL != "" {
-		if name, err := repo.RepoNameFromURL(dotfilesCfg.RepoURL); err == nil && name != "" {
-			targetRepoName = name
+// targetRepoName derives the expected repository directory name from the
+// configured dotfiles URL, defaulting to "eng-cfg".
+func targetRepoName() string {
+	if repoURL := GetDotfilesConfig().RepoURL; repoURL != "" {
+		if name, err := repo.RepoNameFromURL(repoURL); err == nil && name != "" {
+			return name
 		}
 	}
+	return "eng-cfg"
+}
 
+// TargetRepoCandidates lists every on-disk location under devPath that could
+// host the dotfiles git repository, in priority order (project config match,
+// project subdirectory scan, legacy path, deep walk). Used for interactive
+// selection when the automatic resolution fails.
+func TargetRepoCandidates(devPath string) []string {
+	devPath = os.ExpandEnv(devPath)
 	if devPath == "" {
-		return targetRepoName
+		return nil
+	}
+	name := targetRepoName()
+
+	var out []string
+	seen := map[string]bool{}
+	add := func(p string) {
+		if p != "" && !seen[p] {
+			seen[p] = true
+			out = append(out, p)
+		}
 	}
 
 	// 1. Search configured projects (GetProjects())
-	projects := GetProjects()
-	for _, p := range projects {
+	for _, p := range GetProjects() {
 		for _, r := range p.Repos {
 			effectiveName, err := r.GetEffectivePath()
-			if err == nil && (effectiveName == targetRepoName || r.URL == dotfilesCfg.RepoURL) {
-				candidate := filepath.Join(devPath, p.Name, effectiveName)
-				if isGitRepoOrDir(candidate) {
-					return candidate
+			if err == nil && (effectiveName == name || r.URL == GetDotfilesConfig().RepoURL) {
+				if candidate := filepath.Join(devPath, p.Name, effectiveName); isGitRepoOrDir(candidate) {
+					add(candidate)
 				}
 			}
 		}
 	}
 
-	// 2. Search project directories under devPath on disk (devPath/<project_name>/<targetRepoName>)
+	// 2. Search project directories under devPath on disk (devPath/<project_name>/<name>)
 	if entries, err := os.ReadDir(devPath); err == nil {
 		for _, entry := range entries {
 			if entry.IsDir() {
-				candidate := filepath.Join(devPath, entry.Name(), targetRepoName)
-				if isGitRepoOrDir(candidate) {
-					return candidate
+				if candidate := filepath.Join(devPath, entry.Name(), name); isGitRepoOrDir(candidate) {
+					add(candidate)
 				}
 			}
 		}
 	}
 
-	// 3. Check direct child under devPath (legacy path: devPath/<targetRepoName>)
-	legacyPath := filepath.Join(devPath, targetRepoName)
-	if isGitRepoOrDir(legacyPath) {
-		return legacyPath
+	// 3. Check direct child under devPath (legacy path: devPath/<name>)
+	if legacyPath := filepath.Join(devPath, name); isGitRepoOrDir(legacyPath) {
+		add(legacyPath)
 	}
 
-	// 4. Search up to 3 levels deep under devPath looking for a directory matching targetRepoName containing .git
-	var foundPath string
+	// 4. Search up to 3 levels deep under devPath for a matching git repo.
 	_ = filepath.WalkDir(devPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -188,42 +201,78 @@ func TargetRepoPath(devPath string) string {
 					return filepath.SkipDir
 				}
 			}
-			if d.Name() == targetRepoName && isGitRepoOrDir(path) {
-				foundPath = path
-				return filepath.SkipAll
+			if d.Name() == name && isGitRepoOrDir(path) {
+				add(path)
 			}
 		}
 		return nil
 	})
-	if foundPath != "" {
-		return foundPath
+
+	return out
+}
+
+// TargetRepoPath resolves the destination git repository path for copying dotfile changes.
+// It checks explicit config first, then the candidate search, then project
+// configuration (even when not yet on disk), and finally falls back to the
+// legacy path under devPath (which may not exist — callers must verify).
+func TargetRepoPath(devPath string) string {
+	if explicit := ExplicitTargetRepoPath(); explicit != "" {
+		return explicit
+	}
+
+	devPath = os.ExpandEnv(devPath)
+	if devPath == "" {
+		return targetRepoName()
+	}
+
+	if candidates := TargetRepoCandidates(devPath); len(candidates) > 0 {
+		return candidates[0]
 	}
 
 	// 5. Fallback: if configured projects exist, match repo in project config even if not yet on disk
+	projects := GetProjects()
 	if len(projects) > 0 {
+		name := targetRepoName()
 		for _, p := range projects {
 			for _, r := range p.Repos {
 				effectiveName, _ := r.GetEffectivePath()
-				if effectiveName == targetRepoName || r.URL == dotfilesCfg.RepoURL {
+				if effectiveName == name || r.URL == GetDotfilesConfig().RepoURL {
 					return filepath.Join(devPath, p.Name, effectiveName)
 				}
 			}
 		}
 	}
 
-	return legacyPath
+	return filepath.Join(devPath, targetRepoName())
 }
 
-// UpdateTargetRepoPath prompts the user to input their target repository path.
-func UpdateTargetRepoPath() {
-	gitCfg := GetGitConfig()
-	defaultPath := TargetRepoPath(gitCfg.DevPath)
-
-	path, err := InputPrompt("Where is your target dotfiles git repository located?", defaultPath)
-	cobra.CheckErr(err)
-
+// SetTargetRepoPath validates and persists an explicit target repository path.
+// The path must exist; a missing .git directory warns but still saves, since
+// the copy flow re-validates at use time with an interactive fallback.
+func SetTargetRepoPath(path string) error {
+	path = os.ExpandEnv(strings.TrimSpace(path))
+	if path == "" {
+		return fmt.Errorf("target repository path must not be empty")
+	}
+	info, err := os.Stat(path)
+	if err != nil || !info.IsDir() {
+		return fmt.Errorf("target repository path does not exist: %s", path)
+	}
+	if _, err := os.Stat(filepath.Join(path, ".git")); err != nil {
+		log.Warn("No .git directory found at %s; saving anyway", path)
+	}
 	viper.Set("dotfiles.target_repo_path", path)
 	saveConfig()
+	return nil
+}
+
+// IsGitRepo reports whether path contains a .git directory.
+func IsGitRepo(path string) bool {
+	if path == "" {
+		return false
+	}
+	info, err := os.Stat(filepath.Join(path, ".git"))
+	return err == nil && info.IsDir()
 }
 
 func isGitRepoOrDir(path string) bool {

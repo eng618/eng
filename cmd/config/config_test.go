@@ -63,17 +63,18 @@ func mockAllPrompts() func() {
 func TestConfigCmd_Subcommands(t *testing.T) {
 	subcommands := ConfigCmd.Commands()
 	expected := map[string]bool{
-		"list":                    false,
-		"edit":                    false,
-		"email":                   false,
-		"dotfiles-repo":           false,
-		"dotfiles-repo-url":       false,
-		"dotfiles-branch":         false,
-		"dotfiles-bare-repo-path": false,
-		"git-dev-path":            false,
-		"ide-url [url]":           false,
-		"telemetry":               false,
-		"verbose":                 false,
+		"list":                             false,
+		"edit":                             false,
+		"email":                            false,
+		"dotfiles-repo":                    false,
+		"dotfiles-repo-url":                false,
+		"dotfiles-branch":                  false,
+		"dotfiles-bare-repo-path":          false,
+		"dotfiles-target-repo-path [path]": false,
+		"git-dev-path":                     false,
+		"ide-url [url]":                    false,
+		"telemetry":                        false,
+		"verbose":                          false,
 	}
 
 	for _, cmd := range subcommands {
@@ -230,6 +231,36 @@ func TestDotfilesBareRepoPathCmd(t *testing.T) {
 	}
 }
 
+func TestDotfilesTargetRepoPathCmd(t *testing.T) {
+	setupTestViper(t)
+	restore := mockAllPrompts()
+	defer restore()
+
+	// With arg: validates and persists.
+	target := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(target, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	DotfilesTargetRepoPathCmd.Run(DotfilesTargetRepoPathCmd, []string{target})
+	if viper.GetString("dotfiles.target_repo_path") != target {
+		t.Errorf("expected target persisted, got %s", viper.GetString("dotfiles.target_repo_path"))
+	}
+
+	// With missing arg path: error, nothing persisted.
+	viper.Set("dotfiles.target_repo_path", "")
+	DotfilesTargetRepoPathCmd.Run(DotfilesTargetRepoPathCmd, []string{filepath.Join(target, "nope")})
+	if viper.GetString("dotfiles.target_repo_path") != "" {
+		t.Errorf("expected nothing persisted, got %s", viper.GetString("dotfiles.target_repo_path"))
+	}
+
+	// Bare with value set: prints, no prompt.
+	viper.Set("dotfiles.target_repo_path", target)
+	DotfilesTargetRepoPathCmd.Run(DotfilesTargetRepoPathCmd, []string{})
+	if viper.GetString("dotfiles.target_repo_path") != target {
+		t.Errorf("expected value untouched, got %s", viper.GetString("dotfiles.target_repo_path"))
+	}
+}
+
 func TestGitDevPathCmd(t *testing.T) {
 	setupTestViper(t)
 	restore := mockAllPrompts()
@@ -330,7 +361,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 11
+	// Subcommand Count: 12
 }
 
 // ============================================================================

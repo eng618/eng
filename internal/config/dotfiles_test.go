@@ -920,3 +920,110 @@ func BenchmarkStringsRepeat(b *testing.B) {
 		_ = longString
 	}
 }
+
+func TestSetTargetRepoPath(t *testing.T) {
+	setup := func(t *testing.T) {
+		t.Helper()
+		viper.Reset()
+		path := filepath.Join(t.TempDir(), ".eng.yaml")
+		if err := os.WriteFile(path, []byte("{}"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		viper.SetConfigFile(path)
+	}
+
+	t.Run("MissingPathErrors", func(t *testing.T) {
+		setup(t)
+		if err := SetTargetRepoPath(filepath.Join(t.TempDir(), "nope")); err == nil {
+			t.Error("expected error for missing path")
+		}
+		if viper.GetString("dotfiles.target_repo_path") != "" {
+			t.Error("expected nothing persisted on error")
+		}
+	})
+
+	t.Run("EmptyPathErrors", func(t *testing.T) {
+		setup(t)
+		if err := SetTargetRepoPath("   "); err == nil {
+			t.Error("expected error for empty path")
+		}
+	})
+
+	t.Run("GitRepoPersists", func(t *testing.T) {
+		setup(t)
+		dir := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := SetTargetRepoPath(dir); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		assert.Equal(t, dir, viper.GetString("dotfiles.target_repo_path"))
+	})
+
+	t.Run("PlainDirPersistsWithWarning", func(t *testing.T) {
+		setup(t)
+		dir := t.TempDir()
+		if err := SetTargetRepoPath(dir); err != nil {
+			t.Fatalf("expected save despite missing .git, got: %v", err)
+		}
+		assert.Equal(t, dir, viper.GetString("dotfiles.target_repo_path"))
+	})
+}
+
+func TestTargetRepoCandidates(t *testing.T) {
+	viper.Reset()
+	tmpDev := t.TempDir()
+
+	// Legacy location: devPath/dotfiles (name derived from repo_url)
+	legacy := filepath.Join(tmpDev, "dotfiles")
+	if err := os.MkdirAll(filepath.Join(legacy, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Higher-priority project match: devPath/myproject/dotfiles
+	viper.Set("dotfiles.repo_url", "git@github.com:user/dotfiles.git")
+	viper.Set("projects", []Project{
+		{Name: "myproject", Repos: []ProjectRepo{{URL: "git@github.com:user/dotfiles.git"}}},
+	})
+	projRepo := filepath.Join(tmpDev, "myproject", "dotfiles")
+	if err := os.MkdirAll(filepath.Join(projRepo, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	candidates := TargetRepoCandidates(tmpDev)
+	if len(candidates) != 2 {
+		t.Fatalf("expected 2 candidates, got %v", candidates)
+	}
+	if candidates[0] != projRepo {
+		t.Errorf("expected project match first, got %v", candidates)
+	}
+	if candidates[1] != legacy {
+		t.Errorf("expected legacy second, got %v", candidates)
+	}
+
+	// Dedupe: same dir reachable twice still listed once.
+	if got := TargetRepoCandidates(tmpDev); len(got) != 2 {
+		t.Errorf("expected deduped candidates, got %v", got)
+	}
+
+	// Empty devPath yields nothing.
+	if got := TargetRepoCandidates(""); len(got) != 0 {
+		t.Errorf("expected no candidates for empty devPath, got %v", got)
+	}
+}
+
+func TestIsGitRepo(t *testing.T) {
+	if IsGitRepo("") {
+		t.Error("expected false for empty path")
+	}
+	dir := t.TempDir()
+	if IsGitRepo(dir) {
+		t.Error("expected false without .git")
+	}
+	if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if !IsGitRepo(dir) {
+		t.Error("expected true with .git directory")
+	}
+}

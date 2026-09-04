@@ -32,6 +32,7 @@ eng config [flags]
 * [eng config dotfiles-branch](eng_config_dotfiles-branch.md)	 - Update config dotfiles branch
 * [eng config dotfiles-repo](eng_config_dotfiles-repo.md)	 - Update config dotfiles repo path
 * [eng config dotfiles-repo-url](eng_config_dotfiles-repo-url.md)	 - Update config dotfiles repo URL
+* [eng config dotfiles-target-repo-path](eng_config_dotfiles-target-repo-path.md)	 - Show or set the dotfiles target repo path for copy-changes
 * [eng config edit](eng_config_edit.md)	 - Interactively edit the eng CLI configuration
 * [eng config email](eng_config_email.md)	 - Update config email
 * [eng config git-dev-path](eng_config_git-dev-path.md)	 - Update config git dev path
