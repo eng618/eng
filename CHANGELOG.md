@@ -1,5 +1,24 @@
 <a name="unreleased"></a>
 
+## [1.53.0](https://github.com/eng618/eng/compare/v1.52.0...v1.53.0) (2026-09-04)
+
+
+### Features
+
+* Add interactive target repository resolution to dotfiles copy-changes via config and prompts ([fb07cde](https://github.com/eng618/eng/commit/fb07cdee094706ae2f5213d5506b36abaeb78450))
+* Add pre-push hook to prevent doc drift and update GPG renewal to avoid embedding local home paths in CLI help ([73cc909](https://github.com/eng618/eng/commit/73cc9095c48313c62bec97c50f2a60559b091a2d))
+
+
+### Bug Fixes
+
+* Decouple internal packages from UI by injecting prompts via command-layer hooks ([902d306](https://github.com/eng618/eng/commit/902d306c08fed1b4b2a2512a216b7f0a0d7717e3))
+* Migrate prompt functions to internal/config and modularize dashboard UI components ([1bbaa8a](https://github.com/eng618/eng/commit/1bbaa8a905e3dee38592dc05fbf9fc55faf4860d))
+
+
+### Miscellaneous
+
+* Add documentation linting, link checking, and freshness verification tools to CI and Taskfile ([2a88804](https://github.com/eng618/eng/commit/2a888041b5268d98502553614b5be288986197a2))
+
 ## [1.52.0](https://github.com/eng618/eng/compare/v1.51.0...v1.52.0) (2026-09-04)
 
 
