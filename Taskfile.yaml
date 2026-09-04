@@ -134,6 +134,7 @@ tasks:
       - task: format
       - task: lint
       - task: test
+      - task: docs:check
 
   # -----------------------------------------------------------------------------
   # Module Support
@@ -189,6 +190,25 @@ tasks:
       - update-docs
       - docs-update
       - gendocs
+
+  docs:check:
+    desc: Fail if generated CLI docs drifted from checked-in docs
+    cmds:
+      - echo "Checking CLI documentation freshness..."
+      - go run ./tools/gendocs --check
+
+  docs:lint:
+    desc: Lint Markdown documentation (excludes generated CLI pages)
+    cmds:
+      - echo "Linting Markdown documentation..."
+      - npx --yes markdownlint-cli2
+      - npx --yes prettier --check README.md docs/README.md docs/ROADMAP.md "docs/tutorials/*.md" "docs/how-to/*.md" "docs/explanation/*.md" docs/reference/commands.md
+
+  docs:links:
+    desc: Check Markdown links (docs + README)
+    cmds:
+      - echo "Checking Markdown links..."
+      - npx --yes markdown-link-check -q -c .markdown-link-check.json README.md docs/README.md docs/ROADMAP.md docs/tutorials/getting-started.md docs/how-to/new-machine-setup.md docs/how-to/manage-repositories.md docs/how-to/dotfiles-secrets.md docs/how-to/session-logs.md docs/how-to/release.md docs/how-to/test.md docs/reference/commands.md docs/explanation/architecture.md docs/explanation/telemetry.md
 
   tools:test:
     desc: Run tests for maintenance tools

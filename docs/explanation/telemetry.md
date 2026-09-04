@@ -45,34 +45,34 @@ The telemetry client is engineered with a strict **privacy-first** approach:
 
 ### Events Sent by `eng`
 
-| Event Name | Trigger |
-| :--- | :--- |
-| `cli_command_executed` | Dispatched upon completion of any CLI command |
-| `doctor_diagnostics_run` | Dispatched when `eng doctor` runs |
+| Event Name                    | Trigger                                                            |
+| :---------------------------- | :----------------------------------------------------------------- |
+| `cli_command_executed`        | Dispatched upon completion of any CLI command                      |
+| `doctor_diagnostics_run`      | Dispatched when `eng doctor` runs                                  |
 | `telemetry_connection_tested` | Dispatched when testing connection via `eng config telemetry test` |
 
 ### `cli_command_executed` Payload Properties
 
-| Property | Type | Example Values | Description |
-| :--- | :--- | :--- | :--- |
-| `command` | String | `git sync`, `doctor`, `system update` | Full command path executed |
-| `root_command` | String | `git`, `system`, `dotfiles` | Top-level command group |
-| `subcommand` | String | `sync`, `update`, `auth` | Nested subcommand |
-| `duration_ms` | Number | `45`, `1240` | Execution latency in milliseconds |
-| `success` | Boolean | `true`, `false` | Whether command completed successfully |
-| `exit_code` | Number | `0`, `1` | Command process exit code |
-| `error_category` | String | `none`, `usage_error`, `permission_denied` | Categorized error classification |
-| `flags` | Array | `["--verbose"]` | Sanitized list of flag names passed |
-| `flags_count` | Number | `1` | Count of flags used |
-| `args_count` | Number | `2` | Count of positional arguments |
-| `cli_version` | String | `1.47.0`, `dev` | Installed CLI version |
-| `build_commit` | String | `a1b2c3d` | Git commit hash at compile-time |
-| `go_version` | String | `go1.24.0` | Go runtime version |
-| `os` | String | `darwin`, `linux`, `windows` | Client operating system |
-| `arch` | String | `arm64`, `amd64` | Client CPU architecture |
-| `is_ci` | Boolean | `true`, `false` | Whether executed in CI runner (GitHub Actions, etc.) |
-| `is_interactive` | Boolean | `true`, `false` | Whether standard output is connected to a TTY terminal |
-| `shell` | String | `zsh`, `bash`, `fish` | User's active shell |
+| Property         | Type    | Example Values                             | Description                                            |
+| :--------------- | :------ | :----------------------------------------- | :----------------------------------------------------- |
+| `command`        | String  | `git sync`, `doctor`, `system update`      | Full command path executed                             |
+| `root_command`   | String  | `git`, `system`, `dotfiles`                | Top-level command group                                |
+| `subcommand`     | String  | `sync`, `update`, `auth`                   | Nested subcommand                                      |
+| `duration_ms`    | Number  | `45`, `1240`                               | Execution latency in milliseconds                      |
+| `success`        | Boolean | `true`, `false`                            | Whether command completed successfully                 |
+| `exit_code`      | Number  | `0`, `1`                                   | Command process exit code                              |
+| `error_category` | String  | `none`, `usage_error`, `permission_denied` | Categorized error classification                       |
+| `flags`          | Array   | `["--verbose"]`                            | Sanitized list of flag names passed                    |
+| `flags_count`    | Number  | `1`                                        | Count of flags used                                    |
+| `args_count`     | Number  | `2`                                        | Count of positional arguments                          |
+| `cli_version`    | String  | `1.47.0`, `dev`                            | Installed CLI version                                  |
+| `build_commit`   | String  | `a1b2c3d`                                  | Git commit hash at compile-time                        |
+| `go_version`     | String  | `go1.24.0`                                 | Go runtime version                                     |
+| `os`             | String  | `darwin`, `linux`, `windows`               | Client operating system                                |
+| `arch`           | String  | `arm64`, `amd64`                           | Client CPU architecture                                |
+| `is_ci`          | Boolean | `true`, `false`                            | Whether executed in CI runner (GitHub Actions, etc.)   |
+| `is_interactive` | Boolean | `true`, `false`                            | Whether standard output is connected to a TTY terminal |
+| `shell`          | String  | `zsh`, `bash`, `fish`                      | User's active shell                                    |
 
 ---
 

@@ -67,7 +67,7 @@ func TestCommand(t *testing.T) {
         // Return a mock executable command
         return exec.Command("echo", "mocked output")
     }
-    
+
     // Call the command runner logic...
 }
 ```
@@ -93,7 +93,7 @@ func TestInteractiveCommand(t *testing.T) {
     ui.Input = func(prompt, defaultVal string) (string, error) {
         return "mocked-value", nil
     }
-    
+
     // Execute command...
 }
 ```

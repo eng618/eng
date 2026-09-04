@@ -50,7 +50,7 @@ eng config edit --interactive   # full TUI editor: email, dotfiles, GitLab, …
 
 ## 3. Register your first project
 
-A *project* is a named group of repositories living under your dev folder:
+A _project_ is a named group of repositories living under your dev folder:
 
 ```sh
 eng project add -p MyProject     # add a repo (prompts for URL)

@@ -163,22 +163,22 @@ If those prerequisites are not met, the restore step is skipped safely.
 
 ### Available Commands
 
-| Command         | Description                                                        |
-| --------------- | ------------------------------------------------------------------ |
-| `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status) |
+| Command         | Description                                                                  |
+| --------------- | ---------------------------------------------------------------------------- |
+| `eng git`       | Manage multiple git repositories (sync, fetch, pull, push, status)           |
 | `eng compose`   | Manage Docker Compose swarms (up, down, pull, status, logs) — alias: `swarm` |
-| `eng project`   | Manage project-based repository collections                        |
-| `eng dashboard` | Interactive TUI command center for monitoring and managing projects|
-| `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)           |
-| `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)   |
-| `eng files`     | File utilities (find-and-delete, find-non-movie-folders)           |
-| `eng codemod`   | Project codemods (lint-setup, prettier, copilot)                   |
-| `eng tailscale` | Tailscale helpers (up, down) — alias: `ts`                         |
-| `eng gitlab`    | GitLab integration (mr-rules, auth)                                |
-| `eng version`   | Show version, check for updates                                    |
-| `eng config`    | Manage CLI configuration                                           |
-| `eng logs`      | View session logs from verbose commands (list, show, clean)        |
-| `eng doctor`    | Check system health and verify dependencies — alias: `doc`         |
+| `eng project`   | Manage project-based repository collections                                  |
+| `eng dashboard` | Interactive TUI command center for monitoring and managing projects          |
+| `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)                     |
+| `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)             |
+| `eng files`     | File utilities (find-and-delete, find-non-movie-folders)                     |
+| `eng codemod`   | Project codemods (lint-setup, prettier, copilot)                             |
+| `eng tailscale` | Tailscale helpers (up, down) — alias: `ts`                                   |
+| `eng gitlab`    | GitLab integration (mr-rules, auth)                                          |
+| `eng version`   | Show version, check for updates                                              |
+| `eng config`    | Manage CLI configuration                                                     |
+| `eng logs`      | View session logs from verbose commands (list, show, clean)                  |
+| `eng doctor`    | Check system health and verify dependencies — alias: `doc`                   |
 
 For detailed command documentation, see [docs/reference/commands.md](docs/reference/commands.md).
 
@@ -204,7 +204,6 @@ Full index: [docs/README.md](docs/README.md) (Diátaxis: tutorials, how-tos, ref
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/eng618/eng/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/eng618/eng/discussions)
 
 ## Contributing
 

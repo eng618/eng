@@ -1,0 +1,70 @@
+# Validates hand-written and generated documentation.
+# Fails when generated CLI reference drifted, Markdown lint fails,
+# or any checked link is dead.
+
+name: Docs
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'Taskfile.yaml'
+      - 'tools/gendocs/**'
+      - 'cmd/**'
+      - '.markdownlint-cli2.jsonc'
+      - '.markdown-link-check.json'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'Taskfile.yaml'
+      - 'tools/gendocs/**'
+      - 'cmd/**'
+      - '.markdownlint-cli2.jsonc'
+      - '.markdown-link-check.json'
+      - '.github/workflows/docs.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Task
+        uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check generated docs are fresh
+        run: task docs:check
+
+      - name: Lint Markdown
+        run: task docs:lint
+
+      - name: Check links
+        run: task docs:links

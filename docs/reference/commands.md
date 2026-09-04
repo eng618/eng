@@ -60,14 +60,14 @@ Manage multi-service Docker Compose stacks with lifecycle commands, inter-stack 
 
 ### Commands
 
-| Command | Description |
-| ------- | ----------- |
-| `eng compose list` / `ls` | List all discovered compose stacks under `$HOME/bin/containers` |
-| `eng compose up [stack...] [-e env] [-a] [-d] [--build]` | Spin up target stack(s) (e.g. `media`, `arrsenal`, `immich`) |
-| `eng compose down [stack...] [-a] [-v]` | Spin down target stack(s) and optionally remove volumes |
-| `eng compose pull [stack...] [-a]` | Pull latest images for target stack(s) |
-| `eng compose status [stack...] [--json] [-a] [-d] [-p]` | Show live stack status formatted with Lip Gloss tables; use `-d` for details, `-p` for interactive viewport |
-| `eng compose logs <stack> [-f] [--tail lines]` | Tail log output for a specific compose stack |
+| Command                                                  | Description                                                                                                 |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `eng compose list` / `ls`                                | List all discovered compose stacks under `$HOME/bin/containers`                                             |
+| `eng compose up [stack...] [-e env] [-a] [-d] [--build]` | Spin up target stack(s) (e.g. `media`, `arrsenal`, `immich`)                                                |
+| `eng compose down [stack...] [-a] [-v]`                  | Spin down target stack(s) and optionally remove volumes                                                     |
+| `eng compose pull [stack...] [-a]`                       | Pull latest images for target stack(s)                                                                      |
+| `eng compose status [stack...] [--json] [-a] [-d] [-p]`  | Show live stack status formatted with Lip Gloss tables; use `-d` for details, `-p` for interactive viewport |
+| `eng compose logs <stack> [-f] [--tail lines]`           | Tail log output for a specific compose stack                                                                |
 
 ### Config
 
@@ -93,7 +93,7 @@ eng config git-dev-path /path/to/your/dev/folder
 
 Projects are stored in your development folder with each project having its own subdirectory:
 
-```
+```text
 ~/Development/
   MyProject/
     api/
@@ -291,12 +291,12 @@ Manage `asdf` version manager plugins, check project version requirements, updat
 
 ### Commands
 
-| Command | Description |
-| ------- | ----------- |
+| Command                  | Description                                                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `eng asdf update-latest` | Update `.tool-versions` to latest available tool releases (defaults to user-level global config at `$HOME/.tool-versions`) |
-| `eng asdf prune` | Prune outdated, unused `asdf` tool versions |
-| `eng asdf check` | Check if current project requirements in `.tool-versions` are installed |
-| `eng asdf status` | Display status of all installed `asdf` plugins and versions |
+| `eng asdf prune`         | Prune outdated, unused `asdf` tool versions                                                                                |
+| `eng asdf check`         | Check if current project requirements in `.tool-versions` are installed                                                    |
+| `eng asdf status`        | Display status of all installed `asdf` plugins and versions                                                                |
 
 ### `update-latest` Flags
 
@@ -323,23 +323,23 @@ System utilities for macOS and Linux, including developer setup automation.
 
 #### Setup Flags
 
-| Flag                   | Description                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| `-i`, `--interactive`  | Prompt before each step — choose to continue, skip, or exit cleanly            |
+| Flag                  | Description                                                         |
+| --------------------- | ------------------------------------------------------------------- |
+| `-i`, `--interactive` | Prompt before each step — choose to continue, skip, or exit cleanly |
 
 ### System Utilities
 
-| Command                        | Description                                    |
-| ------------------------------ | ---------------------------------------------- |
-| `eng system gpg renew`         | Extend GPG key & subkey expiry (aliases: `update`, `extend`) |
+| Command                        | Description                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| `eng system gpg renew`         | Extend GPG key & subkey expiry (aliases: `update`, `extend`)                        |
 | `eng system gpg sync`          | Sync updated public key from keyserver/GitHub (aliases: `pull`, `fetch`, `refresh`) |
-| `eng system killPort <port>`   | Kill process on a port                         |
-| `eng system killProcess [pid]` | Kill a process by PID or interactively         |
-| `eng system compauditFix`      | Fix insecure directories reported by compaudit |
-| `eng system update`            | Update system packages, cleanup, brew, asdf, and IDE |
-| `eng system update brew`       | Update Homebrew packages only                  |
-| `eng system update ide`        | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`) |
-| `eng system proxy`             | Manage proxy settings                          |
+| `eng system killPort <port>`   | Kill process on a port                                                              |
+| `eng system killProcess [pid]` | Kill a process by PID or interactively                                              |
+| `eng system compauditFix`      | Fix insecure directories reported by compaudit                                      |
+| `eng system update`            | Update system packages, cleanup, brew, asdf, and IDE                                |
+| `eng system update brew`       | Update Homebrew packages only                                                       |
+| `eng system update ide`        | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`)           |
+| `eng system proxy`             | Manage proxy settings                                                               |
 
 ### killProcess Flags
 
@@ -355,11 +355,11 @@ File management utilities for finding and cleaning up files.
 
 ### Commands
 
-| Command                                     | Description                              |
-| ------------------------------------------- | ---------------------------------------- |
-| `eng files findAndDelete [directory]`       | Find and delete files by type            |
-| `eng files findNonMovieFolders [--dry-run]` | Find/delete non-movie folders            |
-| `eng files shred [paths...]`               | Securely delete files/dirs by overwriting |
+| Command                                     | Description                               |
+| ------------------------------------------- | ----------------------------------------- |
+| `eng files findAndDelete [directory]`       | Find and delete files by type             |
+| `eng files findNonMovieFolders [--dry-run]` | Find/delete non-movie folders             |
+| `eng files shred [paths...]`                | Securely delete files/dirs by overwriting |
 
 ### findAndDelete Flags
 
@@ -381,13 +381,13 @@ File management utilities for finding and cleaning up files.
 
 ### shred Methods
 
-| Method | Passes | Description |
-| -------- | -------- | ------------- |
-| `auto` | 3 | Platform-optimized default (random) |
-| `random` | 3 | Cryptographically random bytes |
-| `zero` | 1 | All zeros (fast) |
-| `dod` | 3 | DoD 5220.22-M (random, complement, random) |
-| `gutmann` | 35 | Full 35-pass Gutmann method |
+| Method    | Passes | Description                                |
+| --------- | ------ | ------------------------------------------ |
+| `auto`    | 3      | Platform-optimized default (random)        |
+| `random`  | 3      | Cryptographically random bytes             |
+| `zero`    | 1      | All zeros (fast)                           |
+| `dod`     | 3      | DoD 5220.22-M (random, complement, random) |
+| `gutmann` | 35     | Full 35-pass Gutmann method                |
 
 ### shred Examples
 
@@ -532,10 +532,10 @@ eng gitlab auth doctor --host gitlab.example.com --project group/sub/repo --quie
 
 ## Version
 
-| Command                | Description                                      |
-| ---------------------- | ------------------------------------------------ |
-| `eng version`          | Show version, build info, check for updates      |
-| `eng version --update` | Auto-update via Homebrew or install script |
+| Command                | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `eng version`          | Show version, build info, check for updates |
+| `eng version --update` | Auto-update via Homebrew or install script  |
 
 ---
 
@@ -571,13 +571,13 @@ Verbose commands (`eng git sync-all/fetch-all/pull-all/push-all`, `eng project f
 timestamped log file (kept under the OS cache dir, latest 20 runs; override with `ENG_LOG_DIR`).
 Each run ends with a `Full log: <path>` pointer.
 
-| Command                          | Description                                              |
-| -------------------------------- | -------------------------------------------------------- |
-| `eng logs` / `eng logs list`     | List recent session logs, newest first                   |
-| `eng logs show [name]`           | Show a session log (latest by default; prefix matching)  |
-| `eng logs show --tail N`         | Show only the last N lines                               |
-| `eng logs show -f`               | Stream new lines until interrupted                       |
-| `eng logs clean`                 | Delete all session logs                                  |
+| Command                      | Description                                             |
+| ---------------------------- | ------------------------------------------------------- |
+| `eng logs` / `eng logs list` | List recent session logs, newest first                  |
+| `eng logs show [name]`       | Show a session log (latest by default; prefix matching) |
+| `eng logs show --tail N`     | Show only the last N lines                              |
+| `eng logs show -f`           | Stream new lines until interrupted                      |
+| `eng logs clean`             | Delete all session logs                                 |
 
 ```sh
 eng git sync-all        # summary in terminal, details in log file

@@ -1,0 +1,24 @@
+// Markdown lint for hand-written docs. Generated per-command pages under
+// docs/reference/cli/ are excluded: cobra's markdown output (fences without
+// languages, ## top headings, long option lines) is not ours to restyle.
+{
+  "config": {
+    "default": true,
+    // Long lines are normal in tables and shell examples.
+    "MD013": false,
+    // Same heading text under different sections (e.g. per-command
+    // "Commands"/"Flags" in the command reference) is fine.
+    "MD024": {
+      "siblings_only": true
+    }
+  },
+  "globs": [
+    "README.md",
+    "docs/*.md",
+    "docs/tutorials/*.md",
+    "docs/how-to/*.md",
+    "docs/explanation/*.md",
+    "docs/reference/commands.md"
+  ],
+  "ignores": ["docs/reference/cli/**", "node_modules/**"]
+}

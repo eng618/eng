@@ -39,7 +39,7 @@ Transform how the CLI communicates failures to the user.
 ### 2.1 Smart, Styled Error Handling
 
 - **Status**: `[x]`
-- **Task**: Create a custom error formatter. When an error occurs, output a styled error box that not only explains *what* failed, but provides *actionable suggestions* on how to fix it (e.g., pointing to the exact `eng system setup` command needed).
+- **Task**: Create a custom error formatter. When an error occurs, output a styled error box that not only explains _what_ failed, but provides _actionable suggestions_ on how to fix it (e.g., pointing to the exact `eng system setup` command needed).
 - **Impact**: High (Drastically reduces user frustration during setup or edge cases).
 
 ### 2.2 Progressive Disclosure for Logs
