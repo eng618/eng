@@ -37,13 +37,24 @@ public keys, and strips the master key locally (keeping subkeys only for securit
 }
 
 func init() {
-	homeDir, _ := os.UserHomeDir()
-	defaultKeyDir := filepath.Join(homeDir, "Downloads", "gpg")
-
-	RenewGPGCmd.Flags().StringVarP(&renewKeyDir, "key-dir", "d", defaultKeyDir, "Directory containing GPG key backups")
+	// NOTE: the default stays empty on purpose. A home-derived default here
+	// would bake the local username into --help output, making generated
+	// docs differ per machine (and CI would flag it as drift). The runtime
+	// default (~/Downloads/gpg) resolves in renewGPG instead.
+	RenewGPGCmd.Flags().
+		StringVarP(&renewKeyDir, "key-dir", "d", "", "Directory containing GPG key backups (default: ~/Downloads/gpg)")
 	RenewGPGCmd.Flags().StringVar(&renewDuration, "duration", "1y", "Expiration duration (e.g., 1y, 2y, 6m)")
 	RenewGPGCmd.Flags().
 		BoolVar(&renewKeepMaster, "keep-master", false, "Keep master key in local keyring (do not strip to subkeys-only)")
+}
+
+// defaultRenewKeyDir resolves the runtime default key directory.
+func defaultRenewKeyDir() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil || homeDir == "" {
+		return ""
+	}
+	return filepath.Join(homeDir, "Downloads", "gpg")
 }
 
 // renewGPG guides the user through extending GPG key expiration and managing master key export/removal.
@@ -56,13 +67,17 @@ func renewGPG(verbose bool) error {
 	}
 
 	// 2. Resolve Key Directory
-	keyDir, err := ui.Input("Directory containing GPG key backups", renewKeyDir)
+	flagKeyDir := renewKeyDir
+	if flagKeyDir == "" {
+		flagKeyDir = defaultRenewKeyDir()
+	}
+	keyDir, err := ui.Input("Directory containing GPG key backups", flagKeyDir)
 	if err != nil {
 		return fmt.Errorf("canceled: %w", err)
 	}
 	keyDir = strings.TrimSpace(keyDir)
 	if keyDir == "" {
-		keyDir = renewKeyDir
+		keyDir = flagKeyDir
 	}
 
 	if err := os.MkdirAll(keyDir, 0o700); err != nil {

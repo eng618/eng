@@ -211,11 +211,13 @@ Contributions are welcome! Please follow these guidelines:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following the [Go style guidelines](.github/copilot-instructions.md)
-4. Run validation: `task validate` (runs format, lint, and tests)
-5. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+3. Enable the pre-push hook (one-time per clone): `git config core.hooksPath .githooks`
+   (blocks pushes with stale generated docs; bypass with `git push --no-verify`)
+4. Make your changes following the [Go style guidelines](.github/copilot-instructions.md)
+5. Run validation: `task validate` (runs format, lint, and tests)
+6. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
 ### Development Commands
 

@@ -1,0 +1,23 @@
+#!/bin/sh
+# Pre-push hook: catch generated-docs drift before it reaches CI.
+#
+# The `eng system gpg renew --help` incident showed why: generated reference
+# pages must match the CLI tree on every machine, so `task docs:check` gates
+# the push. CI runs the same check as a backstop.
+#
+# Install once per clone:
+#   git config core.hooksPath .githooks
+#
+# To bypass in an emergency: git push --no-verify
+
+if ! command -v task >/dev/null 2>&1; then
+  echo "pre-push: 'task' not found, skipping docs check (CI will verify)" >&2
+  exit 0
+fi
+
+if ! task docs:check; then
+  echo "" >&2
+  echo "pre-push: generated docs are out of date." >&2
+  echo "pre-push: run 'task docs', verify with 'git status', and amend your commit." >&2
+  exit 1
+fi
