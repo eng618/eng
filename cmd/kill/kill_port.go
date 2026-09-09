@@ -3,7 +3,6 @@ package kill
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -27,13 +27,13 @@ type PortInfo struct {
 }
 
 func findPortTool() string {
-	if _, err := exec.LookPath("lsof"); err == nil {
+	if _, err := lookPath("lsof"); err == nil {
 		return "lsof"
 	}
-	if _, err := exec.LookPath("ss"); err == nil {
+	if _, err := lookPath("ss"); err == nil {
 		return "ss"
 	}
-	if _, err := exec.LookPath("netstat"); err == nil {
+	if _, err := lookPath("netstat"); err == nil {
 		return "netstat"
 	}
 	return ""
@@ -45,14 +45,14 @@ func listPorts(filter string) ([]PortInfo, error) {
 		return nil, errors.New("no suitable tool found for listing ports (lsof, ss, netstat)")
 	}
 
-	var cmd *exec.Cmd
+	var cmd *execx.Cmd
 	switch tool {
 	case "lsof":
-		cmd = exec.Command("lsof", "-i", "-P", "-n")
+		cmd = execCommand("lsof", "-i", "-P", "-n")
 	case "ss":
-		cmd = exec.Command("ss", "-tulpn")
+		cmd = execCommand("ss", "-tulpn")
 	case "netstat":
-		cmd = exec.Command("netstat", "-tulpn")
+		cmd = execCommand("netstat", "-tulpn")
 	}
 
 	outputBytes, err := cmd.CombinedOutput()
@@ -350,13 +350,13 @@ func killPort(portStr, signal string, isVerbose, dryRun, assumeYes bool) {
 		return
 	}
 
-	var lsofCmd *exec.Cmd
+	var lsofCmd *execx.Cmd
 	switch tool {
 	case "lsof":
-		lsofCmd = exec.Command("lsof", "-ti:"+portStr)
+		lsofCmd = execCommand("lsof", "-ti:"+portStr)
 	case "ss":
 		// ss -tulpn | grep :port | awk '{print $7}' | sed 's/.*pid=\([0-9]*\).*/\1/'
-		lsofCmd = exec.Command(
+		lsofCmd = execCommand(
 			"sh",
 			"-c",
 			fmt.Sprintf(
@@ -365,7 +365,7 @@ func killPort(portStr, signal string, isVerbose, dryRun, assumeYes bool) {
 			),
 		)
 	case "netstat":
-		lsofCmd = exec.Command(
+		lsofCmd = execCommand(
 			"sh",
 			"-c",
 			fmt.Sprintf(
@@ -388,7 +388,7 @@ func killPort(portStr, signal string, isVerbose, dryRun, assumeYes bool) {
 		log.Verbose(isVerbose, "lsof output: %s", output)
 
 		// Check if the error is ExitError and output is empty - common case for "port not found"
-		var exitErr *exec.ExitError
+		var exitErr *execx.ExitError
 		if errors.As(err, &exitErr) && output == "" {
 			log.Warn("No process found listening on port %s.", portStr)
 		} else {
@@ -438,7 +438,7 @@ func killPort(portStr, signal string, isVerbose, dryRun, assumeYes bool) {
 		}
 
 		// Use 'kill -<signal> <pid>' to terminate.
-		killCmd := exec.Command("kill", "-"+signal, pid)
+		killCmd := execCommand("kill", "-"+signal, pid)
 		log.Verbose(isVerbose, "Executing: %s", killCmd.String())
 
 		// Run kill command

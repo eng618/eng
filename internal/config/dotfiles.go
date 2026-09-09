@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -68,7 +69,7 @@ func BareRepoPath() string {
 
 // UpdateBareRepoPath prompts the user to input their bare repository path.
 func UpdateBareRepoPath() {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := paths.Home()
 	cobra.CheckErr(err)
 
 	defaultPath := filepath.Join(homeDir, ".eng-cfg")
@@ -92,7 +93,7 @@ func WorktreePath() string {
 
 // UpdateWorktreePath prompts the user to input their worktree path.
 func UpdateWorktreePath() {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := paths.Home()
 	cobra.CheckErr(err)
 
 	path, err := InputPrompt("What is your worktree path (usually home)?", homeDir)

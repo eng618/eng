@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 )
 
-var execCommand = exec.Command
+var execCommand = execx.Command
 
 // Stack represents a Docker Compose stack definition.
 type Stack struct {
@@ -34,8 +35,7 @@ type Manager struct {
 // NewManager creates a new containers Manager targeting the specified base path.
 func NewManager(basePath string) *Manager {
 	if basePath == "" {
-		home, _ := os.UserHomeDir()
-		basePath = filepath.Join(home, "bin", "containers")
+		basePath = filepath.Join(paths.MustHome(), "bin", "containers")
 	}
 	return &Manager{BasePath: basePath}
 }

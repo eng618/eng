@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/sysinfo"
 	"github.com/eng618/eng/internal/ui"
 )
@@ -266,7 +267,7 @@ func TestSetupDotfiles_RunsSecretsRestoreWhenConfigured(t *testing.T) {
 		calls = append(calls, strings.Join(args, " "))
 		return exec.Command("echo", "mock")
 	}
-	defer func() { execCommand = exec.Command }()
+	defer func() { execCommand = execx.Command }()
 
 	if err := setupDotfiles(false); err != nil {
 		t.Fatalf("setupDotfiles returned error: %v", err)
@@ -302,7 +303,7 @@ func TestSetupDotfiles_SkipsSecretsRestoreWithoutToken(t *testing.T) {
 		calls = append(calls, strings.Join(args, " "))
 		return exec.Command("echo", "mock")
 	}
-	defer func() { execCommand = exec.Command }()
+	defer func() { execCommand = execx.Command }()
 
 	if err := setupDotfiles(false); err != nil {
 		t.Fatalf("setupDotfiles returned error: %v", err)

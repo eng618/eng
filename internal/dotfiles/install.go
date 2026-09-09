@@ -14,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/repo"
 )
 
@@ -295,7 +296,7 @@ func backupConflicts(bareRepoPath, homeDir string) (string, bool, error) {
 
 // printCompletionInstructions displays instructions for using the cfg alias and other important information.
 func printCompletionInstructions(bareRepoPath string, hasConflicts bool, backupPath string) {
-	homeDir, _ := os.UserHomeDir()
+	homeDir := paths.MustHome()
 
 	log.Message("")
 	log.Message("-----------------------------------------------------")
@@ -335,7 +336,7 @@ func printCompletionInstructions(bareRepoPath string, hasConflicts bool, backupP
 
 // getSSHAuth returns SSH authentication using the detected GitHub SSH key.
 func getSSHAuth() (*ssh.PublicKeys, error) {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := paths.Home()
 	if err != nil {
 		return nil, fmt.Errorf("could not determine home directory: %w", err)
 	}

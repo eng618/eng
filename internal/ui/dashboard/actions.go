@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,6 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/go-git/go-git/v5"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/repo"
 )
@@ -309,7 +309,7 @@ func cloneActionRepo(ctx context.Context, item ActionItem, prettyName string) er
 	if err := os.MkdirAll(parentDir, 0o755); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, "git", "clone", item.RepoName, item.FullPath)
+	cmd := execx.CommandContext(ctx, "git", "clone", item.RepoName, item.FullPath)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {
@@ -321,7 +321,7 @@ func cloneActionRepo(ctx context.Context, item ActionItem, prettyName string) er
 
 func openActionRepo(ctx context.Context, item ActionItem) error {
 	log.Info("Opening %s...", item.FullPath)
-	cmd := exec.CommandContext(ctx, "open", item.FullPath)
+	cmd := execx.CommandContext(ctx, "open", item.FullPath)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {

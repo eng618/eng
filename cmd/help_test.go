@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/internal/paths"
 )
 
 func TestHelpContainsNoLocalPaths(t *testing.T) {
-	home, err := os.UserHomeDir()
+	home, err := paths.Home()
 	if err != nil || home == "" || home == "/" {
 		t.Skip("no usable home dir")
 	}

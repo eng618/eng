@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 )
@@ -210,7 +210,7 @@ func init() {
 // getModifiedFilesFunc is injectable for tests.
 var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error) {
 	var buf bytes.Buffer
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain", "-z")
+	cmd := execx.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status", "--porcelain", "-z")
 	cmd.Stdout = &buf
 	cmd.Stderr = log.ErrorWriter()
 	err := cmd.Run()
@@ -237,7 +237,7 @@ var getModifiedFilesFunc = func(repoPath, worktreePath string) ([]string, error)
 
 // resetFile runs git checkout -- file.
 func resetFile(repoPath, worktreePath, file string) error {
-	cmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
+	cmd := execx.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "checkout", "--", file)
 	cmd.Dir = worktreePath // Run from worktree directory
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()

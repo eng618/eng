@@ -13,6 +13,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 	appversion "github.com/eng618/eng/internal/version"
 )
@@ -321,7 +322,7 @@ func TestGetInstallSource(t *testing.T) {
 		lookPath = origLookPath
 	}()
 
-	home, _ := os.UserHomeDir()
+	home := paths.MustHome()
 	tests := []struct {
 		name     string
 		mockPath string

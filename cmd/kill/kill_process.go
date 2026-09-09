@@ -3,7 +3,6 @@ package kill
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -24,7 +23,7 @@ type ProcessInfo struct {
 }
 
 func listProcesses(filter string) ([]ProcessInfo, error) {
-	cmd := exec.Command("ps", "aux")
+	cmd := execCommand("ps", "aux")
 	outputBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("failed to run ps: %w", err)
@@ -246,7 +245,7 @@ func killProcess(pidStr, signal string, isVerbose bool) {
 	log.Message("Attempting to kill process with PID %s...", pidStr)
 
 	// Kill the process
-	killCmd := exec.Command("kill", "-"+signal, pidStr)
+	killCmd := execCommand("kill", "-"+signal, pidStr)
 	log.Verbose(isVerbose, "Executing: %s", killCmd.String())
 
 	// Run kill command

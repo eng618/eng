@@ -1,14 +1,14 @@
 package auth
 
 import (
-	"os/exec"
-
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/internal/execx"
 )
 
 var (
-	execCommand = exec.Command
-	lookPath    = exec.LookPath
+	execCommand = execx.Command
+	lookPath    = execx.LookPath
 )
 
 // AuthCmd is the parent for gitlab auth commands.

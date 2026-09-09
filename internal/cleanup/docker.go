@@ -3,19 +3,19 @@ package cleanup
 import (
 	"bytes"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/dustin/go-humanize"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 )
 
-var execCommand = exec.Command
-var lookPath = exec.LookPath
+var execCommand = execx.Command
+var lookPath = execx.LookPath
 
 // IsDockerAvailable checks if the docker CLI is present and the daemon responds.
 func IsDockerAvailable() bool {

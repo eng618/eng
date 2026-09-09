@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -20,11 +19,13 @@ import (
 	"github.com/dustin/go-humanize"
 
 	"github.com/eng618/eng/internal/containers"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
-var execCommandContext = exec.CommandContext
+var execCommandContext = execx.CommandContext
 
 // Manager handles Immich stack operations and health inspection.
 type Manager struct {
@@ -108,7 +109,7 @@ type BackupResult struct {
 
 // NewManager creates an Immich manager targeting the user container setup.
 func NewManager(basePath string) *Manager {
-	home, _ := os.UserHomeDir()
+	home := paths.MustHome()
 	if basePath == "" {
 		basePath = filepath.Join(home, "bin", "containers", "immich-app")
 	}
@@ -139,13 +140,13 @@ func (m *Manager) HasSystemd() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}
-	_, err := exec.LookPath("systemctl")
+	_, err := execx.LookPath("systemctl")
 	return err == nil
 }
 
 // HasDocker checks if Docker CLI is available.
 func (m *Manager) HasDocker() bool {
-	_, err := exec.LookPath("docker")
+	_, err := execx.LookPath("docker")
 	return err == nil
 }
 

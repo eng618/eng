@@ -3,13 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/dashboard"
@@ -132,7 +132,7 @@ var selectEditorCmd = &cobra.Command{
 					options = append(options, opt.Name)
 				}
 			} else {
-				if _, err := exec.LookPath(opt.Command); err == nil {
+				if _, err := execx.LookPath(opt.Command); err == nil {
 					available = append(available, opt)
 					options = append(options, opt.Name)
 				}
@@ -159,12 +159,12 @@ var selectEditorCmd = &cobra.Command{
 			}
 		}
 
-		var execCmd *exec.Cmd
+		var execCmd *execx.Cmd
 		if chosen.IsApp {
-			execCmd = exec.Command("open", "-a", chosen.Command, targetPath)
+			execCmd = execx.Command("open", "-a", chosen.Command, targetPath)
 		} else {
 			parts := strings.Fields(chosen.Command)
-			execCmd = exec.Command(parts[0], append(parts[1:], targetPath)...)
+			execCmd = execx.Command(parts[0], append(parts[1:], targetPath)...)
 		}
 
 		execCmd.Stdin = os.Stdin

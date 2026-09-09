@@ -3,12 +3,12 @@ package dashboard
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/repo"
 )
 
@@ -41,7 +41,7 @@ func (m Model) openInCustomEditorCmd() (tea.Cmd, error) {
 		self = "eng"
 	}
 
-	execCmd := exec.Command(self, "dashboard", "select-editor", targetPath)
+	execCmd := execx.Command(self, "dashboard", "select-editor", targetPath)
 
 	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
 		return editorFinishedMsg{err: err}
@@ -62,7 +62,7 @@ func (m Model) openInTerminalCmd() (tea.Cmd, error) {
 		terminalApp = "iTerm"
 	}
 
-	execCmd := exec.Command("open", "-a", terminalApp, targetPath)
+	execCmd := execx.Command("open", "-a", terminalApp, targetPath)
 
 	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
 		return editorFinishedMsg{err: err}
@@ -97,7 +97,7 @@ func (m Model) resolveTargetPath() (string, error) {
 	return targetPath, nil
 }
 
-func resolveEditorCommand(editorConfig, targetPath string) *exec.Cmd {
+func resolveEditorCommand(editorConfig, targetPath string) *execx.Cmd {
 	cmdStr := editorConfig
 	if cmdStr == "" {
 		cmdStr = os.Getenv("VISUAL")
@@ -107,7 +107,7 @@ func resolveEditorCommand(editorConfig, targetPath string) *exec.Cmd {
 	}
 
 	if cmdStr == "" {
-		_, err := exec.LookPath("code")
+		_, err := execx.LookPath("code")
 		if err == nil {
 			cmdStr = "code"
 		} else {
@@ -116,7 +116,7 @@ func resolveEditorCommand(editorConfig, targetPath string) *exec.Cmd {
 	}
 
 	parts := strings.Fields(cmdStr)
-	execCmd := exec.Command(parts[0], parts[1:]...)
+	execCmd := execx.Command(parts[0], parts[1:]...)
 	execCmd.Args = append(execCmd.Args, targetPath)
 
 	return execCmd
@@ -159,7 +159,7 @@ func (m Model) addProjectOrRepoCmd() tea.Cmd {
 		args = append(args, "-p", preSelectedProject)
 	}
 
-	execCmd := exec.Command(self, args...)
+	execCmd := execx.Command(self, args...)
 
 	// Capture the project list state before execution. When no provider is
 	// wired (tests), fall back to the in-memory list so the diff is empty

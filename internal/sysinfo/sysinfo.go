@@ -3,9 +3,10 @@ package sysinfo
 import (
 	"bufio"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/eng618/eng/internal/execx"
 )
 
 // DistroInfo contains parsed distribution information from /etc/os-release.
@@ -20,7 +21,7 @@ type DistroInfo struct {
 
 var (
 	// LookPath is mockable for testing.
-	LookPath = exec.LookPath
+	LookPath = execx.LookPath
 	// ReadFile is mockable for testing.
 	ReadFile = os.ReadFile
 	// RuntimeGOOS is mockable for testing.

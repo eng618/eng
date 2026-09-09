@@ -2,12 +2,12 @@ package dotfiles
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -51,7 +51,7 @@ var StatusCmd = &cobra.Command{
 
 // checkStatus is injectable for tests to avoid executing git.
 var checkStatus = func(repoPath, worktreePath string) error {
-	gitCmd := exec.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status")
+	gitCmd := execx.Command("git", "--git-dir="+repoPath, "--work-tree="+worktreePath, "status")
 	gitCmd.Stdout = log.Writer()
 	gitCmd.Stderr = log.ErrorWriter()
 

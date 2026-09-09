@@ -9,10 +9,11 @@ import (
 
 	"golang.org/x/term"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 )
 
-var execCommand = exec.Command
+var execCommand = execx.Command
 
 // BitwardenItem represents a Bitwarden vault item.
 type BitwardenItem struct {

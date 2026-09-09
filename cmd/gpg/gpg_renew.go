@@ -13,6 +13,7 @@ import (
 
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -50,7 +51,7 @@ func init() {
 
 // defaultRenewKeyDir resolves the runtime default key directory.
 func defaultRenewKeyDir() string {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := paths.Home()
 	if err != nil || homeDir == "" {
 		return ""
 	}

@@ -1,16 +1,16 @@
 package asdf
 
 import (
-	"os"
-	"os/exec"
-
 	"github.com/spf13/cobra"
+
+	"github.com/eng618/eng/internal/execx"
+	"github.com/eng618/eng/internal/paths"
 )
 
 var (
-	execCommand = exec.Command
-	lookPath    = exec.LookPath
-	userHomeDir = os.UserHomeDir
+	execCommand = execx.Command
+	lookPath    = execx.LookPath
+	userHomeDir = paths.UserHomeDir
 )
 
 // AsdfCmd is the root command for asdf management.

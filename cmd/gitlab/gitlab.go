@@ -1,14 +1,13 @@
 package gitlab
 
 import (
-	"os/exec"
-
 	"github.com/spf13/cobra"
 
 	gitlabauth "github.com/eng618/eng/cmd/gitlab/auth"
+	"github.com/eng618/eng/internal/execx"
 )
 
-var execCommand = exec.Command
+var execCommand = execx.Command
 
 // GitLabCmd represents the parent command for GitLab-related operations.
 var GitLabCmd = &cobra.Command{

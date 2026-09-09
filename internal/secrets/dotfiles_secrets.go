@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 )
@@ -20,7 +20,7 @@ const dotfilesSecretsRetries = 4
 
 var (
 	bwsInvoke = defaultBWSInvoke
-	bwsLookUp = exec.LookPath
+	bwsLookUp = execx.LookPath
 	sleepFn   = time.Sleep
 
 	rateLimitDelayRE = regexp.MustCompile(`Try again in ([0-9]+)s`)
@@ -495,7 +495,7 @@ func invokeBWSWithRetry(args ...string) ([]byte, error) {
 }
 
 func defaultBWSInvoke(args ...string) ([]byte, error) {
-	cmd := exec.Command("bws", args...)
+	cmd := execx.Command("bws", args...)
 	cmd.Env = os.Environ()
 	return cmd.CombinedOutput()
 }

@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -18,8 +18,7 @@ func RunInteractiveEditor() error {
 
 	gitDevPath := viper.GetString("git.dev_path")
 	if gitDevPath == "" {
-		home, _ := os.UserHomeDir()
-		gitDevPath = home + "/Development"
+		gitDevPath = paths.Expand("~/Development")
 	}
 
 	dfRepoURL := viper.GetString("dotfiles.repo_url")

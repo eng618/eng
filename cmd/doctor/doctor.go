@@ -5,7 +5,6 @@ package doctor
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	execLookPath = exec.LookPath
+	execLookPath = execx.LookPath
 	osStat       = os.Stat
 )
 

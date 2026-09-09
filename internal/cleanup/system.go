@@ -11,13 +11,14 @@ import (
 
 	"github.com/eng618/eng/internal/asdf"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/sysinfo"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
 var detectDistro = sysinfo.Detect
-var userHomeDir = os.UserHomeDir
+var userHomeDir = paths.UserHomeDir
 
 // MultiSelectPrompt asks the user to pick cleanup operations. Wired by the
 // command layer (cmd/compose and cmd/clean inits) so this package never

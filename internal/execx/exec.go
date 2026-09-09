@@ -18,6 +18,12 @@ var (
 	LookPath       = exec.LookPath
 )
 
+// Cmd aliases exec.Cmd so callers can drop the os/exec import entirely.
+type Cmd = exec.Cmd
+
+// ExitError aliases exec.ExitError for exit-code inspection without os/exec.
+type ExitError = exec.ExitError
+
 // Runner is a minimal interface for running external processes.
 // DefaultRunner delegates to os/exec; tests provide fakes.
 type Runner interface {

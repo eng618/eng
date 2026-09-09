@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -19,7 +18,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 	appversion "github.com/eng618/eng/internal/version"
@@ -39,10 +40,10 @@ var (
 	// installScriptURL is the canonical install.sh used for curl installs and
 	// script-based self-updates (overridable in tests).
 	installScriptURL = "https://raw.githubusercontent.com/eng618/eng/main/install.sh"
-	execCommand      = exec.Command
+	execCommand      = execx.Command
 	osExecutable     = os.Executable
 	evalSymlinks     = filepath.EvalSymlinks
-	lookPath         = exec.LookPath
+	lookPath         = execx.LookPath
 )
 
 // Flag variable for the --update flag.
@@ -128,7 +129,7 @@ func getInstallSource(isVerbose bool) string {
 		return "Homebrew"
 	}
 	if dir, err := currentInstallDir(); err == nil {
-		home, _ := os.UserHomeDir()
+		home := paths.MustHome()
 		switch dir {
 		case "/usr/local/bin", "/opt/homebrew/bin", "/usr/bin", "/opt/local/bin",
 			filepath.Join(home, ".local", "bin"):
