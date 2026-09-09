@@ -15,132 +15,160 @@ func importGPGKeys(verbose bool) (string, GPGKeyInfo, error) {
 	log.Message("")
 	log.Start("GPG Key Import")
 
-	// Check if keys already exist in keyring
-	existingKeys, _ := listLocalSecretGPGKeys(verbose)
-	shouldImportFiles := true
-
-	if len(existingKeys) > 0 {
-		log.Message("Found %d existing secret key(s) in local GPG keyring.", len(existingKeys))
-		for _, k := range existingKeys {
-			status := "sec (master key present)"
-			if !k.HasMaster {
-				status = "sec# (subkey-only)"
-			}
-			log.Message("  • [%s] %s - %s", k.KeyID, k.UID, status)
-		}
-		log.Message("")
-
-		importMore, err := ui.Confirm("Do you want to import additional GPG key files?", false)
-		if err == nil {
-			shouldImportFiles = importMore
+	if shouldImportKeyFiles(verbose) {
+		if err := importKeyFilesFromDisk(); err != nil {
+			return "", GPGKeyInfo{}, err
 		}
 	}
 
-	if shouldImportFiles {
-		log.Message("You can provide GPG key files to import:")
-		log.Message("  • A master secret key file (e.g., eng618.secret.gpg)")
-		log.Message("  • Subkeys file (e.g., eng618.secsub.gpg)")
-		log.Message("")
+	if target, info, ok := selectKeyFromKeyring(verbose); ok {
+		return target, info, nil
+	}
 
-		secretKeyPath, err := ui.Input(
-			"Path to secret key file (leave empty to skip)",
-			filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
-		)
-		if err != nil {
-			return "", GPGKeyInfo{}, fmt.Errorf("canceled: %w", err)
+	return promptKeyIDManually()
+}
+
+// shouldImportKeyFiles lists existing keyring keys and asks whether to import key files.
+func shouldImportKeyFiles(verbose bool) bool {
+	existingKeys, _ := listLocalSecretGPGKeys(verbose)
+	if len(existingKeys) == 0 {
+		return true
+	}
+
+	log.Message("Found %d existing secret key(s) in local GPG keyring.", len(existingKeys))
+	for _, k := range existingKeys {
+		status := "sec (master key present)"
+		if !k.HasMaster {
+			status = "sec# (subkey-only)"
 		}
+		log.Message("  • [%s] %s - %s", k.KeyID, k.UID, status)
+	}
+	log.Message("")
 
-		secretKeyPath = strings.TrimSpace(secretKeyPath)
-		if secretKeyPath != "" {
-			if _, err := os.Stat(secretKeyPath); err != nil {
-				log.Warn("Secret key file not found at %s: %v", secretKeyPath, err)
-			} else {
-				log.Start("Importing secret key...")
-				cmd := execCommand("gpg", "--import", secretKeyPath)
-				cmd.Stdout = log.Writer()
-				cmd.Stderr = log.ErrorWriter()
-				if err := cmd.Run(); err != nil {
-					return "", GPGKeyInfo{}, fmt.Errorf("failed to import secret key: %w", err)
-				}
-				log.Success("Secret key imported")
+	importMore, err := ui.Confirm("Do you want to import additional GPG key files?", false)
+	if err == nil {
+		return importMore
+	}
+	return true
+}
+
+// importKeyFilesFromDisk prompts for master/subkey files and imports them.
+func importKeyFilesFromDisk() error {
+	log.Message("You can provide GPG key files to import:")
+	log.Message("  • A master secret key file (e.g., eng618.secret.gpg)")
+	log.Message("  • Subkeys file (e.g., eng618.secsub.gpg)")
+	log.Message("")
+
+	secretKeyPath, err := ui.Input(
+		"Path to secret key file (leave empty to skip)",
+		filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secret.gpg"),
+	)
+	if err != nil {
+		return fmt.Errorf("canceled: %w", err)
+	}
+
+	secretKeyPath = strings.TrimSpace(secretKeyPath)
+	if secretKeyPath != "" {
+		if _, err := os.Stat(secretKeyPath); err != nil {
+			log.Warn("Secret key file not found at %s: %v", secretKeyPath, err)
+		} else {
+			log.Start("Importing secret key...")
+			if err := runGPGImport(secretKeyPath); err != nil {
+				return fmt.Errorf("failed to import secret key: %w", err)
 			}
+			log.Success("Secret key imported")
 		}
+	}
 
-		// Optional: Import subkeys
-		importSubkeys, err := ui.Confirm("Import subkeys file?", true)
-		if err == nil && importSubkeys {
-			subkeysPath, err := ui.Input(
-				"Path to subkeys file",
-				filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
-			)
-			if err == nil {
-				subkeysPath = strings.TrimSpace(subkeysPath)
-				if subkeysPath != "" {
-					if _, err := os.Stat(subkeysPath); err != nil {
-						log.Warn("Subkeys file not found at %s: %v", subkeysPath, err)
+	// Optional: Import subkeys
+	importSubkeys, err := ui.Confirm("Import subkeys file?", true)
+	if err == nil && importSubkeys {
+		subkeysPath, err := ui.Input(
+			"Path to subkeys file",
+			filepath.Join(os.Getenv("HOME"), "Downloads", "gpg", "eng618.secsub.gpg"),
+		)
+		if err == nil {
+			subkeysPath = strings.TrimSpace(subkeysPath)
+			if subkeysPath != "" {
+				if _, err := os.Stat(subkeysPath); err != nil {
+					log.Warn("Subkeys file not found at %s: %v", subkeysPath, err)
+				} else {
+					log.Start("Importing subkeys...")
+					if err := runGPGImport(subkeysPath); err != nil {
+						log.Warn("Failed to import subkeys: %v", err)
 					} else {
-						log.Start("Importing subkeys...")
-						cmd := execCommand("gpg", "--import", subkeysPath)
-						cmd.Stdout = log.Writer()
-						cmd.Stderr = log.ErrorWriter()
-						if err := cmd.Run(); err != nil {
-							log.Warn("Failed to import subkeys: %v", err)
-						} else {
-							log.Success("Subkeys imported")
-						}
+						log.Success("Subkeys imported")
 					}
 				}
 			}
 		}
 	}
+	return nil
+}
 
-	// Re-list secret keys from keyring
+// runGPGImport imports a key file into the keyring, wiring output to the log writers.
+func runGPGImport(path string) error {
+	cmd := execCommand("gpg", "--import", path)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.ErrorWriter()
+	return cmd.Run()
+}
+
+// selectKeyFromKeyring re-lists keyring keys and lets the user pick one.
+// It returns ok=false to fall through to manual entry.
+func selectKeyFromKeyring(verbose bool) (string, GPGKeyInfo, bool) {
 	keys, err := listLocalSecretGPGKeys(verbose)
-	if err == nil && len(keys) > 0 {
-		if len(keys) == 1 {
-			k := keys[0]
-			keyLabel := fmt.Sprintf("%s (Key ID: %s)", k.UID, k.KeyID)
-			if k.UID == "" {
-				keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
-			}
-			log.Message("Detected GPG secret key: %s", keyLabel)
-			useDetected, err := ui.Confirm(fmt.Sprintf("Configure detected GPG key %s?", keyLabel), true)
-			if err == nil && useDetected {
-				target := k.KeyID
-				if target == "" {
-					target = k.Fingerprint
-				}
-				log.Success("Selected key: %s", keyLabel)
-				return target, k, nil
-			}
-		} else {
-			// Multi-key selection
-			options := make([]string, 0, len(keys)+1)
-			keyMap := make(map[string]GPGKeyInfo)
-			for _, k := range keys {
-				opt := fmt.Sprintf("[%s] %s", k.KeyID, k.UID)
-				if k.UID == "" {
-					opt = fmt.Sprintf("Key ID: %s", k.KeyID)
-				}
-				options = append(options, opt)
-				keyMap[opt] = k
-			}
-			options = append(options, "Enter key ID manually...")
-
-			selected, err := ui.Select("Select GPG key to configure:", options, options[0])
-			if err == nil && selected != "Enter key ID manually..." {
-				chosen := keyMap[selected]
-				target := chosen.KeyID
-				if target == "" {
-					target = chosen.Fingerprint
-				}
-				log.Success("Selected key: %s", selected)
-				return target, chosen, nil
-			}
-		}
+	if err != nil || len(keys) == 0 {
+		return "", GPGKeyInfo{}, false
 	}
 
-	// Fallback: manual entry
+	if len(keys) == 1 {
+		k := keys[0]
+		keyLabel := fmt.Sprintf("%s (Key ID: %s)", k.UID, k.KeyID)
+		if k.UID == "" {
+			keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
+		}
+		log.Message("Detected GPG secret key: %s", keyLabel)
+		useDetected, err := ui.Confirm(fmt.Sprintf("Configure detected GPG key %s?", keyLabel), true)
+		if err == nil && useDetected {
+			target := k.KeyID
+			if target == "" {
+				target = k.Fingerprint
+			}
+			log.Success("Selected key: %s", keyLabel)
+			return target, k, true
+		}
+		return "", GPGKeyInfo{}, false
+	}
+
+	// Multi-key selection
+	options := make([]string, 0, len(keys)+1)
+	keyMap := make(map[string]GPGKeyInfo)
+	for _, k := range keys {
+		opt := fmt.Sprintf("[%s] %s", k.KeyID, k.UID)
+		if k.UID == "" {
+			opt = fmt.Sprintf("Key ID: %s", k.KeyID)
+		}
+		options = append(options, opt)
+		keyMap[opt] = k
+	}
+	options = append(options, "Enter key ID manually...")
+
+	selected, err := ui.Select("Select GPG key to configure:", options, options[0])
+	if err == nil && selected != "Enter key ID manually..." {
+		chosen := keyMap[selected]
+		target := chosen.KeyID
+		if target == "" {
+			target = chosen.Fingerprint
+		}
+		log.Success("Selected key: %s", selected)
+		return target, chosen, true
+	}
+	return "", GPGKeyInfo{}, false
+}
+
+// promptKeyIDManually falls back to manual key ID entry with keyring verification.
+func promptKeyIDManually() (string, GPGKeyInfo, error) {
 	keyID, err := ui.Input("Enter your GPG key ID or Fingerprint (e.g., 7C180F0FCB31441B)", "")
 	if err != nil {
 		return "", GPGKeyInfo{}, fmt.Errorf("canceled: %w", err)
