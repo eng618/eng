@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.53.2](https://github.com/eng618/eng/compare/v1.53.1...v1.53.2) (2026-09-09)
+
+
+### Code Refactoring
+
+* Modularize GPG key import and selection logic for improved readability ([be224bc](https://github.com/eng618/eng/commit/be224bc6d75b0404dc53be4846f345e915bb0887))
+* Modularize setup commands and implement Immich lifecycle management logic ([4d1fe0c](https://github.com/eng618/eng/commit/4d1fe0cd200ef45c05e385ff7e24aa731a3db48a))
+
 ## [1.53.1](https://github.com/eng618/eng/compare/v1.53.0...v1.53.1) (2026-09-09)
 
 
