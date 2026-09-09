@@ -1,0 +1,33 @@
+## eng update ide
+
+Update or install Antigravity IDE
+
+### Synopsis
+
+Download, validate, and install the latest Antigravity IDE release package.
+Supports automated download, detecting downloaded archives in ~/Downloads, or specifying an archive directly.
+
+```
+eng update ide [archive-path-or-url] [flags]
+```
+
+### Options
+
+```
+  -f, --file string   Path to local Antigravity IDE tarball (.tar.gz)
+  -h, --help          help for ide
+  -u, --url string    Direct download URL for the Antigravity IDE tarball
+  -y, --yes           Auto-approve update operations without prompting
+```
+
+### Options inherited from parent commands
+
+```
+      --config string   config file (default is $HOME/.eng.yaml)
+  -v, --verbose         verbose output
+```
+
+### SEE ALSO
+
+* [eng update](eng_update.md)	 - Update the system and perform maintenance
+

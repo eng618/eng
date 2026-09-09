@@ -8,7 +8,7 @@ import (
 // onboardingSkippedCommands never trigger the first-run setup prompt. They
 // either manage configuration themselves (config), only report state
 // (doctor, version, logs), render help/completion output that must stay
-// clean, or run their own setup flow (system).
+// clean, or run their own setup flow (setup, ssh, gpg).
 var onboardingSkippedCommands = map[string]bool{
 	"config":     true,
 	"doctor":     true,
@@ -18,7 +18,9 @@ var onboardingSkippedCommands = map[string]bool{
 	"completion": true,
 	"__complete": true,
 	"logs":       true,
-	"system":     true,
+	"setup":      true,
+	"ssh":        true,
+	"gpg":        true,
 }
 
 // firstCommand returns the invoked subcommand from raw args, skipping flags

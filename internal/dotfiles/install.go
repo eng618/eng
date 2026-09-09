@@ -29,7 +29,8 @@ type InstallOptions struct {
 // Test hooks and mockable dependencies
 //
 // The workstation-setup hooks (EnsurePrerequisites, FindGitHubSSHKey,
-// SetupSSHForGitHub) are wired by the command layer (cmd/system init) to
+// SetupSSHForGitHub) are wired by the command layer (cmd/setup wires
+// EnsurePrerequisites, cmd/ssh wires the SSH hooks) to
 // keep this package free of imports outside internal/. Their defaults fail
 // loudly so an unwired composition surfaces immediately instead of silently
 // skipping setup steps. Tests override them per-case.

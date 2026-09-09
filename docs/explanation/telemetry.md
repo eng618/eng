@@ -55,8 +55,8 @@ The telemetry client is engineered with a strict **privacy-first** approach:
 
 | Property         | Type    | Example Values                             | Description                                            |
 | :--------------- | :------ | :----------------------------------------- | :----------------------------------------------------- |
-| `command`        | String  | `git sync`, `doctor`, `system update`      | Full command path executed                             |
-| `root_command`   | String  | `git`, `system`, `dotfiles`                | Top-level command group                                |
+| `command`        | String  | `git sync`, `doctor`, `update`             | Full command path executed                             |
+| `root_command`   | String  | `git`, `update`, `dotfiles`                | Top-level command group                                |
 | `subcommand`     | String  | `sync`, `update`, `auth`                   | Nested subcommand                                      |
 | `duration_ms`    | Number  | `45`, `1240`                               | Execution latency in milliseconds                      |
 | `success`        | Boolean | `true`, `false`                            | Whether command completed successfully                 |

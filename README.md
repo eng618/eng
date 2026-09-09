@@ -115,10 +115,10 @@ eng dotfiles secrets backup
 eng dotfiles secrets restore
 
 # Optional: run SSH setup directly if you want to prepare keys first
-eng system setup ssh
+eng ssh setup
 
 # Setup a new development machine
-eng system setup
+eng setup
 
 # Check version and updates
 eng version
@@ -132,7 +132,7 @@ checks core prerequisites, and only then runs GitHub SSH setup when the configur
 If cloning fails due to SSH auth, run:
 
 ```sh
-eng system setup ssh
+eng ssh setup
 ```
 
 ### Dotfiles Secrets
@@ -154,7 +154,7 @@ eng dotfiles secrets restore
 eng dotfiles secrets doctor
 ```
 
-`eng system setup dotfiles` now runs `eng dotfiles secrets restore` automatically after install when:
+`eng setup dotfiles` now runs `eng dotfiles secrets restore` automatically after install when:
 
 - the manifest exists at the configured dotfiles worktree (`bin/secrets/server.manifest`)
 - `BWS_ACCESS_TOKEN` is set
@@ -170,7 +170,13 @@ If those prerequisites are not met, the restore step is skipped safely.
 | `eng project`   | Manage project-based repository collections                                  |
 | `eng dashboard` | Interactive TUI command center for monitoring and managing projects          |
 | `eng dotfiles`  | Manage dotfiles (install, sync, fetch, checkout, status)                     |
-| `eng system`    | System utilities (setup, kill-port, kill-process, update, proxy)             |
+| `eng setup`     | Setup workstation (asdf, dotfiles, oh-my-zsh, gpg)                           |
+| `eng gpg`       | Manage GPG keys (setup, renew, sync)                                         |
+| `eng ssh`       | Manage SSH keys for GitHub (setup)                                           |
+| `eng proxy`     | Manage proxy profiles                                                        |
+| `eng update`    | Update system packages, brew, asdf, and IDE                                  |
+| `eng clean`     | Clean host storage (docker, journals, caches)                                |
+| `eng kill`      | Kill processes by port or PID                                                |
 | `eng files`     | File utilities (find-and-delete, find-non-movie-folders)                     |
 | `eng codemod`   | Project codemods (lint-setup, prettier, copilot)                             |
 | `eng tailscale` | Tailscale helpers (up, down) — alias: `ts`                                   |

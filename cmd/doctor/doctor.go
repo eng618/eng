@@ -73,7 +73,7 @@ func runDoctor() error {
 		return nil
 	}
 	theme.WarningMessage(
-		"Doctor FAIL: some required tools are missing. Run `eng system setup` to install prerequisites.",
+		"Doctor FAIL: some required tools are missing. Run `eng setup` to install prerequisites.",
 	)
 	return fmt.Errorf("doctor found missing required tools")
 }
@@ -135,7 +135,7 @@ func checkTools() bool {
 	}
 
 	if !allRequiredPassed {
-		log.Warn("Some required tools are missing. Run `eng system setup` to install prerequisites.")
+		log.Warn("Some required tools are missing. Run `eng setup` to install prerequisites.")
 	}
 	return allRequiredPassed
 }

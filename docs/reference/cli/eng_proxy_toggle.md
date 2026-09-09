@@ -1,0 +1,37 @@
+## eng proxy toggle
+
+Toggle proxies on or off
+
+### Synopsis
+
+Toggles proxies on or off. When toggling on, select an existing proxy or create a new one.
+
+```
+eng proxy toggle [flags]
+```
+
+### Options
+
+```
+  -h, --help           help for toggle
+      --index int      Enable proxy by index (default -1)
+      --off            Toggle off (disable all proxies)
+      --on             Toggle on (enable a proxy)
+      --quiet          Suppress status output after toggling
+      --title string   Enable proxy by title
+```
+
+### Options inherited from parent commands
+
+```
+      --compact         Show compact status output (default true)
+      --config string   config file (default is $HOME/.eng.yaml)
+      --env             Include environment variables in status output
+      --lowercase-env   Include lowercase environment vars in compact mode
+  -v, --verbose         verbose output
+```
+
+### SEE ALSO
+
+* [eng proxy](eng_proxy.md)	 - Show or configure system proxies
+

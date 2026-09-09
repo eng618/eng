@@ -1,7 +1,7 @@
 #!/bin/sh
 # Pre-push hook: catch generated-docs drift before it reaches CI.
 #
-# The `eng system gpg renew --help` incident showed why: generated reference
+# The `eng gpg renew --help` incident showed why: generated reference
 # pages must match the CLI tree on every machine, so `task docs:check` gates
 # the push. CI runs the same check as a backstop.
 #

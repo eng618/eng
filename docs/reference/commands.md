@@ -9,7 +9,7 @@ Complete documentation for all `eng` CLI commands and their options.
 - [Project Management](#project-management)
 - [Dotfiles Management](#dotfiles-management)
 - [ASDF Tool Version Management](#asdf-tool-version-management)
-- [System Utilities](#system-utilities)
+- [Workstation Setup](#workstation-setup)
 - [File Utilities](#file-utilities)
 - [Codemod Tools](#codemod-tools)
 - [Tailscale](#tailscale)
@@ -217,7 +217,7 @@ This command will:
 
 ```sh
 # Set up dotfiles as part of new system setup
-eng system setup dotfiles
+eng setup dotfiles
 ```
 
 This checks prerequisites, runs dotfiles installation, and then attempts `eng dotfiles secrets restore`
@@ -317,20 +317,21 @@ Manage `asdf` version manager plugins, check project version requirements, updat
 
 ---
 
-## System Utilities
+## Workstation Setup
 
-System utilities for macOS and Linux, including developer setup automation.
+Workstation setup for macOS and Linux, including developer setup automation.
 
 ### Setup Commands
 
-- `eng system setup` — Run all setup steps (Oh My Zsh, ASDF, dotfiles, software installation, GPG keys, and secrets restore when configured)
-- `eng system setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
-- `eng system setup dotfiles` — Setup dotfiles (checks prerequisites, runs install, and restores secrets when configured)
-- `eng system setup oh-my-zsh` — Install Oh My Zsh
-- `eng system setup ssh` — Setup SSH keys for GitHub access
-- `eng system setup gpg` — Setup GPG keys for signing commits and encryption
-- `eng system gpg renew` — Interactively extend GPG primary key & subkey expiration, re-export, publish to keyserver, and update GitHub (aliases: `update`, `extend`)
-- `eng system gpg sync` — Sync updated public key and expiration dates from keyservers/GitHub on secondary devices (aliases: `pull`, `fetch`, `refresh`)
+- `eng setup` — Run all setup steps (Oh My Zsh, ASDF, dotfiles, software installation, GPG keys, and secrets restore when configured)
+- `eng setup asdf` — Setup asdf plugins from `$HOME/.tool-versions`
+- `eng setup dotfiles` — Setup dotfiles (checks prerequisites, runs install, and restores secrets when configured)
+- `eng setup oh-my-zsh` — Install Oh My Zsh
+- `eng setup compauditFix` — Fix insecure directories reported by compaudit
+- `eng ssh setup` — Setup SSH keys for GitHub access
+- `eng gpg setup` — Setup GPG keys for signing commits and encryption
+- `eng gpg renew` — Interactively extend GPG primary key & subkey expiration, re-export, publish to keyserver, and update GitHub (aliases: `update`, `extend`)
+- `eng gpg sync` — Sync updated public key and expiration dates from keyservers/GitHub on secondary devices (aliases: `pull`, `fetch`, `refresh`)
 
 #### Setup Flags
 
@@ -340,17 +341,17 @@ System utilities for macOS and Linux, including developer setup automation.
 
 ### System Utilities
 
-| Command                        | Description                                                                         |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| `eng system gpg renew`         | Extend GPG key & subkey expiry (aliases: `update`, `extend`)                        |
-| `eng system gpg sync`          | Sync updated public key from keyserver/GitHub (aliases: `pull`, `fetch`, `refresh`) |
-| `eng system killPort <port>`   | Kill process on a port                                                              |
-| `eng system killProcess [pid]` | Kill a process by PID or interactively                                              |
-| `eng system compauditFix`      | Fix insecure directories reported by compaudit                                      |
-| `eng system update`            | Update system packages, cleanup, brew, asdf, and IDE                                |
-| `eng system update brew`       | Update Homebrew packages only                                                       |
-| `eng system update ide`        | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`)           |
-| `eng system proxy`             | Manage proxy settings                                                               |
+| Command                  | Description                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `eng gpg renew`          | Extend GPG key & subkey expiry (aliases: `update`, `extend`)                        |
+| `eng gpg sync`           | Sync updated public key from keyserver/GitHub (aliases: `pull`, `fetch`, `refresh`) |
+| `eng kill port <port>`   | Kill process on a port                                                              |
+| `eng kill process [pid]` | Kill a process by PID or interactively                                              |
+| `eng update`             | Update system packages, cleanup, brew, asdf, and IDE                                |
+| `eng update brew`        | Update Homebrew packages only                                                       |
+| `eng update ide`         | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`)           |
+| `eng proxy`              | Manage proxy settings                                                               |
+| `eng clean`              | Clean host storage (docker, journals, caches)                                       |
 
 ### killProcess Flags
 
@@ -556,7 +557,7 @@ Manage CLI configuration stored at `$HOME/.eng.yaml`.
 
 On true first run (fresh config, interactive terminal), `eng` offers a quick
 setup wizard (email, dev folder, defaults) before running your command. It never
-fires for `config`/`doctor`/`version`/`logs`/`system`/help/completion, in pipes
+fires for `config`/`doctor`/`version`/`logs`/`setup`/`gpg`/`ssh`/`proxy`/`update`/`clean`/`kill`/help/completion, in pipes
 or CI, or when `ENG_NO_ONBOARDING` is set. Declining just continues — later
 errors point at `eng config edit --interactive`.
 
@@ -579,7 +580,7 @@ errors point at `eng config edit --interactive`.
 ## Session Logs
 
 Verbose commands (`eng git sync-all/fetch-all/pull-all/push-all`, `eng project fetch/pull/sync`,
-`eng system update`) show a clean summary in the terminal and capture full detail to a
+`eng update`) show a clean summary in the terminal and capture full detail to a
 timestamped log file (kept under the OS cache dir, latest 20 runs; override with `ENG_LOG_DIR`).
 Each run ends with a `Full log: <path>` pointer.
 

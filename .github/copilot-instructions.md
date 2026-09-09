@@ -5,7 +5,7 @@ These guidelines make AI agents productive in this Go CLI codebase by codifying 
 ## Big Picture
 
 - CLI framework: Cobra entry at [cmd/root.go](cmd/root.go); `main()` delegates to `cmd.Execute()` in [main.go](main.go).
-- Module layout: Subcommands under [cmd/](cmd/) mirror features (git, dotfiles, system, codemod, ts, version, config, gitlab, project, files).
+- Module layout: Subcommands under [cmd/](cmd/) mirror features (git, dotfiles, setup, gpg, ssh, proxy, update, clean, kill, codemod, ts, version, config, gitlab, project, files).
 - Utilities: Shared code lives in [internal/utils/](internal/utils/) — NOT `utils/`. Sub-packages include `log/`, `config/`, `repo/`.
 - Configuration: Viper-backed YAML at `$HOME/.eng.yaml` created/migrated on startup; see [internal/utils/config/migration.go](internal/utils/config/migration.go).
 - Logging: Local colorized logger in [internal/utils/log/log.go](internal/utils/log/log.go); use it for all output and for `io.Writer`s.

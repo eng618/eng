@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/dashboard"
 )
@@ -49,10 +50,9 @@ func dashboardProjects() []dashboard.Project {
 func dashboardDevPath() string {
 	devPath := config.GetGitConfig().DevPath
 	if devPath == "" {
-		home, _ := os.UserHomeDir()
-		devPath = home + "/Development"
+		devPath = paths.Expand("~/Development")
 	}
-	return os.ExpandEnv(devPath)
+	return paths.Expand(devPath)
 }
 
 func dashboardEditor() string {
@@ -122,8 +122,7 @@ var selectEditorCmd = &cobra.Command{
 
 			if opt.IsApp {
 				appPath1 := "/Applications/" + opt.Command + ".app"
-				home, _ := os.UserHomeDir()
-				appPath2 := filepath.Join(home, "Applications", opt.Command+".app")
+				appPath2 := filepath.Join(paths.MustHome(), "Applications", opt.Command+".app")
 
 				if _, err := os.Stat(appPath1); err == nil {
 					available = append(available, opt)

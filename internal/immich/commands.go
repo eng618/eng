@@ -14,7 +14,7 @@ import (
 
 // commandFlags holds flag state for one built command tree. Each call to
 // NewCommand gets a fresh set, so multiple registrations of the tree
-// (e.g. `eng immich` and `eng system immich`) stay fully independent.
+// stay fully independent.
 type commandFlags struct {
 	json        bool
 	pager       bool

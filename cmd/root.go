@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/cmd/asdf"
+	"github.com/eng618/eng/cmd/clean"
 	"github.com/eng618/eng/cmd/codemod"
 	"github.com/eng618/eng/cmd/compose"
 	"github.com/eng618/eng/cmd/config"
@@ -39,15 +40,21 @@ import (
 	"github.com/eng618/eng/cmd/files"
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/gitlab"
+	"github.com/eng618/eng/cmd/gpg"
 	"github.com/eng618/eng/cmd/immich"
+	"github.com/eng618/eng/cmd/kill"
 	"github.com/eng618/eng/cmd/logs"
 	"github.com/eng618/eng/cmd/project"
-	"github.com/eng618/eng/cmd/system"
+	"github.com/eng618/eng/cmd/proxy"
+	"github.com/eng618/eng/cmd/setup"
+	"github.com/eng618/eng/cmd/ssh"
 	"github.com/eng618/eng/cmd/ts"
+	"github.com/eng618/eng/cmd/update"
 	"github.com/eng618/eng/cmd/version"
 	"github.com/eng618/eng/internal/cmdutil"
 	configUtils "github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -141,13 +148,19 @@ func init() {
 	codemod.CodemodCmd.GroupID = "devtools"
 	git.GitCmd.GroupID = "devtools"
 	gitlab.GitLabCmd.GroupID = "devtools"
+	gpg.GPGCmd.GroupID = "devtools"
+	ssh.SshCmd.GroupID = "devtools"
 	ts.TailscaleCmd.GroupID = "devtools"
 
 	compose.ComposeCmd.GroupID = "envops"
+	clean.CleanCmd.GroupID = "envops"
+	kill.KillCmd.GroupID = "envops"
 	dotfiles.DotfilesCmd.GroupID = "envops"
 	files.FilesCmd.GroupID = "envops"
 	immich.ImmichCmd.GroupID = "envops"
-	system.SystemCmd.GroupID = "envops"
+	proxy.ProxyCmd.GroupID = "envops"
+	setup.SetupCmd.GroupID = "envops"
+	update.UpdateCmd.GroupID = "envops"
 
 	config.ConfigCmd.GroupID = "mgmt"
 	project.ProjectCmd.GroupID = "mgmt"
@@ -157,9 +170,15 @@ func init() {
 	logs.LogsCmd.GroupID = "meta"
 	version.VersionCmd.GroupID = "meta"
 
+	// Wire cross-domain setup steps (only root aggregates sibling commands).
+	setup.GPGSetup = gpg.SetupGPG
+	setup.IDEUpdate = update.RunIdeUpdate
+
 	// Add subcommands
 	rootCmd.AddCommand(asdf.AsdfCmd)
 	rootCmd.AddCommand(codemod.CodemodCmd)
+	rootCmd.AddCommand(clean.CleanCmd)
+	rootCmd.AddCommand(kill.KillCmd)
 	rootCmd.AddCommand(compose.ComposeCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(dashboardCmd)
@@ -168,11 +187,15 @@ func init() {
 	rootCmd.AddCommand(files.FilesCmd)
 	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
+	rootCmd.AddCommand(gpg.GPGCmd)
 	rootCmd.AddCommand(immich.ImmichCmd)
 	rootCmd.AddCommand(logs.LogsCmd)
 	rootCmd.AddCommand(project.ProjectCmd)
-	rootCmd.AddCommand(system.SystemCmd)
+	rootCmd.AddCommand(proxy.ProxyCmd)
+	rootCmd.AddCommand(setup.SetupCmd)
+	rootCmd.AddCommand(ssh.SshCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
+	rootCmd.AddCommand(update.UpdateCmd)
 	rootCmd.AddCommand(version.VersionCmd)
 }
 
@@ -192,7 +215,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := paths.Home()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".eng" (without extension).
@@ -212,7 +235,7 @@ func initConfig() {
 		configFilePath := viper.ConfigFileUsed()
 		if configFilePath == "" {
 			// Construct the default config file path if not already set by viper
-			home, err := os.UserHomeDir()
+			home, err := paths.Home()
 			cobra.CheckErr(err)
 			configFilePath = home + string(os.PathSeparator) + ".eng.yaml"
 		}

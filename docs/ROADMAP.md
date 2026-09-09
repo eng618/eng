@@ -17,10 +17,13 @@ Status key: `[ ]` not started · `[/]` in progress · `[x]` complete · `[!]` dr
       fail-loud validation, interactive locate-and-persist fallback.
 - [ ] **A4 docs content gaps** — `reference/commands.md` drift (Dashboard TOC
       entry, `compose clean`, codemod `native`/`web`, full config rows,
-      `immich`/`doctor` sections; explain `eng immich` vs `eng system immich`);
+      `immich`/`doctor` sections);
       second tutorial.
-- [ ] **Deferred file splits** — `cmd/system/gpg_setup.go`,
-      `cmd/system/ssh_setup.go`, `internal/immich/client.go` (large but cohesive;
+- [x] **Split `cmd/system` god-package** — promoted to top-level
+      `eng setup|gpg|ssh|proxy|update|clean|kill`, deleted `eng system`
+      (hard break); added `internal/paths` + `internal/execx` foundations.
+- [ ] **Deferred file splits** — `cmd/gpg/gpg_setup.go`,
+      `cmd/ssh/ssh_setup.go`, `internal/immich/client.go` (large but cohesive;
       split when they next change).
 - [ ] **Progress-display interface** — spinners/pagers/terminal-width are still
       imported directly by 7 internal packages (`project`, `cleanup`,
@@ -67,7 +70,8 @@ Status key: `[ ]` not started · `[/]` in progress · `[x]` complete · `[!]` dr
 ### Separation of concerns (B1–B4)
 
 - [x] **B1 layering repairs** — `internal/version` leaf (ldflags updated);
-      dotfiles setup steps injected via `cmd/system/dotfiles_hooks.go` instead
+      dotfiles setup steps injected via `cmd/setup/dotfiles_hooks.go` +
+      `cmd/ssh/dotfiles_hooks.go` instead
       of `internal → cmd` imports; immich tree built once by
       `internal/immich.NewCommand` with independent flag state per path.
 - [x] **B2 UI decoupling** — dashboard DTOs + provider (`ui` no longer

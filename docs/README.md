@@ -15,7 +15,7 @@ hold your hand to a working result.
 
 Goal-oriented recipes. They assume a working setup and get straight to the steps.
 
-- [Set up a new machine](how-to/new-machine-setup.md) — full `system setup` walkthrough.
+- [Set up a new machine](how-to/new-machine-setup.md) — full `setup` walkthrough.
 - [Manage repositories in bulk](how-to/manage-repositories.md) — git/project sync workflows.
 - [Back up and restore dotfiles secrets](how-to/dotfiles-secrets.md) — `bws`-backed env files.
 - [Inspect session logs](how-to/session-logs.md) — `eng logs` for past runs.

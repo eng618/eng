@@ -32,20 +32,27 @@ graph LR
     C2 --> E6[status]
     C2 --> E7[secrets]
 
-    B --> C3[system]
-    C3 --> F1[setup]
-    F1 --> F1a[asdf]
-    F1 --> F1b[dotfiles]
-    F1 --> F1c[oh-my-zsh]
-    F1 --> F1d[ssh]
-    F1 --> F1e[gpg]
-    C3 --> F2[kill-port]
-    C3 --> F3[kill-process]
-    C3 --> F4[proxy]
-    C3 --> F5[update]
-    C3 --> F6[clean]
-    C3 --> F7[gpg]
-    C3 --> F8[immich]
+    B --> C3[setup]
+    C3 --> F1[asdf]
+    C3 --> F1b[dotfiles]
+    C3 --> F1c[oh-my-zsh]
+    C3 --> F1f[compauditFix]
+
+    B --> C3a[gpg]
+    C3a --> F7a[setup]
+    C3a --> F7b[renew]
+    C3a --> F7c[sync]
+
+    B --> C3b[ssh]
+    C3b --> F1d[setup]
+
+    B --> C3c[kill]
+    C3c --> F2[port]
+    C3c --> F3[process]
+
+    B --> C3d[proxy]
+    B --> C3e[update]
+    B --> C3f[clean]
 
     B --> C4[files]
     C4 --> I1[find-and-delete]
@@ -118,7 +125,13 @@ eng/
 │   ├── immich/              # Immich helpers
 │   ├── logs/                # Session-log viewer (list, show, clean)
 │   ├── project/             # Project management commands
-│   ├── system/              # System utilities (setup, proxy, update, …)
+│   ├── proxy/               # Proxy profiles (status, use, add, export, …)
+│   ├── setup/               # Workstation setup orchestrator (asdf, dotfiles, oh-my-zsh)
+│   ├── ssh/                 # SSH key setup for GitHub (setup)
+│   ├── gpg/                 # GPG key management (setup, renew, sync)
+│   ├── kill/                # Process termination (port, process)
+│   ├── update/              # System update + IDE installer
+│   ├── clean/               # Host storage cleanup (wraps internal/cleanup)
 │   ├── ts/                  # Tailscale commands (alias: ts)
 │   └── version/             # Version command
 ├── internal/
@@ -129,9 +142,11 @@ eng/
 │   ├── config/              # Config access, migration, onboarding, interactive editor
 │   ├── containers/          # Compose stack discovery and management
 │   ├── dotfiles/            # Bare-repo dotfiles operations
+│   ├── execx/               # Process execution entry points (mockable Runner)
 │   ├── fs/                  # Filesystem helpers (incl. secure shred)
 │   ├── immich/              # Immich client
 │   ├── log/                 # Unified logging (terminal + session-file tee)
+│   ├── paths/               # Home-dir resolution + path expansion (single source)
 │   ├── project/             # Project fetch/pull/sync engine
 │   ├── repo/                # Git repository helpers
 │   ├── runlog/              # Session log files (create, list, resolve, prune)
@@ -146,7 +161,7 @@ eng/
 
 ## Key Design Principles
 
-1. **Modular Commands**: Each command group is in its own package under `cmd/`, making it easy to add, modify, or remove features independently. When two paths need the same tree (`eng immich` and `eng system immich`), a factory in `internal/` builds it (`internal/immich.NewCommand`) so each registration gets independent flag state instead of sharing copies.
+1. **Modular Commands**: Each command group is in its own package under `cmd/`, making it easy to add, modify, or remove features independently. `eng system` was split into top-level `eng setup|gpg|ssh|proxy|update|clean|kill` so each domain owns its flags, tests, and docs. When two paths need the same tree, a factory in `internal/` builds it (`internal/immich.NewCommand`) so each registration gets independent flag state instead of sharing copies.
 
 2. **Shared Services**: Common functionality lives in `internal/` packages (`log`, `config`, `repo`, `ui`, `runlog`, …) to avoid duplication.
 
@@ -164,8 +179,8 @@ Layering keeps the codebase navigable. Enforced by inspection (and CI grep in th
 
 1. **`cmd/` composes `internal/`** — commands wire services together; they never contain reusable logic that another command needs.
 2. **Never `internal/` → `cmd/`** — shared services stay importable without pulling in the CLI. Build metadata lives in the leaf package `internal/version` (stamped via ldflags) so `internal/telemetry` and `cmd/doctor` read it without touching `cmd/version`.
-3. **No sibling `cmd/` imports** (except parent→child aggregation: `root`, and `gitlab` → `gitlab/auth`) — shared command trees are built by factories in `internal/` (e.g. `internal/immich.NewCommand` backs both `eng immich` and `eng system immich` with independent flag state).
-4. **`ui` never imports domain** — presentation renders plain structs/DTOs; `config`, `repo`, and `containers` types are mapped at the `cmd/` boundary. Interactive steps needed by workflows are injected as hook variables with loud unwired defaults (see `cmd/system/dotfiles_hooks.go`, `cmd/system/cleanup_hooks.go`, `cmd/config/prompts.go`), never imported.
+3. **No sibling `cmd/` imports** (except parent→child aggregation: `root`, and `gitlab` → `gitlab/auth`) — shared command trees are built by factories in `internal/`. Cross-domain setup steps are injected as hook variables with loud unwired defaults (see `cmd/setup/common.go: GPGSetup/IDEUpdate`, wired in `cmd/root.go`), never imported.
+4. **`ui` never imports domain** — presentation renders plain structs/DTOs; `config`, `repo`, and `containers` types are mapped at the `cmd/` boundary. Interactive steps needed by workflows are injected as hook variables with loud unwired defaults (see `cmd/setup/dotfiles_hooks.go`, `cmd/ssh/dotfiles_hooks.go`, `cmd/clean/cleanup_hooks.go`, `cmd/config/prompts.go`), never imported.
 5. **Output goes through `log`/`theme` writers** — no direct `os.Stdout` in display or library code (interactive children are the exception), so tests, pipes, and `__complete` stay clean.
 
 ## Configuration

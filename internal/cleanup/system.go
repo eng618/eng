@@ -20,7 +20,7 @@ var detectDistro = sysinfo.Detect
 var userHomeDir = os.UserHomeDir
 
 // MultiSelectPrompt asks the user to pick cleanup operations. Wired by the
-// command layer (cmd/compose and cmd/system inits) so this package never
+// command layer (cmd/compose and cmd/clean inits) so this package never
 // imports presentation code for prompting; tests override it per-case.
 // Defaults fail loudly instead of hanging on stdin.
 var MultiSelectPrompt = func(string, []string, []string) ([]string, error) {

@@ -6,7 +6,7 @@ with one command (plus a few interactive prompts for keys).
 ## Run the full setup
 
 ```sh
-eng system setup
+eng setup
 ```
 
 This runs, in order: Oh My Zsh, asdf plugins (from `~/.tool-versions`),
@@ -14,7 +14,7 @@ dotfiles install, software installation, GPG keys, and dotfiles secrets
 restore (when `BWS_ACCESS_TOKEN` is set). To approve each step interactively:
 
 ```sh
-eng system setup --interactive
+eng setup --interactive
 ```
 
 ## Run a single step
@@ -22,17 +22,17 @@ eng system setup --interactive
 Each step is also a standalone command for re-runs and debugging:
 
 ```sh
-eng system setup asdf         # install tool versions from ~/.tool-versions
-eng system setup dotfiles     # install dotfiles (+ secrets restore when configured)
-eng system setup oh-my-zsh    # install Oh My Zsh
-eng system setup ssh          # generate/configure GitHub SSH keys
-eng system setup gpg          # generate/configure GPG signing keys
+eng setup asdf         # install tool versions from ~/.tool-versions
+eng setup dotfiles     # install dotfiles (+ secrets restore when configured)
+eng setup oh-my-zsh    # install Oh My Zsh
+eng ssh setup          # generate/configure GitHub SSH keys
+eng gpg setup          # generate/configure GPG signing keys
 ```
 
 If SSH authentication blocks a private dotfiles clone, prepare keys first:
 
 ```sh
-eng system setup ssh
+eng ssh setup
 eng dotfiles install
 ```
 
@@ -47,4 +47,4 @@ eng project setup             # clone any missing project repos
 
 - [Getting started](../tutorials/getting-started.md)
 - [Back up and restore dotfiles secrets](dotfiles-secrets.md)
-- [Command reference: system](../reference/cli/eng_system.md)
+- [Command reference: setup](../reference/cli/eng_setup.md)

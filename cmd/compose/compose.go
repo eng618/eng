@@ -52,6 +52,6 @@ func init() {
 	}
 
 	// Wire the task-selection prompt consumed by internal/cleanup (shared
-	// with cmd/system, which wires the same hook for its clean command).
+	// with cmd/clean, which wires the same hook for its clean command).
 	cleanup.MultiSelectPrompt = ui.MultiSelect
 }

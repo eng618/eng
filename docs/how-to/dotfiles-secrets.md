@@ -23,7 +23,7 @@ export BWS_ACCESS_TOKEN=...   # or export BWS_PROJECT_ID=...
 eng dotfiles secrets restore
 ```
 
-`eng system setup dotfiles` runs the restore automatically after install when
+`eng setup dotfiles` runs the restore automatically after install when
 the manifest exists and `BWS_ACCESS_TOKEN` is set.
 
 ## Check consistency

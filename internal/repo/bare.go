@@ -122,7 +122,7 @@ func wrapCloneError(repoURL string, err error) error {
 	if isSSH &&
 		(strings.Contains(errMsg, "permission denied") || strings.Contains(errMsg, "authentication") || strings.Contains(errMsg, "publickey")) {
 		return fmt.Errorf(
-			"failed to clone repository via SSH: %w. Verify ~/.ssh/github works for GitHub or run `eng system setup ssh`",
+			"failed to clone repository via SSH: %w. Verify ~/.ssh/github works for GitHub or run `eng ssh setup`",
 			err,
 		)
 	}

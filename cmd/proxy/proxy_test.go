@@ -1,0 +1,163 @@
+package proxy
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
+)
+
+func TestListProxyConfigurations(t *testing.T) {
+	// Setup dummy config
+	viper.Reset()
+	viper.SetConfigType("json")
+	proxies := []config.ProxyConfig{
+		{Title: "Test Proxy", Value: "http://test:8080", Enabled: true},
+	}
+	viper.Set("proxies", proxies)
+
+	// Create a test command with the required flags
+	testCmd := &cobra.Command{}
+	testCmd.Flags().Bool("compact", false, "")
+	testCmd.Flags().Bool("env", false, "")
+	testCmd.Flags().Bool("lowercase-env", false, "")
+
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
+
+	listProxyConfigurations(testCmd)
+
+	output := buf.String()
+
+	if !strings.Contains(output, "Test Proxy") {
+		t.Error("Expected output to contain 'Test Proxy'")
+	}
+	// The format is now: "1. ★ Test Proxy (http://test:8080) [ACTIVE]"
+	if !strings.Contains(output, "1.") || !strings.Contains(output, "ACTIVE") {
+		t.Error("Expected output to show proxy 1 as active with [ACTIVE]")
+	}
+}
+
+func TestExportCmd_Enabled(t *testing.T) {
+	viper.Reset()
+	viper.SetConfigType("json")
+	proxies := []config.ProxyConfig{
+		{Title: "Test Proxy", Value: "http://test:8080", Enabled: true},
+	}
+	viper.Set("proxies", proxies)
+
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
+
+	// Run export subcommand logic
+	exportCmd.Run(exportCmd, []string{})
+
+	output := buf.String()
+
+	if !strings.Contains(output, "export HTTP_PROXY='http://test:8080'") {
+		t.Error("Expected export command for HTTP_PROXY")
+	}
+}
+
+func TestExportCmd_Disabled(t *testing.T) {
+	viper.Reset()
+	viper.SetConfigType("json")
+	proxies := []config.ProxyConfig{
+		{Title: "Test Proxy", Value: "http://test:8080", Enabled: false},
+	}
+	viper.Set("proxies", proxies)
+
+	// Capture unified log output
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	defer log.ResetWriters()
+
+	exportCmd.Run(exportCmd, []string{})
+
+	output := buf.String()
+
+	if !strings.Contains(output, "unset HTTP_PROXY") {
+		t.Error("Expected unset command for HTTP_PROXY when no proxy is enabled")
+	}
+}
+
+func TestResolveProxyIndex(t *testing.T) {
+	proxies := []config.ProxyConfig{
+		{Title: "Corp VPN", Value: "http://corp:8080", Enabled: true},
+		{Title: "Home Relay", Value: "http://home:1080", Enabled: false},
+	}
+
+	// Test 1-based index string
+	if idx := resolveProxyIndex("1", -1, "", proxies); idx != 0 {
+		t.Errorf("Expected 0 for 1-based index '1', got %d", idx)
+	}
+
+	if idx := resolveProxyIndex("2", -1, "", proxies); idx != 1 {
+		t.Errorf("Expected 1 for 1-based index '2', got %d", idx)
+	}
+
+	// Test title resolution
+	if idx := resolveProxyIndex("home relay", -1, "", proxies); idx != 1 {
+		t.Errorf("Expected 1 for title match 'home relay', got %d", idx)
+	}
+
+	// Test flag fallback
+	if idx := resolveProxyIndex("", 0, "", proxies); idx != 0 {
+		t.Errorf("Expected 0 for flag fallback index 0, got %d", idx)
+	}
+
+	// Test non-match fallback
+	if idx := resolveProxyIndex("unknown", -1, "", proxies); idx != -1 {
+		t.Errorf("Expected -1 for unknown proxy, got %d", idx)
+	}
+}
+
+func TestCompleteProxyNames(t *testing.T) {
+	viper.Reset()
+	viper.SetConfigType("json")
+	viper.Set("proxies", []config.ProxyConfig{
+		{Title: "home", Value: "http://localhost:8080"},
+		{Title: "work", Value: "http://proxy.corp:3128"},
+	})
+
+	// Capture writers to verify completion restores them (keeps __complete clean).
+	outBefore, errBefore := log.Out, log.Err
+	defer log.SetWriters(outBefore, errBefore)
+
+	names, directive := completeProxyNames(nil, nil, "")
+	if directive != cobra.ShellCompDirectiveNoFileComp {
+		t.Errorf("Expected NoFileComp directive, got %v", directive)
+	}
+	if len(names) != 2 || names[0] != "home" || names[1] != "work" {
+		t.Errorf("Expected [home work], got %v", names)
+	}
+
+	names, _ = completeProxyNames(nil, nil, "w")
+	if len(names) != 1 || names[0] != "work" {
+		t.Errorf("Expected [work] for prefix 'w', got %v", names)
+	}
+
+	names, _ = completeProxyTitles(nil, nil, "h")
+	if len(names) != 1 || names[0] != "home" {
+		t.Errorf("Expected [home] for prefix 'h', got %v", names)
+	}
+
+	if log.Out != outBefore || log.Err != errBefore {
+		t.Error("Expected log writers to be restored after completion")
+	}
+
+	// No proxies configured → no candidates, no error.
+	viper.Set("proxies", []config.ProxyConfig{})
+	if names, _ := completeProxyNames(nil, nil, ""); len(names) != 0 {
+		t.Errorf("Expected no candidates without proxies, got %v", names)
+	}
+}
