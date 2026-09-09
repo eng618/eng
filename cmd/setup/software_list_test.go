@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os/exec"
 	"testing"
+
+	"github.com/eng618/eng/internal/ui"
 )
 
 func TestGetSoftwareList_Checks(t *testing.T) {
@@ -206,4 +208,31 @@ func TestCategorizedSoftwareLists(t *testing.T) {
 	if len(utils) == 0 {
 		t.Error("getUtilityAndOtherApps returned empty list")
 	}
+}
+
+func TestSetupSoftware(t *testing.T) {
+	origLookPath := lookPath
+	origUIMultiSelect := ui.MultiSelect
+	origUISelect := ui.Select
+	origExec := execCommand
+	defer func() {
+		lookPath = origLookPath
+		ui.MultiSelect = origUIMultiSelect
+		ui.Select = origUISelect
+		execCommand = origExec
+	}()
+
+	lookPath = func(path string) (string, error) {
+		return "/usr/bin/" + path, nil
+	}
+	// Mock select prompt
+	ui.MultiSelect = func(msg string, opts, def []string) ([]string, error) {
+		return []string{}, nil
+	}
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		return exec.Command("echo", "success")
+	}
+
+	setupSoftware(false)
+	// If it doesn't panic and reaches here, basic flow works
 }

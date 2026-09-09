@@ -1,11 +1,15 @@
 package setup
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 )
 
 type Software struct {
@@ -490,4 +494,65 @@ func getSoftwareList() []Software {
 	list = append(list, manual...)
 	list = append(list, cli...)
 	return list
+}
+
+func setupSoftware(verbose bool) {
+	log.Verbose(verbose, "Checking software...")
+
+	allSoftware := getSoftwareList()
+	var toInstall []Software
+	var optionalOptions []string
+	optionalSoftwareMap := make(map[string]Software)
+
+	// Filter and check
+	for _, sw := range allSoftware {
+		// Skip if OS mismatch
+		if sw.OS != "" && sw.OS != runtime.GOOS {
+			log.Verbose(verbose, "Skipping %s (OS mismatch: need %s, have %s)", sw.Name, sw.OS, runtime.GOOS)
+			continue
+		}
+
+		if sw.Check() {
+			log.Verbose(verbose, "%s is already installed.", sw.Name)
+			continue
+		}
+
+		if !sw.Optional {
+			toInstall = append(toInstall, sw)
+		} else {
+			optionalOptions = append(optionalOptions, sw.Name)
+			optionalSoftwareMap[sw.Name] = sw
+		}
+	}
+
+	// Prompt for optional software
+	if len(optionalOptions) > 0 {
+		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions, nil)
+		if err != nil {
+			log.Error("Selection canceled: %v", err)
+			return
+		}
+		for _, name := range selected {
+			toInstall = append(toInstall, optionalSoftwareMap[name])
+		}
+	}
+
+	// Install loop
+	for _, sw := range toInstall {
+		log.Start("Installing %s...", sw.Name)
+		if sw.URL != "" {
+			log.Info("Opening %s for manual installation...", sw.URL)
+			if err := sw.Install(); err != nil {
+				log.Error("Failed to open URL: %v", err)
+			}
+			fmt.Fprintf(log.Out, "Press Enter after installing %s to continue...", sw.Name)
+			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
+		} else {
+			if err := sw.Install(); err != nil {
+				log.Error("Failed to install %s: %v", sw.Name, err)
+			} else {
+				log.Success("%s installed successfully.", sw.Name)
+			}
+		}
+	}
 }
