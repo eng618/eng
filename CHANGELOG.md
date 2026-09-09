@@ -1,5 +1,19 @@
 <a name="unreleased"></a>
 
+## [1.53.1](https://github.com/eng618/eng/compare/v1.53.0...v1.53.1) (2026-09-09)
+
+
+### Code Refactoring
+
+* Replace os/exec and os.UserHomeDir with internal execx and paths packages throughout the codebase ([ef35b04](https://github.com/eng618/eng/commit/ef35b046021e46256997b37eaa62fe067b0e8677))
+* Split cmd/system into discrete top-level command packages for setup, ssh, gpg, kill, and clean. ([8a297e7](https://github.com/eng618/eng/commit/8a297e7b921ff0a91dec41a5247e2a425e906056))
+
+
+### Miscellaneous
+
+* Update release-please versioning strategy and expand changelog sections ([8629681](https://github.com/eng618/eng/commit/86296814ac196fd7b3d36fce535dae913b70dfa3))
+* Update release-please versioning strategy to enable minor pre-major bumping ([6cf41ae](https://github.com/eng618/eng/commit/6cf41ae4b3af6da1e028ecc0e4fcad82a28d48cb))
+
 ## [1.53.0](https://github.com/eng618/eng/compare/v1.52.0...v1.53.0) (2026-09-04)
 
 
