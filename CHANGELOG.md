@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.56.0](https://github.com/eng618/eng/compare/v1.55.0...v1.56.0) (2026-09-10)
+
+
+### Features
+
+* Add animated terminal spinner with elapsed time tracking and update command feedback logic ([8f5859f](https://github.com/eng618/eng/commit/8f5859fb02df4d789211215bb042346c33509c2a))
+
 ## [1.55.0](https://github.com/eng618/eng/compare/v1.54.0...v1.55.0) (2026-09-10)
 
 
