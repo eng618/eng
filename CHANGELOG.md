@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.54.0](https://github.com/eng618/eng/compare/v1.53.2...v1.54.0) (2026-09-10)
+
+
+### Features
+
+* Add force variants for git fetch, pull, and sync operations to handle tag conflicts ([2a4c761](https://github.com/eng618/eng/commit/2a4c7616fa7dd96e36bf09bcf2e53fb737b1c3f5))
+
+
+### Documentation
+
+* Add AGENTS.md for development guidelines and update CLI reference docs with --force flag details ([d4980ef](https://github.com/eng618/eng/commit/d4980effb9a987be8e72f766e9bc53e2a65bfe97))
+
 ## [1.53.2](https://github.com/eng618/eng/compare/v1.53.1...v1.53.2) (2026-09-09)
 
 
