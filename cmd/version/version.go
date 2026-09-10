@@ -395,7 +395,11 @@ func runBrewUpgrade(isVerbose bool) error {
 	updateCmd.Stderr = &updateStderr
 	err := updateCmd.Run()
 	if updateSpinner != nil {
-		updateSpinner.Stop()
+		if err != nil {
+			updateSpinner.Fail("Homebrew package index update had warnings")
+		} else {
+			updateSpinner.Success("Homebrew package index updated")
+		}
 	}
 	if err != nil {
 		log.Verbose(isVerbose, "brew update warning: %v (%s)", err, strings.TrimSpace(updateStderr.String()))
@@ -411,7 +415,11 @@ func runBrewUpgrade(isVerbose bool) error {
 	upgradeCmd.Stderr = &upgradeStderr
 	err = upgradeCmd.Run()
 	if upgradeSpinner != nil {
-		upgradeSpinner.Stop()
+		if err != nil {
+			upgradeSpinner.Fail(fmt.Sprintf("Upgrading %s package via Homebrew...", brewPkgName))
+		} else {
+			upgradeSpinner.Success(fmt.Sprintf("%s upgraded to latest version", brewPkgName))
+		}
 	}
 	if err != nil {
 		stderrOutput := strings.TrimSpace(upgradeStderr.String())
@@ -421,7 +429,6 @@ func runBrewUpgrade(isVerbose bool) error {
 		return fmt.Errorf("'%s upgrade %s' command failed: %w", brewCmd, brewPkgName, err)
 	}
 
-	log.Success("Homebrew upgrade successful! %s upgraded to latest version.", brewPkgName)
 	return nil
 }
 
@@ -449,7 +456,11 @@ func runScriptUpgrade(isVerbose bool) error {
 
 	tmpFile, err := downloadInstallScript(installScriptURL)
 	if sp != nil {
-		sp.Stop()
+		if err != nil {
+			sp.Fail("Downloading install script...")
+		} else {
+			sp.Success("Install script downloaded")
+		}
 	}
 	if err != nil {
 		return err
@@ -475,7 +486,11 @@ func runScriptUpgrade(isVerbose bool) error {
 		upgradeCmd.Stderr = &stderrBuf
 		err = upgradeCmd.Run()
 		if upgradeSpinner != nil {
-			upgradeSpinner.Stop()
+			if err != nil {
+				upgradeSpinner.Fail(fmt.Sprintf("Upgrading eng in %s...", destDir))
+			} else {
+				upgradeSpinner.Success(fmt.Sprintf("eng upgraded successfully in %s.", destDir))
+			}
 		}
 		if err != nil {
 			if out := strings.TrimSpace(stderrBuf.String()); out != "" {
@@ -483,7 +498,6 @@ func runScriptUpgrade(isVerbose bool) error {
 			}
 			return fmt.Errorf("install script failed: %w", err)
 		}
-		log.Success("eng upgraded successfully in %s.", destDir)
 		return nil
 	}
 
