@@ -6,6 +6,9 @@ Pull all git repositories in development folder
 
 This command pulls with rebase for all git repositories found in your development folder. Use this after fetch-all for faster operations.
 
+With --force, a forced fetch runs first so moved remote tags don't abort
+the pull (fetch --force then pull).
+
 ```
 eng git pull-all [flags]
 ```
@@ -14,6 +17,7 @@ eng git pull-all [flags]
 
 ```
       --dry-run   Perform a dry run without making actual changes
+      --force     Force overwrite local tags (fetch --force then pull)
   -h, --help      help for pull-all
 ```
 

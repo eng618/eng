@@ -6,6 +6,9 @@ Sync all git repositories in development folder
 
 This command fetches and pulls with rebase for all git repositories found in your development folder.
 
+Use --force to overwrite local tags when remotes move them
+(fetch --force then pull).
+
 ```
 eng git sync-all [flags]
 ```
@@ -14,6 +17,7 @@ eng git sync-all [flags]
 
 ```
       --dry-run   Perform a dry run without making actual changes
+      --force     Force overwrite local tags (fetch --force then pull)
   -h, --help      help for sync-all
 ```
 

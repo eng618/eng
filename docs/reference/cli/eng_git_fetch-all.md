@@ -6,6 +6,9 @@ Fetch all git repositories in development folder
 
 This command fetches updates from remote for all git repositories found in your development folder.
 
+Use --force to overwrite local tags when remotes move them
+(git fetch --all --prune --force).
+
 ```
 eng git fetch-all [flags]
 ```
@@ -14,6 +17,7 @@ eng git fetch-all [flags]
 
 ```
       --dry-run   Perform a dry run without making actual changes
+      --force     Force overwrite local tags on fetch conflicts (git fetch --force)
   -h, --help      help for fetch-all
 ```
 

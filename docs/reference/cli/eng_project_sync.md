@@ -14,6 +14,7 @@ Example:
   eng project sync                  # Sync all projects
   eng project sync -p MyProject     # Sync only the specified project
   eng project sync --dry-run        # Preview what would be synced
+  eng project sync --force          # Force overwrite tags on conflicts
 
 ```
 eng project sync [flags]

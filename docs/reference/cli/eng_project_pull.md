@@ -12,6 +12,7 @@ Example:
   eng project pull                  # Pull all projects
   eng project pull -p MyProject     # Pull only the specified project
   eng project pull --dry-run        # Preview what would be pulled
+  eng project pull --force          # Force overwrite tags on conflicts
 
 ```
 eng project pull [flags]
