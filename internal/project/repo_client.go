@@ -19,6 +19,7 @@ type RepoClient interface {
 	Clone(ctx context.Context, url, path string) error
 	IsDirty(ctx context.Context, repoPath string) (bool, error)
 	PullLatestCode(ctx context.Context, repoPath string) error
+	PullWithOptions(ctx context.Context, repoPath string, force bool) error
 	FetchAllPrune(ctx context.Context, repoPath string) error
 	FetchWithOptions(ctx context.Context, repoPath string, force bool) error
 }
@@ -35,7 +36,30 @@ func (d *defaultRepoClient) IsDirty(ctx context.Context, repoPath string) (bool,
 }
 
 func (d *defaultRepoClient) PullLatestCode(ctx context.Context, repoPath string) error {
-	return repo.PullLatestCode(ctx, repoPath)
+	return repo.PullLatestCodeWithOptions(ctx, repoPath, false)
+}
+
+func (d *defaultRepoClient) PullWithOptions(ctx context.Context, repoPath string, force bool) error {
+	if force {
+		return repo.PullLatestCodeWithOptions(ctx, repoPath, true)
+	}
+	err := repo.PullLatestCodeWithOptions(ctx, repoPath, false)
+	if err == nil {
+		return nil
+	}
+	var clobberErr *repo.TagClobberError
+	if !errors.As(err, &clobberErr) {
+		return err
+	}
+	// Same interactive recovery as fetch: ask before overwriting local tags.
+	proceed, promptErr := ConfirmPrompt(
+		"Tag clobber detected on pull. Overwrite local tags with remote tags and retry?",
+		false,
+	)
+	if promptErr != nil || !proceed {
+		return clobberErr
+	}
+	return repo.PullLatestCodeWithOptions(ctx, repoPath, true)
 }
 
 func (d *defaultRepoClient) FetchAllPrune(ctx context.Context, repoPath string) error {

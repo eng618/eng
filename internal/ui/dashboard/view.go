@@ -237,9 +237,9 @@ func (m Model) renderRightPane() string {
 func (m Model) renderFooter(innerRightWidth int) string {
 	var footerText string
 	if m.focusedPane == FocusRight {
-		footerText = "[j/k] Navigate  [f] Fetch  [p] Pull  [s] Sync  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help  [Esc] Back"
+		footerText = "[j/k] Navigate  [f/F] Fetch(-force)  [p/P] Pull(-force)  [s/S] Sync(-force)  [c] Clone  [o] Open  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help  [Esc] Back"
 	} else {
-		footerText = "[Enter/l] Focus  [f] Fetch All  [p] Pull All  [s] Sync All  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help"
+		footerText = "[Enter/l] Focus  [f/F] Fetch All(-force)  [p/P] Pull All(-force)  [s/S] Sync All(-force)  [e/E] Edit  [t] Term  [r] Refresh  [a] Add  [/] Filter  [?] Help"
 	}
 	if scrollHint := m.scrollIndicator(); scrollHint != "" {
 		footerText += "  " + scrollHint

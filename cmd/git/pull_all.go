@@ -1,8 +1,9 @@
 package git
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"sync/atomic"
 
@@ -21,7 +22,10 @@ import (
 var PullAllCmd = &cobra.Command{
 	Use:   "pull-all",
 	Short: "Pull all git repositories in development folder",
-	Long:  `This command pulls with rebase for all git repositories found in your development folder. Use this after fetch-all for faster operations.`,
+	Long: `This command pulls with rebase for all git repositories found in your development folder. Use this after fetch-all for faster operations.
+
+With --force, a forced fetch runs first so moved remote tags don't abort
+the pull (fetch --force then pull).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		printHeader("📥 Pulling Git Repositories")
 
@@ -89,8 +93,8 @@ var PullAllCmd = &cobra.Command{
 					return nil
 				}
 
-				// Pull with rebase
-				if err := pullRepository(rPath); err != nil {
+				// Pull with rebase (fetch --force first when --force is set).
+				if err := pullRepository(cmd.Context(), rPath, setup.Force); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to pull %s: %s", repoName, err))
 					failureCount.Add(1)
 					return nil
@@ -121,14 +125,18 @@ var PullAllCmd = &cobra.Command{
 
 func init() {
 	PullAllCmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	PullAllCmd.Flags().Bool("force", false, "Force overwrite local tags (fetch --force then pull)")
 }
 
 // pullRepository performs a git pull with rebase operation on the given repository path.
-func pullRepository(repoPath string) error {
-	cmd := exec.Command("git", "-C", repoPath, "pull", "--rebase", "--autostash")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(output))
+// When force is true a forced fetch runs first so moved tags don't abort the pull.
+func pullRepository(ctx context.Context, repoPath string, force bool) error {
+	if err := repo.PullLatestCodeWithOptions(ctx, repoPath, force); err != nil {
+		var clobberErr *repo.TagClobberError
+		if !force && errors.As(err, &clobberErr) {
+			return fmt.Errorf("%w (retry with --force to overwrite local tags)", err)
+		}
+		return err
 	}
 	return nil
 }

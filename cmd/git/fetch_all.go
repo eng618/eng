@@ -1,8 +1,9 @@
 package git
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"sync/atomic"
 
@@ -10,6 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/runlog"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -20,7 +22,10 @@ import (
 var FetchAllCmd = &cobra.Command{
 	Use:   "fetch-all",
 	Short: "Fetch all git repositories in development folder",
-	Long:  `This command fetches updates from remote for all git repositories found in your development folder.`,
+	Long: `This command fetches updates from remote for all git repositories found in your development folder.
+
+Use --force to overwrite local tags when remotes move them
+(git fetch --all --prune --force).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		printHeader("🔍 Fetching Git Repositories")
 
@@ -74,8 +79,8 @@ var FetchAllCmd = &cobra.Command{
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Fetching %s...", repoName))
 
-				// Perform git fetch
-				if err := fetchRepository(rPath); err != nil {
+				// Perform git fetch (force overwrites moved tags when --force is set).
+				if err := fetchRepository(cmd.Context(), rPath, setup.Force); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoName, err))
 					failureCount.Add(1)
 					return nil
@@ -106,13 +111,19 @@ var FetchAllCmd = &cobra.Command{
 
 func init() {
 	FetchAllCmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	FetchAllCmd.Flags().Bool("force", false, "Force overwrite local tags on fetch conflicts (git fetch --force)")
 }
 
-func fetchRepository(repoPath string) error {
-	cmd := exec.Command("git", "-C", repoPath, "fetch", "--all", "--prune")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(output))
+func fetchRepository(ctx context.Context, repoPath string, force bool) error {
+	if force {
+		return repo.FetchAllPruneWithForce(ctx, repoPath)
+	}
+	if err := repo.FetchAllPrune(ctx, repoPath); err != nil {
+		var clobberErr *repo.TagClobberError
+		if errors.As(err, &clobberErr) {
+			return fmt.Errorf("%w (retry with --force to overwrite local tags)", err)
+		}
+		return err
 	}
 	return nil
 }

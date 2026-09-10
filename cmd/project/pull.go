@@ -28,7 +28,8 @@ Note: Repositories with uncommitted changes will be skipped.
 Example:
   eng project pull                  # Pull all projects
   eng project pull -p MyProject     # Pull only the specified project
-  eng project pull --dry-run        # Preview what would be pulled`,
+  eng project pull --dry-run        # Preview what would be pulled
+  eng project pull --force          # Force overwrite tags on conflicts`,
 	Run: func(cmd *cobra.Command, args []string) {
 		headerStyle := lipgloss.NewStyle().
 			Bold(true).
@@ -46,6 +47,7 @@ Example:
 		}
 
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		force, _ := cmd.Flags().GetBool("force")
 		projectFilter, _ := cmd.Flags().GetString("project")
 
 		logPath, stopLog := runlog.Start("project-pull")
@@ -54,6 +56,7 @@ Example:
 
 		opts := internalProject.PullOptions{
 			DryRun:        dryRun,
+			Force:         force,
 			IsVerbose:     cmdutil.IsVerbose(cmd),
 			ProjectFilter: projectFilter,
 			DevPath:       os.ExpandEnv(devPath),

@@ -19,6 +19,7 @@ import (
 // PullOptions holds the configuration for pulling projects.
 type PullOptions struct {
 	DryRun        bool
+	Force         bool
 	IsVerbose     bool
 	ProjectFilter string
 	DevPath       string
@@ -127,7 +128,7 @@ func Pull(ctx context.Context, opts PullOptions) {
 				}
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Pulling %s...", repoPath))
-				if err := opts.RepoClient.PullLatestCode(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.PullWithOptions(egCtx, fullRepoPath, opts.Force); err != nil {
 					// Check if it's just "already up to date"
 					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						spinner.Info(fmt.Sprintf("%s is already up to date", repoPath))

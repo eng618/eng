@@ -8,6 +8,7 @@ type MockRepoClient struct {
 	CloneFunc            func(ctx context.Context, url, path string) error
 	IsDirtyFunc          func(ctx context.Context, repoPath string) (bool, error)
 	PullLatestCodeFunc   func(ctx context.Context, repoPath string) error
+	PullWithOptionsFunc  func(ctx context.Context, repoPath string, force bool) error
 	FetchAllPruneFunc    func(ctx context.Context, repoPath string) error
 	FetchWithOptionsFunc func(ctx context.Context, repoPath string, force bool) error
 }
@@ -27,6 +28,19 @@ func (m *MockRepoClient) IsDirty(ctx context.Context, repoPath string) (bool, er
 }
 
 func (m *MockRepoClient) PullLatestCode(ctx context.Context, repoPath string) error {
+	if m.PullLatestCodeFunc != nil {
+		return m.PullLatestCodeFunc(ctx, repoPath)
+	}
+	if m.PullWithOptionsFunc != nil {
+		return m.PullWithOptionsFunc(ctx, repoPath, false)
+	}
+	return nil
+}
+
+func (m *MockRepoClient) PullWithOptions(ctx context.Context, repoPath string, force bool) error {
+	if m.PullWithOptionsFunc != nil {
+		return m.PullWithOptionsFunc(ctx, repoPath, force)
+	}
 	if m.PullLatestCodeFunc != nil {
 		return m.PullLatestCodeFunc(ctx, repoPath)
 	}

@@ -50,6 +50,20 @@ func IsDirty(ctx context.Context, repoPath string) (bool, error) {
 // It takes the repository path `repoPath` as input and returns an error if the operation fails.
 // The function automatically detects the current branch and pulls from the corresponding remote.
 func PullLatestCode(ctx context.Context, repoPath string) error {
+	return PullLatestCodeWithOptions(ctx, repoPath, false)
+}
+
+// PullLatestCodeWithOptions pulls latest code, optionally force-fetching tags first.
+// When force is true, a `git fetch --all --prune --force` runs before the pull so
+// moved/overwritten remote tags don't abort the operation (fetch --force then pull).
+// When force is false, a pull that fails with "would clobber existing tag" is
+// surfaced as *TagClobberError so callers can hint at --force / F-P-S keys.
+func PullLatestCodeWithOptions(ctx context.Context, repoPath string, force bool) error {
+	if force {
+		if err := FetchAllPruneWithForce(ctx, repoPath); err != nil {
+			return err
+		}
+	}
 	// Get current branch
 	currentBranch, err := GetCurrentBranch(ctx, repoPath)
 	if err != nil {
@@ -90,7 +104,15 @@ func PullLatestCode(ctx context.Context, repoPath string) error {
 			return fmt.Errorf("conflict detected: pull aborted. Please resolve conflicts manually in your terminal")
 		}
 
-		return fmt.Errorf("git pull failed: %w\n%s", err, string(out))
+		outStr := string(out)
+		if !force && strings.Contains(outStr, "would clobber existing tag") {
+			return &TagClobberError{
+				Message: fmt.Sprintf("git pull failed (tag would clobber, retry with --force): %s", outStr),
+				Output:  outStr,
+			}
+		}
+
+		return fmt.Errorf("git pull failed: %w\n%s", err, outStr)
 	}
 
 	// Check if already up to date in out
@@ -326,7 +348,10 @@ func FetchAllPrune(ctx context.Context, repoPath string) error {
 	return fetchAllPruneWithForce(ctx, repoPath, false)
 }
 
-// FetchAllPruneWithForce performs git fetch --all --prune with --force flag.
+// FetchAllPruneWithForce performs git fetch --all --prune --tags with --force flag.
+// The --tags flag is required: plain --force updates branches but silently
+// skips moved tags, while --tags --force actually overwrites local tags that
+// were moved on the remote (verified: `t [tag update]`).
 func FetchAllPruneWithForce(ctx context.Context, repoPath string) error {
 	return fetchAllPruneWithForce(ctx, repoPath, true)
 }
@@ -335,7 +360,7 @@ func FetchAllPruneWithForce(ctx context.Context, repoPath string) error {
 func fetchAllPruneWithForce(ctx context.Context, repoPath string, force bool) error {
 	args := []string{"fetch", "--all", "--prune"}
 	if force {
-		args = append(args, "--force")
+		args = append(args, "--tags", "--force")
 	}
 
 	cmd, cancel := execGitCommand(ctx, repoPath, args...)

@@ -30,7 +30,8 @@ Repositories with uncommitted changes will have fetch performed but pull will be
 Example:
   eng project sync                  # Sync all projects
   eng project sync -p MyProject     # Sync only the specified project
-  eng project sync --dry-run        # Preview what would be synced`,
+  eng project sync --dry-run        # Preview what would be synced
+  eng project sync --force          # Force overwrite tags on conflicts`,
 	Run: func(cmd *cobra.Command, args []string) {
 		headerStyle := lipgloss.NewStyle().
 			Bold(true).
@@ -48,6 +49,7 @@ Example:
 		}
 
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		force, _ := cmd.Flags().GetBool("force")
 		projectFilter, _ := cmd.Flags().GetString("project")
 
 		logPath, stopLog := runlog.Start("project-sync")
@@ -56,6 +58,7 @@ Example:
 
 		opts := internalProject.SyncOptions{
 			DryRun:        dryRun,
+			Force:         force,
 			IsVerbose:     cmdutil.IsVerbose(cmd),
 			ProjectFilter: projectFilter,
 			DevPath:       os.ExpandEnv(devPath),

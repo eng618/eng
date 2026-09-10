@@ -21,6 +21,7 @@ import (
 type GitCommandSetup struct {
 	IsVerbose bool
 	DryRun    bool
+	Force     bool
 	DevPath   string
 }
 
@@ -28,6 +29,7 @@ type GitCommandSetup struct {
 func setupGitCommand(cmd *cobra.Command) (*GitCommandSetup, error) {
 	isVerbose := cmdutil.IsVerbose(cmd)
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	force := getBoolFlag(cmd, "force")
 
 	devPath, err := getWorkingPath(cmd)
 	if err != nil {
@@ -43,6 +45,7 @@ func setupGitCommand(cmd *cobra.Command) (*GitCommandSetup, error) {
 	return &GitCommandSetup{
 		IsVerbose: isVerbose,
 		DryRun:    dryRun,
+		Force:     force,
 		DevPath:   devPath,
 	}, nil
 }

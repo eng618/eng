@@ -189,8 +189,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.delayClearNotificationCmd(m.notificationID)
 			}
 			return m, cmd
-		case "f", "p", "o", "c", "s":
-			// Handle actions based on focus
+		case "f", "p", "o", "c", "s", "F", "P", "S":
+			// Handle actions based on focus.
+			// Uppercase F/P/S force-overwrite moved tags
+			// (fetch --force, or fetch --force then pull).
 			resModel, cmd := handleAction(m, msg.String())
 			m = resModel.(Model)
 			m.clampScrollOffset()

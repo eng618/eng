@@ -19,6 +19,7 @@ import (
 // SyncOptions holds the configuration for syncing projects.
 type SyncOptions struct {
 	DryRun        bool
+	Force         bool
 	IsVerbose     bool
 	ProjectFilter string
 	DevPath       string
@@ -112,9 +113,10 @@ func Sync(ctx context.Context, opts SyncOptions) {
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Syncing %s...", repoPath))
 
-				// Fetch
+				// Fetch (force overwrites moved tags when opts.Force is set,
+				// otherwise TagClobberError surfaces via FetchWithOptions prompt).
 				spinner.UpdateText(fmt.Sprintf("Fetching %s...", repoPath))
-				if err := opts.RepoClient.FetchAllPrune(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.FetchWithOptions(egCtx, fullRepoPath, opts.Force); err != nil {
 					spinner.Fail(fmt.Sprintf("Fetch failed for %s: %s", repoPath, err))
 					mu.Lock()
 					fetchFailed++
@@ -152,9 +154,9 @@ func Sync(ctx context.Context, opts SyncOptions) {
 					return nil
 				}
 
-				// Pull
+				// Pull (fetch --force then pull when opts.Force is set).
 				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoPath))
-				if err := opts.RepoClient.PullLatestCode(egCtx, fullRepoPath); err != nil {
+				if err := opts.RepoClient.PullWithOptions(egCtx, fullRepoPath, opts.Force); err != nil {
 					if errors.Is(err, git.NoErrAlreadyUpToDate) {
 						spinner.Info(fmt.Sprintf("Synced %s (already up to date)", repoPath))
 						mu.Lock()

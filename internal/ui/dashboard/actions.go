@@ -108,15 +108,23 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 
 // actionTitle returns a fixed modal title that never includes a repo name,
 // so the modal width stays stable while rows update underneath.
+// Uppercase F/P/S are force variants that overwrite moved tags
+// (fetch --force then pull for P/S).
 func actionTitle(action string, n int) string {
 	var verb string
 	switch action {
 	case "f":
 		verb = "Fetching"
+	case "F":
+		verb = "Force fetching"
 	case "p":
 		verb = "Pulling"
+	case "P":
+		verb = "Force pulling"
 	case "s":
 		verb = "Syncing"
+	case "S":
+		verb = "Force syncing"
 	case "c":
 		verb = "Cloning"
 	case "o":
@@ -250,14 +258,22 @@ func runActionItem(item ActionItem, prettyName string, pw *io.PipeWriter) {
 }
 
 // executeRepoAction runs the git operation for a single repository.
+// Uppercase F/P/S force-overwrite moved tags: fetch uses
+// git fetch --all --prune --force, pull/sync do fetch --force then pull.
 func executeRepoAction(ctx context.Context, item ActionItem, prettyName string) error {
 	switch item.Action {
 	case "f":
 		return fetchActionRepo(ctx, item, prettyName)
+	case "F":
+		return fetchActionRepoForce(ctx, item, prettyName)
 	case "p":
 		return pullActionRepo(ctx, item, prettyName)
+	case "P":
+		return pullActionRepoForce(ctx, item, prettyName)
 	case "s":
 		return syncActionRepo(ctx, item, prettyName)
+	case "S":
+		return syncActionRepoForce(ctx, item, prettyName)
 	case "c":
 		return cloneActionRepo(ctx, item, prettyName)
 	case "o":
@@ -270,6 +286,19 @@ func executeRepoAction(ctx context.Context, item ActionItem, prettyName string) 
 func fetchActionRepo(ctx context.Context, item ActionItem, prettyName string) error {
 	log.Info("Fetching %s...", prettyName)
 	if err := repo.FetchAllPrune(ctx, item.FullPath); err != nil {
+		var clobberErr *repo.TagClobberError
+		if errors.As(err, &clobberErr) {
+			return fmt.Errorf("%w (press F for force-fetch to overwrite local tags)", err)
+		}
+		return err
+	}
+	log.Success("Fetch completed successfully!")
+	return nil
+}
+
+func fetchActionRepoForce(ctx context.Context, item ActionItem, prettyName string) error {
+	log.Info("Force fetching %s...", prettyName)
+	if err := repo.FetchAllPruneWithForce(ctx, item.FullPath); err != nil {
 		return err
 	}
 	log.Success("Fetch completed successfully!")
@@ -285,6 +314,24 @@ func pullActionRepo(ctx context.Context, item ActionItem, prettyName string) err
 	}
 	if err == nil {
 		log.Success("Pull completed successfully!")
+		return nil
+	}
+	var clobberErr *repo.TagClobberError
+	if errors.As(err, &clobberErr) {
+		return fmt.Errorf("%w (press P for force-pull to overwrite local tags)", err)
+	}
+	return err
+}
+
+func pullActionRepoForce(ctx context.Context, item ActionItem, prettyName string) error {
+	log.Info("Force pulling %s...", prettyName)
+	err := repo.PullLatestCodeWithOptions(ctx, item.FullPath, true)
+	if errors.Is(err, git.NoErrAlreadyUpToDate) {
+		log.Info("Already up to date.")
+		return nil
+	}
+	if err == nil {
+		log.Success("Pull completed successfully!")
 	}
 	return err
 }
@@ -293,10 +340,31 @@ func syncActionRepo(ctx context.Context, item ActionItem, prettyName string) err
 	log.Info("Syncing %s...", prettyName)
 	log.Info("1/2 Fetching...")
 	if err := repo.FetchAllPrune(ctx, item.FullPath); err != nil {
+		var clobberErr *repo.TagClobberError
+		if errors.As(err, &clobberErr) {
+			return fmt.Errorf("%w (press S for force-sync to overwrite local tags)", err)
+		}
 		return err
 	}
 	log.Info("2/2 Pulling...")
 	if err := pullActionRepo(ctx, item, prettyName); err != nil {
+		return err
+	}
+	log.Success("Sync completed successfully!")
+	return nil
+}
+
+func syncActionRepoForce(ctx context.Context, item ActionItem, prettyName string) error {
+	log.Info("Force syncing %s...", prettyName)
+	log.Info("1/2 Force fetching...")
+	if err := repo.FetchAllPruneWithForce(ctx, item.FullPath); err != nil {
+		return err
+	}
+	log.Info("2/2 Pulling...")
+	err := repo.PullLatestCodeWithOptions(ctx, item.FullPath, true)
+	if errors.Is(err, git.NoErrAlreadyUpToDate) {
+		log.Info("Already up to date.")
+	} else if err != nil {
 		return err
 	}
 	log.Success("Sync completed successfully!")

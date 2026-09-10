@@ -21,7 +21,10 @@ import (
 var SyncAllCmd = &cobra.Command{
 	Use:   "sync-all",
 	Short: "Sync all git repositories in development folder",
-	Long:  `This command fetches and pulls with rebase for all git repositories found in your development folder.`,
+	Long: `This command fetches and pulls with rebase for all git repositories found in your development folder.
+
+Use --force to overwrite local tags when remotes move them
+(fetch --force then pull).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		printHeader("🔄 Syncing Git Repositories")
 
@@ -75,6 +78,15 @@ var SyncAllCmd = &cobra.Command{
 
 				spinner := multi.AddSpinner(fmt.Sprintf("Processing %s...", repoName))
 
+				// Fetch first so remote refs/tags are current (force overwrites
+				// moved tags when --force is set).
+				spinner.UpdateText(fmt.Sprintf("Fetching %s...", repoName))
+				if err := fetchRepository(cmd.Context(), rPath, setup.Force); err != nil {
+					spinner.Fail(fmt.Sprintf("Failed to fetch %s: %s", repoName, err))
+					failureCount.Add(1)
+					return nil
+				}
+
 				// Check if repository is dirty
 				isDirty, err := repo.IsDirty(cmd.Context(), rPath)
 				if err != nil {
@@ -84,14 +96,14 @@ var SyncAllCmd = &cobra.Command{
 				}
 
 				if isDirty {
-					spinner.Warning(fmt.Sprintf("Repository %s has uncommitted changes, skipping...", repoName))
+					spinner.Warning(fmt.Sprintf("Repository %s has uncommitted changes, skipping pull...", repoName))
 					failureCount.Add(1)
 					return nil
 				}
 
-				// Pull latest code
+				// Pull latest code (fetch --force then pull when --force is set).
 				spinner.UpdateText(fmt.Sprintf("Pulling %s...", repoName))
-				if err := repo.PullLatestCode(cmd.Context(), rPath); err != nil {
+				if err := pullRepository(cmd.Context(), rPath, setup.Force); err != nil {
 					spinner.Fail(fmt.Sprintf("Failed to pull latest code for %s: %s", repoName, err))
 					failureCount.Add(1)
 					return nil
@@ -122,6 +134,7 @@ var SyncAllCmd = &cobra.Command{
 
 func init() {
 	SyncAllCmd.Flags().Bool("dry-run", false, "Perform a dry run without making actual changes")
+	SyncAllCmd.Flags().Bool("force", false, "Force overwrite local tags (fetch --force then pull)")
 }
 
 // findGitRepositories scans the given directory for git repositories.
