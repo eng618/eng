@@ -123,11 +123,14 @@ func writeCache(path string, entry cacheEntry) {
 }
 
 // fetchLatestTag queries the GitHub releases API for the latest tag.
-func fetchLatestTag(ctx context.Context) (string, error) {
+// The endpoint template is passed explicitly so callers capture the
+// package-level override synchronously; background goroutines must never
+// read the mutable global directly (data race with tests).
+func fetchLatestTag(ctx context.Context, apiURL string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(githubAPIURL, githubRepoOwner, githubRepoName), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(apiURL, githubRepoOwner, githubRepoName), nil)
 	if err != nil {
 		return "", err
 	}
@@ -187,10 +190,13 @@ func RefreshAsync() {
 	if time.Since(time.Unix(entry.CheckedAt, 0)) < CheckInterval && entry.LatestTag != "" {
 		return
 	}
+	// Capture the endpoint now: the goroutine below must not read the
+	// package global after this function returns.
+	apiURL := githubAPIURL
 	go func() {
 		bg, cancel := context.WithTimeout(context.Background(), requestTimeout+time.Second)
 		defer cancel()
-		tag, err := fetchLatestTag(bg)
+		tag, err := fetchLatestTag(bg, apiURL)
 		if err != nil {
 			return
 		}
