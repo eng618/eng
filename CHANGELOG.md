@@ -1,5 +1,17 @@
 <a name="unreleased"></a>
 
+## [1.55.0](https://github.com/eng618/eng/compare/v1.54.0...v1.55.0) (2026-09-10)
+
+
+### Features
+
+* Add npm-style automatic update notifications to CLI usage ([27c328c](https://github.com/eng618/eng/commit/27c328cf285f15c285dfdae4db6c1162da008bf9))
+
+
+### Bug Fixes
+
+* Pass API URL as parameter to fetchLatestTag to prevent data races with global state ([89a5832](https://github.com/eng618/eng/commit/89a5832cfad757f75b0e10729304a665fd00371c))
+
 ## [1.54.0](https://github.com/eng618/eng/compare/v1.53.2...v1.54.0) (2026-09-10)
 
 
