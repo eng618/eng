@@ -58,6 +58,7 @@ import (
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
+	"github.com/eng618/eng/internal/updatecheck"
 	appversion "github.com/eng618/eng/internal/version"
 )
 
@@ -97,6 +98,11 @@ func ExecuteContext(ctx context.Context) {
 	// Silence usage printing on errors to avoid noisy output
 	rootCmd.SilenceUsage = true
 
+	// Kick off the background update check before the command runs so the
+	// network fetch overlaps command execution. Served from cache + silent
+	// on failure, it never delays or breaks the invocation.
+	updatecheck.RefreshAsync()
+
 	startTime := time.Now()
 	err := rootCmd.ExecuteContext(ctx)
 	duration := time.Since(startTime)
@@ -110,6 +116,9 @@ func ExecuteContext(ctx context.Context) {
 
 	telemetry.TrackCommand(targetCmd, targetArgs, duration, err)
 	telemetry.Drain(400 * time.Millisecond)
+
+	// npm-style update notice (stderr, cached, almost silent).
+	updatecheck.NotifyIfAvailable(invokedCommandName(targetCmd))
 
 	if err != nil {
 		theme.HandleError(err)
@@ -260,6 +269,21 @@ func initConfig() {
 	telemetry.Init(configUtils.GetEffectiveTelemetryConfig(), cmdutil.IsVerbose(rootCmd))
 
 	maybeRunOnboarding()
+}
+
+// invokedCommandName resolves the subcommand name for update-check skip
+// decisions. Shell completion keeps machine-clean output, so it always maps
+// to the skipped "__complete" sentinel.
+func invokedCommandName(targetCmd *cobra.Command) string {
+	for _, a := range os.Args[1:] {
+		if a == "__complete" {
+			return "__complete"
+		}
+	}
+	if targetCmd == nil {
+		return ""
+	}
+	return targetCmd.Name()
 }
 
 // firstRunConfigCreated tracks whether initConfig created a fresh config file
