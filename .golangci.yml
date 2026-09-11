@@ -109,7 +109,8 @@ formatters: # Formatters configuration
       simplify: true # Simplify code where possible
     gofumpt:
       module-path: github.com/eng618/eng # Module path for extra rules
-      extra.group-params: true # Apply extra formatting rules
+      extra:
+        group-params: true # Apply extra formatting rules
     goimports:
       local-prefixes: # Local import prefixes
         - github.com/eng618/eng
