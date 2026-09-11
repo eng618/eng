@@ -1,5 +1,23 @@
 <a name="unreleased"></a>
 
+## [1.56.1](https://github.com/eng618/eng/compare/v1.56.0...v1.56.1) (2026-09-11)
+
+
+### Bug Fixes
+
+* Correct gofumpt configuration syntax for extra group-params setting ([93dda8e](https://github.com/eng618/eng/commit/93dda8e6c85e621698bfff6faffebeab82141554))
+
+
+### Build System
+
+* Upgrade Go to 1.27 and update golangci-lint configuration ([8b74735](https://github.com/eng618/eng/commit/8b7473586f0924a65e70870869cf695d71cdf014))
+
+
+### Miscellaneous
+
+* Update golangci-lint version to v2.13 in CI workflow ([86dc8e5](https://github.com/eng618/eng/commit/86dc8e5463dc398e77018f8528d0f72b24ed8ef8))
+* Update project dependencies and align Go version to 1.26.0 ([2daaac1](https://github.com/eng618/eng/commit/2daaac158afd2b78a5e32d9b27c3afb6f5aac987))
+
 ## [1.56.0](https://github.com/eng618/eng/compare/v1.55.0...v1.56.0) (2026-09-10)
 
 
