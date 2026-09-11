@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         # Always support current, and upcoming releases
-        go-version: ['1.26']
+        go-version: ['1.27']
 
     steps:
       - uses: actions/checkout@v7
@@ -79,7 +79,7 @@ jobs:
         run: task test
 
       - name: Report coverage to Codacy
-        if: matrix.go-version == '1.26'
+        if: matrix.go-version == '1.27'
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         continue-on-error: true
         with:
