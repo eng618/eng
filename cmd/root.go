@@ -48,6 +48,7 @@ import (
 	"github.com/eng618/eng/cmd/proxy"
 	"github.com/eng618/eng/cmd/setup"
 	"github.com/eng618/eng/cmd/ssh"
+	"github.com/eng618/eng/cmd/sysinfo"
 	"github.com/eng618/eng/cmd/ts"
 	"github.com/eng618/eng/cmd/update"
 	"github.com/eng618/eng/cmd/version"
@@ -177,6 +178,7 @@ func init() {
 
 	doctor.DoctorCmd.GroupID = "meta"
 	logs.LogsCmd.GroupID = "meta"
+	sysinfo.SysinfoCmd.GroupID = "meta"
 	version.VersionCmd.GroupID = "meta"
 
 	// Wire cross-domain setup steps (only root aggregates sibling commands).
@@ -203,6 +205,7 @@ func init() {
 	rootCmd.AddCommand(proxy.ProxyCmd)
 	rootCmd.AddCommand(setup.SetupCmd)
 	rootCmd.AddCommand(ssh.SshCmd)
+	rootCmd.AddCommand(sysinfo.SysinfoCmd)
 	rootCmd.AddCommand(ts.TailscaleCmd)
 	rootCmd.AddCommand(update.UpdateCmd)
 	rootCmd.AddCommand(version.VersionCmd)

@@ -352,6 +352,12 @@ Workstation setup for macOS and Linux, including developer setup automation.
 | `eng update ide`         | Update or install Antigravity IDE (aliases: `agy-ide`, `antigravity-ide`)           |
 | `eng proxy`              | Manage proxy settings                                                               |
 | `eng clean`              | Clean host storage (docker, journals, caches)                                       |
+| `eng sysinfo`            | Show system diagnostics: CPU, memory, disk, network (table, json, yaml)             |
+
+### sysinfo Flags
+
+- `--output <format>` / `-o` — Output format: table, json, or yaml (default: table)
+- `--timeout <duration>` — Overall timeout for diagnostics collection (default: 8s)
 
 ### killProcess Flags
 

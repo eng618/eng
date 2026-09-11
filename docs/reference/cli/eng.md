@@ -49,6 +49,7 @@ This is a personal CLI to facilitate developer workflows and maintain developmen
 * [eng proxy](eng_proxy.md)	 - Show or configure system proxies
 * [eng setup](eng_setup.md)	 - Setup development tools
 * [eng ssh](eng_ssh.md)	 - Manage SSH keys for GitHub access
+* [eng sysinfo](eng_sysinfo.md)	 - Show system diagnostics (CPU, memory, disk, network)
 * [eng tailscale](eng_tailscale.md)	 - A helper for the tailscale command
 * [eng update](eng_update.md)	 - Update the system and perform maintenance
 * [eng version](eng_version.md)	 - Print the version number of eng and check for updates
