@@ -21,6 +21,8 @@ func RunInteractiveEditor() error {
 		gitDevPath = paths.Expand("~/Development")
 	}
 
+	gitEditor := viper.GetString("git.editor")
+
 	dfRepoURL := viper.GetString("dotfiles.repo_url")
 	dfBranch := viper.GetString("dotfiles.branch")
 	if dfBranch == "" {
@@ -54,6 +56,10 @@ func RunInteractiveEditor() error {
 				Title("Git Dev Path").
 				Description("Directory where your repositories live.").
 				Value(&gitDevPath),
+			huh.NewInput().
+				Title("Default Editor").
+				Description("Editor for dashboard (e), e.g. agy-ide, code, nvim. Blank uses auto-detect.").
+				Value(&gitEditor),
 			huh.NewConfirm().
 				Title("Enable Verbose Output").
 				Description("Show detailed debug logs by default.").
@@ -132,6 +138,7 @@ func RunInteractiveEditor() error {
 	viper.Set("email", email)
 	viper.Set("verbose", verbose)
 	viper.Set("git.dev_path", gitDevPath)
+	viper.Set("git.editor", gitEditor)
 
 	viper.Set("dotfiles.repo_url", dfRepoURL)
 	viper.Set("dotfiles.branch", dfBranch)

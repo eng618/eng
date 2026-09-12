@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/eng618/eng/internal/editor"
 	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/repo"
 )
@@ -98,31 +98,10 @@ func (m Model) resolveTargetPath() (string, error) {
 }
 
 func resolveEditorCommand(editorConfig, targetPath string) *execx.Cmd {
-	// Precedence mirrors the `ide()` shell helper:
-	// explicit `git.editor` config > $VISUAL/$EDITOR > agy-ide > code > nano.
-	cmdStr := editorConfig
-	if cmdStr == "" {
-		cmdStr = os.Getenv("VISUAL")
-		if cmdStr == "" {
-			cmdStr = os.Getenv("EDITOR")
-		}
-	}
-
-	if cmdStr == "" {
-		if _, err := execx.LookPath("agy-ide"); err == nil {
-			cmdStr = "agy-ide"
-		} else if _, err := execx.LookPath("code"); err == nil {
-			cmdStr = "code"
-		} else {
-			cmdStr = "nano"
-		}
-	}
-
-	parts := strings.Fields(cmdStr)
-	execCmd := execx.Command(parts[0], parts[1:]...)
-	execCmd.Args = append(execCmd.Args, targetPath)
-
-	return execCmd
+	// Delegates to the shared editor package so dashboard open logic,
+	// the select-editor picker, and `eng config git-editor` stay in sync.
+	// Precedence: explicit `git.editor` > $VISUAL/$EDITOR > agy-ide > code > nano.
+	return editor.Resolve(editorConfig, targetPath)
 }
 
 func findAddedDiff(oldProjs, newProjs []Project) (targetProject, addedRepo string) {

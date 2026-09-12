@@ -37,6 +37,7 @@ It should be located at $HOME/.eng.yaml`,
 		config.Branch()
 		config.BareRepoPath()
 		config.GitDevPath()
+		config.GitEditor()
 		config.Verbose()
 	},
 }
@@ -51,6 +52,7 @@ func init() {
 	ConfigCmd.AddCommand(DotfilesBareRepoPathCmd)
 	ConfigCmd.AddCommand(DotfilesTargetRepoPathCmd)
 	ConfigCmd.AddCommand(GitDevPathCmd)
+	ConfigCmd.AddCommand(GitEditorCmd)
 	ConfigCmd.AddCommand(IdeURLCmd)
 	ConfigCmd.AddCommand(TelemetryCmd)
 	ConfigCmd.AddCommand(VerboseCmd)

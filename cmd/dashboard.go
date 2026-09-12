@@ -3,12 +3,12 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/editor"
 	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
@@ -77,31 +77,10 @@ var selectEditorCmd = &cobra.Command{
 			}
 		}
 
-		type EditorOption struct {
-			Name    string
-			Command string
-			IsApp   bool
-		}
+		type EditorOption = editor.Option
 
-		potentialEditors := []EditorOption{
-			// Ordered to mirror the `ide()` helper precedence: agy-ide > code > nano.
-			{Name: "agy-ide (CLI)", Command: "agy-ide", IsApp: false},
-			{Name: "antigravity-ide (CLI)", Command: "antigravity-ide", IsApp: false},
-			{Name: "Antigravity IDE", Command: "Antigravity IDE", IsApp: true},
-			{Name: "Antigravity VS Code", Command: "Antigravity", IsApp: true},
-			{Name: "Visual Studio Code (CLI)", Command: "code", IsApp: false},
-			{Name: "Visual Studio Code (App)", Command: "Visual Studio Code", IsApp: true},
-			{Name: "Neovim", Command: "nvim", IsApp: false},
-			{Name: "Vim", Command: "vim", IsApp: false},
-			{Name: "Nano", Command: "nano", IsApp: false},
-			{Name: "Emacs", Command: "emacs", IsApp: false},
-			{Name: "Sublime Text (CLI)", Command: "subl", IsApp: false},
-			{Name: "Sublime Text (App)", Command: "Sublime Text", IsApp: true},
-			{Name: "Cursor (CLI)", Command: "cursor", IsApp: false},
-			{Name: "Cursor (App)", Command: "Cursor", IsApp: true},
-			{Name: "Xcode", Command: "Xcode", IsApp: true},
-			{Name: "Android Studio", Command: "Android Studio", IsApp: true},
-		}
+		// Installed editors in `ide()` precedence order (agy-ide > code > nano).
+		potentialEditors := editor.Available()
 
 		var available []EditorOption
 		var options []string
@@ -123,23 +102,9 @@ var selectEditorCmd = &cobra.Command{
 				continue
 			}
 
-			if opt.IsApp {
-				appPath1 := "/Applications/" + opt.Command + ".app"
-				appPath2 := filepath.Join(paths.MustHome(), "Applications", opt.Command+".app")
-
-				if _, err := os.Stat(appPath1); err == nil {
-					available = append(available, opt)
-					options = append(options, opt.Name)
-				} else if _, err := os.Stat(appPath2); err == nil {
-					available = append(available, opt)
-					options = append(options, opt.Name)
-				}
-			} else {
-				if _, err := execx.LookPath(opt.Command); err == nil {
-					available = append(available, opt)
-					options = append(options, opt.Name)
-				}
-			}
+			// Already filtered to installed editors by editor.Available().
+			available = append(available, opt)
+			options = append(options, opt.Name)
 		}
 
 		if len(available) == 0 {

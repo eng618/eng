@@ -72,6 +72,7 @@ func TestConfigCmd_Subcommands(t *testing.T) {
 		"dotfiles-bare-repo-path":          false,
 		"dotfiles-target-repo-path [path]": false,
 		"git-dev-path":                     false,
+		"git-editor [editor]":              false,
 		"ide-url [url]":                    false,
 		"telemetry":                        false,
 		"verbose":                          false,
@@ -281,6 +282,32 @@ func TestGitDevPathCmd(t *testing.T) {
 	}
 }
 
+func TestGitEditorCmd(t *testing.T) {
+	setupTestViper(t)
+	restore := mockAllPrompts()
+	defer restore()
+
+	// Direct arg sets without prompting.
+	GitEditorCmd.Run(GitEditorCmd, []string{"agy-ide"})
+	if viper.GetString("git.editor") != "agy-ide" {
+		t.Errorf("expected git.editor to be agy-ide, got %s", viper.GetString("git.editor"))
+	}
+
+	// Interactive select persists the picked command.
+	viper.Set("git.editor", "")
+	internalconfig.SelectPrompt = func(_ string, options []string, _ string) (string, error) {
+		if len(options) == 0 {
+			t.Error("expected editor options to select from")
+		}
+		return "code", nil
+	}
+
+	GitEditorCmd.Run(GitEditorCmd, []string{})
+	if viper.GetString("git.editor") != "code" {
+		t.Errorf("expected git.editor to be code, got %s", viper.GetString("git.editor"))
+	}
+}
+
 func TestEditCmd_ConfigFlags(t *testing.T) {
 	if EditCmd.Use != "edit" {
 		t.Errorf("expected edit command Use to be 'edit', got %q", EditCmd.Use)
@@ -361,7 +388,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 12
+	// Subcommand Count: 13
 }
 
 // ============================================================================

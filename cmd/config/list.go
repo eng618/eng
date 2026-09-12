@@ -74,6 +74,16 @@ func PrintConfigSummary() {
 		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Git Dev Path:"), theme.BaseText.Render(devPath)),
 	)
 
+	// Default Editor
+	defaultEditor := gitCfg.Editor
+	if defaultEditor == "" {
+		defaultEditor = "Not set"
+	}
+	cardLines = append(
+		cardLines,
+		fmt.Sprintf("  %-24s %s", theme.BoldText.Render("Default Editor:"), theme.BaseText.Render(defaultEditor)),
+	)
+
 	// Dotfiles
 	dotfilesCfg := config.GetDotfilesConfig()
 	dotfilesRepoURL := dotfilesCfg.RepoURL
