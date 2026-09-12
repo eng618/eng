@@ -84,6 +84,9 @@ var selectEditorCmd = &cobra.Command{
 		}
 
 		potentialEditors := []EditorOption{
+			// Ordered to mirror the `ide()` helper precedence: agy-ide > code > nano.
+			{Name: "agy-ide (CLI)", Command: "agy-ide", IsApp: false},
+			{Name: "antigravity-ide (CLI)", Command: "antigravity-ide", IsApp: false},
 			{Name: "Antigravity IDE", Command: "Antigravity IDE", IsApp: true},
 			{Name: "Antigravity VS Code", Command: "Antigravity", IsApp: true},
 			{Name: "Visual Studio Code (CLI)", Command: "code", IsApp: false},

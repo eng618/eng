@@ -98,6 +98,8 @@ func (m Model) resolveTargetPath() (string, error) {
 }
 
 func resolveEditorCommand(editorConfig, targetPath string) *execx.Cmd {
+	// Precedence mirrors the `ide()` shell helper:
+	// explicit `git.editor` config > $VISUAL/$EDITOR > agy-ide > code > nano.
 	cmdStr := editorConfig
 	if cmdStr == "" {
 		cmdStr = os.Getenv("VISUAL")
@@ -107,11 +109,12 @@ func resolveEditorCommand(editorConfig, targetPath string) *execx.Cmd {
 	}
 
 	if cmdStr == "" {
-		_, err := execx.LookPath("code")
-		if err == nil {
+		if _, err := execx.LookPath("agy-ide"); err == nil {
+			cmdStr = "agy-ide"
+		} else if _, err := execx.LookPath("code"); err == nil {
 			cmdStr = "code"
 		} else {
-			cmdStr = "vim"
+			cmdStr = "nano"
 		}
 	}
 
