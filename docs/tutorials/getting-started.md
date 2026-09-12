@@ -27,6 +27,10 @@ eng doctor
 `eng doctor` checks required tools (git, brew, bash) and your workspace paths.
 It exits non-zero when something required is missing, so you can gate scripts on it.
 
+The script installer also drops in shell completions for bash, zsh, and
+fish — restart your shell (new terminal) to load them. Opt out with
+`sh -s -- --no-completions` (or `ENG_NO_COMPLETIONS=1`).
+
 ## 2. First run: the setup wizard
 
 The first time `eng` creates `~/.eng.yaml`, it offers a quick setup wizard

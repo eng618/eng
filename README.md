@@ -57,6 +57,15 @@ curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | INSTAL
 ENG_VERSION=v0.17.5 INSTALL_DIR=$HOME/.local/bin sh install.sh
 ```
 
+The script also installs shell completions for bash, zsh, and fish
+(system vendor dirs for system installs, XDG user dirs otherwise).
+Restart your shell to load them. Skip with `--no-completions`
+(or `ENG_NO_COMPLETIONS=1`):
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | sh -s -- --no-completions
+```
+
 Update anytime with:
 
 ```sh

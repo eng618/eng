@@ -213,13 +213,10 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	// Shell completion (`eng __complete ...`) parses stdout for candidates,
-	// so route all log output to stderr to keep completions clean.
-	for _, a := range os.Args {
-		if a == "__complete" {
-			log.SetWriters(os.Stderr, os.Stderr)
-			break
-		}
+	// Completion output (generated scripts and __complete candidates) is
+	// consumed from stdout, so route all log output to stderr to keep it clean.
+	if completionOutputRequested(os.Args) {
+		log.SetWriters(os.Stderr, os.Stderr)
 	}
 
 	if cfgFile != "" {
@@ -287,6 +284,19 @@ func invokedCommandName(targetCmd *cobra.Command) string {
 		return ""
 	}
 	return targetCmd.Name()
+}
+
+// completionOutputRequested reports whether the invocation produces
+// machine-consumed completion output on stdout: either a full completion
+// script (`eng completion bash|zsh|fish|powershell`) or dynamic candidates
+// (`eng __complete ...`). Callers use it to keep stdout machine-clean.
+func completionOutputRequested(args []string) bool {
+	for _, a := range args {
+		if a == "__complete" || a == "completion" {
+			return true
+		}
+	}
+	return false
 }
 
 // firstRunConfigCreated tracks whether initConfig created a fresh config file

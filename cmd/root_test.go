@@ -67,6 +67,33 @@ func TestRunOnboardingPromptAccepted(t *testing.T) {
 	}
 }
 
+func TestCompletionOutputRequested(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want bool
+	}{
+		{"no args", []string{"eng"}, false},
+		{"regular command", []string{"eng", "version"}, false},
+		{"completion script", []string{"eng", "completion", "zsh"}, true},
+		{"completion bare", []string{"eng", "completion"}, true},
+		{"dynamic complete", []string{"eng", "__complete", "ver", ""}, true},
+		{
+			"completion as flag value still matches",
+			[]string{"eng", "config", "--output", "completion"},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := completionOutputRequested(tt.args); got != tt.want {
+				t.Errorf("completionOutputRequested(%v) = %v, want %v", tt.args, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRunOnboardingPromptEditFails(t *testing.T) {
 	buf := captureLog(t)
 

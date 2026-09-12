@@ -10,12 +10,25 @@
 #   ENG_VERSION  version tag to install (e.g. v0.17.5) or "latest" (default)
 #   INSTALL_DIR  destination directory (default: /usr/local/bin)
 #   REPO         GitHub repo "owner/name" (default: eng618/eng)
+#   ENG_COMPLETIONS     1/0 to enable/disable shell completions (default: 1)
+#   ENG_NO_COMPLETIONS  set to 1 to skip shell completions
+#   COMPLETIONS_DIR     override base dir for installed completions (advanced/testing)
 set -eu
 
 REPO="${REPO:-eng618/eng}"
 VERSION_INPUT="${ENG_VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 USE_SUDO="auto"
+COMPLETIONS="${COMPLETIONS:-${ENG_COMPLETIONS:-yes}}"
+case "$COMPLETIONS" in
+  0|no|No|NO|false|False|FALSE|off|Off|OFF|n|N) COMPLETIONS="no" ;;
+  *) COMPLETIONS="yes" ;;
+esac
+case "${ENG_NO_COMPLETIONS:-}" in
+  ""|0|no|No|NO|false|False|FALSE|off|Off|OFF|n|N) ;;
+  *) COMPLETIONS="no" ;;
+esac
+COMPLETIONS_DIR="${COMPLETIONS_DIR:-}"
 
 log() { printf '%s\n' "eng-install: $*" >&2; }
 err() { printf '%s\n' "eng-install: ERROR: $*" >&2; }
@@ -23,18 +36,26 @@ die() { err "$*"; exit 1; }
 
 usage() {
   cat >&2 <<'EOF'
-Usage: install.sh [-v VERSION] [-b DIR] [--to DIR] [-h]
+Usage: install.sh [-v VERSION] [-b DIR] [--to DIR] [--completions|--no-completions] [-h]
 
   -v, --version VERSION   Release tag to install (e.g. v0.17.5) or "latest" (default).
                           Can also be set via ENG_VERSION env var.
   -b, --to, --install-dir DIR
                           Destination directory (default: /usr/local/bin).
                           Can also be set via INSTALL_DIR env var.
+  --completions           Install shell completions for bash/zsh/fish (default).
+  --no-completions        Skip shell completion installation.
+                          Can also be disabled via ENG_NO_COMPLETIONS=1
+                          or ENG_COMPLETIONS=0 env vars.
+  --completions-dir DIR   Override base directory for completions
+                          (advanced/testing). Can also be set via
+                          COMPLETIONS_DIR env var.
   -h, --help              Show this help and exit.
 
 Examples:
   curl -sSfL https://raw.githubusercontent.com/eng618/eng/main/install.sh | sh
   curl -sSfL .../install.sh | sh -s -- -v v0.17.5
+  curl -sSfL .../install.sh | sh -s -- --no-completions
   INSTALL_DIR="$HOME/.local/bin" sh install.sh
 EOF
 }
@@ -53,6 +74,13 @@ while [ $# -gt 0 ]; do
       INSTALL_DIR="$2"; shift 2 ;;
     -b=*|--to=*|--install-dir=*)
       INSTALL_DIR="${1#*=}"; shift ;;
+    --completions) COMPLETIONS="yes"; shift ;;
+    --no-completions) COMPLETIONS="no"; shift ;;
+    --completions-dir)
+      [ $# -ge 2 ] || die "Missing value for $1 (e.g. $1 \$HOME/.local/share/eng-completions)"
+      COMPLETIONS_DIR="$2"; shift 2 ;;
+    --completions-dir=*)
+      COMPLETIONS_DIR="${1#*=}"; shift ;;
     --) shift; break ;;
     -*) die "Unknown option: $1 (see --help)" ;;
     *) break ;;
@@ -94,6 +122,178 @@ resolve_latest_tag() {
   tag="$(printf '%s' "$api_json" | grep -m1 '"tag_name"' | sed -e 's/.*"tag_name"[[:space:]]*:[[:space:]]*"//' -e 's/".*//' || true)"
   [ -n "$tag" ] || return 1
   printf '%s' "$tag"
+}
+
+# --- shell completions (bash/zsh/fish) ---
+# Best-effort: generates completions from the installed binary and drops
+# static files into the standard per-shell locations. Never fails the install.
+install_one_completion() {
+  _shell="$1"
+  _target="$2"
+  _tmp_comp="$TMPDIR/completion.$_shell"
+  if ! "$DEST" completion "$_shell" >"$_tmp_comp" 2>/dev/null; then
+    log "WARNING: could not generate $_shell completions (skipping)"
+    return 0
+  fi
+  if [ ! -s "$_tmp_comp" ]; then
+    log "WARNING: empty $_shell completions generated (skipping)"
+    return 0
+  fi
+  # Sanity check: the first line must look like a completion script.
+  # This refuses output polluted by log lines on stdout (as produced by
+  # older binaries). Installing such a file would break shell startup.
+  _first_line="$(head -n 1 "$_tmp_comp" 2>/dev/null || true)"
+  _valid="no"
+  case "$_shell:$_first_line" in
+    bash:"# bash completion"*) _valid="yes" ;;
+    zsh:"#compdef"*) _valid="yes" ;;
+    fish:"# fish completion"*) _valid="yes" ;;
+  esac
+  if [ "$_valid" != "yes" ]; then
+    log "WARNING: generated $_shell completions failed validation (skipping)"
+    return 0
+  fi
+  _target_dir="$(dirname "$_target")"
+  _comp_sudo=""
+  if ! mkdir -p "$_target_dir" 2>/dev/null; then
+    if command -v sudo >/dev/null 2>&1; then
+      if ! sudo mkdir -p "$_target_dir" 2>/dev/null; then
+        log "WARNING: could not create completions dir $_target_dir (skipping $_shell)"
+        return 0
+      fi
+      _comp_sudo="sudo"
+    else
+      log "WARNING: no write permission for $_target_dir (skipping $_shell completions)"
+      return 0
+    fi
+  fi
+  if [ -n "$_comp_sudo" ]; then
+    if ! $_comp_sudo cp -f "$_tmp_comp" "$_target" 2>/dev/null ||
+      ! $_comp_sudo chmod 644 "$_target" 2>/dev/null; then
+      log "WARNING: could not write $_target (skipping)"
+      return 0
+    fi
+  else
+    if command -v install >/dev/null 2>&1; then
+      if ! install -m 644 "$_tmp_comp" "$_target" 2>/dev/null; then
+        if ! cp -f "$_tmp_comp" "$_target" 2>/dev/null; then
+          log "WARNING: could not write $_target (skipping)"
+          return 0
+        fi
+        chmod 644 "$_target" 2>/dev/null || true
+      fi
+    else
+      if ! cp -f "$_tmp_comp" "$_target" 2>/dev/null; then
+        log "WARNING: could not write $_target (skipping)"
+        return 0
+      fi
+      chmod 644 "$_target" 2>/dev/null || true
+    fi
+  fi
+  log "Installed $_shell completions to $_target"
+  return 0
+}
+
+install_completions() {
+  if [ "$COMPLETIONS" != "yes" ]; then
+    log "Skipping shell completions (--no-completions)."
+    return 0
+  fi
+  if [ ! -x "$DEST" ]; then
+    log "WARNING: skipping shell completions ($DEST not executable)"
+    return 0
+  fi
+
+  # Explicit override (advanced/testing): fixed layout under one base dir.
+  if [ -n "$COMPLETIONS_DIR" ]; then
+    install_one_completion bash "$COMPLETIONS_DIR/bash/eng"
+    install_one_completion zsh "$COMPLETIONS_DIR/zsh/_eng"
+    install_one_completion fish "$COMPLETIONS_DIR/fish/eng.fish"
+    log "Shell completions installed under $COMPLETIONS_DIR. Restart your shell."
+    return 0
+  fi
+
+  _home="${HOME:-}"
+  _xdg_data="${XDG_DATA_HOME:-}"
+  if [ -z "$_xdg_data" ] && [ -n "$_home" ]; then
+    _xdg_data="$_home/.local/share"
+  fi
+  _xdg_config="${XDG_CONFIG_HOME:-}"
+  if [ -z "$_xdg_config" ] && [ -n "$_home" ]; then
+    _xdg_config="$_home/.config"
+  fi
+
+  _bash_user=""
+  _zsh_user=""
+  _fish_user=""
+  if [ -n "$_xdg_data" ]; then
+    _bash_user="$_xdg_data/bash-completion/completions"
+    _zsh_user="$_xdg_data/zsh/site-functions"
+  fi
+  if [ -n "$_xdg_config" ]; then
+    _fish_user="$_xdg_config/fish/completions"
+  fi
+
+  _system_install="no"
+  case "$INSTALL_DIR" in
+    /usr/local/bin|/opt/homebrew/bin|/usr/bin|/opt/local/bin) _system_install="yes" ;;
+  esac
+
+  # On Windows (Git Bash) only user dirs are meaningful; system
+  # vendor paths do not apply.
+  if [ "$OS_LABEL" = "Windows" ]; then
+    if [ -z "$_bash_user" ]; then
+      log "WARNING: skipping shell completions (HOME is unset)"
+      return 0
+    fi
+    install_one_completion bash "$_bash_user/eng"
+    install_one_completion zsh "$_zsh_user/_eng"
+    install_one_completion fish "$_fish_user/eng.fish"
+    log "Shell completions installed. Restart your shell."
+    return 0
+  fi
+
+  _bash_dir="$_bash_user"
+  _zsh_dir="$_zsh_user"
+  _fish_dir="$_fish_user"
+  if [ "$_system_install" = "yes" ]; then
+    if [ -n "$_bash_user" ] || [ -n "$_xdg_data" ]; then
+      : # user dirs available as fallback
+    fi
+    _sys_bash="/usr/local/share/bash-completion/completions"
+    _sys_zsh="/usr/local/share/zsh/site-functions"
+    _sys_fish="/usr/local/share/fish/vendor_completions.d"
+    if [ -w "$_sys_bash" ] 2>/dev/null || command -v sudo >/dev/null 2>&1; then
+      _bash_dir="$_sys_bash"
+    fi
+    if [ -w "$_sys_zsh" ] 2>/dev/null || command -v sudo >/dev/null 2>&1; then
+      _zsh_dir="$_sys_zsh"
+    fi
+    if [ -w "$_sys_fish" ] 2>/dev/null || command -v sudo >/dev/null 2>&1; then
+      _fish_dir="$_sys_fish"
+    fi
+  fi
+
+  if [ -z "$_bash_dir" ] && [ -z "$_zsh_dir" ] && [ -z "$_fish_dir" ]; then
+    log "WARNING: skipping shell completions (HOME is unset and no system dir is usable)"
+    return 0
+  fi
+
+  if [ -n "$_bash_dir" ]; then
+    install_one_completion bash "$_bash_dir/eng"
+  fi
+  if [ -n "$_zsh_dir" ]; then
+    install_one_completion zsh "$_zsh_dir/_eng"
+  fi
+  if [ -n "$_fish_dir" ]; then
+    install_one_completion fish "$_fish_dir/eng.fish"
+  fi
+
+  log "Shell completions installed. Restart your shell (new terminal) to load them."
+  log "  zsh:  ensure the _eng file's directory is on fpath before 'compinit'"
+  log "  bash: requires bash-completion to auto-load the completions dir"
+  log "  fish: completions load automatically"
+  return 0
 }
 
 case "$VERSION_INPUT" in
@@ -203,5 +403,7 @@ case ":$PATH:" in
   *":$INSTALL_DIR:"*) ;;
   *) log "WARNING: $INSTALL_DIR is not on your PATH. Add: export PATH=\"$INSTALL_DIR:\$PATH\"" ;;
 esac
+
+install_completions
 
 log "Done. Run 'eng --help' to get started. Update anytime with 'eng version -u'."
