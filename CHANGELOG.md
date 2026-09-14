@@ -1,5 +1,24 @@
 <a name="unreleased"></a>
 
+## [1.57.0](https://github.com/eng618/eng/compare/v1.56.1...v1.57.0) (2026-09-12)
+
+
+### Features
+
+* **config:** Add configurable default editor ([e405fbf](https://github.com/eng618/eng/commit/e405fbfc4758f7c71c8a144205c2e74b1145c02f))
+* **info:** Add system info command ([6bc211c](https://github.com/eng618/eng/commit/6bc211cc81b77daf19561c098205ea7810fb56da))
+
+
+### Bug Fixes
+
+* **ide:** Updated ide selector from dashboard ([6dbf6a9](https://github.com/eng618/eng/commit/6dbf6a92aa3228ea36deb0cdf7f6b1619a526b68))
+
+
+### Build System
+
+* **install:** Add completion to teh manual install ([7273823](https://github.com/eng618/eng/commit/72738239fcdfdadab5c819aec827b42782653849))
+* Update deps ([b409ffc](https://github.com/eng618/eng/commit/b409ffc766a300a9d8a1e46b9053ccfe5403d4e1))
+
 ## [1.56.1](https://github.com/eng618/eng/compare/v1.56.0...v1.56.1) (2026-09-11)
 
 
