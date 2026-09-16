@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.58.0](https://github.com/eng618/eng/compare/v1.57.0...v1.58.0) (2026-09-16)
+
+
+### Features
+
+* **osc:** Add codemod for setting up oxc ([a0e90e6](https://github.com/eng618/eng/commit/a0e90e6106d2ce180a077274dbec6ad3db1783db))
+
 ## [1.57.0](https://github.com/eng618/eng/compare/v1.56.1...v1.57.0) (2026-09-12)
 
 
