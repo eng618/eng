@@ -440,6 +440,7 @@ Project automation and setup helpers for various development environments.
 | Command                         | Description                                                                |
 | ------------------------------- | -------------------------------------------------------------------------- |
 | `eng codemod lint-setup`        | Setup lint/format (eslint, prettier, husky, lint-staged) in JS/TS projects |
+| `eng codemod oxc-setup`         | Setup Oxlint + Oxfmt via @gv-tech/oxc-config (migrate off eslint/prettier) |
 | `eng codemod prettier [path]`   | Format code with prettier using @eng618/prettier-config                    |
 | `eng codemod copilot [--force]` | Create base custom Copilot instructions file                               |
 

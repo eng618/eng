@@ -26,9 +26,16 @@ var echo bool
 
 func init() {
 	CodemodCmd.AddCommand(LintSetupCmd)
+	CodemodCmd.AddCommand(OxcSetupCmd)
 	CodemodCmd.AddCommand(CopilotSetupCmd)
 	CodemodCmd.AddCommand(PrettierCmd)
 	CodemodCmd.AddCommand(NativeCmd)
 	CodemodCmd.AddCommand(WebCmd)
 	LintSetupCmd.Flags().BoolVarP(&echo, "echo", "e", false, "Use echo linting setup")
+	OxcSetupCmd.Flags().
+		StringVar(&oxcPreset, "preset", "auto", "Oxc preset: auto, recommended, next, vite, react, typescript, base")
+	OxcSetupCmd.Flags().BoolVar(&oxcTypeAware, "type-aware", false, "Enable type-aware linting (oxlint-tsgolint)")
+	OxcSetupCmd.Flags().
+		BoolVar(&oxcRemoveEslint, "remove-eslint", false, "Remove ESLint/Prettier stack and legacy configs")
+	OxcSetupCmd.Flags().BoolVarP(&oxcYes, "yes", "y", false, "Skip confirmation prompts")
 }

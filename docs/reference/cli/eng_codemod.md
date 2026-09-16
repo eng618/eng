@@ -25,6 +25,7 @@ Run codemods or setup helpers for various project types.
 * [eng codemod copilot](eng_codemod_copilot.md)	 - Setup custom Copilot instructions file
 * [eng codemod lint-setup](eng_codemod_lint-setup.md)	 - Setup linting and formatting for a Node.js project
 * [eng codemod native](eng_codemod_native.md)	 - Bootstrap a new React Native Expo project with gvtech-design
+* [eng codemod oxc-setup](eng_codemod_oxc-setup.md)	 - Setup Oxlint + Oxfmt via @gv-tech/oxc-config
 * [eng codemod prettier](eng_codemod_prettier.md)	 - Format code with prettier using @eng618/prettier-config
 * [eng codemod web](eng_codemod_web.md)	 - Bootstrap a new React web project with gvtech-design
 

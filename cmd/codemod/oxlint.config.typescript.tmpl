@@ -1,0 +1,10 @@
+import { defineConfig } from 'oxlint';
+import { typescript } from '@gv-tech/oxc-config/typescript';
+
+/**
+ * Oxlint configuration for TypeScript libraries (no framework).
+ * Uses @gv-tech/oxc-config for sensible defaults.
+ * For more information on configuration options, see:
+ * https://github.com/Garcia-Ventures/oxc-config
+ */
+export default defineConfig({ extends: [typescript] });

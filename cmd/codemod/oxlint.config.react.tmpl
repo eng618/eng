@@ -1,0 +1,10 @@
+import { defineConfig } from 'oxlint';
+import { react } from '@gv-tech/oxc-config/react';
+
+/**
+ * Oxlint configuration for React projects (no Vite / Next.js).
+ * Uses @gv-tech/oxc-config for sensible defaults.
+ * For more information on configuration options, see:
+ * https://github.com/Garcia-Ventures/oxc-config
+ */
+export default defineConfig({ extends: [react] });

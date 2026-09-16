@@ -12,6 +12,7 @@ func TestCodemodCmd_Integration(t *testing.T) {
 
 	expectedCommands := map[string]bool{
 		"lint-setup": false,
+		"oxc-setup":  false,
 		"copilot":    false,
 	}
 

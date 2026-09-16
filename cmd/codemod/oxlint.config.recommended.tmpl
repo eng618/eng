@@ -1,0 +1,10 @@
+import { defineConfig } from 'oxlint';
+import { recommended } from '@gv-tech/oxc-config/recommended';
+
+/**
+ * Oxlint configuration for most projects (Vite-light default).
+ * Uses @gv-tech/oxc-config for sensible defaults.
+ * For more information on configuration options, see:
+ * https://github.com/Garcia-Ventures/oxc-config
+ */
+export default defineConfig({ extends: [recommended] });
