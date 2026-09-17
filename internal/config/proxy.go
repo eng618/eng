@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/eng618/eng/internal/log"
@@ -19,8 +18,11 @@ type ProxyConfig struct {
 	NoProxy string
 }
 
-// GetProxyConfigs checks for proxy settings in the configuration and returns the current proxies
+// GetProxyConfigs reads proxy settings and returns the current proxies
 // and the index of the active proxy (-1 if none are active).
+// It is a pure read: it never writes the config file. Legacy singular
+// `proxy:` configs are converted in memory with a warning pointing at
+// `eng config migrate`, which owns persistent migration.
 func GetProxyConfigs() ([]ProxyConfig, int) {
 	log.Start("Checking for proxy configurations")
 
@@ -29,49 +31,19 @@ func GetProxyConfigs() ([]ProxyConfig, int) {
 
 	// Read from config
 	if !viper.IsSet("proxies") {
-		// Handle migration from old format if there's a legacy proxy config
+		// Legacy singular format: convert in memory only.
 		if viper.IsSet("proxy.value") {
-			log.Info("Migrating from old single proxy format to multi-proxy format...")
-
-			title := "Default"
-			value := viper.GetString("proxy.value")
-			enabled := viper.GetBool("proxy.enabled")
+			log.Info("Legacy single proxy format detected; run `eng config migrate` to convert it persistently")
 
 			proxies = append(proxies, ProxyConfig{
-				Title:   title,
-				Value:   value,
-				Enabled: enabled,
+				Title:   "Default",
+				Value:   viper.GetString("proxy.value"),
+				Enabled: viper.GetBool("proxy.enabled"),
 			})
 
-			if enabled {
+			if proxies[0].Enabled {
 				activeIndex = 0
 			}
-
-			// Save in new format
-			viper.Set("proxies", proxies)
-			// Clean up old format
-			viper.Set("proxy", nil)
-			if err := viper.WriteConfig(); err != nil {
-				err := fmt.Errorf(
-					"%s: %w",
-					lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
-					err,
-				)
-				cobra.CheckErr(err)
-			}
-			log.Success("Migration complete: old proxy configuration has been converted to the new format")
-		} else {
-			// No old format and no new format - initialize with empty array
-			viper.Set("proxies", []ProxyConfig{})
-			if err := viper.WriteConfig(); err != nil {
-				err := fmt.Errorf(
-					"%s: %w",
-					lipgloss.NewStyle().Foreground(theme.Destructive).Render("Error writing config file"),
-					err,
-				)
-				cobra.CheckErr(err)
-			}
-			log.Info("Initialized empty proxy configurations array")
 		}
 	} else {
 		// Load existing multi-proxy configuration

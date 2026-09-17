@@ -151,6 +151,8 @@ func AddOrUpdateProxyWithValues(title, value, noProxy string) ([]ProxyConfig, in
 	if err := validateTitle(title); err != nil {
 		return proxies, -1, err
 	}
+	// Normalize once so the canonical form is both validated and stored.
+	value = NormalizeProxyURLString(strings.TrimSpace(value))
 	if err := ValidateProxyURLString(value); err != nil {
 		return proxies, -1, err
 	}
@@ -165,7 +167,7 @@ func AddOrUpdateProxyWithValues(title, value, noProxy string) ([]ProxyConfig, in
 		// Add new
 		newProxy := ProxyConfig{
 			Title:   strings.TrimSpace(title),
-			Value:   strings.TrimSpace(value),
+			Value:   value,
 			NoProxy: noProxy,
 			Enabled: false,
 		}

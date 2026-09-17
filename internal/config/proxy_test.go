@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -141,6 +142,28 @@ func TestGetProxyConfigs(t *testing.T) {
 	}
 }
 
+func TestGetProxyConfigs_DoesNotWrite(t *testing.T) {
+	path := t.TempDir() + "/config.json"
+	require.NoError(t, os.WriteFile(path, []byte("{}"), 0o600))
+	setupViper(path)
+	viper.Set("proxy.value", "http://legacy-proxy:8080")
+	viper.Set("proxy.enabled", true)
+
+	before, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	proxies, activeIndex := GetProxyConfigs()
+	require.Len(t, proxies, 1)
+	require.Equal(t, 0, activeIndex)
+
+	// No persistent migration: legacy key intact, no proxies key written.
+	require.True(t, viper.IsSet("proxy.value"))
+	require.False(t, viper.IsSet("proxies"))
+	after, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.Equal(t, string(before), string(after), "Expected config file untouched by read")
+}
+
 // Group 2: GetActiveProxy tests.
 func TestGetActiveProxy(t *testing.T) {
 	testCases := []struct {
@@ -239,6 +262,44 @@ func TestEnableProxy(t *testing.T) {
 		assert.True(t, updatedProxies[1].Enabled, "Expected second proxy to be enabled")
 	})
 
+	t.Run("DoesNotMutateInput", func(t *testing.T) {
+		setupViper(testConfigPath)
+		proxies := []ProxyConfig{
+			{Title: "Proxy1", Value: "proxy1:8080", Enabled: true, NoProxy: ""},
+			{Title: "Proxy2", Value: "proxy2:8080", Enabled: false, NoProxy: "custom.corp"},
+		}
+
+		updated, err := EnableProxy(1, proxies)
+		assert.NoError(t, err)
+		// Caller slice untouched: still enabled + unnormalized.
+		assert.True(t, proxies[0].Enabled, "Expected input slice to be unmodified")
+		assert.Equal(t, "proxy2:8080", proxies[1].Value, "Expected input value to be unmodified")
+		// Returned slice normalized with the new proxy enabled.
+		assert.Equal(t, "http://proxy2:8080", updated[1].Value)
+		assert.True(t, updated[1].Enabled)
+	})
+
+	t.Run("AppliesJustSavedNoProxy", func(t *testing.T) {
+		setupViper(testConfigPath)
+		// Persisted snapshot has NO custom NoProxy; the just-enabled proxy does.
+		setupProxies([]ProxyConfig{
+			{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true, NoProxy: ""},
+		})
+		proxies := []ProxyConfig{
+			{Title: "Proxy1", Value: "http://proxy1:8080", Enabled: true, NoProxy: ""},
+			{Title: "Proxy2", Value: "proxy2:8080", Enabled: false, NoProxy: "fresh.corp"},
+		}
+
+		_, err := EnableProxy(1, proxies)
+		assert.NoError(t, err)
+		assert.Contains(
+			t,
+			os.Getenv("NO_PROXY"),
+			"fresh.corp",
+			"Expected NO_PROXY from the just-enabled proxy, not the persisted snapshot",
+		)
+	})
+
 	t.Run("IndexOutOfRange", func(t *testing.T) {
 		setupViper(testConfigPath)
 		proxies := []ProxyConfig{testProxy1}
@@ -331,19 +392,22 @@ func TestProxyEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("SetProxyEnvVars_WithProxyValue", func(t *testing.T) {
-		// Setup test environment with an active proxy that has a custom NoProxy value
-		setupViper(testConfigPath)
-		setupProxies([]ProxyConfig{testProxy1, testProxy2})
-
-		proxyValue := "http://proxy1:8080"
-		SetProxyEnvVars(proxyValue)
+		// The given proxy's own NoProxy applies immediately, without
+		// depending on whatever is persisted in viper.
+		proxy := ProxyConfig{
+			Title:   "proxy1",
+			Value:   "http://proxy1:8080",
+			Enabled: true,
+			NoProxy: "internal.example.com",
+		}
+		SetProxyEnvVars(proxy)
 
 		// Check standard proxy vars
 		for _, envVar := range []string{"ALL_PROXY", "HTTP_PROXY", "HTTPS_PROXY", "GLOBAL_AGENT_HTTP_PROXY", "http_proxy", "https_proxy"} {
-			assert.Equal(t, proxyValue, os.Getenv(envVar), "Expected %s to be set to proxy value", envVar)
+			assert.Equal(t, proxy.Value, os.Getenv(envVar), "Expected %s to be set to proxy value", envVar)
 		}
 
-		// Check no_proxy vars - should include both default and custom values from active proxy
+		// Check no_proxy vars - should include both default and custom values from the given proxy
 		expectedNoProxy := "localhost,127.0.0.1,::1,.local,internal.example.com"
 		assert.Equal(
 			t,
@@ -363,14 +427,25 @@ func TestProxyEnvironmentVariables(t *testing.T) {
 		// First set some values
 		setTestEnvVars("http://proxy1:8080")
 
-		// Then unset with empty string
-		SetProxyEnvVars("")
+		// Then unset with empty proxy
+		SetProxyEnvVars(ProxyConfig{})
 
 		// Verify all are unset
 		for _, envVar := range proxyEnvVars {
 			assert.Empty(t, os.Getenv(envVar), "Expected environment variable %s to be unset", envVar)
 		}
 	})
+}
+
+func TestAddOrUpdateProxyWithValues_NormalizesBeforeSave(t *testing.T) {
+	setupViper(testConfigPath)
+	viper.Set("proxies", []ProxyConfig{})
+
+	proxies, index, err := AddOrUpdateProxyWithValues("Corp", "proxy.corp:8080", " internal.corp,, ")
+	require.NoError(t, err)
+	require.Equal(t, 0, index)
+	require.Equal(t, "http://proxy.corp:8080", proxies[0].Value)
+	require.Equal(t, "internal.corp", proxies[0].NoProxy)
 }
 
 // Group 7: AddOrUpdateProxy tests.
