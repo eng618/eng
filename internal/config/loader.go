@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -151,6 +152,26 @@ var knownTopLevelKeys = map[string]bool{
 	"telemetry": true, "gitlab": true, "proxy": true, "proxies": true,
 	"antigravity": true,
 	"user-email":  true, // legacy, migrated by MigrateMap
+}
+
+// FindUnknownKeys returns sorted top-level keys in the config file that are
+// not part of the known schema. These are safe to drop with `config unset`
+// after confirming no local tooling depends on them.
+func FindUnknownKeys(configFile string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for key := range fileKeySet(configFile) {
+		top := key
+		if i := strings.Index(key, "."); i >= 0 {
+			top = key[:i]
+		}
+		if !knownTopLevelKeys[top] && !seen[top] {
+			seen[top] = true
+			out = append(out, top)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 // rejectUnknownTopLevelKeys fails fast on typos like `gti:` instead of `git:`.

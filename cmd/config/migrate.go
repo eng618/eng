@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,6 +39,10 @@ Example: eng config migrate --check`,
 			_, changed, err := config.MigrateMap(decoded)
 			if err != nil {
 				return err
+			}
+			if unknown := config.FindUnknownKeys(path); len(unknown) > 0 {
+				log.Warn("Unknown config keys (not read by any command): %s", strings.Join(unknown, ", "))
+				log.Info("Drop them with `eng config unset <key>` after confirming nothing depends on them")
 			}
 			if changed {
 				log.Info("Migration needed for %s (run without --check to apply)", path)

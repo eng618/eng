@@ -74,6 +74,14 @@ func TestLoadResolved_AcceptsKnownKeys(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestFindUnknownKeys(t *testing.T) {
+	path := writeConfig(t, "email: a@b.c\ndry_run: true\nproject_filter: x\n")
+	require.Equal(t, []string{"dry_run", "project_filter"}, FindUnknownKeys(path))
+	clean := writeConfig(t, "email: a@b.c\n")
+	require.Empty(t, FindUnknownKeys(clean))
+	require.Empty(t, FindUnknownKeys("/nonexistent/path.yaml"))
+}
+
 func TestResolveConfigPath(t *testing.T) {
 	require.Equal(t, "/custom/path.yaml", ResolveConfigPath("/custom/path.yaml"))
 	require.Equal(t, DefaultConfigPath(), ResolveConfigPath(""))
