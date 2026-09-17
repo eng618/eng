@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.60.1](https://github.com/eng618/eng/compare/v1.60.0...v1.60.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* **config:** Report unknown keys in migrate check ([dfb4ada](https://github.com/eng618/eng/commit/dfb4ada9cfb3c4d0e46617e5e8fac0f0e3dd9c7a))
+* **config:** Require TTY for init walkthrough ([2f2c33c](https://github.com/eng618/eng/commit/2f2c33cc425b1e023cbbe375252051c4b142092a))
+
 ## [1.60.0](https://github.com/eng618/eng/compare/v1.59.0...v1.60.0) (2026-09-17)
 
 
