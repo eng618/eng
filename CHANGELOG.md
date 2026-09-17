@@ -1,5 +1,36 @@
 <a name="unreleased"></a>
 
+## [1.59.0](https://github.com/eng618/eng/compare/v1.58.0...v1.59.0) (2026-09-17)
+
+
+### Features
+
+* **config:** Add central Validate with field errors ([1e178ec](https://github.com/eng618/eng/commit/1e178ec7790db33b1acb5a03370981009ab2f438))
+* **config:** Add guided init walkthrough wizard ([06eefb1](https://github.com/eng618/eng/commit/06eefb16c533b027d1000e7c382f2a1dd63d97c2))
+* **config:** Add layered loader with ENG_ env, XDG, and single-point path expansion ([e30f7ce](https://github.com/eng618/eng/commit/e30f7ced67f5a90aeac79ec842d622f6e1f459c3))
+* **config:** Add secure store with bitwarden, keychain, and env resolution ([949dfec](https://github.com/eng618/eng/commit/949dfec215a484a9bf2ec91b68086a59e074ae42))
+* **config:** Add set/get/validate/migrate commands with value-source display ([1459a29](https://github.com/eng618/eng/commit/1459a2994c597ee028bca3be60c6be49a06e0181))
+* **config:** Add versioned schema with v2 key normalization and backups ([187c795](https://github.com/eng618/eng/commit/187c795f3df22a21e78b83235220e5bf006a59ff))
+* Theme unification and updates ([0580779](https://github.com/eng618/eng/commit/05807797a7373575e6cde9f8a914cb9e0dd22d47))
+* **ui:** Add ConfirmDanger and SelectWithFilter huh prompts ([0aad70b](https://github.com/eng618/eng/commit/0aad70b8f1bc9054a3f640269d751d09b7a10e28))
+
+
+### Bug Fixes
+
+* Open terminal now supports linux ([22cd19b](https://github.com/eng618/eng/commit/22cd19bb40223f3174bf7ba7554f327b4d35e7fa))
+
+
+### Code Refactoring
+
+* **cli:** Migrate compose and asdf lists to shared RenderTable ([e52493a](https://github.com/eng618/eng/commit/e52493a7ae325592321baec963c211704e4b4b0e))
+* **cli:** Route asdf cleanup and log follow output through log writers ([a77c6e1](https://github.com/eng618/eng/commit/a77c6e18af7c16e0df518864ce3a440294dcceb0))
+* **ui:** Route sysinfo key-value table through shared RenderTable ([b38f386](https://github.com/eng618/eng/commit/b38f3866dc591d21762ae9386d642ef136846aea))
+
+
+### Build System
+
+* Bump deps ([e43d30e](https://github.com/eng618/eng/commit/e43d30e333d16e741eb2d6fc71e0b8f2bde890b5))
+
 ## [1.58.0](https://github.com/eng618/eng/compare/v1.57.0...v1.58.0) (2026-09-16)
 
 
