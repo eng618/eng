@@ -60,4 +60,5 @@ func init() {
 	ConfigCmd.AddCommand(GetCmd)
 	ConfigCmd.AddCommand(ValidateCmd)
 	ConfigCmd.AddCommand(MigrateCmd)
+	ConfigCmd.AddCommand(InitCmd)
 }

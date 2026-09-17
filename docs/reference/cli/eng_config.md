@@ -40,6 +40,7 @@ eng config [flags]
 * [eng config git-dev-path](eng_config_git-dev-path.md)	 - Update config git dev path
 * [eng config git-editor](eng_config_git-editor.md)	 - Update config default editor
 * [eng config ide-url](eng_config_ide-url.md)	 - Update Antigravity IDE download URL
+* [eng config init](eng_config_init.md)	 - Guided walkthrough to configure eng step by step
 * [eng config list](eng_config_list.md)	 - Display a summary of all active configuration settings
 * [eng config migrate](eng_config_migrate.md)	 - Migrate the config file to the current schema version
 * [eng config set](eng_config_set.md)	 - Set a single configuration value
