@@ -161,7 +161,13 @@ func rejectUnknownTopLevelKeys(v *viper.Viper) error {
 			top = key[:i]
 		}
 		if !knownTopLevelKeys[top] {
-			return fmt.Errorf("unknown config key %q (top-level %q not recognized)", key, top)
+			return fmt.Errorf(
+				"unknown config key %q (top-level %q not recognized): "+
+					"remove it with `eng config unset %s` or delete it from the config file",
+				key,
+				top,
+				top,
+			)
 		}
 	}
 	return nil

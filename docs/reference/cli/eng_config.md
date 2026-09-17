@@ -46,6 +46,7 @@ eng config [flags]
 * [eng config secrets](eng_config_secrets.md)	 - Manage secret storage (bitwarden, keychain, env)
 * [eng config set](eng_config_set.md)	 - Set a single configuration value
 * [eng config telemetry](eng_config_telemetry.md)	 - Manage OpenPanel telemetry and analytics settings
+* [eng config unset](eng_config_unset.md)	 - Remove a configuration key from the config file
 * [eng config validate](eng_config_validate.md)	 - Validate the resolved configuration
 * [eng config verbose](eng_config_verbose.md)	 - Update config verbose setting
 

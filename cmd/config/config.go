@@ -62,4 +62,5 @@ func init() {
 	ConfigCmd.AddCommand(MigrateCmd)
 	ConfigCmd.AddCommand(InitCmd)
 	ConfigCmd.AddCommand(SecretsCmd)
+	ConfigCmd.AddCommand(UnsetCmd)
 }
