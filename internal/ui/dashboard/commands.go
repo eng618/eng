@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -54,6 +55,17 @@ func (m Model) openInTerminalCmd() (tea.Cmd, error) {
 		return nil, err
 	}
 
+	switch runtime.GOOS {
+	case "darwin":
+		return m.openInTerminalDarwin(targetPath)
+	case "linux":
+		return m.openInTerminalLinux(targetPath)
+	default:
+		return nil, fmt.Errorf("opening a new terminal is not supported on %s", runtime.GOOS)
+	}
+}
+
+func (m Model) openInTerminalDarwin(targetPath string) (tea.Cmd, error) {
 	// Detect terminal app in fallback chain: Ghostty -> iTerm -> Terminal
 	terminalApp := "Terminal"
 	if _, err := os.Stat("/Applications/Ghostty.app"); err == nil {
@@ -63,6 +75,45 @@ func (m Model) openInTerminalCmd() (tea.Cmd, error) {
 	}
 
 	execCmd := execx.Command("open", "-a", terminalApp, targetPath)
+
+	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
+		return editorFinishedMsg{err: err}
+	}), nil
+}
+
+func (m Model) openInTerminalLinux(targetPath string) (tea.Cmd, error) {
+	// Look for known terminal emulators in fallback chain.
+	// $TERMINAL always wins so users can pin a preferred emulator.
+	candidates := []string{
+		"ghostty", "kitty", "alacritty", "wezterm",
+		"gnome-terminal", "konsole", "xfce4-terminal", "xterm",
+	}
+	terminalApp := os.Getenv("TERMINAL")
+	if terminalApp == "" {
+		for _, candidate := range candidates {
+			if _, err := execx.LookPath(candidate); err == nil {
+				terminalApp = candidate
+				break
+			}
+		}
+	}
+	if terminalApp == "" {
+		return nil, fmt.Errorf("no supported terminal emulator found; set $TERMINAL")
+	}
+
+	var args []string
+	switch terminalApp {
+	case "wezterm":
+		args = []string{"start", "--cwd", targetPath}
+	case "gnome-terminal":
+		args = []string{"--working-directory=" + targetPath}
+	case "konsole":
+		args = []string{"--workdir", targetPath}
+	default:
+		args = []string{"--working-directory", targetPath}
+	}
+
+	execCmd := execx.Command(terminalApp, args...)
 
 	return tea.ExecProcess(execCmd, func(err error) tea.Msg {
 		return editorFinishedMsg{err: err}
