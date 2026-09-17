@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,6 +24,9 @@ Resume mid-walkthrough with --from, or preview without writing with --dry-run.
 
 Example: eng config init --from dotfiles --dry-run`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
+		if !ui.IsTerminal(os.Stdin) || !ui.IsTerminal(os.Stdout) {
+			return fmt.Errorf("config init requires an interactive terminal (stdin and stdout must be TTYs)")
+		}
 		fromStr, _ := cmd.Flags().GetString("from")
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		step, err := config.ParseWizardStep(fromStr)
