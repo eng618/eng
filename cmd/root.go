@@ -148,6 +148,12 @@ func init() {
 	// Persistent flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.eng.yaml)")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
+	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output (also respects NO_COLOR)")
+
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		noColor, _ := cmd.Flags().GetBool("no-color")
+		theme.Configure(noColor)
+	}
 
 	// Bind the verbose flag to viper config
 	err := viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))

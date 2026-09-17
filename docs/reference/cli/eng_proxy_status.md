@@ -23,6 +23,7 @@ eng proxy status [flags]
       --config string   config file (default is $HOME/.eng.yaml)
       --env             Include environment variables in status output
       --lowercase-env   Include lowercase environment vars in compact mode
+      --no-color        disable colored output (also respects NO_COLOR)
   -v, --verbose         verbose output
 ```
 

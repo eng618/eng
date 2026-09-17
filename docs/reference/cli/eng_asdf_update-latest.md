@@ -26,7 +26,8 @@ eng asdf update-latest [flags]
 ### Options inherited from parent commands
 
 ```
-  -v, --verbose   verbose output
+      --no-color   disable colored output (also respects NO_COLOR)
+  -v, --verbose    verbose output
 ```
 
 ### SEE ALSO

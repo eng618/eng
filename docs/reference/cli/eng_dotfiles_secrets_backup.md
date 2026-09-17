@@ -17,6 +17,7 @@ eng dotfiles secrets backup [flags]
 ```
       --config string       config file (default is $HOME/.eng.yaml)
       --manifest string     Path to the dotfiles secrets manifest
+      --no-color            disable colored output (also respects NO_COLOR)
       --project-id string   Bitwarden Secrets Manager project ID override
       --root string         Root path for manifest-relative env files
   -v, --verbose             verbose output

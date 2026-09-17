@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 // outMu guards Out/Err against concurrent use (tests run with -race).
@@ -24,6 +25,27 @@ var (
 	// See SetFileLog. Guarded by outMu.
 	fileOut io.Writer
 )
+
+// NoColor reports whether styled output is disabled via --no-color or NO_COLOR.
+var noColor bool
+
+// Configure sets global color behavior. When noColor is true, or the
+// NO_COLOR environment variable is set, lipgloss falls back to ASCII output.
+func Configure(noColorFlag bool) {
+	outMu.Lock()
+	defer outMu.Unlock()
+	noColor = noColorFlag || os.Getenv("NO_COLOR") != ""
+	if noColor {
+		lipgloss.SetColorProfile(termenv.Ascii)
+	}
+}
+
+// NoColorEnabled reports whether color output is currently disabled.
+func NoColorEnabled() bool {
+	outMu.RLock()
+	defer outMu.RUnlock()
+	return noColor || os.Getenv("NO_COLOR") != ""
+}
 
 // SetFileLog tees plain copies of banner messages to w (nil disables).
 // The caller owns w: it is never closed here.

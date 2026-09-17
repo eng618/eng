@@ -26,6 +26,7 @@ eng git sync-all [flags]
 ```
       --config string   config file (default is $HOME/.eng.yaml)
   -c, --current         Use current working directory instead of configured development path
+      --no-color        disable colored output (also respects NO_COLOR)
   -v, --verbose         verbose output
 ```
 

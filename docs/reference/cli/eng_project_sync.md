@@ -32,6 +32,7 @@ eng project sync [flags]
       --config string    config file (default is $HOME/.eng.yaml)
       --dry-run          Perform a dry run without making actual changes
       --force            Force overwrite tags on fetch conflicts (bypasses prompts)
+      --no-color         disable colored output (also respects NO_COLOR)
   -p, --project string   Filter operations to a specific project
   -v, --verbose          verbose output
 ```

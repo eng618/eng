@@ -19,6 +19,7 @@ eng immich logs [flags]
 
 ```
       --config string   config file (default is $HOME/.eng.yaml)
+      --no-color        disable colored output (also respects NO_COLOR)
   -v, --verbose         verbose output
 ```
 

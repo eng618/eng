@@ -25,6 +25,7 @@ This is a personal CLI to facilitate developer workflows and maintain developmen
 ```
       --config string   config file (default is $HOME/.eng.yaml)
   -h, --help            help for eng
+      --no-color        disable colored output (also respects NO_COLOR)
   -v, --verbose         verbose output
 ```
 

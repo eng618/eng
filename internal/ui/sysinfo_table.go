@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/eng618/eng/internal/ui/theme"
 )
@@ -27,16 +26,6 @@ func RenderKeyValueTable(title string, rows []KeyValueRow, termWidth int) string
 		termWidth = GetTerminalWidth()
 	}
 
-	headerStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(theme.Background).
-		Background(theme.Primary).
-		Padding(0, 1)
-
-	labelStyle := lipgloss.NewStyle().Bold(true).Padding(0, 1)
-	cellStyle := lipgloss.NewStyle().Padding(0, 1)
-	borderStyle := lipgloss.NewStyle().Foreground(theme.Primary)
-
 	// Overhead for table borders and inner paddings (2 columns = 3 borders + 4 padding spaces = 7).
 	availWidth := termWidth - 7
 	if availWidth < 40 {
@@ -49,33 +38,29 @@ func RenderKeyValueTable(title string, rows []KeyValueRow, termWidth int) string
 		colValue = 20
 	}
 
-	t := table.New().
-		Border(lipgloss.RoundedBorder()).
-		BorderStyle(borderStyle).
-		Headers("FIELD", "VALUE").
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			if col == 0 {
-				return labelStyle.MaxWidth(colLabel)
-			}
-
-			return cellStyle.MaxWidth(colValue)
-		})
-
+	plain := make([][]string, 0, len(rows))
 	for _, r := range rows {
-		t.Row(
+		plain = append(plain, []string{
 			Truncate(r.Label, colLabel),
 			Truncate(r.Value, colValue),
-		)
+		})
 	}
+	rendered := RenderTable(TableOpts{
+		Headers: []string{"FIELD", "VALUE"},
+		Rows:    plain,
+		StyleFunc: func(row, col int) lipgloss.Style {
+			if col == 0 {
+				return lipgloss.NewStyle().Bold(true).Padding(0, 1).MaxWidth(colLabel)
+			}
+			return lipgloss.NewStyle().Padding(0, 1).MaxWidth(colValue)
+		},
+	})
 
 	if title == "" {
-		return t.Render()
+		return rendered
 	}
 
 	heading := theme.PrimaryText.Bold(true).Render(title)
 
-	return fmt.Sprintf("%s\n%s", heading, t.Render())
+	return fmt.Sprintf("%s\n%s", heading, rendered)
 }
