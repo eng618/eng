@@ -179,11 +179,10 @@ func runPrune(cmd *cobra.Command, _args []string) error {
 
 	// Print summary of discovered .tool-versions protection files
 	if !ui.DisableProgress && len(summaries) > 0 {
-		fmt.Fprintf(log.Out, "Discovered %d .tool-versions file(s) protecting active versions:\n", len(summaries))
+		log.Info("Discovered %d .tool-versions file(s) protecting active versions:", len(summaries))
 		for _, s := range summaries {
-			fmt.Fprintf(log.Out, "  %s %s\n", theme.SuccessText.Render("✓"), s.FormatFileSummary(homeDir))
+			log.Success("%s", s.FormatFileSummary(homeDir))
 		}
-		fmt.Fprintln(log.Out)
 	}
 
 	if len(removable) == 0 {

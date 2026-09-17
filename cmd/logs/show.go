@@ -84,7 +84,7 @@ func printLog(path string, tail int) error {
 	} else {
 		theme.InfoMessage(fmt.Sprintf("Showing %s", path))
 	}
-	_, _ = fmt.Fprint(log.Out, text)
+	_, _ = fmt.Fprint(log.Writer(), text)
 	return nil
 }
 
@@ -109,10 +109,10 @@ func followLog(cmd *cobra.Command, path string) error {
 		if len(lines) > showTail {
 			lines = lines[len(lines)-showTail:]
 		}
-		_, _ = fmt.Fprintln(log.Out, strings.Join(lines, "\n"))
+		_, _ = fmt.Fprintln(log.Writer(), strings.Join(lines, "\n"))
 	}
 
-	_, _ = fmt.Fprintln(log.Err, theme.MutedText.Render(fmt.Sprintf("Following %s (Ctrl+C to stop)…", path)))
+	log.Info("Following %s (Ctrl+C to stop)…", path)
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
