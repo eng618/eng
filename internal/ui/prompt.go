@@ -10,11 +10,13 @@ import (
 
 // Wrapper functions for testing.
 var (
-	Confirm     = ConfirmImpl
-	Input       = InputImpl
-	Select      = SelectImpl
-	MultiSelect = MultiSelectImpl
-	Password    = PasswordImpl
+	Confirm          = ConfirmImpl
+	ConfirmDanger    = ConfirmDangerImpl
+	Input            = InputImpl
+	Select           = SelectImpl
+	SelectWithFilter = SelectWithFilterImpl
+	MultiSelect      = MultiSelectImpl
+	Password         = PasswordImpl
 )
 
 // ConfirmImpl prompts the user with a yes/no question using the default theme.
@@ -32,6 +34,67 @@ func ConfirmImpl(message string, defaultVal bool) (bool, error) {
 	if err != nil {
 		if errors.Is(err, huh.ErrUserAborted) {
 			return false, err
+		}
+		return defaultVal, err
+	}
+	return val, nil
+}
+
+// ConfirmDangerImpl prompts for a destructive action, defaulting to No.
+// It uses the shared Eng huh theme so destructive confirms look identical
+// everywhere; callers should prefer this over ad-hoc fmt.Scan confirms.
+func ConfirmDangerImpl(message string) (bool, error) {
+	val := false
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title(message).
+				Description("Destructive action — defaults to No.").
+				Value(&val).
+				Affirmative("Yes, proceed").
+				Negative("No, cancel"),
+		),
+	).WithTheme(theme.EngTheme()).Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return false, err
+		}
+		return false, err
+	}
+	return val, nil
+}
+
+// SelectWithFilterImpl prompts with filtering enabled for long option lists.
+// It falls back to the first option when defaultVal does not match, so Enter always works.
+func SelectWithFilterImpl(message string, options []string, defaultVal string) (string, error) {
+	val := defaultVal
+	matched := false
+	for _, opt := range options {
+		if opt == defaultVal {
+			matched = true
+			break
+		}
+	}
+	if !matched && len(options) > 0 {
+		val = options[0]
+	}
+	huhOptions := make([]huh.Option[string], len(options))
+	for i, opt := range options {
+		huhOptions[i] = huh.NewOption(opt, opt)
+	}
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(message).
+				Description("Type to filter, Enter to accept.").
+				Options(huhOptions...).
+				Height(10).
+				Value(&val),
+		),
+	).WithTheme(theme.EngTheme()).Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", err
 		}
 		return defaultVal, err
 	}
