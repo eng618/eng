@@ -56,4 +56,8 @@ func init() {
 	ConfigCmd.AddCommand(IdeURLCmd)
 	ConfigCmd.AddCommand(TelemetryCmd)
 	ConfigCmd.AddCommand(VerboseCmd)
+	ConfigCmd.AddCommand(SetCmd)
+	ConfigCmd.AddCommand(GetCmd)
+	ConfigCmd.AddCommand(ValidateCmd)
+	ConfigCmd.AddCommand(MigrateCmd)
 }

@@ -36,10 +36,14 @@ eng config [flags]
 * [eng config dotfiles-target-repo-path](eng_config_dotfiles-target-repo-path.md)	 - Show or set the dotfiles target repo path for copy-changes
 * [eng config edit](eng_config_edit.md)	 - Interactively edit the eng CLI configuration
 * [eng config email](eng_config_email.md)	 - Update config email
+* [eng config get](eng_config_get.md)	 - Print a single configuration value and where it comes from
 * [eng config git-dev-path](eng_config_git-dev-path.md)	 - Update config git dev path
 * [eng config git-editor](eng_config_git-editor.md)	 - Update config default editor
 * [eng config ide-url](eng_config_ide-url.md)	 - Update Antigravity IDE download URL
 * [eng config list](eng_config_list.md)	 - Display a summary of all active configuration settings
+* [eng config migrate](eng_config_migrate.md)	 - Migrate the config file to the current schema version
+* [eng config set](eng_config_set.md)	 - Set a single configuration value
 * [eng config telemetry](eng_config_telemetry.md)	 - Manage OpenPanel telemetry and analytics settings
+* [eng config validate](eng_config_validate.md)	 - Validate the resolved configuration
 * [eng config verbose](eng_config_verbose.md)	 - Update config verbose setting
 

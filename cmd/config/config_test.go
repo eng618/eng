@@ -76,6 +76,10 @@ func TestConfigCmd_Subcommands(t *testing.T) {
 		"ide-url [url]":                    false,
 		"telemetry":                        false,
 		"verbose":                          false,
+		"set <key> <value>":                false,
+		"get <key>":                        false,
+		"validate":                         false,
+		"migrate":                          false,
 	}
 
 	for _, cmd := range subcommands {
@@ -388,7 +392,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 13
+	// Subcommand Count: 17
 }
 
 // ============================================================================

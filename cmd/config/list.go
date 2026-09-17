@@ -52,7 +52,7 @@ func PrintConfigSummary() {
 	)
 
 	// User Email
-	userEmail := viper.GetString("user-email")
+	userEmail := viper.GetString("email")
 	if userEmail == "" {
 		userEmail = "Not set"
 	}
