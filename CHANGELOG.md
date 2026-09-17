@@ -1,5 +1,22 @@
 <a name="unreleased"></a>
 
+## [1.60.0](https://github.com/eng618/eng/compare/v1.59.0...v1.60.0) (2026-09-17)
+
+
+### Features
+
+* **config:** Add unset command and actionable unknown-key error ([141655f](https://github.com/eng618/eng/commit/141655fd53c11aa45d24af7a8eaa2cf9c11ec8df))
+
+
+### Bug Fixes
+
+* **config:** Allow proxies key in config validation ([234672b](https://github.com/eng618/eng/commit/234672b4c61d32427299148097321ccfbf2353e5))
+
+
+### Code Refactoring
+
+* **gitlab:** Route token lookup through central secure store ([6d9f5c2](https://github.com/eng618/eng/commit/6d9f5c291c594cb5e9af33c04d3362688f4a613c))
+
 ## [1.59.0](https://github.com/eng618/eng/compare/v1.58.0...v1.59.0) (2026-09-17)
 
 
