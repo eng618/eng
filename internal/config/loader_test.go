@@ -64,6 +64,16 @@ func TestLoadResolved_RejectsUnknownKeys(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestLoadResolved_AcceptsKnownKeys(t *testing.T) {
+	path := writeConfig(
+		t,
+		"proxies:\n  - title: Default\n    value: http://proxy:8080\n    enabled: false\nproxy:\n  value: http://old:8080\n  enabled: false\n",
+	)
+	v := NewLoader(path)
+	_, err := LoadResolved(v)
+	require.NoError(t, err)
+}
+
 func TestResolveConfigPath(t *testing.T) {
 	require.Equal(t, "/custom/path.yaml", ResolveConfigPath("/custom/path.yaml"))
 	require.Equal(t, DefaultConfigPath(), ResolveConfigPath(""))

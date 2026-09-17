@@ -148,8 +148,9 @@ func LoadResolved(v *viper.Viper) (*ResolvedConfig, error) {
 var knownTopLevelKeys = map[string]bool{
 	"version": true, "email": true, "verbose": true, "git": true,
 	"dotfiles": true, "containers": true, "projects": true,
-	"telemetry": true, "gitlab": true, "proxy": true, "antigravity": true,
-	"user-email": true, // legacy, migrated by MigrateMap
+	"telemetry": true, "gitlab": true, "proxy": true, "proxies": true,
+	"antigravity": true,
+	"user-email":  true, // legacy, migrated by MigrateMap
 }
 
 // rejectUnknownTopLevelKeys fails fast on typos like `gti:` instead of `git:`.
