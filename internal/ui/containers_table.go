@@ -199,7 +199,7 @@ func formatStackStatusBadge(status string) string {
 	case strings.HasPrefix(lower, "running"):
 		return badge.Background(theme.Secondary).Foreground(theme.Background).Render(" RUNNING ")
 	case strings.HasPrefix(lower, "partial"):
-		return badge.Background(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}).
+		return badge.Background(theme.Warning).
 			Foreground(theme.Background).
 			Render(fmt.Sprintf(" %s ", strings.ToUpper(status)))
 	case strings.HasPrefix(lower, "stopped"):
@@ -228,7 +228,7 @@ func formatContainerStatusBadge(state, health string) string {
 		if health != "" {
 			lbl += fmt.Sprintf(" (%s)", strings.ToUpper(health))
 		}
-		return badge.Background(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}).
+		return badge.Background(theme.Warning).
 			Foreground(theme.Background).
 			Render(fmt.Sprintf(" %s ", lbl))
 	}

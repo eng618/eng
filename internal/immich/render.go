@@ -123,11 +123,11 @@ func RenderStatus(s *StatusResult, termWidth int) string {
 func formatBadge(text string, isOk bool) string {
 	badge := lipgloss.NewStyle().Bold(true).Padding(0, 1)
 	if isOk {
-		return badge.Background(lipgloss.Color("#10B981")).
-			Foreground(lipgloss.Color("#000000")).
+		return badge.Background(theme.Success).
+			Foreground(theme.Background).
 			Render(" " + strings.ToUpper(text) + " ")
 	}
-	return badge.Background(lipgloss.Color("#EF4444")).
-		Foreground(lipgloss.Color("#FFFFFF")).
+	return badge.Background(theme.Destructive).
+		Foreground(theme.Background).
 		Render(" " + strings.ToUpper(text) + " ")
 }

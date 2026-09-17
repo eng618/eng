@@ -147,45 +147,25 @@ func runStatus(_cmd *cobra.Command, _args []string) error {
 	}
 
 	// Render Dashboard Callout
-	var dashboardLines []string
-	dashboardLines = append(
-		dashboardLines,
-		fmt.Sprintf("Summary: %s plugins  •  %s installed versions  •  %s total disk space",
-			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
-			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", totalVersions)),
-			theme.SuccessText.Bold(true).Render(humanize.Bytes(uint64(totalDiskBytes))),
-		),
+	summary := fmt.Sprintf("Summary: %s plugins  •  %s installed versions  •  %s total disk space",
+		theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(pluginNames))),
+		theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", totalVersions)),
+		theme.SuccessText.Bold(true).Render(humanize.Bytes(uint64(totalDiskBytes))),
 	)
-	dashboardLines = append(dashboardLines, "")
-	dashboardLines = append(dashboardLines, fmt.Sprintf("  %-25s %-20s %-12s %s",
-		theme.BoldText.Render("Plugin"),
-		theme.BoldText.Render("Active Pin"),
-		theme.BoldText.Render("Versions"),
-		theme.BoldText.Render("Disk Space"),
-	))
-	dashboardLines = append(dashboardLines, "  "+strings.Repeat("─", 68))
-
+	var rows [][]string
 	for _, s := range summaries {
 		sizeStr := "0 B"
 		if s.DiskBytes > 0 {
 			sizeStr = humanize.Bytes(uint64(s.DiskBytes))
 		}
-
-		dashboardLines = append(dashboardLines, fmt.Sprintf("  %-25s %-20s %-12s %s",
-			theme.PrimaryText.Render(s.Name),
-			theme.MutedText.Render(s.ActivePin),
-			fmt.Sprintf("%d version(s)", s.VersionCount),
-			theme.SuccessText.Render(sizeStr),
-		))
+		rows = append(rows, []string{s.Name, s.ActivePin, fmt.Sprintf("%d version(s)", s.VersionCount), sizeStr})
 	}
 
 	if !ui.DisableProgress {
-		boxStyle := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(theme.Primary).
-			Padding(0, 1).
-			MarginBottom(1)
-		fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(dashboardLines, "\n")))
+		fmt.Fprintln(log.Out, theme.InfoBox.Render(summary+"\n"+ui.RenderTable(ui.TableOpts{
+			Headers: []string{"PLUGIN", "ACTIVE PIN", "VERSIONS", "DISK SPACE"},
+			Rows:    rows,
+		})))
 	}
 
 	return nil

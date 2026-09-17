@@ -23,6 +23,10 @@ var (
 )
 
 // Spinner manages progress bars and status updates using Lip Gloss and Bubbles.
+//
+// Deprecated: prefer MultiSpinner/AddSpinner (ProgressSpinner) for new code,
+// which shares banner semantics with theme banners and degrades cleanly when
+// DisableProgress is set. This type is retained for existing callers.
 type Spinner struct {
 	mu             sync.Mutex
 	baseMessage    string

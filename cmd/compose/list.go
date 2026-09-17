@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
@@ -19,12 +18,9 @@ var listCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List discovered Docker Compose stacks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		headerStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(theme.Primary).
-			MarginBottom(1)
+		header := theme.PrimaryText.Bold(true).Render("🐳 Discovered Docker Compose Stacks")
 		if !ui.DisableProgress {
-			fmt.Fprintln(log.Out, headerStyle.Render("🐳 Discovered Docker Compose Stacks"))
+			fmt.Fprintln(log.Out, header)
 		}
 
 		cfg := config.GetContainersConfig()
@@ -40,41 +36,27 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		var boxLines []string
-		boxLines = append(boxLines, fmt.Sprintf("Discovered %s compose stack(s) under %s:",
-			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(stacks))),
-			theme.BoldText.Render(cfg.Path),
-		))
-		boxLines = append(boxLines, "")
-		boxLines = append(boxLines, fmt.Sprintf("  %-20s %-35s %s",
-			theme.BoldText.Render("Stack"),
-			theme.BoldText.Render("Path"),
-			theme.BoldText.Render("Services"),
-		))
-		boxLines = append(boxLines, "  "+strings.Repeat("─", 65))
-
+		var rows [][]string
 		for _, s := range stacks {
 			svcs := strings.Join(s.Services, ", ")
 			if svcs == "" {
 				svcs = "-"
 			}
-			boxLines = append(boxLines, fmt.Sprintf("  %-20s %-35s %s",
-				theme.PrimaryText.Render(s.Name),
-				theme.MutedText.Render(s.Path),
-				theme.BaseText.Render(svcs),
-			))
+			rows = append(rows, []string{s.Name, s.Path, svcs})
 		}
+		subheader := fmt.Sprintf("Discovered %s compose stack(s) under %s:",
+			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(stacks))),
+			theme.BoldText.Render(cfg.Path),
+		)
 
 		if !ui.DisableProgress {
-			boxStyle := lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(theme.Primary).
-				Padding(0, 1).
-				MarginBottom(1)
-			fmt.Fprintln(log.Out, boxStyle.Render(strings.Join(boxLines, "\n")))
+			fmt.Fprintln(log.Out, theme.InfoBox.Render(subheader+"\n"+ui.RenderTable(ui.TableOpts{
+				Headers: []string{"STACK", "PATH", "SERVICES"},
+				Rows:    rows,
+			})))
 		} else {
-			for _, line := range boxLines {
-				log.Info("%s", line)
+			for _, r := range rows {
+				log.Info("%s | %s | %s", r[0], r[1], r[2])
 			}
 		}
 
