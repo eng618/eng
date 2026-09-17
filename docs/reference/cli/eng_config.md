@@ -43,6 +43,7 @@ eng config [flags]
 * [eng config init](eng_config_init.md)	 - Guided walkthrough to configure eng step by step
 * [eng config list](eng_config_list.md)	 - Display a summary of all active configuration settings
 * [eng config migrate](eng_config_migrate.md)	 - Migrate the config file to the current schema version
+* [eng config secrets](eng_config_secrets.md)	 - Manage secret storage (bitwarden, keychain, env)
 * [eng config set](eng_config_set.md)	 - Set a single configuration value
 * [eng config telemetry](eng_config_telemetry.md)	 - Manage OpenPanel telemetry and analytics settings
 * [eng config validate](eng_config_validate.md)	 - Validate the resolved configuration

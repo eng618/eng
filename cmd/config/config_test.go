@@ -81,6 +81,7 @@ func TestConfigCmd_Subcommands(t *testing.T) {
 		"validate":                         false,
 		"migrate":                          false,
 		"init":                             false,
+		"secrets":                          false,
 	}
 
 	for _, cmd := range subcommands {
@@ -393,7 +394,7 @@ func ExampleConfigCmd() {
 	fmt.Println("Subcommand Count:", len(ConfigCmd.Commands()))
 	// Output:
 	// Config Command Use: config
-	// Subcommand Count: 18
+	// Subcommand Count: 19
 }
 
 // ============================================================================

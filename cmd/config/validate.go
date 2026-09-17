@@ -27,6 +27,9 @@ Example: eng config validate`,
 			return err
 		}
 		errs := rc.Validate()
+		if w := config.PlaintextSecretWarning(); w != nil {
+			errs = append(errs, *w)
+		}
 		if len(errs) == 0 {
 			theme.SuccessMessage("Configuration is valid")
 			return nil
