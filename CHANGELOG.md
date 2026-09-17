@@ -1,5 +1,22 @@
 <a name="unreleased"></a>
 
+## [1.61.0](https://github.com/eng618/eng/compare/v1.60.1...v1.61.0) (2026-09-17)
+
+
+### Features
+
+* **config:** Various improvement to proxy setup ([c6cc722](https://github.com/eng618/eng/commit/c6cc72200ea0743d7ccf9677d6f499d49db173c5))
+
+
+### Bug Fixes
+
+* **proxy:** Use saved proxy for no_proxy env ([613442c](https://github.com/eng618/eng/commit/613442cd01dc628ed0297bd770b3786a418c5d20))
+
+
+### Code Refactoring
+
+* **proxy:** Render status as shared table with proper exits ([d81f771](https://github.com/eng618/eng/commit/d81f77103b6c14a02ad9dab179c6762b0b2835f0))
+
 ## [1.60.1](https://github.com/eng618/eng/compare/v1.60.0...v1.60.1) (2026-09-17)
 
 
