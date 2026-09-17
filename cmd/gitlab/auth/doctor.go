@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	gitrepo "github.com/eng618/eng/internal/repo"
 	"github.com/eng618/eng/internal/ui"
@@ -64,34 +64,15 @@ var doctorCmd = &cobra.Command{
 			}
 		}
 
-		// Prepare environment with token (env -> Bitwarden -> config)
+		// Prepare environment with token via the central secure store
+		// (env -> Bitwarden -> keychain -> config).
 		env := os.Environ()
-		// If token not already in process env, try Bitwarden then config
+		// If token not already in process env, resolve via the secure store.
 		if os.Getenv("GITLAB_TOKEN") == "" {
-			itemName := viper.GetString("gitlab.tokenItem")
-			if itemName != "" {
-				sess, err := bitwarden.EnsureBitwardenSession()
-				if err != nil {
-					log.Warn("Bitwarden session not available: %v", err)
-				} else if sess != "" {
-					env = append(env, "BW_SESSION="+sess)
-					if item, err := bitwarden.GetBitwardenItem(itemName); err == nil {
-						// prefer login.password; fallback to field named token
-						if item.Login != nil && item.Login.Password != "" {
-							env = append(env, "GITLAB_TOKEN="+item.Login.Password)
-						} else {
-							for _, f := range item.Fields {
-								if f.Name == "token" && f.Value != "" {
-									env = append(env, "GITLAB_TOKEN="+f.Value)
-									break
-								}
-							}
-						}
-					}
-				}
-			}
-			if os.Getenv("GITLAB_TOKEN") == "" && viper.GetString("gitlab.token") != "" {
-				env = append(env, "GITLAB_TOKEN="+viper.GetString("gitlab.token"))
+			if token, _, err := config.ResolveGitLabToken(); err == nil {
+				env = append(env, "GITLAB_TOKEN="+token)
+			} else {
+				log.Warn("GitLab token not available: %v", err)
 			}
 		}
 		if host != "" {

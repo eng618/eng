@@ -2,13 +2,12 @@ package auth
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/bitwarden"
+	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -29,23 +28,13 @@ var showCmd = &cobra.Command{
 
 		host := viper.GetString("gitlab.host")
 		project := viper.GetString("gitlab.project")
-		tokenItem := viper.GetString("gitlab.tokenItem")
 
-		// Determine token source availability
-		tokenSource := ""
-		if os.Getenv("GITLAB_TOKEN") != "" {
-			tokenSource = "env:GITLAB_TOKEN"
-		} else if tokenItem != "" {
-			// Try to locate item without printing its content
-			if _, err := bitwarden.GetBitwardenItem(tokenItem); err == nil {
-				tokenSource = fmt.Sprintf("bitwarden:%s", tokenItem)
-			} else {
-				tokenSource = fmt.Sprintf("bitwarden:%s (not found)", tokenItem)
-			}
-		} else if viper.GetString("gitlab.token") != "" {
-			tokenSource = "config:gitlab.token (discouraged)"
-		} else {
-			tokenSource = "none"
+		// Determine token source availability without exposing secrets.
+		tokenSource := "none"
+		if _, source, err := config.ResolveGitLabToken(); err == nil {
+			tokenSource = source
+		} else if ref := config.GitLabTokenRef(viper.GetViper()); ref.Provider != config.ProviderEnv {
+			tokenSource = fmt.Sprintf("%s:%s (not found)", ref.Provider, ref.Item)
 		}
 
 		log.Message("GitLab defaults:")

@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/eng618/eng/internal/bitwarden"
 	"github.com/eng618/eng/internal/cmdutil"
+	"github.com/eng618/eng/internal/config"
 	gitlabcfg "github.com/eng618/eng/internal/config/gitlab"
 	"github.com/eng618/eng/internal/log"
 	gitrepo "github.com/eng618/eng/internal/repo"
@@ -86,51 +86,6 @@ var mrRulesApplyCmd = &cobra.Command{
 			return errors.New("could not determine GitLab project; use --project or run inside a Git repo")
 		}
 
-		// Prepare token via env or Bitwarden
-		env := os.Environ()
-		if os.Getenv("GITLAB_TOKEN") == "" {
-			// Prefer Bitwarden item reference if configured
-			itemName := tokenItemOpt
-			if itemName == "" {
-				itemName = viper.GetString("gitlab.tokenItem")
-			}
-			if itemName != "" {
-				// Ensure BW session and fetch item password as token
-				sess, err := bitwarden.EnsureBitwardenSession()
-				if err != nil {
-					return err
-				}
-				if sess != "" {
-					env = append(env, "BW_SESSION="+sess)
-				}
-				item, err := bitwarden.GetBitwardenItem(itemName)
-				if err != nil {
-					return fmt.Errorf("failed to read Bitwarden item '%s': %w", itemName, err)
-				}
-				var token string
-				if item.Login != nil && item.Login.Password != "" {
-					token = item.Login.Password
-				}
-				for _, f := range item.Fields {
-					if f.Name == "token" && f.Value != "" {
-						token = f.Value
-						break
-					}
-				}
-				if token != "" {
-					env = append(env, "GITLAB_TOKEN="+token)
-				}
-			}
-			// Lastly, fall back to config literal (not recommended)
-			if os.Getenv("GITLAB_TOKEN") == "" && viper.GetString("gitlab.token") != "" {
-				env = append(env, "GITLAB_TOKEN="+viper.GetString("gitlab.token"))
-			}
-		}
-
-		if host != "" {
-			env = append(env, "GITLAB_HOST="+host)
-		}
-
 		// Build glab api call
 		apiPath := fmt.Sprintf("projects/%s", url.PathEscape(project))
 		apiArgs := []string{"api", apiPath, "-X", "PUT"}
@@ -142,6 +97,36 @@ var mrRulesApplyCmd = &cobra.Command{
 		if dryRun {
 			log.Message("dry-run: glab %v", apiArgs)
 			return nil
+		}
+
+		// Prepare token via the central secure store (env -> Bitwarden -> keychain -> config).
+		// Dry-run returns above, so a missing token only fails real applies.
+		env := os.Environ()
+		if os.Getenv("GITLAB_TOKEN") == "" {
+			var token string
+			if tokenItemOpt != "" {
+				var err error
+				token, err = config.ResolveSecret(config.SecretRef{
+					Provider: config.ProviderBitwarden,
+					Item:     tokenItemOpt,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to read Bitwarden item '%s': %w", tokenItemOpt, err)
+				}
+			} else {
+				var err error
+				token, _, err = config.ResolveGitLabToken()
+				if err != nil {
+					return err
+				}
+			}
+			if token != "" {
+				env = append(env, "GITLAB_TOKEN="+token)
+			}
+		}
+
+		if host != "" {
+			env = append(env, "GITLAB_HOST="+host)
 		}
 
 		cmdExec := execCommand("glab", apiArgs...)
