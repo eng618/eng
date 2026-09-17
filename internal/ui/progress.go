@@ -84,13 +84,7 @@ func (s *charmSpinner) Info(text ...interface{}) {
 	if msg == "" {
 		msg = s.text
 	}
-	banner := lipgloss.NewStyle().
-		Background(theme.Primary).
-		Foreground(theme.Background).
-		Bold(true).
-		Padding(0, 1).
-		MarginRight(1).
-		Render("INFO")
+	banner := theme.InfoBanner.Render("INFO")
 	txt := theme.BaseText.Render(msg)
 	fmt.Fprintf(s.out, "%s %s\n", banner, txt)
 }
@@ -142,7 +136,8 @@ func (s *dummySpinner) Info(text ...interface{}) {
 	if msg == "" {
 		msg = s.text
 	}
-	fmt.Fprintf(s.outOrDefault(), "%s\n", theme.BaseText.Render(msg))
+	banner := theme.InfoBanner.Render("INFO")
+	fmt.Fprintf(s.outOrDefault(), "%s %s\n", banner, theme.BaseText.Render(msg))
 }
 
 // MultiSpinner manages multiple concurrent progress indicators.
@@ -353,10 +348,7 @@ func (m *MultiProgressBar) renderBarLocked(bar *ProgressBar) {
 
 	// Truncate label if too long
 	maxLabelWidth := 40
-	label := bar.Label
-	if len(label) > maxLabelWidth {
-		label = label[:maxLabelWidth-3] + "..."
-	}
+	label := Truncate(bar.Label, maxLabelWidth)
 
 	barView := bar.prog.ViewAs(bar.Percent)
 

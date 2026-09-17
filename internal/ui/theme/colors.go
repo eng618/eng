@@ -18,4 +18,10 @@ var (
 	MutedForeground = lipgloss.AdaptiveColor{Light: "#65758b", Dark: "#b3b3b3"}
 	// Destructive/Error color
 	Destructive = lipgloss.AdaptiveColor{Light: "#dc2626", Dark: "#f87171"}
+	// Warning color for non-fatal issues.
+	Warning = lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}
+	// Debug color for verbose/diagnostic output.
+	Debug = lipgloss.AdaptiveColor{Light: "#c084fc", Dark: "#e879f9"}
+	// Success color alias (Secondary doubles as success).
+	Success = Secondary
 )

@@ -36,8 +36,8 @@ var (
 	startStyle   = lipgloss.NewStyle().Foreground(theme.Primary)
 	successStyle = lipgloss.NewStyle().Foreground(theme.Secondary)
 	infoStyle    = lipgloss.NewStyle().Foreground(theme.Primary)
-	debugStyle   = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#c084fc", Dark: "#e879f9"})
-	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"})
+	debugStyle   = lipgloss.NewStyle().Foreground(theme.Debug)
+	warnStyle    = lipgloss.NewStyle().Foreground(theme.Warning)
 	errorStyle   = lipgloss.NewStyle().Foreground(theme.Destructive)
 
 	ansiRegex = regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")
@@ -50,6 +50,11 @@ func SetFileLog(f *os.File) {
 	mu.Lock()
 	defer mu.Unlock()
 	fileOut = f
+	var w io.Writer
+	if f != nil {
+		w = io.Writer(f)
+	}
+	theme.SetFileLog(w)
 }
 
 // FileLogActive reports whether file tee output is currently enabled.

@@ -93,7 +93,15 @@ var (
 
 	// WarningBanner is a highlighted block for warnings
 	WarningBanner = lipgloss.NewStyle().
-			Background(lipgloss.AdaptiveColor{Light: "#f59e0b", Dark: "#d97706"}). // Yellow/Orange
+			Background(Warning).
+			Foreground(Background).
+			Bold(true).
+			Padding(0, 1).
+			MarginRight(1)
+
+	// InfoBanner is a highlighted block for informational messages.
+	InfoBanner = lipgloss.NewStyle().
+			Background(Primary).
 			Foreground(Background).
 			Bold(true).
 			Padding(0, 1).
@@ -128,13 +136,7 @@ func SuccessMessage(msg string) {
 
 // InfoMessage prints a formatted informational message.
 func InfoMessage(msg string) {
-	banner := lipgloss.NewStyle().
-		Background(Primary).
-		Foreground(Background).
-		Bold(true).
-		Padding(0, 1).
-		MarginRight(1).
-		Render("INFO")
+	banner := InfoBanner.Render("INFO")
 	text := BaseText.Render(msg)
 	fmt.Fprintf(getOut(), "%s %s\n", banner, text)
 	fileWrite("INFO", msg)
