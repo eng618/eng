@@ -53,11 +53,58 @@ func MigrateMap(in map[string]any) (map[string]any, bool, error) {
 		in["projects"] = []any{}
 		changed = true
 	}
+	if c := migrateLegacyProxy(in); c {
+		changed = true
+	}
 	if v, _ := in["version"].(int); v != CurrentVersion {
 		in["version"] = CurrentVersion
 		changed = true
 	}
 	return in, changed, nil
+}
+
+// migrateLegacyProxy converts the singular legacy `proxy:` map
+// (value/enabled) into the `proxies:` list, repairs multiple enabled
+// entries (first wins), and ensures a default empty list.
+// It returns whether anything changed.
+func migrateLegacyProxy(in map[string]any) bool {
+	changed := false
+	legacy, hasLegacy := in["proxy"].(map[string]any)
+	_, hasProxies := in["proxies"]
+	if hasLegacy && !isEmpty(legacy["value"]) && !hasProxies {
+		in["proxies"] = []any{map[string]any{
+			"title":   "Default",
+			"value":   legacy["value"],
+			"enabled": legacy["enabled"] == true,
+		}}
+		changed = true
+	}
+	if hasLegacy {
+		delete(in, "proxy")
+		changed = true
+	}
+	proxies, ok := in["proxies"].([]any)
+	if !ok {
+		in["proxies"] = []any{}
+		return true
+	}
+	seenEnabled := false
+	for i, p := range proxies {
+		m, ok := p.(map[string]any)
+		if !ok {
+			continue
+		}
+		if m["enabled"] == true {
+			if seenEnabled {
+				m["enabled"] = false
+				proxies[i] = m
+				changed = true
+			} else {
+				seenEnabled = true
+			}
+		}
+	}
+	return changed
 }
 
 // BackupFile copies path to path.bak.<UTC timestamp> and returns the backup path.

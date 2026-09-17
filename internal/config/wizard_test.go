@@ -90,6 +90,34 @@ func TestRunWizard_Full(t *testing.T) {
 	require.Equal(t, false, changes["telemetry.enabled"])
 }
 
+func TestRunWizard_ProxyStep(t *testing.T) {
+	restore := stubWizardPrompts(
+		map[string]string{"address": "proxy.corp:8080", "no-proxy": "internal.corp"},
+		map[string]bool{"proxy?": true},
+	)
+	defer restore()
+	changes, err := RunWizard(WizardAnswers{}, WizardProxy)
+	require.NoError(t, err)
+	require.Contains(t, changes, "proxies")
+	entries, ok := changes["proxies"].([]any)
+	require.True(t, ok)
+	require.Len(t, entries, 1)
+	entry := entries[0].(map[string]any)
+	require.Equal(t, "http://proxy.corp:8080", entry["value"])
+	require.Equal(t, true, entry["enabled"])
+	require.Equal(t, "internal.corp", entry["noProxy"])
+	// Resume continues through later steps (telemetry confirm defaults to false).
+	require.Equal(t, false, changes["telemetry.enabled"])
+}
+
+func TestRunWizard_ProxySkipped(t *testing.T) {
+	restore := stubWizardPrompts(nil, map[string]bool{"proxy?": false})
+	defer restore()
+	changes, err := RunWizard(WizardAnswers{}, WizardProxy)
+	require.NoError(t, err)
+	require.NotContains(t, changes, "proxies")
+}
+
 func TestRunWizard_ResumeFromStep(t *testing.T) {
 	restore := stubWizardPrompts(nil, map[string]bool{"telemetry": true})
 	defer restore()

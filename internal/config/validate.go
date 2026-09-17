@@ -62,6 +62,43 @@ func (c *ResolvedConfig) Validate() []FieldError {
 			errs = append(errs, *err)
 		}
 	}
+	errs = append(errs, validateProxies(c.Proxies)...)
+	return errs
+}
+
+// validateProxies checks proxy URLs, duplicate titles, and multi-enabled state.
+func validateProxies(proxies []ProxyConfig) []FieldError {
+	var errs []FieldError
+	seen := map[string]int{}
+	enabledCount := 0
+	for i, p := range proxies {
+		field := fmt.Sprintf("proxies[%d].value", i)
+		if err := ValidateProxyURLString(p.Value); err != nil {
+			errs = append(errs, FieldError{
+				Field: field, Value: p.Value,
+				Hint: "fix with `eng proxy edit --title " + p.Title + " --url <host:port>` (" + err.Error() + ")",
+			})
+		}
+		if p.Title != "" {
+			if prev, dup := seen[p.Title]; dup {
+				errs = append(errs, FieldError{
+					Field: fmt.Sprintf("proxies[%d].title", i), Value: p.Title,
+					Hint: fmt.Sprintf("duplicate of proxies[%d]: rename with `eng proxy edit`", prev),
+				})
+			} else {
+				seen[p.Title] = i
+			}
+		}
+		if p.Enabled {
+			enabledCount++
+		}
+	}
+	if enabledCount > 1 {
+		errs = append(errs, FieldError{
+			Field: "proxies", Value: fmt.Sprintf("%d enabled", enabledCount),
+			Hint: "only one proxy may be active: run `eng proxy use <name>` to pick one",
+		})
+	}
 	return errs
 }
 

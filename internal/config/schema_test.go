@@ -47,6 +47,40 @@ func TestMigrateMap_NewKeyWins(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestMigrateMap_LegacyProxy(t *testing.T) {
+	in := map[string]any{
+		"proxy": map[string]any{"value": "http://proxy:8080", "enabled": true},
+	}
+	out, changed, err := MigrateMap(in)
+	require.NoError(t, err)
+	require.True(t, changed)
+	require.NotContains(t, out, "proxy")
+	proxies, ok := out["proxies"].([]any)
+	require.True(t, ok)
+	require.Len(t, proxies, 1)
+	first := proxies[0].(map[string]any)
+	require.Equal(t, "Default", first["title"])
+	require.Equal(t, "http://proxy:8080", first["value"])
+	require.Equal(t, true, first["enabled"])
+}
+
+func TestMigrateMap_MultiEnabledRepair(t *testing.T) {
+	in := map[string]any{
+		"proxies": []any{
+			map[string]any{"title": "a", "value": "http://a:8080", "enabled": true},
+			map[string]any{"title": "b", "value": "http://b:8080", "enabled": true},
+		},
+		"version":  CurrentVersion,
+		"projects": []any{},
+	}
+	out, changed, err := MigrateMap(in)
+	require.NoError(t, err)
+	require.True(t, changed)
+	proxies := out["proxies"].([]any)
+	require.Equal(t, true, proxies[0].(map[string]any)["enabled"])
+	require.Equal(t, false, proxies[1].(map[string]any)["enabled"])
+}
+
 func TestMigrateFile_BackupAndIdempotent(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".eng.yaml")

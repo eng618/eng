@@ -12,11 +12,12 @@ const (
 	WizardProfile   WizardStep = "profile"
 	WizardGit       WizardStep = "git"
 	WizardDotfiles  WizardStep = "dotfiles"
+	WizardProxy     WizardStep = "proxy"
 	WizardTelemetry WizardStep = "telemetry"
 )
 
 // wizardOrder is the fixed walkthrough order.
-var wizardOrder = []WizardStep{WizardProfile, WizardGit, WizardDotfiles, WizardTelemetry}
+var wizardOrder = []WizardStep{WizardProfile, WizardGit, WizardDotfiles, WizardProxy, WizardTelemetry}
 
 // WizardAnswers holds one walkthrough run. Defaults are preloaded from the
 // current resolved config; empty means "leave unset".
@@ -28,6 +29,9 @@ type WizardAnswers struct {
 	DotfilesRepoURL  string
 	DotfilesBranch   string
 	SkipDotfiles     bool
+	ProxyAddress     string
+	ProxyNoProxy     string
+	SkipProxy        bool
 	TelemetryEnabled bool
 }
 
@@ -41,7 +45,7 @@ func ParseWizardStep(s string) (WizardStep, error) {
 			return st, nil
 		}
 	}
-	return "", fmt.Errorf("unknown step %q (choose profile, git, dotfiles, telemetry)", s)
+	return "", fmt.Errorf("unknown step %q (choose profile, git, dotfiles, proxy, telemetry)", s)
 }
 
 // RunWizard walks the prompt hooks from the given step and returns the
@@ -109,6 +113,41 @@ func runWizardStep(step WizardStep, ans *WizardAnswers, changes map[string]any) 
 			return err
 		}
 		changes["dotfiles.branch"] = ans.DotfilesBranch
+	case WizardProxy:
+		var useProxy bool
+		useProxy, err = ConfirmPrompt("Route traffic through a proxy?", !ans.SkipProxy)
+		if err != nil {
+			return err
+		}
+		ans.SkipProxy = !useProxy
+		if ans.SkipProxy {
+			break
+		}
+		ans.ProxyAddress, err = InputPrompt("Proxy address (host:port, blank = skip)", ans.ProxyAddress)
+		if err != nil {
+			return err
+		}
+		if ans.ProxyAddress == "" {
+			ans.SkipProxy = true
+			break
+		}
+		if err := ValidateProxyURLString(ans.ProxyAddress); err != nil {
+			return err
+		}
+		changes["proxies"] = []any{map[string]any{
+			"title":   "Default",
+			"value":   NormalizeProxyURLString(ans.ProxyAddress),
+			"enabled": true,
+		}}
+		ans.ProxyNoProxy, err = InputPrompt("No-proxy hosts (blank = defaults)", ans.ProxyNoProxy)
+		if err != nil {
+			return err
+		}
+		if ans.ProxyNoProxy != "" {
+			entry := changes["proxies"].([]any)[0].(map[string]any)
+			entry["noProxy"] = ans.ProxyNoProxy
+			changes["proxies"] = []any{entry}
+		}
 	case WizardTelemetry:
 		ans.TelemetryEnabled, err = ConfirmPrompt("Enable anonymous telemetry?", ans.TelemetryEnabled)
 		if err != nil {
@@ -135,6 +174,7 @@ func DefaultsFromResolved(rc *ResolvedConfig) WizardAnswers {
 		Verbose:          rc.Verbose,
 		DotfilesRepoURL:  rc.DotfilesRepo,
 		DotfilesBranch:   branch,
+		SkipProxy:        len(rc.Proxies) == 0,
 		TelemetryEnabled: IsTelemetryEnabled(),
 	}
 }

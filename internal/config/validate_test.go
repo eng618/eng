@@ -56,6 +56,50 @@ func TestValidate_Table(t *testing.T) {
 			func(c *ResolvedConfig) { c.Email = "bad"; c.DotfilesBranch = "has space" },
 			[]string{"email", "dotfiles.branch"},
 		},
+		{
+			"bad proxy url",
+			func(c *ResolvedConfig) {
+				c.Proxies = []ProxyConfig{{Title: "corp", Value: "not a url"}}
+			},
+			[]string{"proxies[0].value"},
+		},
+		{
+			"proxy missing port",
+			func(c *ResolvedConfig) {
+				c.Proxies = []ProxyConfig{{Title: "corp", Value: "http://proxy"}}
+			},
+			[]string{"proxies[0].value"},
+		},
+		{
+			"valid proxies",
+			func(c *ResolvedConfig) {
+				c.Proxies = []ProxyConfig{
+					{Title: "corp", Value: "http://proxy:8080", Enabled: true},
+					{Title: "home", Value: "socks5://127.0.0.1:1080"},
+				}
+			},
+			nil,
+		},
+		{
+			"duplicate proxy titles",
+			func(c *ResolvedConfig) {
+				c.Proxies = []ProxyConfig{
+					{Title: "corp", Value: "http://a:8080"},
+					{Title: "corp", Value: "http://b:8080"},
+				}
+			},
+			[]string{"proxies[1].title"},
+		},
+		{
+			"multiple enabled proxies",
+			func(c *ResolvedConfig) {
+				c.Proxies = []ProxyConfig{
+					{Title: "a", Value: "http://a:8080", Enabled: true},
+					{Title: "b", Value: "http://b:8080", Enabled: true},
+				}
+			},
+			[]string{"proxies"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

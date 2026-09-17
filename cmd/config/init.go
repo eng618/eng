@@ -17,7 +17,7 @@ import (
 var InitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Guided walkthrough to configure eng step by step",
-	Long: `Walks through profile, git, dotfiles, and telemetry settings one
+	Long: `Walks through profile, git, dotfiles, proxy, and telemetry settings one
 section at a time, showing a preview before writing anything.
 
 Resume mid-walkthrough with --from, or preview without writing with --dry-run.
@@ -69,6 +69,6 @@ Example: eng config init --from dotfiles --dry-run`,
 }
 
 func init() {
-	InitCmd.Flags().String("from", "", "resume from step: profile, git, dotfiles, telemetry")
+	InitCmd.Flags().String("from", "", "resume from step: profile, git, dotfiles, proxy, telemetry")
 	InitCmd.Flags().Bool("dry-run", false, "preview changes without writing")
 }

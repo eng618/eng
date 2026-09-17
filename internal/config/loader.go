@@ -28,6 +28,7 @@ type ResolvedConfig struct {
 	DotfilesRepo   string
 	DotfilesBranch string
 	ContainersPath string
+	Proxies        []ProxyConfig
 	Source         map[string]string
 }
 
@@ -112,6 +113,7 @@ func LoadResolved(v *viper.Viper) (*ResolvedConfig, error) {
 			Path string `mapstructure:"path"`
 		} `mapstructure:"containers"`
 		Projects    []any          `mapstructure:"projects"`
+		Proxies     []ProxyConfig  `mapstructure:"proxies"`
 		Telemetry   map[string]any `mapstructure:"telemetry"`
 		Gitlab      map[string]any `mapstructure:"gitlab"`
 		Proxy       map[string]any `mapstructure:"proxy"`
@@ -132,13 +134,14 @@ func LoadResolved(v *viper.Viper) (*ResolvedConfig, error) {
 		DotfilesRepo:   raw.Dotfiles.RepoURL,
 		DotfilesBranch: raw.Dotfiles.Branch,
 		ContainersPath: paths.Expand(raw.Containers.Path),
+		Proxies:        raw.Proxies,
 		Source:         map[string]string{},
 	}
 	fileKeys := fileKeySet(v.ConfigFileUsed())
 	for _, key := range []string{
 		"email", "verbose", "git.dev_path", "git.editor",
 		"dotfiles.repo_url", "dotfiles.branch", "dotfiles.bare_repo_path",
-		"containers.path",
+		"containers.path", "proxies",
 	} {
 		rc.Source[key] = valueSource(fileKeys, key)
 	}
