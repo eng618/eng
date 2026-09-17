@@ -3,11 +3,13 @@ package proxy
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
 )
 
@@ -35,22 +37,42 @@ func listProxyConfigurations(cmd *cobra.Command) {
 }
 
 func renderProxyList(compact bool, proxies []config.ProxyConfig) {
-	header := theme.PrimaryText.Bold(true).Render("🌐 Proxy Configurations (★ active, • inactive):")
-	fmt.Fprintln(log.Out, header)
 	if len(proxies) == 0 {
 		fmt.Fprintln(
 			log.Out,
-			theme.MutedText.Render("  No proxy configurations found. Use 'eng proxy add' to create one."),
+			theme.MutedText.Render("No proxy configurations found. Use 'eng proxy add' to create one."),
 		)
 		return
 	}
-	for i, p := range proxies {
-		prefix := theme.MutedText.Render(fmt.Sprintf("%d.", i+1))
-		if compact {
-			prefix = theme.MutedText.Render("•")
+	if compact {
+		for _, p := range proxies {
+			fmt.Fprintln(log.Out, "  "+theme.BaseText.Render(config.FormatProxyOption(p)))
 		}
-		fmt.Fprintf(log.Out, "  %s %s\n", prefix, config.FormatProxyOption(p))
+		return
 	}
+	rows := make([][]string, 0, len(proxies))
+	for i, p := range proxies {
+		status := "—"
+		if p.Enabled {
+			status = "★ ACTIVE"
+		}
+		noProxy := p.NoProxy
+		if noProxy == "" {
+			noProxy = "—"
+		}
+		rows = append(rows, []string{
+			strconv.Itoa(i + 1),
+			p.Title,
+			p.Value,
+			status,
+			noProxy,
+		})
+	}
+	header := theme.PrimaryText.Bold(true).Render("🌐 Proxy Configurations")
+	fmt.Fprintln(log.Out, theme.InfoBox.Render(header+"\n"+ui.RenderTable(ui.TableOpts{
+		Headers: []string{"#", "TITLE", "ADDRESS", "STATUS", "NO PROXY"},
+		Rows:    rows,
+	})))
 }
 
 func renderEnv(compact, showLowercase bool) {

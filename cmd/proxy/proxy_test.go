@@ -39,9 +39,12 @@ func TestListProxyConfigurations(t *testing.T) {
 	if !strings.Contains(output, "Test Proxy") {
 		t.Error("Expected output to contain 'Test Proxy'")
 	}
-	// The format is now: "1. ★ Test Proxy (http://test:8080) [ACTIVE]"
-	if !strings.Contains(output, "1.") || !strings.Contains(output, "ACTIVE") {
-		t.Error("Expected output to show proxy 1 as active with [ACTIVE]")
+	// Table format: title, address, and ACTIVE status cells.
+	if !strings.Contains(output, "ACTIVE") {
+		t.Error("Expected output to show proxy as ACTIVE")
+	}
+	if !strings.Contains(output, "http://test:8080") {
+		t.Error("Expected output to contain proxy address")
 	}
 }
 

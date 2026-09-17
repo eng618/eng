@@ -10,11 +10,9 @@ import (
 	"time"
 
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/log"
-	"github.com/eng618/eng/internal/ui/theme"
 )
 
 // ProxyConfig represents a single proxy configuration.
@@ -96,24 +94,16 @@ func SelectProxy(proxies []ProxyConfig) (int, error) {
 	return selectedIndex, nil
 }
 
-// FormatProxyOption renders a single proxy as a stylized radio option string.
-// Example: "● Corp Proxy (http://proxy:8080)" with colored markers and dimmed value.
+// FormatProxyOption renders a single proxy as a plain option string for
+// selection prompts and status tables. It intentionally contains no ANSI
+// styling so callers can compare options with == and apply the shared
+// huh/lipgloss theme at render time.
+// Example: "★ Corp (http://proxy:8080) [ACTIVE]".
 func FormatProxyOption(proxy ProxyConfig) string {
-	// Marker and label with stronger contrast: ★ ACTIVE vs • inactive
-	marker := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render("•")
-	label := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render("[inactive]")
-	title := proxy.Title
-
 	if proxy.Enabled {
-		marker = lipgloss.NewStyle().Foreground(theme.Secondary).Bold(true).Render("★")
-		label = lipgloss.NewStyle().Foreground(theme.Secondary).Render("[ACTIVE]")
-		title = theme.BoldText.Render(proxy.Title)
+		return fmt.Sprintf("★ %s (%s) [ACTIVE]", proxy.Title, proxy.Value)
 	}
-
-	// Value in dim gray
-	value := lipgloss.NewStyle().Foreground(theme.MutedForeground).Render(fmt.Sprintf("(%s)", proxy.Value))
-
-	return fmt.Sprintf("%s %s %s %s", marker, title, value, label)
+	return fmt.Sprintf("• %s (%s) [inactive]", proxy.Title, proxy.Value)
 }
 
 // Validation helpers.

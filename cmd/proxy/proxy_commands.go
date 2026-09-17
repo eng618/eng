@@ -26,7 +26,7 @@ var addCmd = &cobra.Command{
 	Aliases: []string{"create", "new"},
 	Short:   "Add a new proxy configuration",
 	Long:    `Add a new proxy configuration with a title, proxy address, and optional bypass domains.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		titleFlag, _ := cmd.Flags().GetString("title")
 		urlFlag, _ := cmd.Flags().GetString("url")
 		if urlFlag == "" {
@@ -53,8 +53,7 @@ var addCmd = &cobra.Command{
 			var err error
 			proxies, idx, err = config.AddOrUpdateProxyWithValues(titleVal, urlVal, noProxyFlag)
 			if err != nil {
-				log.Error("Failed to add proxy: %v", err)
-				return
+				return fmt.Errorf("failed to add proxy: %w", err)
 			}
 			log.Success("Proxy '%s' added successfully", titleVal)
 		} else {
@@ -63,14 +62,14 @@ var addCmd = &cobra.Command{
 
 		if idx >= 0 && enableAfter {
 			if _, err := config.EnableProxy(idx, proxies); err != nil {
-				log.Error(msgFailedEnableProxyFmt, err)
-				return
+				return fmt.Errorf(msgFailedEnableProxyFmt, err)
 			}
 			log.Success("Proxy '%s' enabled", proxies[idx].Title)
 		}
 
 		fmt.Fprintln(log.Out, msgUpdatedProxyConfigurations)
 		listProxyConfigurations(cmd)
+		return nil
 	},
 }
 
@@ -79,7 +78,7 @@ var useCmd = &cobra.Command{
 	Aliases: []string{"enable", "switch", "select"},
 	Short:   "Activate a proxy configuration",
 	Long:    `Select and enable a proxy configuration interactively or by name/index.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		proxies, _ := config.GetProxyConfigs()
 
 		idxFlag, _ := cmd.Flags().GetInt("index")
@@ -96,33 +95,31 @@ var useCmd = &cobra.Command{
 			log.Info("No proxy configurations found. Adding a new one...")
 			proxies, _ = config.AddOrUpdateProxy()
 			if len(proxies) == 0 {
-				return
+				return nil
 			}
 		}
 
 		selectedIndex := resolveProxyIndex(targetArg, idxFlag, titleFlag, proxies)
 		if selectedIndex < 0 {
 			if targetArg != "" || titleFlag != "" {
-				log.Error("No proxy configuration found matching identifier")
-				return
+				return fmt.Errorf("no proxy configuration found matching identifier")
 			}
 			var err error
 			selectedIndex, err = config.SelectProxy(proxies)
 			if err != nil {
-				log.Error("Failed to select proxy: %v", err)
-				return
+				return fmt.Errorf("failed to select proxy: %w", err)
 			}
 		}
 
 		if _, err := config.EnableProxy(selectedIndex, proxies); err != nil {
-			log.Error(msgFailedEnableProxyFmt, err)
-			return
+			return fmt.Errorf(msgFailedEnableProxyFmt, err)
 		}
 
 		log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
 		if !quietFlag {
 			listProxyConfigurations(cmd)
 		}
+		return nil
 	},
 }
 
@@ -131,16 +128,16 @@ var offCmd = &cobra.Command{
 	Aliases: []string{"disable", "unset", "clear"},
 	Short:   "Deactivate all proxies and unset environment variables",
 	Long:    `Disables all proxy configurations and unsets all shell proxy environment variables.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		quietFlag, _ := cmd.Flags().GetBool("quiet")
 		if err := config.DisableAllProxies(); err != nil {
-			log.Error("Failed to disable proxies: %v", err)
-			return
+			return fmt.Errorf("failed to disable proxies: %w", err)
 		}
 		log.Success("All proxies disabled")
 		if !quietFlag {
 			listProxyConfigurations(cmd)
 		}
+		return nil
 	},
 }
 
@@ -191,7 +188,7 @@ var toggleCmd = &cobra.Command{
 	Aliases: []string{"on-off"},
 	Short:   "Toggle proxies on or off",
 	Long:    `Toggles proxies on or off. When toggling on, select an existing proxy or create a new one.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		onFlag, _ := cmd.Flags().GetBool("on")
 		offFlag, _ := cmd.Flags().GetBool("off")
 		quietFlag, _ := cmd.Flags().GetBool("quiet")
@@ -205,15 +202,14 @@ var toggleCmd = &cobra.Command{
 
 		if doOff {
 			if err := config.DisableAllProxies(); err != nil {
-				log.Error("Failed to disable proxies: %v", err)
-				return
+				return fmt.Errorf("failed to disable proxies: %w", err)
 			}
 			log.Success("All proxies disabled")
 			if !quietFlag {
 				listProxyConfigurations(cmd)
 			}
 			if offFlag && !onFlag {
-				return
+				return nil
 			}
 		}
 
@@ -224,8 +220,7 @@ var toggleCmd = &cobra.Command{
 			} else if titleFlag != "" {
 				selectedIndex = config.FindProxyIndexByTitle(proxies, titleFlag)
 				if selectedIndex < 0 {
-					log.Error("No proxy found with title '%s'", titleFlag)
-					return
+					return fmt.Errorf("no proxy found with title '%s'", titleFlag)
 				}
 			} else {
 				if len(proxies) == 0 {
@@ -241,8 +236,7 @@ var toggleCmd = &cobra.Command{
 
 					selected, err := ui.Select("Select a proxy to enable or create new:", options, "")
 					if err != nil {
-						log.Error("Selection canceled: %v", err)
-						return
+						return fmt.Errorf("selection canceled: %w", err)
 					}
 
 					sel := -1
@@ -264,14 +258,14 @@ var toggleCmd = &cobra.Command{
 			}
 
 			if _, err := config.EnableProxy(selectedIndex, proxies); err != nil {
-				log.Error(msgFailedEnableProxyFmt, err)
-				return
+				return fmt.Errorf(msgFailedEnableProxyFmt, err)
 			}
 			log.Success("Proxy '%s' selected and enabled", proxies[selectedIndex].Title)
 			if !quietFlag {
 				listProxyConfigurations(cmd)
 			}
 		}
+		return nil
 	},
 }
 
@@ -279,9 +273,18 @@ var editCmd = &cobra.Command{
 	Use:     "edit [name|index]",
 	Aliases: []string{"update", "set"},
 	Short:   "Edit an existing proxy configuration",
-	Long:    `Modify an existing proxy configuration via flags or interactively.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Long: `Modify an existing proxy configuration via flags or interactively.
+
+The target is selected by positional arg or --title (never both). The proxy
+title itself is only changed with --new-title; --title never renames.
+
+Examples:
+  eng proxy edit corp --url http://proxy:8080
+  eng proxy edit --title corp --new-title headquarters
+  eng proxy edit 1 --no-proxy internal.corp --enable`,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		titleFlag, _ := cmd.Flags().GetString("title")
+		newTitleFlag, _ := cmd.Flags().GetString("new-title")
 		valueFlag, _ := cmd.Flags().GetString("value")
 		if valueFlag == "" {
 			valueFlag, _ = cmd.Flags().GetString("url")
@@ -296,20 +299,29 @@ var editCmd = &cobra.Command{
 			targetArg = args[0]
 		}
 
+		if targetArg != "" && titleFlag != "" {
+			if resolveProxyIndex(targetArg, -1, "", proxies) != resolveProxyIndex("", -1, titleFlag, proxies) {
+				return fmt.Errorf(
+					"conflicting targets: positional %q and --title %q differ (use one)",
+					targetArg,
+					titleFlag,
+				)
+			}
+		}
+
 		targetIdx := resolveProxyIndex(targetArg, -1, titleFlag, proxies)
 
 		if interactive || (titleFlag == "" && targetIdx < 0 && valueFlag == "") {
 			proxies, idx := config.AddOrUpdateProxy()
 			if enableAfter && idx >= 0 {
 				if _, err := config.EnableProxy(idx, proxies); err != nil {
-					log.Error(msgFailedEnableProxyFmt, err)
-					return
+					return fmt.Errorf(msgFailedEnableProxyFmt, err)
 				}
 				log.Success("Proxy '%s' enabled", proxies[idx].Title)
 			}
 			fmt.Fprintln(log.Out, msgUpdatedProxyConfigurations)
 			listProxyConfigurations(cmd)
-			return
+			return nil
 		}
 
 		targetTitle := titleFlag
@@ -318,31 +330,44 @@ var editCmd = &cobra.Command{
 		}
 
 		if targetTitle == "" {
-			log.Error("Please specify a proxy title or index to edit")
-			return
+			return fmt.Errorf("please specify a proxy title or index to edit")
 		}
 
 		if valueFlag == "" && targetIdx >= 0 {
 			valueFlag = proxies[targetIdx].Value
 		}
+		if noProxyFlag == "" && targetIdx >= 0 {
+			noProxyFlag = proxies[targetIdx].NoProxy
+		}
+
+		if newTitleFlag != "" {
+			if targetIdx < 0 {
+				return fmt.Errorf("cannot rename: no proxy matches %q", targetTitle)
+			}
+			proxies[targetIdx].Title = newTitleFlag
+			if err := config.SaveProxyConfigs(proxies); err != nil {
+				return fmt.Errorf("failed to rename proxy: %w", err)
+			}
+			log.Success("Proxy '%s' renamed to '%s'", targetTitle, newTitleFlag)
+			targetTitle = newTitleFlag
+		}
 
 		proxies, idx, err := config.AddOrUpdateProxyWithValues(targetTitle, valueFlag, noProxyFlag)
 		if err != nil {
-			log.Error("Failed to update proxy: %v", err)
-			return
+			return fmt.Errorf("failed to update proxy: %w", err)
 		}
 		log.Success("Proxy '%s' updated", targetTitle)
 
 		if enableAfter && idx >= 0 {
 			if _, err := config.EnableProxy(idx, proxies); err != nil {
-				log.Error(msgFailedEnableProxyFmt, err)
-				return
+				return fmt.Errorf(msgFailedEnableProxyFmt, err)
 			}
 			log.Success("Proxy '%s' enabled", proxies[idx].Title)
 		}
 
 		fmt.Fprintln(log.Out, msgUpdatedProxyConfigurations)
 		listProxyConfigurations(cmd)
+		return nil
 	},
 }
 
@@ -351,11 +376,11 @@ var removeCmd = &cobra.Command{
 	Aliases: []string{"rm", "delete"},
 	Short:   "Remove a proxy configuration",
 	Long:    `Deletes a stored proxy configuration profile.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		proxies, _ := config.GetProxyConfigs()
 		if len(proxies) == 0 {
 			log.Info("No proxy configurations found to remove.")
-			return
+			return nil
 		}
 
 		idxFlag, _ := cmd.Flags().GetInt("index")
@@ -371,19 +396,18 @@ var removeCmd = &cobra.Command{
 			var err error
 			targetIdx, err = config.SelectProxy(proxies)
 			if err != nil {
-				log.Error("Failed to select proxy to remove: %v", err)
-				return
+				return fmt.Errorf("failed to select proxy to remove: %w", err)
 			}
 		}
 
 		updatedProxies, err := config.RemoveProxy(targetIdx)
 		if err != nil {
-			log.Error("Failed to remove proxy: %v", err)
-			return
+			return fmt.Errorf("failed to remove proxy: %w", err)
 		}
 
 		listProxyConfigurations(cmd)
 		_ = updatedProxies
+		return nil
 	},
 }
 
@@ -392,7 +416,7 @@ var testCmd = &cobra.Command{
 	Aliases: []string{"check", "ping"},
 	Short:   "Test HTTP connection through a proxy",
 	Long:    `Sends a test HTTP request through the specified proxy or active proxy to verify connectivity.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		targetURL, _ := cmd.Flags().GetString("target")
 		if targetURL == "" {
 			targetURL = "https://1.1.1.1"
@@ -400,8 +424,7 @@ var testCmd = &cobra.Command{
 
 		proxies, activeIdx := config.GetProxyConfigs()
 		if len(proxies) == 0 {
-			log.Error("No proxy configurations stored to test.")
-			return
+			return fmt.Errorf("no proxy configurations stored to test")
 		}
 
 		targetArg := ""
@@ -420,8 +443,7 @@ var testCmd = &cobra.Command{
 				var err error
 				testIdx, err = config.SelectProxy(proxies)
 				if err != nil {
-					log.Error("Failed to select proxy for testing: %v", err)
-					return
+					return fmt.Errorf("failed to select proxy for testing: %w", err)
 				}
 			}
 		}
@@ -431,10 +453,10 @@ var testCmd = &cobra.Command{
 
 		duration, err := config.TestProxyConnection(targetProxy.Value, targetURL)
 		if err != nil {
-			log.Error("Connection test failed after %v: %v", duration.Round(100), err)
-			return
+			return fmt.Errorf("connection test failed after %v: %w", duration.Round(100), err)
 		}
 
 		log.Success("Connection successful! Response time: %v", duration.Round(100))
+		return nil
 	},
 }

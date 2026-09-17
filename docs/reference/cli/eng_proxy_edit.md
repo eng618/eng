@@ -6,6 +6,14 @@ Edit an existing proxy configuration
 
 Modify an existing proxy configuration via flags or interactively.
 
+The target is selected by positional arg or --title (never both). The proxy
+title itself is only changed with --new-title; --title never renames.
+
+Examples:
+  eng proxy edit corp --url http://proxy:8080
+  eng proxy edit --title corp --new-title headquarters
+  eng proxy edit 1 --no-proxy internal.corp --enable
+
 ```
 eng proxy edit [name|index] [flags]
 ```
@@ -13,13 +21,14 @@ eng proxy edit [name|index] [flags]
 ### Options
 
 ```
-      --enable            Enable this proxy after editing
-  -h, --help              help for edit
-      --interactive       Use interactive prompts when missing values
-      --no-proxy string   Additional no_proxy values (comma-separated)
-      --title string      Proxy configuration title
-      --url string        Proxy address (e.g., http://host:port)
-      --value string      Alias for --url
+      --enable             Enable this proxy after editing
+  -h, --help               help for edit
+      --interactive        Use interactive prompts when missing values
+      --new-title string   Rename the selected proxy
+      --no-proxy string    Additional no_proxy values (comma-separated)
+      --title string       Select the proxy to edit (never renames)
+      --url string         Proxy address (e.g., http://host:port)
+      --value string       Alias for --url
 ```
 
 ### Options inherited from parent commands

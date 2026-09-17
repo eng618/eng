@@ -14,7 +14,7 @@ import (
 
 const (
 	msgUpdatedProxyConfigurations = "Updated proxy configurations:"
-	msgFailedEnableProxyFmt       = "Failed to enable proxy: %v"
+	msgFailedEnableProxyFmt       = "failed to enable proxy: %v"
 )
 
 var ProxyCmd = &cobra.Command{
@@ -109,7 +109,8 @@ func init() {
 	addCmd.Flags().String("no-proxy", "", "Additional no_proxy values (comma-separated)")
 	addCmd.Flags().Bool("enable", false, "Enable proxy after adding")
 
-	editCmd.Flags().String("title", "", "Proxy configuration title")
+	editCmd.Flags().String("title", "", "Select the proxy to edit (never renames)")
+	editCmd.Flags().String("new-title", "", "Rename the selected proxy")
 	editCmd.Flags().String("url", "", "Proxy address (e.g., http://host:port)")
 	editCmd.Flags().String("value", "", "Alias for --url")
 	editCmd.Flags().String("no-proxy", "", "Additional no_proxy values (comma-separated)")
