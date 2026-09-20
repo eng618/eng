@@ -3,7 +3,6 @@ package setup
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -99,8 +98,12 @@ func ensureHomebrew(verbose bool) error {
 	}
 
 	// Download the install script to a temporary file
-	tmpDir := os.TempDir()
-	installScript := filepath.Join(tmpDir, "install_homebrew.sh")
+	tmpFile, err := os.CreateTemp("", "install_homebrew_*.sh")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary file for homebrew script: %w", err)
+	}
+	installScript := tmpFile.Name()
+	tmpFile.Close() // Close the file so curl can write to it
 
 	downloadCmd := execCommand(
 		"curl",
