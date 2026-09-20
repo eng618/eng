@@ -513,9 +513,24 @@ func extractTarGz(tarGzPath, destDir string) error {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return err
 			}
+			// Security check: ensure symlink target doesn't escape destination directory
+			if err := sanitizeSymlinkPath(destDir, target, header.Linkname); err != nil {
+				continue
+			}
 			_ = os.Remove(target)
 			_ = os.Symlink(header.Linkname, target)
 		}
+	}
+	return nil
+}
+
+func sanitizeSymlinkPath(destDir, currentFilePath, linkName string) error {
+	if filepath.IsAbs(linkName) {
+		return fmt.Errorf("absolute symlink targets are not allowed: %s", linkName)
+	}
+	linkTarget := filepath.Join(filepath.Dir(currentFilePath), linkName)
+	if !strings.HasPrefix(linkTarget, filepath.Clean(destDir)+string(os.PathSeparator)) {
+		return fmt.Errorf("invalid symlink target: %s", linkName)
 	}
 	return nil
 }
