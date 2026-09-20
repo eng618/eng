@@ -18,4 +18,3 @@ var (
 	stat         = os.Stat
 	detectDistro = sysinfo.Detect
 )
-

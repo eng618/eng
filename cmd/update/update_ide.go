@@ -514,7 +514,7 @@ func extractTarGz(tarGzPath, destDir string) error {
 				return err
 			}
 			// Security check: ensure symlink target doesn't escape destination directory
-			if err := sanitizeSymlinkPath(destDir, target, header.Linkname); err != nil {
+			if err := sanitizeSymlinkPath(header.Linkname); err != nil {
 				continue
 			}
 			_ = os.Remove(target)
@@ -524,14 +524,19 @@ func extractTarGz(tarGzPath, destDir string) error {
 	return nil
 }
 
-func sanitizeSymlinkPath(destDir, currentFilePath, linkName string) error {
+func sanitizeSymlinkPath(linkName string) error {
 	if filepath.IsAbs(linkName) {
 		return fmt.Errorf("absolute symlink targets are not allowed: %s", linkName)
 	}
-	linkTarget := filepath.Join(filepath.Dir(currentFilePath), linkName)
-	if !strings.HasPrefix(linkTarget, filepath.Clean(destDir)+string(os.PathSeparator)) {
-		return fmt.Errorf("invalid symlink target: %s", linkName)
+
+	// Strictly disallow any parent directory traversal in symlink targets
+	// to prevent Zip Slip and escaping the extraction root.
+	for _, part := range strings.Split(filepath.ToSlash(linkName), "/") {
+		if part == ".." {
+			return fmt.Errorf("symlink target contains directory traversal: %s", linkName)
+		}
 	}
+
 	return nil
 }
 
