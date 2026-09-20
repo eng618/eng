@@ -2,11 +2,14 @@ package gpg
 
 import (
 	"os"
+	"regexp"
 
 	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/sysinfo"
 )
+
+var validKeyIDRegex = regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
 
 // Mockable system interaction points, migrated from cmd/system/system.go.
 // Seams default to the shared internal/execx and internal/paths entry

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -34,8 +33,10 @@ and GitHub on secondary devices without needing access to your master key.`,
 }
 
 func init() {
-	SyncGPGCmd.Flags().StringVarP(&syncKeyID, "key-id", "k", "", "GPG key ID (defaults to git user.signingkey)")
-	SyncGPGCmd.Flags().StringVar(&syncKeyserver, "keyserver", "hkps://keys.openpgp.org", "Keyserver URL")
+	SyncGPGCmd.Flags().
+		StringVarP(&syncKeyID, "key-id", "k", "", "GPG key ID (defaults to git user.signingkey)")
+	SyncGPGCmd.Flags().
+		StringVar(&syncKeyserver, "keyserver", "hkps://keys.openpgp.org", "Keyserver URL")
 	SyncGPGCmd.Flags().
 		StringVar(&syncGitHubUser, "github-user", "", "GitHub username to fetch public key from (e.g. eng618)")
 }
@@ -69,8 +70,7 @@ func syncGPG(verbose bool) error {
 	}
 
 	// Validate hex key ID format (16 to 40 hex chars)
-	validKeyID := regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
-	if !validKeyID.MatchString(keyID) {
+	if !validKeyIDRegex.MatchString(keyID) {
 		return fmt.Errorf("invalid GPG key ID format: must be 16 to 40 hexadecimal characters")
 	}
 
