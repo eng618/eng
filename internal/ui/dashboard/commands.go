@@ -86,7 +86,7 @@ func (m Model) openInTerminalLinux(targetPath string) (tea.Cmd, error) {
 	// $TERMINAL always wins so users can pin a preferred emulator.
 	candidates := []string{
 		"ghostty", "kitty", "alacritty", "wezterm",
-		"gnome-terminal", "konsole", "xfce4-terminal", "xterm",
+		"ptyxis", "gnome-terminal", "konsole", "xfce4-terminal", "xterm",
 	}
 	terminalApp := os.Getenv("TERMINAL")
 	if terminalApp == "" {
@@ -96,6 +96,8 @@ func (m Model) openInTerminalLinux(targetPath string) (tea.Cmd, error) {
 				break
 			}
 		}
+	} else {
+		terminalApp = filepath.Base(terminalApp)
 	}
 	if terminalApp == "" {
 		return nil, fmt.Errorf("no supported terminal emulator found; set $TERMINAL")
@@ -105,6 +107,8 @@ func (m Model) openInTerminalLinux(targetPath string) (tea.Cmd, error) {
 	switch terminalApp {
 	case "wezterm":
 		args = []string{"start", "--cwd", targetPath}
+	case "ptyxis":
+		args = []string{"--new-window", "--working-directory=" + targetPath}
 	case "gnome-terminal":
 		args = []string{"--working-directory=" + targetPath}
 	case "konsole":
