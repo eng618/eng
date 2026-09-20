@@ -1,0 +1,10 @@
+--- cmd/gpg/gpg_renew.go
++++ cmd/gpg/gpg_renew.go
+@@ -22,7 +22,7 @@
+	renewDuration   string
+	renewKeepMaster bool
+
+-	// validKeyIDRegex validates hex key ID format (16 to 40 hex chars)
++	// validKeyIDRegex validates hex key ID format (16 to 40 hex chars).
+	validKeyIDRegex = regexp.MustCompile(` + "`" + `^[0-9A-Fa-f]{16,40}$` + "`" + `)
+ )
