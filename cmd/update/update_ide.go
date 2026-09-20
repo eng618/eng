@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/eng618/eng/internal/browser"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
@@ -52,8 +53,10 @@ Supports automated download, detecting downloaded archives in ~/Downloads, or sp
 
 func init() {
 	UpdateIdeCmd.Flags().StringP("file", "f", "", "Path to local Antigravity IDE tarball (.tar.gz)")
-	UpdateIdeCmd.Flags().StringP("url", "u", "", "Direct download URL for the Antigravity IDE tarball")
-	UpdateIdeCmd.Flags().BoolP("yes", "y", false, "Auto-approve update operations without prompting")
+	UpdateIdeCmd.Flags().
+		StringP("url", "u", "", "Direct download URL for the Antigravity IDE tarball")
+	UpdateIdeCmd.Flags().
+		BoolP("yes", "y", false, "Auto-approve update operations without prompting")
 }
 
 var ideTargetOS = runtime.GOOS
@@ -61,7 +64,9 @@ var ideTargetOS = runtime.GOOS
 // RunIdeUpdate orchestrates finding, downloading, extracting, validating, and installing the IDE.
 func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool) error {
 	if ideTargetOS != "linux" {
-		log.Warn("Antigravity IDE automated tarball installation is currently configured for Linux.")
+		log.Warn(
+			"Antigravity IDE automated tarball installation is currently configured for Linux.",
+		)
 		return nil
 	}
 
@@ -117,7 +122,7 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 				true,
 			)
 			if err == nil && confirm {
-				_ = openURL("https://antigravity.google/download")
+				_ = browser.OpenURL("https://antigravity.google/download")
 				log.Message("Please download the Linux Antigravity IDE package to ~/Downloads.")
 				log.Message("After downloading, re-run 'eng update ide' to complete the update.")
 				return nil
@@ -136,7 +141,10 @@ func RunIdeUpdate(ctx context.Context, target string, verbose, autoApprove bool)
 			shouldDelete := autoApprove
 			if !autoApprove {
 				confirm, err := ui.Confirm(
-					fmt.Sprintf("Delete downloaded release archive '%s'?", filepath.Base(archivePath)),
+					fmt.Sprintf(
+						"Delete downloaded release archive '%s'?",
+						filepath.Base(archivePath),
+					),
 					true,
 				)
 				if err == nil && confirm {
@@ -427,7 +435,12 @@ Icon=%s/.local/share/icons/antigravity-ide.png
 	}
 
 	_ = execCommand("update-desktop-database", appsDir).Run()
-	_ = execCommand("xdg-mime", "default", "antigravity-ide.desktop", "x-scheme-handler/antigravity").Run()
+	_ = execCommand(
+		"xdg-mime",
+		"default",
+		"antigravity-ide.desktop",
+		"x-scheme-handler/antigravity",
+	).Run()
 
 	// Verify installation
 	verCmd := execCommand(targetBin, "--version")
@@ -440,7 +453,9 @@ Icon=%s/.local/share/icons/antigravity-ide.png
 		}
 	}
 
-	theme.SuccessMessage(fmt.Sprintf("Antigravity IDE successfully updated! (Version: %s)", versionStr))
+	theme.SuccessMessage(
+		fmt.Sprintf("Antigravity IDE successfully updated! (Version: %s)", versionStr),
+	)
 	return nil
 }
 
@@ -483,7 +498,11 @@ func extractTarGz(tarGzPath, destDir string) error {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return err
 			}
-			outFile, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(header.Mode))
+			outFile, err := os.OpenFile(
+				target,
+				os.O_CREATE|os.O_RDWR|os.O_TRUNC,
+				os.FileMode(header.Mode),
+			)
 			if err != nil {
 				return err
 			}
