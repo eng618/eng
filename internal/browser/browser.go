@@ -6,9 +6,7 @@ import (
 	"github.com/eng618/eng/internal/execx"
 )
 
-var (
-	execCommand = execx.Command
-)
+var execCommand = execx.Command
 
 // OpenURL opens the given URL in the system's default browser.
 func OpenURL(url string) error {

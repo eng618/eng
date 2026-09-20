@@ -483,12 +483,10 @@ func extractTarGz(tarGzPath, destDir string) error {
 		}
 
 		// Security check: Zip Slip vulnerability prevention
-		cleanPath := filepath.Clean(header.Name)
-		if strings.HasPrefix(cleanPath, "..") || filepath.IsAbs(cleanPath) {
-			continue
+		target := filepath.Join(destDir, filepath.Clean(header.Name))
+		if !strings.HasPrefix(target, filepath.Clean(destDir)+string(os.PathSeparator)) {
+			continue // Skip paths that try to escape the destination directory
 		}
-
-		target := filepath.Join(destDir, cleanPath)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(target, 0o755); err != nil {
