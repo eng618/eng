@@ -36,9 +36,10 @@ func getOriginURL(ctx context.Context, repoPath string) (string, error) {
 	return remote.URLs[0], nil
 }
 
+// Support SSH: git@gitlab.com:group/sub/git.git.
+var gitlabSSHPattern = regexp.MustCompile(`^(?:git|ssh)@([^:]+):(.+?)(?:\.git)?$`)
+
 func parseGitLabRemote(remote string) (string, string, error) {
-	// Support SSH: git@gitlab.com:group/sub/git.git
-	gitlabSSHPattern := regexp.MustCompile(`^(?:git|ssh)@([^:]+):(.+?)(?:\.git)?$`)
 	if matches := gitlabSSHPattern.FindStringSubmatch(remote); len(matches) == 3 {
 		host := matches[1]
 		path := strings.TrimSuffix(matches[2], ".git")
