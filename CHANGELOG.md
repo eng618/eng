@@ -1,5 +1,24 @@
 <a name="unreleased"></a>
 
+## [1.61.1](https://github.com/eng618/eng/compare/v1.61.0...v1.61.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* Insecure temporary file creation in gpg sync ([#182](https://github.com/eng618/eng/issues/182)) ([6149c56](https://github.com/eng618/eng/commit/6149c56025126f64b00163a956ad853e9f1331d8))
+* **term:** Support fedora ptyxis ([76e309b](https://github.com/eng618/eng/commit/76e309b823f7e920a590e6a4b2a5e694ce84e101))
+* Use secure temporary file creation with os.CreateTemp ([#178](https://github.com/eng618/eng/issues/178)) ([dd104e5](https://github.com/eng618/eng/commit/dd104e51f2751aef10441b260c583dc9688a4675))
+
+
+### Performance Improvements
+
+* **compose:** Optimize string concatenation in status render ([#180](https://github.com/eng618/eng/issues/180)) ([91eefee](https://github.com/eng618/eng/commit/91eefeea096d6453bcfdc2fe7a5740b411b178d4))
+* Optimize parseGitLabRemote regexp compilation ([#190](https://github.com/eng618/eng/issues/190)) ([709ae7e](https://github.com/eng618/eng/commit/709ae7e8676b6721e69ed332f215035385ba083a))
+* Optimize RepoNameFromURL regex compilation ([#185](https://github.com/eng618/eng/issues/185)) ([246a99c](https://github.com/eng618/eng/commit/246a99ccff26c55ac820797fb213c91dc6904870))
+* Optimize string concatenation with strings.Builder in auth_test.go ([#181](https://github.com/eng618/eng/issues/181)) ([941e9d9](https://github.com/eng618/eng/commit/941e9d95f92bb79dd3edc5f79d071d2cb3fbecec))
+* **sysinfo:** Extract static regexp compilation to global vars ([#191](https://github.com/eng618/eng/issues/191)) ([db9598b](https://github.com/eng618/eng/commit/db9598bdc27e66cce3288acc540aa55b7951f4b6))
+* **sysinfo:** Optimize parseVcgencmdTemp by reusing regex ([#184](https://github.com/eng618/eng/issues/184)) ([bf365b6](https://github.com/eng618/eng/commit/bf365b62ea59dd15837b488f07ef89efb0622c91))
+
 ## [1.61.0](https://github.com/eng618/eng/compare/v1.60.1...v1.61.0) (2026-09-17)
 
 
