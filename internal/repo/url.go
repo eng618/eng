@@ -8,18 +8,21 @@ import (
 	"strings"
 )
 
+var (
+	// sshPattern matches SSH format: git@host:path/git.git or ssh://git@host/path/git.git
+	sshPattern = regexp.MustCompile(`^(?:git|ssh)@[^:]+:(.+?)(?:\.git)?$`)
+	// sshProtoPattern matches SSH with protocol: ssh://git@host/path/git.git
+	sshProtoPattern = regexp.MustCompile(`^ssh://[^/]+/(.+?)(?:\.git)?$`)
+)
+
 // RepoNameFromURL extracts the repository name from a git URL.
 // Supports both SSH (git@host:path/git.git) and HTTPS (https://host/path/git.git) formats.
 func RepoNameFromURL(repoURL string) (string, error) {
-	// SSH format: git@host:path/git.git or ssh://git@host/path/git.git
-	sshPattern := regexp.MustCompile(`^(?:git|ssh)@[^:]+:(.+?)(?:\.git)?$`)
 	if matches := sshPattern.FindStringSubmatch(repoURL); len(matches) == 2 {
 		path := strings.TrimSuffix(matches[1], ".git")
 		return filepath.Base(path), nil
 	}
 
-	// SSH with protocol: ssh://git@host/path/git.git
-	sshProtoPattern := regexp.MustCompile(`^ssh://[^/]+/(.+?)(?:\.git)?$`)
 	if matches := sshProtoPattern.FindStringSubmatch(repoURL); len(matches) == 2 {
 		path := strings.TrimSuffix(matches[1], ".git")
 		return filepath.Base(path), nil
