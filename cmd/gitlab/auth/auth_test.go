@@ -389,13 +389,14 @@ func BenchmarkScannerLoop_Concat(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var tokenToSave string
+		var builder strings.Builder
 		for _, line := range lines {
-			if tokenToSave != "" {
-				tokenToSave += "\n"
+			if builder.Len() > 0 {
+				builder.WriteString("\n")
 			}
-			tokenToSave += line
+			builder.WriteString(line)
 		}
+		_ = builder.String()
 	}
 }
 
