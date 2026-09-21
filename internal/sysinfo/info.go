@@ -340,7 +340,8 @@ func collectCPU(ctx context.Context) (string, int, int) {
 
 func fallbackCPUModel(ctx context.Context) string {
 	if RuntimeGOOS == "darwin" {
-		if out, err := runCmd(ctx, "sysctl", "-n", "machdep.cpu.brand_string"); err == nil && out != "" {
+		if out, err := runCmd(ctx, "sysctl", "-n", "machdep.cpu.brand_string"); err == nil &&
+			out != "" {
 			return out
 		}
 
@@ -998,10 +999,12 @@ func parseThermalZoneMillis(data string) (string, bool) {
 	return fmt.Sprintf("%.1f°C", milli/1000), true
 }
 
+var vcgencmdTempRegex = regexp.MustCompile(`([\d.]+)'?C`)
+
 // parseVcgencmdTemp extracts the temperature from
 // `vcgencmd measure_temp` output like "temp=48.2'C".
 func parseVcgencmdTemp(out string) string {
-	if matches := regexp.MustCompile(`([\d.]+)'?C`).FindStringSubmatch(out); len(matches) == 2 {
+	if matches := vcgencmdTempRegex.FindStringSubmatch(out); len(matches) == 2 {
 		return matches[1] + "°C"
 	}
 
