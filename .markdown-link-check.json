@@ -5,6 +5,9 @@
     },
     {
       "pattern": "^mailto:"
+    },
+    {
+      "pattern": "^https://github\\.com/eng618/eng/actions/workflows/"
     }
   ],
   "timeout": "20s",
