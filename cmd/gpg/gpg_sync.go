@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -170,11 +169,17 @@ func fetchAndImportGPGURL(url string, verbose bool) error {
 		return fmt.Errorf("received empty key response from %s", url)
 	}
 
-	tempFile := filepath.Join(os.TempDir(), "eng_github_key.asc")
+	tmpFile, err := os.CreateTemp("", "eng_github_key_*.asc")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %w", err)
+	}
+	tempFile := tmpFile.Name()
+	defer os.Remove(tempFile)
+
 	if err := os.WriteFile(tempFile, buf.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("failed to write temp key file: %w", err)
 	}
-	defer os.Remove(tempFile)
+	tmpFile.Close()
 
 	cmd := execCommand("gpg", "--import", tempFile)
 	cmd.Stdout = log.Writer()
