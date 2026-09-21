@@ -3,6 +3,7 @@ package compose
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -61,18 +62,24 @@ var statusCmd = &cobra.Command{
 				return nil
 			}
 
-			var rendered string
+			var rendered strings.Builder
 			for stackName, containersList := range details {
-				rendered += ui.RenderContainerTable(stackName, toContainerRows(containersList), termWidth) + "\n\n"
+				rendered.WriteString(
+					ui.RenderContainerTable(
+						stackName,
+						toContainerRows(containersList),
+						termWidth,
+					) + "\n\n",
+				)
 			}
 
 			if pagerFlag {
-				return ui.RunContainersPager(rendered)
+				return ui.RunContainersPager(rendered.String())
 			}
 
 			theme.InfoMessage("Compose Swarms Status (Detailed):")
 			fmt.Fprintln(log.Out)
-			fmt.Fprint(log.Out, rendered)
+			fmt.Fprint(log.Out, rendered.String())
 			return nil
 		}
 
@@ -109,7 +116,12 @@ var statusCmd = &cobra.Command{
 func toStackRows(stacks []containers.Stack) []ui.StackRow {
 	rows := make([]ui.StackRow, len(stacks))
 	for i, s := range stacks {
-		rows[i] = ui.StackRow{Name: s.Name, Containers: s.Containers, Status: s.Status, File: s.File}
+		rows[i] = ui.StackRow{
+			Name:       s.Name,
+			Containers: s.Containers,
+			Status:     s.Status,
+			File:       s.File,
+		}
 	}
 	return rows
 }
@@ -137,7 +149,8 @@ func toContainerRows(list []containers.ContainerDetail) []ui.ContainerRow {
 func init() {
 	statusCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output status in JSON format")
 	statusCmd.Flags().BoolVarP(&allFlagStatus, "all", "a", false, "Include all stacks")
-	statusCmd.Flags().BoolVarP(&detailsFlag, "details", "d", false, "Show detailed container inspection")
+	statusCmd.Flags().
+		BoolVarP(&detailsFlag, "details", "d", false, "Show detailed container inspection")
 	statusCmd.Flags().
 		BoolVarP(&pagerFlag, "pager", "p", false, "Open status table inside an interactive scrollable viewport")
 }

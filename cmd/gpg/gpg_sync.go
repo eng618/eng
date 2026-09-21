@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -34,8 +34,10 @@ and GitHub on secondary devices without needing access to your master key.`,
 }
 
 func init() {
-	SyncGPGCmd.Flags().StringVarP(&syncKeyID, "key-id", "k", "", "GPG key ID (defaults to git user.signingkey)")
-	SyncGPGCmd.Flags().StringVar(&syncKeyserver, "keyserver", "hkps://keys.openpgp.org", "Keyserver URL")
+	SyncGPGCmd.Flags().
+		StringVarP(&syncKeyID, "key-id", "k", "", "GPG key ID (defaults to git user.signingkey)")
+	SyncGPGCmd.Flags().
+		StringVar(&syncKeyserver, "keyserver", "hkps://keys.openpgp.org", "Keyserver URL")
 	SyncGPGCmd.Flags().
 		StringVar(&syncGitHubUser, "github-user", "", "GitHub username to fetch public key from (e.g. eng618)")
 }
@@ -151,7 +153,10 @@ func syncGPG(verbose bool) error {
 
 // fetchAndImportGPGURL downloads a public key block from a URL and imports it into gpg.
 func fetchAndImportGPGURL(url string, verbose bool) error {
-	resp, err := http.Get(url)
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	resp, err := client.Get(url)
 	if err != nil {
 		return fmt.Errorf("failed to download key from %s: %w", url, err)
 	}
@@ -170,11 +175,17 @@ func fetchAndImportGPGURL(url string, verbose bool) error {
 		return fmt.Errorf("received empty key response from %s", url)
 	}
 
-	tempFile := filepath.Join(os.TempDir(), "eng_github_key.asc")
+	tmpFile, err := os.CreateTemp("", "eng_github_key_*.asc")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %w", err)
+	}
+	tempFile := tmpFile.Name()
+	defer os.Remove(tempFile)
+
 	if err := os.WriteFile(tempFile, buf.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("failed to write temp key file: %w", err)
 	}
-	defer os.Remove(tempFile)
+	tmpFile.Close()
 
 	cmd := execCommand("gpg", "--import", tempFile)
 	cmd.Stdout = log.Writer()
