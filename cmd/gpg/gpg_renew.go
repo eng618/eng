@@ -21,6 +21,9 @@ var (
 	renewKeyDir     string
 	renewDuration   string
 	renewKeepMaster bool
+
+	// validKeyIDRegex validates hex key ID format (16 to 40 hex chars).
+	validKeyIDRegex = regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
 )
 
 var RenewGPGCmd = &cobra.Command{
@@ -44,7 +47,8 @@ func init() {
 	// default (~/Downloads/gpg) resolves in renewGPG instead.
 	RenewGPGCmd.Flags().
 		StringVarP(&renewKeyDir, "key-dir", "d", "", "Directory containing GPG key backups (default: ~/Downloads/gpg)")
-	RenewGPGCmd.Flags().StringVar(&renewDuration, "duration", "1y", "Expiration duration (e.g., 1y, 2y, 6m)")
+	RenewGPGCmd.Flags().
+		StringVar(&renewDuration, "duration", "1y", "Expiration duration (e.g., 1y, 2y, 6m)")
 	RenewGPGCmd.Flags().
 		BoolVar(&renewKeepMaster, "keep-master", false, "Keep master key in local keyring (do not strip to subkeys-only)")
 }
@@ -110,8 +114,7 @@ func renewGPG(verbose bool) error {
 	}
 
 	// Validate hex key ID format (16 to 40 hex chars)
-	validKeyID := regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
-	if !validKeyID.MatchString(keyID) {
+	if !validKeyIDRegex.MatchString(keyID) {
 		return fmt.Errorf("invalid GPG key ID format: must be 16 to 40 hexadecimal characters")
 	}
 
@@ -219,10 +222,19 @@ func renewGPG(verbose bool) error {
 	log.Message("💡 Re-upload updated files in %s to your Box.com / cloud backup.", keyDir)
 
 	// 12. Send updated key to OpenPGP keyserver
-	sendKeyserver, err := ui.Confirm("Publish updated public key to OpenPGP keyserver (keys.openpgp.org)?", true)
+	sendKeyserver, err := ui.Confirm(
+		"Publish updated public key to OpenPGP keyserver (keys.openpgp.org)?",
+		true,
+	)
 	if err == nil && sendKeyserver {
 		log.Start("Publishing to OpenPGP keyserver...")
-		ksCmd := execCommand("gpg", "--keyserver", "hkps://keys.openpgp.org", "--send-keys", primaryFpr)
+		ksCmd := execCommand(
+			"gpg",
+			"--keyserver",
+			"hkps://keys.openpgp.org",
+			"--send-keys",
+			primaryFpr,
+		)
 		ksCmd.Stdout = log.Writer()
 		ksCmd.Stderr = log.ErrorWriter()
 		if err := ksCmd.Run(); err != nil {
@@ -372,7 +384,10 @@ func findAndImportMasterKey(keyDir string, verbose bool) (string, error) {
 
 	if foundPath == "" {
 		// Prompt user for custom path
-		inputPath, err := ui.Input("Path to master secret key file", filepath.Join(keyDir, "eng618.secret.gpg"))
+		inputPath, err := ui.Input(
+			"Path to master secret key file",
+			filepath.Join(keyDir, "eng618.secret.gpg"),
+		)
 		if err != nil || strings.TrimSpace(inputPath) == "" {
 			return "", fmt.Errorf("no master secret key file provided")
 		}
@@ -383,7 +398,10 @@ func findAndImportMasterKey(keyDir string, verbose bool) (string, error) {
 		return "", fmt.Errorf("master secret key file not found: %s", foundPath)
 	}
 
-	confirmImport, err := ui.Confirm(fmt.Sprintf("Import master secret key from %s?", foundPath), true)
+	confirmImport, err := ui.Confirm(
+		fmt.Sprintf("Import master secret key from %s?", foundPath),
+		true,
+	)
 	if err != nil || !confirmImport {
 		return "", fmt.Errorf("skipped master key import")
 	}
