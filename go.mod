@@ -11,7 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/muesli/termenv v0.16.0
-	github.com/shirou/gopsutil/v4 v4.26.8
+	github.com/shirou/gopsutil/v4 v4.26.9
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -39,7 +39,7 @@ require (
 	github.com/cloudflare/circl v1.6.5 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
-	github.com/ebitengine/purego v0.11.0 // indirect
+	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
