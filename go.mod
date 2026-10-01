@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/huh v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/muesli/termenv v0.16.0
 	github.com/shirou/gopsutil/v4 v4.26.8
