@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -70,8 +69,7 @@ func syncGPG(verbose bool) error {
 	}
 
 	// Validate hex key ID format (16 to 40 hex chars)
-	validKeyID := regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
-	if !validKeyID.MatchString(keyID) {
+	if !validKeyIDRegex.MatchString(keyID) {
 		return fmt.Errorf("invalid GPG key ID format: must be 16 to 40 hexadecimal characters")
 	}
 
