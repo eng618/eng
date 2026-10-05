@@ -941,9 +941,11 @@ func collectBattery(ctx context.Context) string {
 	return ""
 }
 
+var pmsetBattPctRe = regexp.MustCompile(`(\d+)%`)
+
 // parsePmsetBatt extracts "NN% (state)" from `pmset -g batt` output.
 func parsePmsetBatt(out string) string {
-	pct := regexp.MustCompile(`(\d+)%`).FindStringSubmatch(out)
+	pct := pmsetBattPctRe.FindStringSubmatch(out)
 	if len(pct) != 2 {
 		return ""
 	}
