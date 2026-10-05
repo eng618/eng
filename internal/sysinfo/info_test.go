@@ -374,3 +374,11 @@ func TestCollectAllFailuresYieldsZeroValues(t *testing.T) {
 		t.Errorf("CPUDisplay() = %q, want cores-only fallback %q", info.CPUDisplay(), want)
 	}
 }
+
+func BenchmarkParseBoottimeSec(b *testing.B) {
+	out := "{ sec = 1700000000, usec = 0 } Thu Nov  9 00:00:00 2023"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		parseBoottimeSec(out)
+	}
+}
