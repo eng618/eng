@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
-	"testing"
 	"regexp"
+	"testing"
 )
 
 func TestFetchAndImportGPGURL(t *testing.T) {
