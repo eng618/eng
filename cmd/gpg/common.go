@@ -2,6 +2,7 @@ package gpg
 
 import (
 	"os"
+	"regexp"
 
 	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/paths"
@@ -17,6 +18,9 @@ var (
 	userHomeDir  = paths.UserHomeDir
 	stat         = os.Stat
 	detectDistro = sysinfo.Detect
+
+	// validKeyIDRegex validates hex key ID format (16 to 40 hex chars).
+	validKeyIDRegex = regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
 )
 
 // SetupGPG is the exported entry point for the GPG setup flow,

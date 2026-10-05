@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
+	"regexp"
 	"testing"
 )
 
@@ -24,5 +25,20 @@ func TestFetchAndImportGPGURL(t *testing.T) {
 	err := fetchAndImportGPGURL(server.URL, false)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func BenchmarkValidKeyID_Inline(b *testing.B) {
+	keyID := "1234567890ABCDEF"
+	for i := 0; i < b.N; i++ {
+		validKeyID := regexp.MustCompile("^[0-9A-Fa-f]{16,40}$")
+		_ = validKeyID.MatchString(keyID)
+	}
+}
+
+func BenchmarkValidKeyID_Package(b *testing.B) {
+	keyID := "1234567890ABCDEF"
+	for i := 0; i < b.N; i++ {
+		_ = validKeyIDRegex.MatchString(keyID)
 	}
 }
