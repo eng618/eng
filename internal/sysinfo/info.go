@@ -530,10 +530,12 @@ func fallbackUptime(ctx context.Context) uint64 {
 	return parseProcUptime(string(data))
 }
 
+var boottimeRegex = regexp.MustCompile(`sec = (\d+)`)
+
 // parseBoottimeSec extracts boot epoch seconds from
 // `sysctl -n kern.boottime` output like "{ sec = 1234, usec = 0 } ...".
 func parseBoottimeSec(out string) (uint64, bool) {
-	matches := regexp.MustCompile(`sec = (\d+)`).FindStringSubmatch(out)
+	matches := boottimeRegex.FindStringSubmatch(out)
 	if len(matches) != 2 {
 		return 0, false
 	}
