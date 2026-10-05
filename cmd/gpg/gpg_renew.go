@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -21,9 +20,6 @@ var (
 	renewKeyDir     string
 	renewDuration   string
 	renewKeepMaster bool
-
-	// validKeyIDRegex validates hex key ID format (16 to 40 hex chars).
-	validKeyIDRegex = regexp.MustCompile(`^[0-9A-Fa-f]{16,40}$`)
 )
 
 var RenewGPGCmd = &cobra.Command{
