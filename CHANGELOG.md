@@ -1,5 +1,29 @@
 <a name="unreleased"></a>
 
+## [1.61.2](https://github.com/eng618/eng/compare/v1.61.1...v1.61.2) (2026-10-06)
+
+
+### Bug Fixes
+
+* Remove shell wrapper in update commands ([#197](https://github.com/eng618/eng/issues/197)) ([50419ed](https://github.com/eng618/eng/commit/50419edc0bf821d172ef5f51bbec7c93e88b1b58))
+
+
+### Performance Improvements
+
+* Extract pmset regex to global scope ([#196](https://github.com/eng618/eng/issues/196)) ([44a71e0](https://github.com/eng618/eng/commit/44a71e0d4817eec96a95f959caa742b36d9018ad))
+* Precompile regex in parseBoottimeSec ([#195](https://github.com/eng618/eng/issues/195)) ([9d18019](https://github.com/eng618/eng/commit/9d18019ea122dfe1abfa8024f39cada03461dbfe))
+
+
+### Tests
+
+* Make test deterministic ([7427175](https://github.com/eng618/eng/commit/74271752c885ab73965a19ab0e7300b2f0bcc3d5))
+
+
+### Build System
+
+* **deps:** Bump ([b46dbf8](https://github.com/eng618/eng/commit/b46dbf8f38eef08223bb59c1ab06e01a3d93aaee))
+* **deps:** Bump actions/setup-node from 6 to 7 ([#194](https://github.com/eng618/eng/issues/194)) ([774747d](https://github.com/eng618/eng/commit/774747d06a4acef83f5d3f0126fdaa918fa67749))
+
 ## [1.61.1](https://github.com/eng618/eng/compare/v1.61.0...v1.61.1) (2026-09-21)
 
 
