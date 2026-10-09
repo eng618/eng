@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/containers"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -32,7 +31,7 @@ var logsCmd = &cobra.Command{
 		}
 		stackName := args[0]
 		cfg := config.GetContainersConfig()
-		mgr := containers.NewManager(cfg.Path)
+		mgr := newManagerFromConfig(cfg)
 
 		if err := mgr.Logs(stackName, followFlag, tailFlag); err != nil {
 			return fmt.Errorf("failed to fetch logs for stack %s: %w", stackName, err)

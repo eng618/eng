@@ -20,16 +20,17 @@ const EnvPrefix = "ENG"
 
 // ResolvedConfig is the fully-loaded, expanded, validated view of configuration.
 type ResolvedConfig struct {
-	Version        int
-	Email          string
-	Verbose        bool
-	GitDevPath     string
-	GitEditor      string
-	DotfilesRepo   string
-	DotfilesBranch string
-	ContainersPath string
-	Proxies        []ProxyConfig
-	Source         map[string]string
+	Version          int
+	Email            string
+	Verbose          bool
+	GitDevPath       string
+	GitEditor        string
+	DotfilesRepo     string
+	DotfilesBranch   string
+	ContainersPath   string
+	ContainersStacks []ComposeStackEntry
+	Proxies          []ProxyConfig
+	Source           map[string]string
 }
 
 // DefaultConfigPath returns the primary config file path ($HOME/.eng.yaml).
@@ -81,6 +82,7 @@ func NewLoader(configFile string) *viper.Viper {
 	v.SetDefault("dotfiles.bare_repo_path", filepath.Join(paths.MustHome(), ".eng-cfg"))
 	v.SetDefault("dotfiles.worktree_path", paths.MustHome())
 	v.SetDefault("containers.path", "")
+	v.SetDefault("containers.stacks", []any{})
 	v.SetDefault("projects", []any{})
 	return v
 }
@@ -110,7 +112,8 @@ func LoadResolved(v *viper.Viper) (*ResolvedConfig, error) {
 			TargetRepoPath string `mapstructure:"target_repo_path"`
 		} `mapstructure:"dotfiles"`
 		Containers struct {
-			Path string `mapstructure:"path"`
+			Path   string              `mapstructure:"path"`
+			Stacks []ComposeStackEntry `mapstructure:"stacks"`
 		} `mapstructure:"containers"`
 		Projects    []any          `mapstructure:"projects"`
 		Proxies     []ProxyConfig  `mapstructure:"proxies"`
@@ -137,11 +140,18 @@ func LoadResolved(v *viper.Viper) (*ResolvedConfig, error) {
 		Proxies:        raw.Proxies,
 		Source:         map[string]string{},
 	}
+	for i := range raw.Containers.Stacks {
+		raw.Containers.Stacks[i].Path = paths.Expand(raw.Containers.Stacks[i].Path)
+	}
+	rc.ContainersStacks = raw.Containers.Stacks
+	if rc.ContainersStacks == nil {
+		rc.ContainersStacks = []ComposeStackEntry{}
+	}
 	fileKeys := fileKeySet(v.ConfigFileUsed())
 	for _, key := range []string{
 		"email", "verbose", "git.dev_path", "git.editor",
 		"dotfiles.repo_url", "dotfiles.branch", "dotfiles.bare_repo_path",
-		"containers.path", "proxies",
+		"containers.path", "containers.stacks", "proxies",
 	} {
 		rc.Source[key] = valueSource(fileKeys, key)
 	}

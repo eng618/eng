@@ -39,12 +39,18 @@ func GetDotfilesConfig() DotfilesConfig {
 // ContainersConfig holds container-related configuration.
 type ContainersConfig struct {
 	Path string `mapstructure:"path"`
+	// Stacks is the list of user-registered named compose stacks, each
+	// pointing at an arbitrary local root path containing a compose file.
+	Stacks []ComposeStackEntry `mapstructure:"stacks"`
 }
 
 // GetContainersConfig retrieves the containers configuration from Viper.
 func GetContainersConfig() ContainersConfig {
+	var stacks []ComposeStackEntry
+	_ = viper.UnmarshalKey("containers.stacks", &stacks)
 	return ContainersConfig{
-		Path: viper.GetString("containers.path"),
+		Path:   viper.GetString("containers.path"),
+		Stacks: stacks,
 	}
 }
 

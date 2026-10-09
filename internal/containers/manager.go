@@ -25,11 +25,41 @@ type Stack struct {
 	Services   []string `json:"services"`
 	Status     string   `json:"status"`
 	Containers int      `json:"containers"`
+	// Source is "registered" for user-registered named stacks and
+	// "discovered" for stacks found under BasePath. It is informational only.
+	Source string `json:"source"`
+}
+
+// RegisteredStack is a pure-data DTO for a user-registered named stack.
+// The compose file is autodetected inside Path at discovery time.
+type RegisteredStack struct {
+	Name string
+	Path string
+}
+
+// ComposeFilenames is the autodetection probe order for stack root paths.
+var ComposeFilenames = []string{
+	"docker-compose.yml",
+	"docker-compose.yaml",
+	"compose.yml",
+	"compose.yaml",
+}
+
+// FindComposeFile returns the first compose file found directly inside dir.
+func FindComposeFile(dir string) (string, bool) {
+	for _, name := range ComposeFilenames {
+		candidate := filepath.Join(dir, name)
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate, true
+		}
+	}
+	return "", false
 }
 
 // Manager handles Docker Compose stack operations.
 type Manager struct {
-	BasePath string
+	BasePath   string
+	Registered []RegisteredStack
 }
 
 // NewManager creates a new containers Manager targeting the specified base path.
@@ -40,9 +70,45 @@ func NewManager(basePath string) *Manager {
 	return &Manager{BasePath: basePath}
 }
 
-// DiscoverStacks scans the containers path for valid Compose files.
+// NewManagerWithStacks creates a Manager with additional user-registered stacks.
+func NewManagerWithStacks(basePath string, registered []RegisteredStack) *Manager {
+	mgr := NewManager(basePath)
+	mgr.Registered = registered
+	return mgr
+}
+
+// DiscoverStacks scans the containers path for valid Compose files, plus any
+// user-registered named stacks (arbitrary local root paths, autodetected).
 func (m *Manager) DiscoverStacks() ([]Stack, error) {
 	var stacks []Stack
+	seen := map[string]bool{}
+
+	// Registered stacks first so they win on case-insensitive name conflicts.
+	for _, reg := range m.Registered {
+		name := strings.TrimSpace(reg.Name)
+		if name == "" {
+			continue
+		}
+		key := strings.ToLower(name)
+		if seen[key] {
+			continue
+		}
+		dir := paths.Expand(reg.Path)
+		composeFile, ok := FindComposeFile(dir)
+		if !ok {
+			continue
+		}
+		services, _ := parseServices(composeFile)
+		stacks = append(stacks, Stack{
+			Name:     name,
+			Path:     dir,
+			File:     composeFile,
+			Services: services,
+			Status:   "Unknown",
+			Source:   "registered",
+		})
+		seen[key] = true
+	}
 
 	stacksDir := filepath.Join(m.BasePath, "stacks")
 	entries, err := os.ReadDir(stacksDir)
@@ -50,6 +116,9 @@ func (m *Manager) DiscoverStacks() ([]Stack, error) {
 		for _, entry := range entries {
 			if entry.IsDir() {
 				stackName := entry.Name()
+				if seen[strings.ToLower(stackName)] {
+					continue
+				}
 				composeFile := filepath.Join(stacksDir, stackName, "docker-compose.yml")
 				if _, err := os.Stat(composeFile); os.IsNotExist(err) {
 					composeFile = filepath.Join(stacksDir, stackName, "docker-compose.yaml")
@@ -62,7 +131,9 @@ func (m *Manager) DiscoverStacks() ([]Stack, error) {
 						File:     composeFile,
 						Services: services,
 						Status:   "Unknown",
+						Source:   "discovered",
 					})
+					seen[strings.ToLower(stackName)] = true
 				}
 			}
 		}
@@ -79,6 +150,7 @@ func (m *Manager) DiscoverStacks() ([]Stack, error) {
 				File:     topCompose,
 				Services: services,
 				Status:   "Unknown",
+				Source:   "discovered",
 			})
 		}
 	}

@@ -34,7 +34,7 @@ var statusCmd = &cobra.Command{
 			fmt.Fprintln(log.Out, headerStyle.Render("📊 Docker Compose Swarms Status"))
 		}
 		cfg := config.GetContainersConfig()
-		mgr := containers.NewManager(cfg.Path)
+		mgr := newManagerFromConfig(cfg)
 
 		targets := args
 		if len(args) == 0 || allFlagStatus {

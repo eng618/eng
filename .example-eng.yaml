@@ -4,6 +4,11 @@
 
 containers:
     path: $HOME/bin/containers
+    stacks:
+        - name: default
+          path: $HOME/bin/containers
+        - name: media
+          path: $HOME/Development/homelab/media
 dotfiles:
     bare_repo_path: $HOME/.my-dotfiles
     repopath: $HOME/.my-dotfiles
