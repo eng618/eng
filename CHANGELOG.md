@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.62.0](https://github.com/eng618/eng/compare/v1.61.2...v1.62.0) (2026-10-09)
+
+
+### Features
+
+* Add multi-stack docker compose support ([9923640](https://github.com/eng618/eng/commit/99236405b240b4f76f76f07d05c5b9bd9cd26be8))
+
 ## [1.61.2](https://github.com/eng618/eng/compare/v1.61.1...v1.61.2) (2026-10-06)
 
 
