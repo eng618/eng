@@ -31,5 +31,4 @@ eng proxy remove [name|index] [flags]
 
 ### SEE ALSO
 
-* [eng proxy](eng_proxy.md)	 - Show or configure system proxies
-
+- [eng proxy](eng_proxy.md) - Show or configure system proxies

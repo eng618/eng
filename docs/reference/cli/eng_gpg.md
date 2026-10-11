@@ -26,8 +26,7 @@ eng gpg [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-* [eng gpg renew](eng_gpg_renew.md)	 - Renew or extend GPG key and subkey expiration
-* [eng gpg setup](eng_gpg_setup.md)	 - Setup GPG keys for signing and encryption
-* [eng gpg sync](eng_gpg_sync.md)	 - Sync updated GPG public key and expiration dates from keyservers
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
+- [eng gpg renew](eng_gpg_renew.md) - Renew or extend GPG key and subkey expiration
+- [eng gpg setup](eng_gpg_setup.md) - Setup GPG keys for signing and encryption
+- [eng gpg sync](eng_gpg_sync.md) - Sync updated GPG public key and expiration dates from keyservers

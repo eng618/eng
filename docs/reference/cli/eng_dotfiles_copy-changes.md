@@ -39,5 +39,4 @@ eng dotfiles copy-changes [flags]
 
 ### SEE ALSO
 
-* [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
-
+- [eng dotfiles](eng_dotfiles.md) - Manage dotfiles

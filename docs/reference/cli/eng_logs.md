@@ -38,8 +38,7 @@ eng logs [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-* [eng logs clean](eng_logs_clean.md)	 - Delete session logs
-* [eng logs list](eng_logs_list.md)	 - List recent session logs
-* [eng logs show](eng_logs_show.md)	 - Show a session log (latest by default)
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
+- [eng logs clean](eng_logs_clean.md) - Delete session logs
+- [eng logs list](eng_logs_list.md) - List recent session logs
+- [eng logs show](eng_logs_show.md) - Show a session log (latest by default)

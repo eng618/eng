@@ -3,30 +3,30 @@
 # You can further customize it from there.
 
 containers:
-    path: $HOME/bin/containers
-    stacks:
-        - name: default
-          path: $HOME/bin/containers
-        - name: media
-          path: $HOME/Development/homelab/media
+  path: $HOME/bin/containers
+  stacks:
+    - name: default
+      path: $HOME/bin/containers
+    - name: media
+      path: $HOME/Development/homelab/media
 dotfiles:
-    bare_repo_path: $HOME/.my-dotfiles
-    repopath: $HOME/.my-dotfiles
-    worktree: /Users/myuser
-    worktree_path: /Users/myuser
+  bare_repo_path: $HOME/.my-dotfiles
+  repopath: $HOME/.my-dotfiles
+  worktree: /Users/myuser
+  worktree_path: /Users/myuser
 git:
-    dev_path: $HOME/Development
-    devpath: $HOME/Development
+  dev_path: $HOME/Development
+  devpath: $HOME/Development
 projects: []
 proxies:
-    - enabled: false
-      noproxy: ''
-      title: My custom proxy
-      value: myproxy.example.com:8080
+  - enabled: false
+    noproxy: ""
+    title: My custom proxy
+    value: myproxy.example.com:8080
 telemetry:
-    # Set to false to disable anonymous telemetry (or use DO_NOT_TRACK=1 env var)
-    enabled: true
-    # Locally generated anonymous profile ID (auto-generated if empty)
-    profile_id: ''
+  # Set to false to disable anonymous telemetry (or use DO_NOT_TRACK=1 env var)
+  enabled: true
+  # Locally generated anonymous profile ID (auto-generated if empty)
+  profile_id: ""
 user-email: myemail@example.com
 verbose: false

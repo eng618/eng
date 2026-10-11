@@ -6,27 +6,27 @@ name: Docs
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
     paths:
-      - 'docs/**'
-      - 'README.md'
-      - 'Taskfile.yaml'
-      - 'tools/gendocs/**'
-      - 'cmd/**'
-      - '.markdownlint-cli2.jsonc'
-      - '.markdown-link-check.json'
-      - '.github/workflows/docs.yml'
+      - "docs/**"
+      - "README.md"
+      - "Taskfile.yaml"
+      - "tools/gendocs/**"
+      - "cmd/**"
+      - ".markdownlint-cli2.jsonc"
+      - ".markdown-link-check.json"
+      - ".github/workflows/docs.yml"
   pull_request:
-    branches: ['main']
+    branches: ["main"]
     paths:
-      - 'docs/**'
-      - 'README.md'
-      - 'Taskfile.yaml'
-      - 'tools/gendocs/**'
-      - 'cmd/**'
-      - '.markdownlint-cli2.jsonc'
-      - '.markdown-link-check.json'
-      - '.github/workflows/docs.yml'
+      - "docs/**"
+      - "README.md"
+      - "Taskfile.yaml"
+      - "tools/gendocs/**"
+      - "cmd/**"
+      - ".markdownlint-cli2.jsonc"
+      - ".markdown-link-check.json"
+      - ".github/workflows/docs.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -26,7 +26,6 @@ eng tailscale [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-* [eng tailscale down](eng_tailscale_down.md)	 - take down the tailscale service
-* [eng tailscale up](eng_tailscale_up.md)	 - bring up the tailscale service
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
+- [eng tailscale down](eng_tailscale_down.md) - take down the tailscale service
+- [eng tailscale up](eng_tailscale_up.md) - bring up the tailscale service

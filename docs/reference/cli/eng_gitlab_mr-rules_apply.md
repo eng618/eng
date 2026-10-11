@@ -28,5 +28,4 @@ eng gitlab mr-rules apply [flags]
 
 ### SEE ALSO
 
-* [eng gitlab mr-rules](eng_gitlab_mr-rules.md)	 - Manage GitLab merge request rules
-
+- [eng gitlab mr-rules](eng_gitlab_mr-rules.md) - Manage GitLab merge request rules

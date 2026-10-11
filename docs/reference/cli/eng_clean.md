@@ -42,5 +42,4 @@ eng clean [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.

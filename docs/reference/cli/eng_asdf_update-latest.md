@@ -32,5 +32,4 @@ eng asdf update-latest [flags]
 
 ### SEE ALSO
 
-* [eng asdf](eng_asdf.md)	 - Manage asdf version manager plugins and installs
-
+- [eng asdf](eng_asdf.md) - Manage asdf version manager plugins and installs

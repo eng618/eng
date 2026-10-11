@@ -25,5 +25,4 @@ eng gitlab auth doctor [flags]
 
 ### SEE ALSO
 
-* [eng gitlab auth](eng_gitlab_auth.md)	 - Manage GitLab authentication for eng
-
+- [eng gitlab auth](eng_gitlab_auth.md) - Manage GitLab authentication for eng

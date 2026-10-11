@@ -9,7 +9,6 @@ and delete them after an interactive confirmation. Use --list-extensions to list
 all file extensions in the directory instead. Use --filename to target a specific
 filename, --glob for glob patterns, or --ext for file extensions.
 
-
 ```
 eng files findAndDelete [directory] [flags]
 ```
@@ -34,5 +33,4 @@ eng files findAndDelete [directory] [flags]
 
 ### SEE ALSO
 
-* [eng files](eng_files.md)	 - A command for managing files
-
+- [eng files](eng_files.md) - A command for managing files

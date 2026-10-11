@@ -36,5 +36,4 @@ eng kill process [pid] [flags]
 
 ### SEE ALSO
 
-* [eng kill](eng_kill.md)	 - Find and kill processes by port or PID
-
+- [eng kill](eng_kill.md) - Find and kill processes by port or PID

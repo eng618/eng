@@ -5,9 +5,10 @@ Check system health and verify dependencies
 ### Synopsis
 
 Inspects your workstation environment and verifies the availability and health of:
-  - Core CLI tools (git, brew, docker, asdf, tailscale, bw, gpg, gh, glab)
-  - Configured workspace paths and dotfiles
-  - Installation and update status
+
+- Core CLI tools (git, brew, docker, asdf, tailscale, bw, gpg, gh, glab)
+- Configured workspace paths and dotfiles
+- Installation and update status
 
 Exits non-zero when a required tool is missing, so CI can gate on it.
 
@@ -37,5 +38,4 @@ eng doctor [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.

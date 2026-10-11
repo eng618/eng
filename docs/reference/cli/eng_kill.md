@@ -26,7 +26,6 @@ eng kill [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-* [eng kill port](eng_kill_port.md)	 - Find and kill the process listening on a specific port
-* [eng kill process](eng_kill_process.md)	 - Find and kill a process by PID or interactively
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
+- [eng kill port](eng_kill_port.md) - Find and kill the process listening on a specific port
+- [eng kill process](eng_kill_process.md) - Find and kill a process by PID or interactively

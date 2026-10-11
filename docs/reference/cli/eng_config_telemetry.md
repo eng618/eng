@@ -30,9 +30,8 @@ eng config telemetry [flags]
 
 ### SEE ALSO
 
-* [eng config](eng_config.md)	 - Manage the cli's config file.
-* [eng config telemetry disable](eng_config_telemetry_disable.md)	 - Disable anonymous telemetry reporting
-* [eng config telemetry enable](eng_config_telemetry_enable.md)	 - Enable anonymous telemetry reporting
-* [eng config telemetry status](eng_config_telemetry_status.md)	 - Display active telemetry settings
-* [eng config telemetry test](eng_config_telemetry_test.md)	 - Test connection to the OpenPanel telemetry instance
-
+- [eng config](eng_config.md) - Manage the cli's config file.
+- [eng config telemetry disable](eng_config_telemetry_disable.md) - Disable anonymous telemetry reporting
+- [eng config telemetry enable](eng_config_telemetry_enable.md) - Enable anonymous telemetry reporting
+- [eng config telemetry status](eng_config_telemetry_status.md) - Display active telemetry settings
+- [eng config telemetry test](eng_config_telemetry_test.md) - Test connection to the OpenPanel telemetry instance

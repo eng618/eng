@@ -29,8 +29,7 @@ eng dotfiles secrets [flags]
 
 ### SEE ALSO
 
-* [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
-* [eng dotfiles secrets backup](eng_dotfiles_secrets_backup.md)	 - Backup managed dotfiles env values into Bitwarden Secrets Manager
-* [eng dotfiles secrets doctor](eng_dotfiles_secrets_doctor.md)	 - Validate manifest templates and Bitwarden Secrets Manager values
-* [eng dotfiles secrets restore](eng_dotfiles_secrets_restore.md)	 - Restore managed dotfiles env files from Bitwarden Secrets Manager
-
+- [eng dotfiles](eng_dotfiles.md) - Manage dotfiles
+- [eng dotfiles secrets backup](eng_dotfiles_secrets_backup.md) - Backup managed dotfiles env values into Bitwarden Secrets Manager
+- [eng dotfiles secrets doctor](eng_dotfiles_secrets_doctor.md) - Validate manifest templates and Bitwarden Secrets Manager values
+- [eng dotfiles secrets restore](eng_dotfiles_secrets_restore.md) - Restore managed dotfiles env files from Bitwarden Secrets Manager

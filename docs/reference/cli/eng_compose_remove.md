@@ -12,8 +12,8 @@ only explicitly added names can be removed.
 With no arguments, an interactive picker lists the registered stacks.
 
 Example:
-  eng compose remove         # Interactive picker
-  eng compose remove media
+eng compose remove # Interactive picker
+eng compose remove media
 
 ```
 eng compose remove [name] [flags]
@@ -35,5 +35,4 @@ eng compose remove [name] [flags]
 
 ### SEE ALSO
 
-* [eng compose](eng_compose.md)	 - Manage Docker Compose swarms and services
-
+- [eng compose](eng_compose.md) - Manage Docker Compose swarms and services

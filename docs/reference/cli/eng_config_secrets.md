@@ -26,6 +26,5 @@ Example: eng config secrets migrate --to keychain --item gitlab
 
 ### SEE ALSO
 
-* [eng config](eng_config.md)	 - Manage the cli's config file.
-* [eng config secrets migrate](eng_config_secrets_migrate.md)	 - Move plaintext tokens from config into keychain or bitwarden
-
+- [eng config](eng_config.md) - Manage the cli's config file.
+- [eng config secrets migrate](eng_config_secrets_migrate.md) - Move plaintext tokens from config into keychain or bitwarden

@@ -33,5 +33,4 @@ eng gpg renew [flags]
 
 ### SEE ALSO
 
-* [eng gpg](eng_gpg.md)	 - Manage GPG keys for commit signing and encryption
-
+- [eng gpg](eng_gpg.md) - Manage GPG keys for commit signing and encryption

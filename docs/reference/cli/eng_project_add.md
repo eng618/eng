@@ -7,13 +7,14 @@ Add a new project or repository to configuration
 This command interactively adds a new project or adds a repository to an existing project.
 
 You will be prompted for:
-  - Project name (new or existing)
-  - Repository URL (SSH or HTTPS)
-  - Optional custom directory name
+
+- Project name (new or existing)
+- Repository URL (SSH or HTTPS)
+- Optional custom directory name
 
 Example:
-  eng project add                  # Interactive add
-  eng project add -p MyProject     # Add a repo to the specified project
+eng project add # Interactive add
+eng project add -p MyProject # Add a repo to the specified project
 
 ```
 eng project add [flags]
@@ -38,5 +39,4 @@ eng project add [flags]
 
 ### SEE ALSO
 
-* [eng project](eng_project.md)	 - Manage project-based repository collections
-
+- [eng project](eng_project.md) - Manage project-based repository collections

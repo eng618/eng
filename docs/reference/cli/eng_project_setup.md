@@ -4,19 +4,20 @@ Setup project directories and clone missing repositories
 
 ### Synopsis
 
-This command ensures all configured projects have their directory structure 
+This command ensures all configured projects have their directory structure
 set up and all repositories are cloned.
 
 It is safe to run multiple times - existing repositories will be skipped.
 Use this command when:
-  - Setting up a new development machine
-  - A new repository has been added to a project's configuration
-  - You want to verify all project repos are present
+
+- Setting up a new development machine
+- A new repository has been added to a project's configuration
+- You want to verify all project repos are present
 
 Example:
-  eng project setup                  # Setup all projects
-  eng project setup -p MyProject     # Setup only the specified project
-  eng project setup --dry-run        # Preview what would be done
+eng project setup # Setup all projects
+eng project setup -p MyProject # Setup only the specified project
+eng project setup --dry-run # Preview what would be done
 
 ```
 eng project setup [flags]
@@ -41,5 +42,4 @@ eng project setup [flags]
 
 ### SEE ALSO
 
-* [eng project](eng_project.md)	 - Manage project-based repository collections
-
+- [eng project](eng_project.md) - Manage project-based repository collections

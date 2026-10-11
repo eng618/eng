@@ -26,5 +26,4 @@ eng dotfiles fetch [flags]
 
 ### SEE ALSO
 
-* [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
-
+- [eng dotfiles](eng_dotfiles.md) - Manage dotfiles

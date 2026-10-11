@@ -22,5 +22,4 @@ eng config telemetry status [flags]
 
 ### SEE ALSO
 
-* [eng config telemetry](eng_config_telemetry.md)	 - Manage OpenPanel telemetry and analytics settings
-
+- [eng config telemetry](eng_config_telemetry.md) - Manage OpenPanel telemetry and analytics settings

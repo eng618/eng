@@ -27,5 +27,4 @@ eng git branch-all [flags]
 
 ### SEE ALSO
 
-* [eng git](eng_git.md)	 - Manage multiple git repositories
-
+- [eng git](eng_git.md) - Manage multiple git repositories

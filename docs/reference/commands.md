@@ -63,8 +63,8 @@ Manage multi-service Docker Compose stacks with lifecycle commands, inter-stack 
 | Command                                                  | Description                                                                                                 |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `eng compose list` / `ls`                                | List all discovered compose stacks under `$HOME/bin/containers`                                             |
-| `eng compose add [name] [path]`                         | Register a named stack at a local path (wizard prompts when args omitted)                                  |
-| `eng compose remove [name]` / `rm`                      | Remove a registered stack (picker prompts when name omitted)                                                |
+| `eng compose add [name] [path]`                          | Register a named stack at a local path (wizard prompts when args omitted)                                   |
+| `eng compose remove [name]` / `rm`                       | Remove a registered stack (picker prompts when name omitted)                                                |
 | `eng compose up [stack...] [-e env] [-a] [-d] [--build]` | Spin up target stack(s) (e.g. `media`, `arrsenal`, `immich`)                                                |
 | `eng compose down [stack...] [-a] [-v]`                  | Spin down target stack(s) and optionally remove volumes                                                     |
 | `eng compose pull [stack...] [-a]`                       | Pull latest images for target stack(s)                                                                      |

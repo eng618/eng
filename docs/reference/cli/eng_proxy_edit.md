@@ -10,9 +10,9 @@ The target is selected by positional arg or --title (never both). The proxy
 title itself is only changed with --new-title; --title never renames.
 
 Examples:
-  eng proxy edit corp --url http://proxy:8080
-  eng proxy edit --title corp --new-title headquarters
-  eng proxy edit 1 --no-proxy internal.corp --enable
+eng proxy edit corp --url http://proxy:8080
+eng proxy edit --title corp --new-title headquarters
+eng proxy edit 1 --no-proxy internal.corp --enable
 
 ```
 eng proxy edit [name|index] [flags]
@@ -44,5 +44,4 @@ eng proxy edit [name|index] [flags]
 
 ### SEE ALSO
 
-* [eng proxy](eng_proxy.md)	 - Show or configure system proxies
-
+- [eng proxy](eng_proxy.md) - Show or configure system proxies

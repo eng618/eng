@@ -41,5 +41,4 @@ eng logs show [name] [flags]
 
 ### SEE ALSO
 
-* [eng logs](eng_logs.md)	 - View session logs from verbose commands
-
+- [eng logs](eng_logs.md) - View session logs from verbose commands

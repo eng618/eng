@@ -37,7 +37,6 @@ builds:
       - -X github.com/eng618/eng/internal/config.DefaultClientID={{.Env.OPENPANEL_CLIENT_ID}}
       - -X github.com/eng618/eng/internal/config.DefaultClientSecret={{.Env.OPENPANEL_CLIENT_SECRET}}
 
-
 archives:
   - formats:
       - tar.gz
@@ -91,4 +90,3 @@ brews:
     test: |
       assert_match version.to_s, shell_output("#{bin}/eng --version")
       assert_match "USAGE", shell_output("#{bin}/eng --help")
-

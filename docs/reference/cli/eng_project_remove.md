@@ -6,12 +6,12 @@ Remove a project or repository from configuration
 
 This command removes a project or a repository from a project's configuration.
 
-Note: This only removes the entry from your configuration. 
+Note: This only removes the entry from your configuration.
 It does NOT delete any files from disk.
 
 Example:
-  eng project remove                  # Interactive removal
-  eng project remove -p MyProject     # Remove from the specified project
+eng project remove # Interactive removal
+eng project remove -p MyProject # Remove from the specified project
 
 ```
 eng project remove [flags]
@@ -36,5 +36,4 @@ eng project remove [flags]
 
 ### SEE ALSO
 
-* [eng project](eng_project.md)	 - Manage project-based repository collections
-
+- [eng project](eng_project.md) - Manage project-based repository collections

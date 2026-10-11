@@ -18,8 +18,7 @@ Manage GitLab authentication for eng
 
 ### SEE ALSO
 
-* [eng gitlab](eng_gitlab.md)	 - Interact with GitLab via glab
-* [eng gitlab auth doctor](eng_gitlab_auth_doctor.md)	 - Validate GitLab token and project access
-* [eng gitlab auth set](eng_gitlab_auth_set.md)	 - Configure GitLab token and defaults
-* [eng gitlab auth show](eng_gitlab_auth_show.md)	 - Show GitLab auth and defaults (no secrets)
-
+- [eng gitlab](eng_gitlab.md) - Interact with GitLab via glab
+- [eng gitlab auth doctor](eng_gitlab_auth_doctor.md) - Validate GitLab token and project access
+- [eng gitlab auth set](eng_gitlab_auth_set.md) - Configure GitLab token and defaults
+- [eng gitlab auth show](eng_gitlab_auth_show.md) - Show GitLab auth and defaults (no secrets)

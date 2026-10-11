@@ -26,5 +26,4 @@ eng update brew [flags]
 
 ### SEE ALSO
 
-* [eng update](eng_update.md)	 - Update the system and perform maintenance
-
+- [eng update](eng_update.md) - Update the system and perform maintenance

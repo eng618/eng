@@ -22,5 +22,4 @@ eng gitlab auth show [flags]
 
 ### SEE ALSO
 
-* [eng gitlab auth](eng_gitlab_auth.md)	 - Manage GitLab authentication for eng
-
+- [eng gitlab auth](eng_gitlab_auth.md) - Manage GitLab authentication for eng

@@ -27,12 +27,11 @@ eng immich [flags]
 
 ### SEE ALSO
 
-* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
-* [eng immich backup](eng_immich_backup.md)	 - Run verified database backup and configuration snapshot
-* [eng immich logs](eng_immich_logs.md)	 - View live Immich service or container logs
-* [eng immich restart](eng_immich_restart.md)	 - Restart Immich service stack via systemd
-* [eng immich restore](eng_immich_restore.md)	 - Restore Immich database and configuration from backup
-* [eng immich start](eng_immich_start.md)	 - Start Immich service stack via systemd
-* [eng immich status](eng_immich_status.md)	 - Display comprehensive health, metrics, and backup status
-* [eng immich stop](eng_immich_stop.md)	 - Gracefully stop Immich service stack
-
+- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
+- [eng immich backup](eng_immich_backup.md) - Run verified database backup and configuration snapshot
+- [eng immich logs](eng_immich_logs.md) - View live Immich service or container logs
+- [eng immich restart](eng_immich_restart.md) - Restart Immich service stack via systemd
+- [eng immich restore](eng_immich_restore.md) - Restore Immich database and configuration from backup
+- [eng immich start](eng_immich_start.md) - Start Immich service stack via systemd
+- [eng immich status](eng_immich_status.md) - Display comprehensive health, metrics, and backup status
+- [eng immich stop](eng_immich_stop.md) - Gracefully stop Immich service stack

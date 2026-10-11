@@ -4,14 +4,13 @@ Install dotfiles from a bare git repository
 
 ### Synopsis
 
-Install dotfiles from a bare git repository. This command will:
-	- Check and install prerequisites (Homebrew, Git, Bash)
-	- Setup SSH keys for GitHub when required by the repository URL
-  - Clone your dotfiles repository as a bare repository
-  - Backup any conflicting files
-  - Checkout dotfiles to your home directory
-  - Initialize git submodules
-  - Configure git to hide untracked files
+Install dotfiles from a bare git repository. This command will: - Check and install prerequisites (Homebrew, Git, Bash) - Setup SSH keys for GitHub when required by the repository URL
+
+- Clone your dotfiles repository as a bare repository
+- Backup any conflicting files
+- Checkout dotfiles to your home directory
+- Initialize git submodules
+- Configure git to hide untracked files
 
 ```
 eng dotfiles install [flags]
@@ -33,5 +32,4 @@ eng dotfiles install [flags]
 
 ### SEE ALSO
 
-* [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
-
+- [eng dotfiles](eng_dotfiles.md) - Manage dotfiles
