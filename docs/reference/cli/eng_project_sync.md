@@ -5,17 +5,16 @@ Sync all project repositories (fetch + pull)
 ### Synopsis
 
 This command synchronizes all repositories in configured projects by:
-
-1. Fetching updates from remote (git fetch --all --prune)
-2. Pulling changes for the current branch (git pull)
+  1. Fetching updates from remote (git fetch --all --prune)
+  2. Pulling changes for the current branch (git pull)
 
 Repositories with uncommitted changes will have fetch performed but pull will be skipped.
 
 Example:
-eng project sync # Sync all projects
-eng project sync -p MyProject # Sync only the specified project
-eng project sync --dry-run # Preview what would be synced
-eng project sync --force # Force overwrite tags on conflicts
+  eng project sync                  # Sync all projects
+  eng project sync -p MyProject     # Sync only the specified project
+  eng project sync --dry-run        # Preview what would be synced
+  eng project sync --force          # Force overwrite tags on conflicts
 
 ```
 eng project sync [flags]
@@ -40,4 +39,5 @@ eng project sync [flags]
 
 ### SEE ALSO
 
-- [eng project](eng_project.md) - Manage project-based repository collections
+* [eng project](eng_project.md)	 - Manage project-based repository collections
+

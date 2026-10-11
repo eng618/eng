@@ -26,4 +26,5 @@ eng setup oh-my-zsh [flags]
 
 ### SEE ALSO
 
-- [eng setup](eng_setup.md) - Setup development tools
+* [eng setup](eng_setup.md)	 - Setup development tools
+

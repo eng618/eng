@@ -31,4 +31,5 @@ eng config secrets migrate [flags]
 
 ### SEE ALSO
 
-- [eng config secrets](eng_config_secrets.md) - Manage secret storage (bitwarden, keychain, env)
+* [eng config secrets](eng_config_secrets.md)	 - Manage secret storage (bitwarden, keychain, env)
+

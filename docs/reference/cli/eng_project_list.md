@@ -7,15 +7,14 @@ List configured projects and their repositories
 This command displays all configured projects and their repositories.
 
 Use the --verbose flag to see detailed information including:
-
-- Repository URLs
-- Clone status (✓ cloned / ✗ missing)
-- Local paths
+  - Repository URLs
+  - Clone status (✓ cloned / ✗ missing)
+  - Local paths
 
 Example:
-eng project list # Show projects summary
-eng project list -v # Show detailed repository information
-eng project list -p MyProject # Show only the specified project
+  eng project list               # Show projects summary
+  eng project list -v            # Show detailed repository information
+  eng project list -p MyProject  # Show only the specified project
 
 ```
 eng project list [flags]
@@ -40,4 +39,5 @@ eng project list [flags]
 
 ### SEE ALSO
 
-- [eng project](eng_project.md) - Manage project-based repository collections
+* [eng project](eng_project.md)	 - Manage project-based repository collections
+

@@ -4,14 +4,15 @@ Setup dotfiles from your git repository
 
 ### Synopsis
 
-Setup dotfiles from your git repository. This command will: - Check and install prerequisites (Homebrew, Git, Bash) - Setup SSH keys for GitHub when required by the repository URL
-
-- Clone your dotfiles repository as a bare repository
-- Backup any conflicting files
-- Checkout dotfiles to your home directory
-- Initialize git submodules
-  - Configure git to hide untracked files
-  - Restore dotfiles secrets when manifest and BWS token are available
+Setup dotfiles from your git repository. This command will:
+	- Check and install prerequisites (Homebrew, Git, Bash)
+	- Setup SSH keys for GitHub when required by the repository URL
+  - Clone your dotfiles repository as a bare repository
+  - Backup any conflicting files
+  - Checkout dotfiles to your home directory
+  - Initialize git submodules
+	- Configure git to hide untracked files
+	- Restore dotfiles secrets when manifest and BWS token are available
 
 ```
 eng setup dotfiles [flags]
@@ -33,4 +34,5 @@ eng setup dotfiles [flags]
 
 ### SEE ALSO
 
-- [eng setup](eng_setup.md) - Setup development tools
+* [eng setup](eng_setup.md)	 - Setup development tools
+

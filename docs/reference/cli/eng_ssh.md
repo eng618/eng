@@ -26,5 +26,6 @@ eng ssh [flags]
 
 ### SEE ALSO
 
-- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
-- [eng ssh setup](eng_ssh_setup.md) - Setup SSH keys for GitHub access
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
+* [eng ssh setup](eng_ssh_setup.md)	 - Setup SSH keys for GitHub access
+

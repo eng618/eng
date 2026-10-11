@@ -25,4 +25,5 @@ eng dotfiles secrets backup [flags]
 
 ### SEE ALSO
 
-- [eng dotfiles secrets](eng_dotfiles_secrets.md) - Backup and restore dotfiles env secrets via Bitwarden Secrets Manager
+* [eng dotfiles secrets](eng_dotfiles_secrets.md)	 - Backup and restore dotfiles env secrets via Bitwarden Secrets Manager
+

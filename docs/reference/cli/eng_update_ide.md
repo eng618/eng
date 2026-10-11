@@ -30,4 +30,5 @@ eng update ide [archive-path-or-url] [flags]
 
 ### SEE ALSO
 
-- [eng update](eng_update.md) - Update the system and perform maintenance
+* [eng update](eng_update.md)	 - Update the system and perform maintenance
+

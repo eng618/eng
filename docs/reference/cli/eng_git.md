@@ -28,13 +28,14 @@ eng git [flags]
 
 ### SEE ALSO
 
-- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
-- [eng git branch-all](eng_git_branch-all.md) - Show current branch of all git repositories in development folder
-- [eng git clean-all](eng_git_clean-all.md) - Clean untracked files in all git repositories in development folder
-- [eng git fetch-all](eng_git_fetch-all.md) - Fetch all git repositories in development folder
-- [eng git list](eng_git_list.md) - List all git repositories in development folder
-- [eng git pull-all](eng_git_pull-all.md) - Pull all git repositories in development folder
-- [eng git push-all](eng_git_push-all.md) - Push all git repositories in development folder
-- [eng git stash-all](eng_git_stash-all.md) - Stash changes in all git repositories in development folder
-- [eng git status-all](eng_git_status-all.md) - Check status of all git repositories in development folder
-- [eng git sync-all](eng_git_sync-all.md) - Sync all git repositories in development folder
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
+* [eng git branch-all](eng_git_branch-all.md)	 - Show current branch of all git repositories in development folder
+* [eng git clean-all](eng_git_clean-all.md)	 - Clean untracked files in all git repositories in development folder
+* [eng git fetch-all](eng_git_fetch-all.md)	 - Fetch all git repositories in development folder
+* [eng git list](eng_git_list.md)	 - List all git repositories in development folder
+* [eng git pull-all](eng_git_pull-all.md)	 - Pull all git repositories in development folder
+* [eng git push-all](eng_git_push-all.md)	 - Push all git repositories in development folder
+* [eng git stash-all](eng_git_stash-all.md)	 - Stash changes in all git repositories in development folder
+* [eng git status-all](eng_git_status-all.md)	 - Check status of all git repositories in development folder
+* [eng git sync-all](eng_git_sync-all.md)	 - Sync all git repositories in development folder
+

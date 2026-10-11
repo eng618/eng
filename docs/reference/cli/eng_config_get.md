@@ -28,4 +28,5 @@ eng config get <key> [flags]
 
 ### SEE ALSO
 
-- [eng config](eng_config.md) - Manage the cli's config file.
+* [eng config](eng_config.md)	 - Manage the cli's config file.
+

@@ -7,10 +7,10 @@ Fetch updates for all project repositories
 This command fetches updates from remote for all repositories in configured projects.
 
 Example:
-eng project fetch # Fetch all projects
-eng project fetch -p MyProject # Fetch only the specified project
-eng project fetch --dry-run # Preview what would be fetched
-eng project fetch --force # Force overwrite tags on conflicts
+  eng project fetch                  # Fetch all projects
+  eng project fetch -p MyProject     # Fetch only the specified project
+  eng project fetch --dry-run        # Preview what would be fetched
+  eng project fetch --force          # Force overwrite tags on conflicts
 
 ```
 eng project fetch [flags]
@@ -35,4 +35,5 @@ eng project fetch [flags]
 
 ### SEE ALSO
 
-- [eng project](eng_project.md) - Manage project-based repository collections
+* [eng project](eng_project.md)	 - Manage project-based repository collections
+

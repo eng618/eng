@@ -2,9 +2,11 @@
 
 ## Verify before push
 
-- `task validate` = format + lint + test + `docs:check`. Always run before commits.
+- `task validate` = format (Go) + `docs:format` (Markdown) + lint + test + `docs:check`. Always run before commits.
 - `validate` does not cover Markdown lint/links; CI `docs.yml` also gates `task docs:lint`
   and `task docs:links` — run those when touching `*.md`.
+- Markdown is formatted with Oxfmt via the `gv-oxfmt` wrapper (`@gv-tech/oxc-config` style),
+  not Prettier: `task docs:format` to write, `task docs:lint` to verify. Same formatter as `eng fmt`.
 - Focused checks: `go test ./internal/project/...`, `go test ./internal/repo/... -run TestName -v`.
 - `task test` uses `CGO_ENABLED=1` + `-race` — needs `build-essential` on Linux.
 

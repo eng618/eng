@@ -37,4 +37,5 @@ eng config dotfiles-target-repo-path [path] [flags]
 
 ### SEE ALSO
 
-- [eng config](eng_config.md) - Manage the cli's config file.
+* [eng config](eng_config.md)	 - Manage the cli's config file.
+

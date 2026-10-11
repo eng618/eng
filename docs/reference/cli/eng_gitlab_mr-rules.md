@@ -18,6 +18,7 @@ Manage GitLab merge request rules
 
 ### SEE ALSO
 
-- [eng gitlab](eng_gitlab.md) - Interact with GitLab via glab
-- [eng gitlab mr-rules apply](eng_gitlab_mr-rules_apply.md) - Apply merge request rules from a JSON file
-- [eng gitlab mr-rules init](eng_gitlab_mr-rules_init.md) - Interactively generate a MR rules JSON file
+* [eng gitlab](eng_gitlab.md)	 - Interact with GitLab via glab
+* [eng gitlab mr-rules apply](eng_gitlab_mr-rules_apply.md)	 - Apply merge request rules from a JSON file
+* [eng gitlab mr-rules init](eng_gitlab_mr-rules_init.md)	 - Interactively generate a MR rules JSON file
+

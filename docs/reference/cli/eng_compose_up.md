@@ -26,4 +26,5 @@ eng compose up [stack...] [flags]
 
 ### SEE ALSO
 
-- [eng compose](eng_compose.md) - Manage Docker Compose swarms and services
+* [eng compose](eng_compose.md)	 - Manage Docker Compose swarms and services
+

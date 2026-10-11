@@ -9,10 +9,10 @@ This command pulls the latest changes from remote for all repositories in config
 Note: Repositories with uncommitted changes will be skipped.
 
 Example:
-eng project pull # Pull all projects
-eng project pull -p MyProject # Pull only the specified project
-eng project pull --dry-run # Preview what would be pulled
-eng project pull --force # Force overwrite tags on conflicts
+  eng project pull                  # Pull all projects
+  eng project pull -p MyProject     # Pull only the specified project
+  eng project pull --dry-run        # Preview what would be pulled
+  eng project pull --force          # Force overwrite tags on conflicts
 
 ```
 eng project pull [flags]
@@ -37,4 +37,5 @@ eng project pull [flags]
 
 ### SEE ALSO
 
-- [eng project](eng_project.md) - Manage project-based repository collections
+* [eng project](eng_project.md)	 - Manage project-based repository collections
+

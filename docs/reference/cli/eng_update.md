@@ -28,6 +28,7 @@ eng update [flags]
 
 ### SEE ALSO
 
-- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
-- [eng update brew](eng_update_brew.md) - Update Homebrew packages only
-- [eng update ide](eng_update_ide.md) - Update or install Antigravity IDE
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
+* [eng update brew](eng_update_brew.md)	 - Update Homebrew packages only
+* [eng update ide](eng_update_ide.md)	 - Update or install Antigravity IDE
+

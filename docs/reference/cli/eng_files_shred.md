@@ -11,11 +11,11 @@ Supports multiple overwrite methods including DoD 5220.22-M (3-pass) and Gutmann
 By default, uses a 3-pass random overwrite which is suitable for most use cases.
 
 Examples:
-eng files shred sensitive.txt # Shred a single file (3 passes)
-eng files shred -r secrets/ # Shred directory recursively
-eng files shred -p 7 -m dod file1 file2 # 7-pass DoD method
-eng files shred --dry-run secrets/ # Preview what would be shredded
-eng files shred -f -r /path/to/data # Force (no confirmation)
+  eng files shred sensitive.txt                    # Shred a single file (3 passes)
+  eng files shred -r secrets/                      # Shred directory recursively
+  eng files shred -p 7 -m dod file1 file2         # 7-pass DoD method
+  eng files shred --dry-run secrets/              # Preview what would be shredded
+  eng files shred -f -r /path/to/data             # Force (no confirmation)
 
 ```
 eng files shred [paths...] [flags]
@@ -45,4 +45,5 @@ eng files shred [paths...] [flags]
 
 ### SEE ALSO
 
-- [eng files](eng_files.md) - A command for managing files
+* [eng files](eng_files.md)	 - A command for managing files
+

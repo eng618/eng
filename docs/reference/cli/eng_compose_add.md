@@ -13,8 +13,8 @@ config file and is included in list, status, up, down, pull, and logs.
 With no arguments, an interactive wizard prompts for the name and path.
 
 Example:
-eng compose add # Interactive wizard
-eng compose add media ~/Development/homelab/media
+  eng compose add                  # Interactive wizard
+  eng compose add media ~/Development/homelab/media
 
 ```
 eng compose add [name] [path] [flags]
@@ -36,4 +36,5 @@ eng compose add [name] [path] [flags]
 
 ### SEE ALSO
 
-- [eng compose](eng_compose.md) - Manage Docker Compose swarms and services
+* [eng compose](eng_compose.md)	 - Manage Docker Compose swarms and services
+

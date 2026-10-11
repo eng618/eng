@@ -26,4 +26,5 @@ eng tailscale down [flags]
 
 ### SEE ALSO
 
-- [eng tailscale](eng_tailscale.md) - A helper for the tailscale command
+* [eng tailscale](eng_tailscale.md)	 - A helper for the tailscale command
+

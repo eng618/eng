@@ -27,4 +27,5 @@ eng codemod copilot [flags]
 
 ### SEE ALSO
 
-- [eng codemod](eng_codemod.md) - Helpers for codemods and project automation
+* [eng codemod](eng_codemod.md)	 - Helpers for codemods and project automation
+

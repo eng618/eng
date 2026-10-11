@@ -132,6 +132,7 @@ tasks:
     desc: Run lint and tests
     cmds:
       - task: format
+      - task: docs:format
       - task: lint
       - task: test
       - task: docs:check
@@ -202,7 +203,13 @@ tasks:
     cmds:
       - echo "Linting Markdown documentation..."
       - npx --yes markdownlint-cli2
-      - npx --yes prettier --check README.md docs/README.md docs/ROADMAP.md "docs/tutorials/*.md" "docs/how-to/*.md" "docs/explanation/*.md" docs/reference/commands.md
+      - npx --yes --package oxfmt --package @gv-tech/oxc-config@latest gv-oxfmt --check README.md docs/README.md docs/ROADMAP.md "docs/tutorials/*.md" "docs/how-to/*.md" "docs/explanation/*.md" docs/reference/commands.md
+
+  docs:format:
+    desc: Format Markdown documentation with Oxfmt (@gv-tech/oxc-config style)
+    cmds:
+      - echo "Formatting Markdown documentation..."
+      - npx --yes --package oxfmt --package @gv-tech/oxc-config@latest gv-oxfmt --write README.md docs/README.md docs/ROADMAP.md "docs/tutorials/*.md" "docs/how-to/*.md" "docs/explanation/*.md" docs/reference/commands.md
 
   docs:links:
     desc: Check Markdown links (docs + README)

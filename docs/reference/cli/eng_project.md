@@ -6,21 +6,21 @@ Manage project-based repository collections
 
 This command facilitates the management of project-based repository collections.
 
-A project is a logical grouping of related repositories. For example, you might have
+A project is a logical grouping of related repositories. For example, you might have 
 a project containing multiple microservices, or a shared infrastructure project.
 
 Projects are stored in your development folder (configured via 'eng config git-dev-path'),
 with each project having its own subdirectory containing all related repositories.
 
 Example structure:
-~/Development/
-MyProject/
-api/
-web/
-shared/
-Infrastructure/
-core/
-auth/
+  ~/Development/
+    MyProject/
+      api/
+      web/
+      shared/
+    Infrastructure/
+      core/
+      auth/
 
 ```
 eng project [flags]
@@ -46,11 +46,12 @@ eng project [flags]
 
 ### SEE ALSO
 
-- [eng](eng.md) - A personal CLI to facilitate workflow and system maintenance.
-- [eng project add](eng_project_add.md) - Add a new project or repository to configuration
-- [eng project fetch](eng_project_fetch.md) - Fetch updates for all project repositories
-- [eng project list](eng_project_list.md) - List configured projects and their repositories
-- [eng project pull](eng_project_pull.md) - Pull updates for all project repositories
-- [eng project remove](eng_project_remove.md) - Remove a project or repository from configuration
-- [eng project setup](eng_project_setup.md) - Setup project directories and clone missing repositories
-- [eng project sync](eng_project_sync.md) - Sync all project repositories (fetch + pull)
+* [eng](eng.md)	 - A personal CLI to facilitate workflow and system maintenance.
+* [eng project add](eng_project_add.md)	 - Add a new project or repository to configuration
+* [eng project fetch](eng_project_fetch.md)	 - Fetch updates for all project repositories
+* [eng project list](eng_project_list.md)	 - List configured projects and their repositories
+* [eng project pull](eng_project_pull.md)	 - Pull updates for all project repositories
+* [eng project remove](eng_project_remove.md)	 - Remove a project or repository from configuration
+* [eng project setup](eng_project_setup.md)	 - Setup project directories and clone missing repositories
+* [eng project sync](eng_project_sync.md)	 - Sync all project repositories (fetch + pull)
+

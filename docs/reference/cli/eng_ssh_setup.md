@@ -5,11 +5,10 @@ Setup SSH keys for GitHub access
 ### Synopsis
 
 Setup SSH keys for GitHub access. This command will:
-
-- Check for existing SSH keys
-- Attempt to retrieve SSH keys from Bitwarden vault
-- Generate new SSH keys if none found
-- Configure SSH config for GitHub
+  - Check for existing SSH keys
+  - Attempt to retrieve SSH keys from Bitwarden vault
+  - Generate new SSH keys if none found
+  - Configure SSH config for GitHub
 
 ```
 eng ssh setup [flags]
@@ -31,4 +30,5 @@ eng ssh setup [flags]
 
 ### SEE ALSO
 
-- [eng ssh](eng_ssh.md) - Manage SSH keys for GitHub access
+* [eng ssh](eng_ssh.md)	 - Manage SSH keys for GitHub access
+

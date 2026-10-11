@@ -22,4 +22,5 @@ eng immich stop [flags]
 
 ### SEE ALSO
 
-- [eng immich](eng_immich.md) - Manage Immich photo stack, database, backups, and lifecycle
+* [eng immich](eng_immich.md)	 - Manage Immich photo stack, database, backups, and lifecycle
+

@@ -32,4 +32,5 @@ eng files findNonMovieFolders [directory] [flags]
 
 ### SEE ALSO
 
-- [eng files](eng_files.md) - A command for managing files
+* [eng files](eng_files.md)	 - A command for managing files
+
