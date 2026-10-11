@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -140,9 +141,13 @@ func TestWriteOxcConfigs_Presets(t *testing.T) {
 			lintData, err := os.ReadFile("oxlint.config.ts")
 			require.NoError(t, err)
 			assert.Contains(t, string(lintData), tt.contains)
+			// Cast-free: presets carry native upstream types, no `as` needed.
+			assert.NotContains(t, string(lintData), " as OxlintConfig")
+			assert.NotContains(t, string(lintData), "as unknown as")
 			fmtData, err := os.ReadFile("oxfmt.config.ts")
 			require.NoError(t, err)
 			assert.Contains(t, string(fmtData), "@gv-tech/oxc-config/oxfmt")
+			assert.NotContains(t, string(fmtData), " as OxfmtConfig")
 		})
 	}
 }
@@ -154,6 +159,49 @@ func TestWriteOxcConfigs_TypeAware(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "typeAware")
 	assert.Contains(t, string(data), "@gv-tech/oxc-config/type-aware")
+	assert.Contains(t, string(data), "extends: [vite, typeAware]")
+	assert.NotContains(t, string(data), " as OxlintConfig")
+}
+
+func TestCheckOxcConfigNativeTypes(t *testing.T) {
+	t.Run("native types present", func(t *testing.T) {
+		chdirTemp(t)
+		dir := filepath.Join("node_modules", "@gv-tech", "oxc-config", "dist")
+		require.NoError(t, os.MkdirAll(dir, 0o755))
+		require.NoError(t, os.WriteFile(
+			filepath.Join(dir, "types.d.ts"),
+			[]byte("export type { OxlintConfig } from 'oxlint';"),
+			0o644,
+		))
+		var errBuf strings.Builder
+		log.SetWriters(&strings.Builder{}, &errBuf)
+		t.Cleanup(log.ResetWriters)
+		checkOxcConfigNativeTypes()
+		assert.NotContains(t, errBuf.String(), "predates native upstream types")
+	})
+	t.Run("stale structural types warn", func(t *testing.T) {
+		chdirTemp(t)
+		dir := filepath.Join("node_modules", "@gv-tech", "oxc-config", "dist")
+		require.NoError(t, os.MkdirAll(dir, 0o755))
+		require.NoError(t, os.WriteFile(
+			filepath.Join(dir, "types.d.ts"),
+			[]byte("export interface OxlintConfig { extends?: Array<OxlintConfig | string>; }"),
+			0o644,
+		))
+		var errBuf strings.Builder
+		log.SetWriters(&strings.Builder{}, &errBuf)
+		t.Cleanup(log.ResetWriters)
+		checkOxcConfigNativeTypes()
+		assert.Contains(t, errBuf.String(), "predates native upstream types")
+	})
+	t.Run("missing install warns", func(t *testing.T) {
+		chdirTemp(t)
+		var errBuf strings.Builder
+		log.SetWriters(&strings.Builder{}, &errBuf)
+		t.Cleanup(log.ResetWriters)
+		checkOxcConfigNativeTypes()
+		assert.Contains(t, errBuf.String(), "Could not verify @gv-tech/oxc-config types")
+	})
 }
 
 func TestDetectEslintPrettier(t *testing.T) {
