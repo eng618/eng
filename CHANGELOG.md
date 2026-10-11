@@ -1,5 +1,24 @@
 <a name="unreleased"></a>
 
+## [1.63.0](https://github.com/eng618/eng/compare/v1.62.0...v1.63.0) (2026-10-11)
+
+
+### Features
+
+* **codemod:** Enforce native oxc-config types for cast-free configs. ([f638c5a](https://github.com/eng618/eng/commit/f638c5a789159a6c8220bdd5fd889b4f3975cff6))
+* **fmt:** Add oxfmt check/format command) ([54f6a2f](https://github.com/eng618/eng/commit/54f6a2ff4bf05c11b5aba6e041fed4fe89bb6561))
+
+
+### Documentation
+
+* Update CLI reference documentation and project configurations ([571c8b4](https://github.com/eng618/eng/commit/571c8b4ca290ea2cc71c007960f0315b3c1d7005))
+
+
+### Miscellaneous
+
+* **docs:** Format markdown via gv-oxfmt wrapper and regenerate cli reference ([4c38cd4](https://github.com/eng618/eng/commit/4c38cd4e9a8afeea3f29bf18ccc1d95501128d7e))
+* Remove copilot instructions and update documentation references to AGENTS.md ([0f81c5b](https://github.com/eng618/eng/commit/0f81c5b5132eab176bfd08ba5341b8361f5f2376))
+
 ## [1.62.0](https://github.com/eng618/eng/compare/v1.61.2...v1.62.0) (2026-10-09)
 
 
