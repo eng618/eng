@@ -95,7 +95,13 @@ type diffOptions struct {
 
 // buildDiffArgs constructs the git CLI args for a bare-repo diff.
 func buildDiffArgs(repoPath, worktreePath string, opts diffOptions) []string {
-	args := []string{"--git-dir=" + repoPath, "--work-tree=" + worktreePath, "diff"}
+	args := []string{
+		"--git-dir=" + repoPath,
+		"--work-tree=" + worktreePath,
+		"diff",
+		"--no-color",
+		"--no-ext-diff",
+	}
 	if opts.Staged {
 		args = append(args, "--cached")
 	}
@@ -112,12 +118,39 @@ func buildDiffArgs(repoPath, worktreePath string, opts diffOptions) []string {
 	return args
 }
 
-// runDiff streams `git diff` output for the bare repo. Injectable for tests.
+// runDiff runs `git diff` for the bare repo and pretty-prints it.
+// Added lines render with a green background and removed lines with a red
+// background via ui.RenderDiff; --stat output uses ui.RenderDiffStat and
+// --name-only stays plain. Injectable for tests.
 var runDiff = func(repoPath, worktreePath string, opts diffOptions) error {
+	var buf bytes.Buffer
 	gitCmd := execx.Command("git", buildDiffArgs(repoPath, worktreePath, opts)...)
-	gitCmd.Stdout = log.Writer()
+	gitCmd.Stdout = &buf
 	gitCmd.Stderr = log.ErrorWriter()
-	return gitCmd.Run()
+	if err := gitCmd.Run(); err != nil {
+		return err
+	}
+	out := buf.String()
+	if out == "" {
+		return nil
+	}
+	switch {
+	case opts.Stat:
+		out = ui.RenderDiffStat(out)
+	case opts.NameOnly:
+		// Keep file lists plain for scripting.
+	default:
+		out = ui.RenderDiff(out)
+	}
+	if _, err := io.WriteString(log.Writer(), out); err != nil {
+		return err
+	}
+	// git diff output ends with a newline; ensure separation from the
+	// success banner that follows.
+	if !bytes.HasSuffix(buf.Bytes(), []byte("\n")) {
+		fmt.Fprintln(log.Writer())
+	}
+	return nil
 }
 
 // diffStatSummary returns `git diff HEAD --stat` output for the bare repo.
@@ -130,6 +163,8 @@ var diffStatSummary = func(repoPath, worktreePath string) (string, error) {
 		"--git-dir="+repoPath,
 		"--work-tree="+worktreePath,
 		"diff",
+		"--no-color",
+		"--no-ext-diff",
 		"HEAD",
 		"--stat",
 	)

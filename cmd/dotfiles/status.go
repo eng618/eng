@@ -74,7 +74,7 @@ offers to show the full diff inline (same rendering as 'eng cfg diff').`,
 			} else if stat != "" {
 				fmt.Fprintln(log.Out, "")
 				fmt.Fprintln(log.Out, "Changes:")
-				fmt.Fprintln(log.Out, stat)
+				fmt.Fprintln(log.Out, ui.RenderDiffStat(stat))
 				log.Info("Run `eng cfg diff` for the full patch, or `eng cfg status --diff`.")
 				offerDiffPrompt(isVerbose, repoPath, worktreePath, showStaged, args)
 			}

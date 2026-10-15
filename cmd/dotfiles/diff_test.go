@@ -23,17 +23,31 @@ func TestBuildDiffArgs(t *testing.T) {
 		{
 			name: "default unstaged",
 			opts: diffOptions{},
-			want: []string{"--git-dir=/tmp/repo", "--work-tree=/tmp/wt", "diff"},
+			want: []string{"--git-dir=/tmp/repo", "--work-tree=/tmp/wt", "diff", "--no-color", "--no-ext-diff"},
 		},
 		{
 			name: "staged",
 			opts: diffOptions{Staged: true},
-			want: []string{"--git-dir=/tmp/repo", "--work-tree=/tmp/wt", "diff", "--cached"},
+			want: []string{
+				"--git-dir=/tmp/repo",
+				"--work-tree=/tmp/wt",
+				"diff",
+				"--no-color",
+				"--no-ext-diff",
+				"--cached",
+			},
 		},
 		{
 			name: "stat",
 			opts: diffOptions{Stat: true},
-			want: []string{"--git-dir=/tmp/repo", "--work-tree=/tmp/wt", "diff", "--stat"},
+			want: []string{
+				"--git-dir=/tmp/repo",
+				"--work-tree=/tmp/wt",
+				"diff",
+				"--no-color",
+				"--no-ext-diff",
+				"--stat",
+			},
 		},
 		{
 			name: "name-only with paths",
@@ -42,6 +56,8 @@ func TestBuildDiffArgs(t *testing.T) {
 				"--git-dir=/tmp/repo",
 				"--work-tree=/tmp/wt",
 				"diff",
+				"--no-color",
+				"--no-ext-diff",
 				"--name-only",
 				"--",
 				".zshrc",
