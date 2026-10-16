@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.64.0](https://github.com/eng618/eng/compare/v1.63.0...v1.64.0) (2026-10-16)
+
+
+### Features
+
+* Add colored diff and diffstat rendering for dotfiles command output ([8deeae8](https://github.com/eng618/eng/commit/8deeae8c18de5fa20166654b1c5dbd625465d31e))
+
 ## [1.63.0](https://github.com/eng618/eng/compare/v1.62.0...v1.63.0) (2026-10-14)
 
 
