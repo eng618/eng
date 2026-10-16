@@ -51,8 +51,10 @@ func GetDetailedStatus(ctx context.Context, repoPath string) (StatusInfo, error)
 		info.Branch = branch
 	}
 
-	// 2. Get git status --porcelain
-	cmdStatus, cancelStatus := execGitCommand(ctx, repoPath, "status", "--porcelain")
+	// 2. Get git status --porcelain. --no-optional-locks keeps this read-only
+	// path from taking .git/index.lock, so background status refreshes can
+	// never block (or be killed while holding) a lock a fetch/pull needs.
+	cmdStatus, cancelStatus := execGitCommand(ctx, repoPath, "--no-optional-locks", "status", "--porcelain")
 	statusOut, errStatus := cmdStatus.Output()
 	cancelStatus()
 	if errStatus != nil {

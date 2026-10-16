@@ -74,8 +74,11 @@ func (m *Model) forceRefreshSelectedProjectStatusesCmd() tea.Cmd {
 }
 
 func checkRepoStatus(projectName string, repoDef Repo, devPath string) tea.Msg {
-	// Allow a very brief timeout since this blocks UI refresh momentarily if it hangs
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	// Status checks run async, so the budget favors never killing a git
+	// process (a SIGKILLed `git status` can leave .git/index.lock behind) over
+	// absolute snappiness. Reads also pass --no-optional-locks (see
+	// repo.GetDetailedStatus) so they never take locks in the first place.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	repoPath, err := repo.EffectivePath(repoDef.URL, repoDef.Path)

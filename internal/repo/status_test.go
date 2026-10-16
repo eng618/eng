@@ -135,3 +135,42 @@ func TestGetDetailedStatus(t *testing.T) {
 
 	// Cleanup untracked file so other tests running in parallel won't be affected (though this has its own temp dir)
 }
+
+func TestGetDetailedStatusWithStaleIndexLock(t *testing.T) {
+	ctx := context.Background()
+	repoPath := setupTestRepo(t, "main")
+	defer os.RemoveAll(repoPath)
+
+	// Simulate a crashed git process: a leftover index.lock must not break
+	// read-only status checks (they pass --no-optional-locks so they never
+	// try to refresh the index while a fetch/pull may own it).
+	lockPath := filepath.Join(repoPath, ".git", "index.lock")
+	if err := os.WriteFile(lockPath, []byte("stale"), 0o644); err != nil {
+		t.Fatalf("failed to create stale lock: %v", err)
+	}
+	// A real worktree change exercises the full porcelain parse path.
+	tracked := filepath.Join(repoPath, "test.txt")
+	if err := os.WriteFile(tracked, []byte("modified under stale lock"), 0o644); err != nil {
+		t.Fatalf("failed to modify tracked file: %v", err)
+	}
+
+	info, err := GetDetailedStatus(ctx, repoPath)
+	if err != nil {
+		t.Fatalf("GetDetailedStatus with stale index.lock failed: %v", err)
+	}
+	if info.Branch != "main" {
+		t.Errorf("expected branch 'main', got %q", info.Branch)
+	}
+	if info.UnstagedCount != 1 {
+		t.Errorf("expected 1 unstaged change under stale lock, got %d", info.UnstagedCount)
+	}
+
+	// The read path must leave the lock alone for the stale-lock reaper.
+	if _, statErr := os.Stat(lockPath); statErr != nil {
+		t.Error("status check must not delete the lock file")
+	}
+	locks := LockFiles(repoPath)
+	if len(locks) != 1 {
+		t.Errorf("Expected LockFiles to still report the stale lock, got %v", locks)
+	}
+}

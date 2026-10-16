@@ -181,7 +181,7 @@ func (m Model) renderHelpModal() string {
 	descStyle := lipgloss.NewStyle().Foreground(theme.Foreground)
 
 	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("?/Esc "), descStyle.Render("Open / close this help"))
-	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("q     "), descStyle.Render("Quit (Ctrl+C always quits)"))
+	fmt.Fprintf(&b, "  %s   %s\n", keyStyle.Render("q     "), descStyle.Render("Quit (waits for running action)"))
 	fmt.Fprintf(&b, "  %s   %s\n\n", keyStyle.Render("1/2   "), descStyle.Render("Switch Projects / Repos tabs"))
 
 	b.WriteString(statusMutedStyle.Render("Navigation:"))

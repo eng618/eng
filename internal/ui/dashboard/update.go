@@ -88,13 +88,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "ctrl+c" {
+			if m.actionState != "" {
+				if m.actionQuitRequested {
+					// Second press: force quit even if git is still running.
+					// This may leave a stale *.lock behind; fetch/pull
+					// clean it on the next run and report it.
+					return m, tea.Quit
+				}
+				// First press: cancel the running git operation, drop the
+				// remaining queue, and quit once the current action reports
+				// back so its locks are released before exit.
+				m.actionQuitRequested = true
+				m.actionQueue = nil
+				if m.actionCancel != nil {
+					m.actionCancel()
+				}
+				m.notificationID++
+				m.notification = "Canceling Git operation, waiting for lock release… (ctrl+c again to force quit)"
+				m.notificationStyle = notificationWarnStyle
+				m.notificationType = NotifyWarn
+				return m, m.delayClearNotificationCmd(m.notificationID)
+			}
 			return m, tea.Quit
 		}
 		if msg.String() == "q" {
-			// Don't accidentally quit mid-action (background io.Pipe
-			// goroutine would be orphaned). Ctrl+C still force-quits.
 			if m.actionState != "" {
-				return m, nil
+				// Graceful quit: let the running git operation finish so it
+				// releases its locks, drop the remaining queue, quit when the
+				// current action reports back. Ctrl+C cancels instead.
+				m.actionQuitRequested = true
+				m.actionQueue = nil
+				m.notificationID++
+				m.notification = "Finishing current operation, quitting when done…"
+				m.notificationStyle = notificationWarnStyle
+				m.notificationType = NotifyWarn
+				return m, m.delayClearNotificationCmd(m.notificationID)
 			}
 			return m, tea.Quit
 		}
@@ -307,6 +335,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		m.completedActions++
+		m.actionCancel = nil
+
+		// A mid-action quit waits for the running git operation to exit so
+		// its locks are released. Quit now instead of refreshing or popping
+		// the next action; the queue was already dropped on request.
+		if m.actionQuitRequested {
+			return m, tea.Quit
+		}
 
 		if len(m.actionQueue) > 0 {
 			var cmd tea.Cmd

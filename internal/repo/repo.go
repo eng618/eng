@@ -70,12 +70,27 @@ func PullLatestCodeWithOptions(ctx context.Context, repoPath string, force bool)
 		return err
 	}
 
-	cmd, cancel := execGitCommand(ctx, repoPath, "pull", "--rebase", "--autostash", "origin", currentBranch)
-	defer cancel()
+	runPull := func() (string, error) {
+		cmd, cancel := execGitCommand(ctx, repoPath, "pull", "--rebase", "--autostash", "origin", currentBranch)
+		defer cancel()
 
-	out, err := cmd.CombinedOutput()
+		out, err := cmd.CombinedOutput()
+		return string(out), err
+	}
+
+	outStr, err := runPull()
+	if err != nil && (IsLockError(outStr) || IsLockError(err.Error())) {
+		// A leftover *.lock from a killed git process blocks every later pull.
+		// Clean it once and retry instead of failing forever.
+		if removed, cleanErr := RemoveStaleLocks(repoPath); cleanErr == nil && len(removed) > 0 {
+			log.Warn("Removed stale git lock(s) in %s, retrying pull...", repoPath)
+			outStr, err = runPull()
+		} else if cleanErr != nil {
+			return fmt.Errorf("git pull blocked by another git process (%s): %w\n%s", cleanErr, err, outStr)
+		}
+	}
 	if err != nil {
-		if strings.Contains(string(out), "up to date") {
+		if strings.Contains(outStr, "up to date") {
 			return git.NoErrAlreadyUpToDate
 		}
 
@@ -104,7 +119,6 @@ func PullLatestCodeWithOptions(ctx context.Context, repoPath string, force bool)
 			return fmt.Errorf("conflict detected: pull aborted. Please resolve conflicts manually in your terminal")
 		}
 
-		outStr := string(out)
 		if !force && strings.Contains(outStr, "would clobber existing tag") {
 			return &TagClobberError{
 				Message: fmt.Sprintf("git pull failed (tag would clobber, retry with --force): %s", outStr),
@@ -116,7 +130,7 @@ func PullLatestCodeWithOptions(ctx context.Context, repoPath string, force bool)
 	}
 
 	// Check if already up to date in out
-	if strings.Contains(string(out), "Already up to date.") {
+	if strings.Contains(outStr, "Already up to date.") {
 		return git.NoErrAlreadyUpToDate
 	}
 
@@ -363,12 +377,26 @@ func fetchAllPruneWithForce(ctx context.Context, repoPath string, force bool) er
 		args = append(args, "--tags", "--force")
 	}
 
-	cmd, cancel := execGitCommand(ctx, repoPath, args...)
-	defer cancel()
+	run := func() (string, error) {
+		cmd, cancel := execGitCommand(ctx, repoPath, args...)
+		defer cancel()
 
-	out, err := cmd.CombinedOutput()
+		out, err := cmd.CombinedOutput()
+		return string(out), err
+	}
+
+	outStr, err := run()
+	if err != nil && (IsLockError(outStr) || IsLockError(err.Error())) {
+		// A leftover *.lock from a killed git process blocks every later fetch.
+		// Clean it once and retry instead of failing forever.
+		if removed, cleanErr := RemoveStaleLocks(repoPath); cleanErr == nil && len(removed) > 0 {
+			log.Warn("Removed stale git lock(s) in %s, retrying fetch...", repoPath)
+			outStr, err = run()
+		} else if cleanErr != nil {
+			return fmt.Errorf("git fetch blocked by another git process (%s): %w\n%s", cleanErr, err, outStr)
+		}
+	}
 	if err != nil {
-		outStr := string(out)
 		// Check if error is due to tag clobber
 		if !force && strings.Contains(outStr, "would clobber existing tag") {
 			return &TagClobberError{

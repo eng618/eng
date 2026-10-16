@@ -3,17 +3,27 @@ package repo
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 )
 
 // Clone clones a git repository to the specified path.
 // It uses os/exec for the clone operation and provides informative error messages.
+// On failure it removes a partially cloned destination (when this call created
+// it) so retries start clean instead of tripping over half-written lock files.
 func Clone(ctx context.Context, url, destPath string) error {
-	cmd, cancel := execGitCommand(ctx, "", "clone", "--progress", url, destPath)
+	created := false
+	if _, err := os.Stat(destPath); os.IsNotExist(err) {
+		created = true
+	}
+	cmd, cancel := execGitCloneCommand(ctx, "clone", "--progress", url, destPath)
 	defer cancel()
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if created {
+			_ = os.RemoveAll(destPath)
+		}
 		errStr := strings.ToLower(string(out))
 		// Provide more helpful error messages for common issues
 		switch {

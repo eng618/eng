@@ -35,6 +35,9 @@ func handleAction(m Model, action string) (tea.Model, tea.Cmd) {
 	m.actionTitle = ""
 	m.hasError = false
 	m.lastError = nil
+	// A new batch starts quiescent: no git running, no pending quit.
+	m.actionCancel = nil
+	m.actionQuitRequested = false
 
 	if m.focusedPane == FocusRight {
 		if len(p.Repos) == 0 {
@@ -220,22 +223,58 @@ func (m Model) popAndRunNextAction() (Model, tea.Cmd) {
 
 	pr, pw := io.Pipe()
 
-	go runActionItem(item, prettyName, pw)
+	// The budget intentionally exceeds repo's 2m git timeout so an inner git
+	// command times out first and exits cleanly. Cancelling this outer context
+	// SIGKILLs git mid-operation and leaves *.lock files behind, so it only
+	// happens on explicit quit, never on a timer firing mid-fetch.
+	ctx, cancel := context.WithTimeout(context.Background(), actionTimeout(item.Action))
+	m.actionCancel = cancel
+
+	go runActionItem(ctx, cancel, item, prettyName, pw)
 
 	scanner := bufio.NewScanner(pr)
 	return m, readLogCmd(scanner)
 }
 
+// actionTimeout returns how long one repo action may run before its context
+// is cancelled. Fetch/pull/sync exceed repo's 2m git timeout so slow networks
+// fail inside git (clean exit, locks released) rather than via an outer
+// SIGKILL. Clone gets the full clone budget; local open stays short.
+func actionTimeout(action string) time.Duration {
+	switch action {
+	case "c":
+		return 10 * time.Minute
+	case "o":
+		return 30 * time.Second
+	default:
+		return 3 * time.Minute
+	}
+}
+
 // runActionItem executes one queued repo action, streaming log output to pw.
 // It runs in its own goroutine; completion surfaces as actionDoneMsg via
-// the pipe scanner.
-func runActionItem(item ActionItem, prettyName string, pw *io.PipeWriter) {
+// the pipe scanner. cancel is called on return so context resources are
+// released; the model also holds it to cancel on quit and then waits for
+// this goroutine (via the pipe) before exiting, so git always gets to
+// release its locks.
+func runActionItem(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	item ActionItem,
+	prettyName string,
+	pw *io.PipeWriter,
+) {
+	defer cancel()
 	// Intercept internal log output
 	log.SetWriters(pw, pw)
 	defer log.ResetWriters()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	// Never orphan the pipe reader: a panic must still surface as
+	// actionDoneMsg so the modal cannot hang forever on "Working…".
+	defer func() {
+		if r := recover(); r != nil {
+			pw.CloseWithError(fmt.Errorf("action panicked: %v", r))
+		}
+	}()
 
 	cloned := repo.IsCloned(item.FullPath)
 	if item.Action == "c" && cloned {
@@ -377,10 +416,10 @@ func cloneActionRepo(ctx context.Context, item ActionItem, prettyName string) er
 	if err := os.MkdirAll(parentDir, 0o755); err != nil {
 		return err
 	}
-	cmd := execx.CommandContext(ctx, "git", "clone", item.RepoName, item.FullPath)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.ErrorWriter()
-	if err := cmd.Run(); err != nil {
+	// repo.Clone carries the long clone budget and removes a partial
+	// destination on failure, so an interrupted clone never leaves a
+	// half-written .git dir (and its locks) behind to confuse retries.
+	if err := repo.Clone(ctx, item.RepoName, item.FullPath); err != nil {
 		return err
 	}
 	log.Success("Clone completed successfully!")
@@ -389,7 +428,9 @@ func cloneActionRepo(ctx context.Context, item ActionItem, prettyName string) er
 
 func openActionRepo(ctx context.Context, item ActionItem) error {
 	log.Info("Opening %s...", item.FullPath)
-	cmd := execx.CommandContext(ctx, "open", item.FullPath)
+	openCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	cmd := execx.CommandContext(openCtx, "open", item.FullPath)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()
 	if err := cmd.Run(); err != nil {

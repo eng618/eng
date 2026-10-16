@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -131,6 +132,15 @@ type Model struct {
 	actionTail  string
 	actionTitle string
 	spinner     spinner.Model
+
+	// actionCancel cancels the running git operation. It is set when an action
+	// spawns its background goroutine and cleared when the action finishes, so
+	// a quit request can wait for git to exit (releasing its locks) instead of
+	// orphaning it and leaving stale *.lock files behind.
+	actionCancel context.CancelFunc
+	// actionQuitRequested marks a quit asked for mid-action: the current
+	// operation runs to a clean stop, then the program exits.
+	actionQuitRequested bool
 
 	// Toast notification fields
 	notification      string
