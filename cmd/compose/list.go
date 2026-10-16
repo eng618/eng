@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/containers"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
@@ -24,7 +23,7 @@ var listCmd = &cobra.Command{
 		}
 
 		cfg := config.GetContainersConfig()
-		mgr := containers.NewManager(cfg.Path)
+		mgr := newManagerFromConfig(cfg)
 
 		stacks, err := mgr.DiscoverStacks()
 		if err != nil {
@@ -42,7 +41,11 @@ var listCmd = &cobra.Command{
 			if svcs == "" {
 				svcs = "-"
 			}
-			rows = append(rows, []string{s.Name, s.Path, svcs})
+			source := s.Source
+			if source == "" {
+				source = "-"
+			}
+			rows = append(rows, []string{s.Name, s.Path, svcs, source})
 		}
 		subheader := fmt.Sprintf("Discovered %s compose stack(s) under %s:",
 			theme.PrimaryText.Bold(true).Render(fmt.Sprintf("%d", len(stacks))),
@@ -51,12 +54,12 @@ var listCmd = &cobra.Command{
 
 		if !ui.DisableProgress {
 			fmt.Fprintln(log.Out, theme.InfoBox.Render(subheader+"\n"+ui.RenderTable(ui.TableOpts{
-				Headers: []string{"STACK", "PATH", "SERVICES"},
+				Headers: []string{"STACK", "PATH", "SERVICES", "SOURCE"},
 				Rows:    rows,
 			})))
 		} else {
 			for _, r := range rows {
-				log.Info("%s | %s | %s", r[0], r[1], r[2])
+				log.Info("%s | %s | %s | %s", r[0], r[1], r[2], r[3])
 			}
 		}
 

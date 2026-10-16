@@ -370,15 +370,23 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 		t.Fatal("Expected tea.Cmd to be returned for custom editor")
 	}
 
-	// Test 7c: Terminal resolution check (stub a fake terminal on PATH)
+	// Test 7c: Terminal resolution check (stub a fake terminal on PATH).
+	// Call openInTerminalLinux directly so the test is deterministic on
+	// all platforms: openInTerminalCmd dispatches on runtime.GOOS and the
+	// darwin branch always succeeds via `open -a` without consulting PATH.
 	fakeBin := t.TempDir()
 	fakeTerm := filepath.Join(fakeBin, "kitty")
 	if err := os.WriteFile(fakeTerm, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
 		t.Fatalf("failed to create fake terminal: %v", err)
 	}
+	targetPath, err := m.resolveTargetPath()
+	if err != nil {
+		t.Fatalf("failed to resolve target path: %v", err)
+	}
+	t.Setenv("TERMINAL", "")
 	t.Setenv("PATH", fakeBin)
 
-	cmdTerm, errTerm := m.openInTerminalCmd()
+	cmdTerm, errTerm := m.openInTerminalLinux(targetPath)
 	if errTerm != nil {
 		t.Fatalf("Expected no error launching terminal, got: %v", errTerm)
 	}
@@ -387,11 +395,12 @@ func TestDashboardCommandsAndNotifications(t *testing.T) {
 	}
 
 	// Test 7d: Terminal error when no emulator is available
+	t.Setenv("TERMINAL", "")
 	t.Setenv("PATH", fakeBin+string(os.PathListSeparator)+"/nonexistent-empty")
 	if err := os.Remove(fakeTerm); err != nil {
 		t.Fatalf("failed to remove fake terminal: %v", err)
 	}
-	if _, errNoTerm := m.openInTerminalCmd(); errNoTerm == nil {
+	if _, errNoTerm := m.openInTerminalLinux(targetPath); errNoTerm == nil {
 		t.Error("Expected error when no terminal emulator is found")
 	}
 

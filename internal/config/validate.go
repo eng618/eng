@@ -62,7 +62,46 @@ func (c *ResolvedConfig) Validate() []FieldError {
 			errs = append(errs, *err)
 		}
 	}
+	errs = append(errs, validateComposeStacks(c.ContainersStacks)...)
 	errs = append(errs, validateProxies(c.Proxies)...)
+	return errs
+}
+
+// validateComposeStacks checks registered stack names, duplicates, and paths.
+func validateComposeStacks(stacks []ComposeStackEntry) []FieldError {
+	var errs []FieldError
+	seen := map[string]int{}
+	for i, s := range stacks {
+		if err := ValidateComposeStackName(s.Name); err != nil {
+			errs = append(errs, FieldError{
+				Field: fmt.Sprintf("containers.stacks[%d].name", i), Value: s.Name,
+				Hint: "use letters, digits, '-' or '_' starting with alphanumeric",
+			})
+		}
+		lower := strings.ToLower(s.Name)
+		if prev, dup := seen[lower]; dup {
+			errs = append(errs, FieldError{
+				Field: fmt.Sprintf("containers.stacks[%d].name", i), Value: s.Name,
+				Hint: fmt.Sprintf(
+					"duplicate of containers.stacks[%d]: rename with `eng compose remove %s`",
+					prev,
+					s.Name,
+				),
+			})
+		} else {
+			seen[lower] = i
+		}
+		if strings.TrimSpace(s.Path) == "" {
+			errs = append(errs, FieldError{
+				Field: fmt.Sprintf("containers.stacks[%d].path", i), Value: s.Path,
+				Hint: "set a directory containing a compose file",
+			})
+			continue
+		}
+		if err := checkDirField(fmt.Sprintf("containers.stacks[%d].path", i), s.Path); err != nil {
+			errs = append(errs, *err)
+		}
+	}
 	return errs
 }
 

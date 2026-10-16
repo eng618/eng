@@ -6,7 +6,6 @@ import (
 	"github.com/eng618/eng/internal/cleanup"
 	"github.com/eng618/eng/internal/cmdutil"
 	"github.com/eng618/eng/internal/config"
-	"github.com/eng618/eng/internal/containers"
 	"github.com/eng618/eng/internal/ui"
 )
 
@@ -14,8 +13,12 @@ var ComposeCmd = &cobra.Command{
 	Use:     "compose",
 	Aliases: []string{"swarm", "stack"},
 	Short:   "Manage Docker Compose swarms and services",
-	Long:    `Audit, inspect, start, stop, pull, and monitor Docker Compose service stacks.`,
+	Long: `Audit, inspect, start, stop, pull, and monitor Docker Compose service stacks.
+
+Stacks are discovered under the legacy containers.path tree and merged with
+named stacks registered via 'eng compose add <name> <path>'.`,
 	Example: `  eng compose list
+  eng compose add media ~/Development/homelab/media
   eng compose status --all
   eng compose up media -e dev`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -27,7 +30,7 @@ var ComposeCmd = &cobra.Command{
 // It never errors: on discovery failure it returns no completions.
 func completeStackNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	cfg := config.GetContainersConfig()
-	stacks, err := containers.NewManager(cfg.Path).DiscoverStacks()
+	stacks, err := newManagerFromConfig(cfg).DiscoverStacks()
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -40,6 +43,8 @@ func completeStackNames(cmd *cobra.Command, args []string, toComplete string) ([
 
 func init() {
 	ComposeCmd.AddCommand(listCmd)
+	ComposeCmd.AddCommand(addCmd)
+	ComposeCmd.AddCommand(removeCmd)
 	ComposeCmd.AddCommand(upCmd)
 	ComposeCmd.AddCommand(downCmd)
 	ComposeCmd.AddCommand(pullCmd)
@@ -47,7 +52,7 @@ func init() {
 	ComposeCmd.AddCommand(logsCmd)
 	ComposeCmd.AddCommand(cleanCmd)
 
-	for _, c := range []*cobra.Command{upCmd, downCmd, pullCmd, statusCmd, logsCmd} {
+	for _, c := range []*cobra.Command{upCmd, downCmd, pullCmd, statusCmd, logsCmd, removeCmd} {
 		c.ValidArgsFunction = completeStackNames
 	}
 

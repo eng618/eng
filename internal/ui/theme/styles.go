@@ -136,6 +136,28 @@ var (
 			Bold(true).
 			Padding(0, 1).
 			MarginRight(1)
+
+	// DiffAddLine highlights an added diff line with a green background.
+	DiffAddLine = lipgloss.NewStyle().
+			Background(Secondary).
+			Foreground(Background)
+
+	// DiffDelLine highlights a removed diff line with a red background.
+	DiffDelLine = lipgloss.NewStyle().
+			Background(Destructive).
+			Foreground(Background)
+
+	// DiffAddText colors added diffstat markers green.
+	DiffAddText = lipgloss.NewStyle().Foreground(Secondary).Bold(true)
+
+	// DiffDelText colors removed diffstat markers red.
+	DiffDelText = lipgloss.NewStyle().Foreground(Destructive).Bold(true)
+
+	// DiffHunk highlights unified-diff hunk headers.
+	DiffHunk = lipgloss.NewStyle().Foreground(MutedForeground).Bold(true)
+
+	// DiffHeader highlights diff metadata lines (diff --git, index, ---, +++).
+	DiffHeader = lipgloss.NewStyle().Foreground(Primary).Bold(true)
 )
 
 // fileWrite writes a plain banner line to the file tee, if enabled.

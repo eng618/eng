@@ -228,8 +228,8 @@ Contributions are welcome! Please follow these guidelines:
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Enable the pre-push hook (one-time per clone): `git config core.hooksPath .githooks`
    (blocks pushes with stale generated docs; bypass with `git push --no-verify`)
-4. Make your changes following the [Go style guidelines](.github/copilot-instructions.md)
-5. Run validation: `task validate` (runs format, lint, and tests)
+4. Make your changes following [AGENTS.md](AGENTS.md)
+5. Run validation: `task validate` (runs format, lint, tests, docs:check)
 6. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/)
 7. Push to the branch (`git push origin feature/amazing-feature`)
 8. Open a Pull Request
@@ -242,9 +242,7 @@ task install    # Install to $GOPATH/bin
 task docs       # Generate Markdown documentation for CLI commands
 task lint       # Run golangci-lint
 task test       # Run tests with coverage
-task validate   # Run format + lint + test
-task changelog  # Generate changelog
-task release    # Create a release (goreleaser)
+task validate   # Run format + lint + test + docs:check
 ```
 
 See [Taskfile.yaml](Taskfile.yaml) for all available tasks.

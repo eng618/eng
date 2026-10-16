@@ -1,5 +1,83 @@
 <a name="unreleased"></a>
 
+## [1.64.0](https://github.com/eng618/eng/compare/v1.63.0...v1.64.0) (2026-10-16)
+
+
+### Features
+
+* Add colored diff and diffstat rendering for dotfiles command output ([8deeae8](https://github.com/eng618/eng/commit/8deeae8c18de5fa20166654b1c5dbd625465d31e))
+
+## [1.63.0](https://github.com/eng618/eng/compare/v1.62.0...v1.63.0) (2026-10-14)
+
+
+### Features
+
+* Add dotfiles diff command and integrate diff summary into status command ([659dcac](https://github.com/eng618/eng/commit/659dcacd929c8b7c96412be2449f0396ce6cefd7))
+* **codemod:** Enforce native oxc-config types for cast-free configs. ([f638c5a](https://github.com/eng618/eng/commit/f638c5a789159a6c8220bdd5fd889b4f3975cff6))
+* **fmt:** Add oxfmt check/format command) ([54f6a2f](https://github.com/eng618/eng/commit/54f6a2ff4bf05c11b5aba6e041fed4fe89bb6561))
+
+
+### Documentation
+
+* Update CLI reference documentation and project configurations ([571c8b4](https://github.com/eng618/eng/commit/571c8b4ca290ea2cc71c007960f0315b3c1d7005))
+
+
+### Miscellaneous
+
+* **docs:** Format markdown via gv-oxfmt wrapper and regenerate cli reference ([4c38cd4](https://github.com/eng618/eng/commit/4c38cd4e9a8afeea3f29bf18ccc1d95501128d7e))
+* Remove copilot instructions and update documentation references to AGENTS.md ([0f81c5b](https://github.com/eng618/eng/commit/0f81c5b5132eab176bfd08ba5341b8361f5f2376))
+* Update Go dependencies in go.mod and go.sum ([7bce171](https://github.com/eng618/eng/commit/7bce17199f32ee652be316bbc3d2117594ae77bb))
+
+## [1.62.0](https://github.com/eng618/eng/compare/v1.61.2...v1.62.0) (2026-10-09)
+
+
+### Features
+
+* Add multi-stack docker compose support ([9923640](https://github.com/eng618/eng/commit/99236405b240b4f76f76f07d05c5b9bd9cd26be8))
+
+## [1.61.2](https://github.com/eng618/eng/compare/v1.61.1...v1.61.2) (2026-10-06)
+
+
+### Bug Fixes
+
+* Remove shell wrapper in update commands ([#197](https://github.com/eng618/eng/issues/197)) ([50419ed](https://github.com/eng618/eng/commit/50419edc0bf821d172ef5f51bbec7c93e88b1b58))
+
+
+### Performance Improvements
+
+* Extract pmset regex to global scope ([#196](https://github.com/eng618/eng/issues/196)) ([44a71e0](https://github.com/eng618/eng/commit/44a71e0d4817eec96a95f959caa742b36d9018ad))
+* Precompile regex in parseBoottimeSec ([#195](https://github.com/eng618/eng/issues/195)) ([9d18019](https://github.com/eng618/eng/commit/9d18019ea122dfe1abfa8024f39cada03461dbfe))
+
+
+### Tests
+
+* Make test deterministic ([7427175](https://github.com/eng618/eng/commit/74271752c885ab73965a19ab0e7300b2f0bcc3d5))
+
+
+### Build System
+
+* **deps:** Bump ([b46dbf8](https://github.com/eng618/eng/commit/b46dbf8f38eef08223bb59c1ab06e01a3d93aaee))
+* **deps:** Bump actions/setup-node from 6 to 7 ([#194](https://github.com/eng618/eng/issues/194)) ([774747d](https://github.com/eng618/eng/commit/774747d06a4acef83f5d3f0126fdaa918fa67749))
+
+## [1.61.1](https://github.com/eng618/eng/compare/v1.61.0...v1.61.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* Insecure temporary file creation in gpg sync ([#182](https://github.com/eng618/eng/issues/182)) ([6149c56](https://github.com/eng618/eng/commit/6149c56025126f64b00163a956ad853e9f1331d8))
+* **term:** Support fedora ptyxis ([76e309b](https://github.com/eng618/eng/commit/76e309b823f7e920a590e6a4b2a5e694ce84e101))
+* Use secure temporary file creation with os.CreateTemp ([#178](https://github.com/eng618/eng/issues/178)) ([dd104e5](https://github.com/eng618/eng/commit/dd104e51f2751aef10441b260c583dc9688a4675))
+
+
+### Performance Improvements
+
+* **compose:** Optimize string concatenation in status render ([#180](https://github.com/eng618/eng/issues/180)) ([91eefee](https://github.com/eng618/eng/commit/91eefeea096d6453bcfdc2fe7a5740b411b178d4))
+* Optimize parseGitLabRemote regexp compilation ([#190](https://github.com/eng618/eng/issues/190)) ([709ae7e](https://github.com/eng618/eng/commit/709ae7e8676b6721e69ed332f215035385ba083a))
+* Optimize RepoNameFromURL regex compilation ([#185](https://github.com/eng618/eng/issues/185)) ([246a99c](https://github.com/eng618/eng/commit/246a99ccff26c55ac820797fb213c91dc6904870))
+* Optimize string concatenation with strings.Builder in auth_test.go ([#181](https://github.com/eng618/eng/issues/181)) ([941e9d9](https://github.com/eng618/eng/commit/941e9d95f92bb79dd3edc5f79d071d2cb3fbecec))
+* **sysinfo:** Extract static regexp compilation to global vars ([#191](https://github.com/eng618/eng/issues/191)) ([db9598b](https://github.com/eng618/eng/commit/db9598bdc27e66cce3288acc540aa55b7951f4b6))
+* **sysinfo:** Optimize parseVcgencmdTemp by reusing regex ([#184](https://github.com/eng618/eng/issues/184)) ([bf365b6](https://github.com/eng618/eng/commit/bf365b62ea59dd15837b488f07ef89efb0622c91))
+
 ## [1.61.0](https://github.com/eng618/eng/compare/v1.60.1...v1.61.0) (2026-09-17)
 
 

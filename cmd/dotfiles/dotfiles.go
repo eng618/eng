@@ -66,6 +66,7 @@ func init() {
 	DotfilesCmd.AddCommand(SyncCmd)
 	DotfilesCmd.AddCommand(FetchCmd)
 	DotfilesCmd.AddCommand(StatusCmd)
+	DotfilesCmd.AddCommand(DiffCmd)
 	DotfilesCmd.AddCommand(CopyChangesCmd)
 	DotfilesCmd.AddCommand(CheckoutCmd)
 	DotfilesCmd.AddCommand(SecretsCmd)

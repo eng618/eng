@@ -171,9 +171,7 @@ func ensureGPGDependencies(verbose bool) error {
 	// Check for gnupg
 	if _, err := lookPath("gpg"); err != nil {
 		if distro.IsFedora() {
-			return fmt.Errorf(
-				"gpg is not installed - please install it via: sudo dnf install -y gnupg2",
-			)
+			return fmt.Errorf("gpg is not installed - please install it via: sudo dnf install -y gnupg2")
 		} else if distro.IsDebianUbuntu() {
 			return fmt.Errorf("gpg is not installed - please install it via: sudo apt-get install -y gnupg")
 		}
@@ -183,13 +181,7 @@ func ensureGPGDependencies(verbose bool) error {
 
 	// Check for pinentry (pinentry-mac on macOS, pinentry / pinentry-curses / pinentry-gnome3 / pinentry-qt on Linux)
 	foundPinentry := false
-	pinentryCandidates := []string{
-		"pinentry",
-		"pinentry-curses",
-		"pinentry-gnome3",
-		"pinentry-qt",
-		"pinentry-mac",
-	}
+	pinentryCandidates := []string{"pinentry", "pinentry-curses", "pinentry-gnome3", "pinentry-qt", "pinentry-mac"}
 	if distro.IsMacOS() {
 		pinentryCandidates = []string{"pinentry-mac", "pinentry"}
 	}
@@ -203,17 +195,13 @@ func ensureGPGDependencies(verbose bool) error {
 
 	if !foundPinentry {
 		if distro.IsFedora() {
-			return fmt.Errorf(
-				"pinentry is not installed - please install it via: sudo dnf install -y pinentry",
-			)
+			return fmt.Errorf("pinentry is not installed - please install it via: sudo dnf install -y pinentry")
 		} else if distro.IsDebianUbuntu() {
 			return fmt.Errorf(
 				"pinentry is not installed - please install it via: sudo apt-get install -y pinentry-curses",
 			)
 		}
-		return fmt.Errorf(
-			"pinentry is not installed - please install it via: brew install pinentry-mac",
-		)
+		return fmt.Errorf("pinentry is not installed - please install it via: brew install pinentry-mac")
 	}
 	log.Verbose(verbose, "pinentry is installed")
 

@@ -26,7 +26,7 @@ func TestUpdateCmd_Fedora(t *testing.T) {
 
 	updateFedora(false, true, 60)
 
-	expected := "bash -c sudo dnf upgrade --refresh -y"
+	expected := "sudo dnf upgrade --refresh -y"
 	found := false
 	for _, c := range called {
 		if c == expected {
@@ -56,7 +56,7 @@ func TestUpdateCmd_Ubuntu(t *testing.T) {
 
 	updateDebianUbuntu(false, true, 60)
 
-	expected := "bash -c sudo apt-get update && sudo apt-get upgrade -y"
+	expected := "sudo apt-get update"
 	found := false
 	for _, c := range called {
 		if c == expected {
@@ -91,7 +91,7 @@ func TestUpdateCmd_Dispatch_Fedora(t *testing.T) {
 
 	calledDNF := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && len(args) > 1 && strings.Contains(args[1], "dnf upgrade") {
+		if name == "sudo" && len(args) > 1 && args[0] == "dnf" && args[1] == "upgrade" {
 			calledDNF = true
 		}
 		return exec.Command("echo", "success")
@@ -126,7 +126,7 @@ func TestUpdateCmd_Dispatch_Ubuntu(t *testing.T) {
 
 	calledAPT := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && len(args) > 1 && strings.Contains(args[1], "apt-get update") {
+		if name == "sudo" && len(args) > 1 && args[0] == "apt-get" && args[1] == "update" {
 			calledAPT = true
 		}
 		return exec.Command("echo", "success")
@@ -185,7 +185,7 @@ func TestUpdateBrew(t *testing.T) {
 
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "brew update") {
+		if name == "brew" && len(args) > 0 && args[0] == "update" {
 			called = true
 		}
 		return exec.Command("echo", "success")
@@ -211,7 +211,7 @@ func TestUpdateMacOS(t *testing.T) {
 	}
 	calledBrew := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "brew update") {
+		if name == "brew" && len(args) > 0 && args[0] == "update" {
 			calledBrew = true
 		}
 		return exec.Command("echo", "success")
@@ -236,7 +236,7 @@ func TestUpdateRaspberryPi(t *testing.T) {
 	}
 	calledAPT := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "bash" && strings.Contains(args[1], "apt-get update") {
+		if name == "sudo" && len(args) > 1 && args[0] == "apt-get" && args[1] == "update" {
 			calledAPT = true
 		}
 		return exec.Command("echo", "success")

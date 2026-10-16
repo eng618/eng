@@ -40,6 +40,7 @@ This is a personal CLI to facilitate developer workflows and maintain developmen
 * [eng doctor](eng_doctor.md)	 - Check system health and verify dependencies
 * [eng dotfiles](eng_dotfiles.md)	 - Manage dotfiles
 * [eng files](eng_files.md)	 - A command for managing files
+* [eng fmt](eng_fmt.md)	 - Check or format code with Oxfmt using @gv-tech/oxc-config style
 * [eng git](eng_git.md)	 - Manage multiple git repositories
 * [eng gitlab](eng_gitlab.md)	 - Interact with GitLab via glab
 * [eng gpg](eng_gpg.md)	 - Manage GPG keys for commit signing and encryption

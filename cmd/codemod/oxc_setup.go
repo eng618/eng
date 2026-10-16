@@ -139,6 +139,8 @@ ESLint/Prettier setup is detected.`,
 			return
 		}
 
+		checkOxcConfigNativeTypes()
+
 		if oxcRemoveEslint {
 			if err := removeEslintPrettier(); err != nil {
 				log.Error("Failed to remove ESLint/Prettier: %v", err)
@@ -477,6 +479,8 @@ func writeOxcConfigs(preset string, typeAware bool) error {
 }
 
 // injectTypeAware adds the typeAware preset to an oxlint config's extends list.
+// Presets from @gv-tech/oxc-config carry native upstream OxlintConfig types,
+// so no casts are needed in generated configs.
 func injectTypeAware(config string) string {
 	if strings.Contains(config, "typeAware") {
 		return config
@@ -497,6 +501,25 @@ func injectTypeAware(config string) string {
 		}
 	}
 	return config
+}
+
+// checkOxcConfigNativeTypes warns when the installed @gv-tech/oxc-config
+// predates native upstream types. Generated configs are cast-free and rely
+// on presets typed as oxlint's OxlintConfig / oxfmt's OxfmtConfig; older
+// releases with local structural types surface TS2322/TS2345 until upgraded.
+func checkOxcConfigNativeTypes() {
+	data, err := os.ReadFile(filepath.Join(
+		"node_modules", "@gv-tech", "oxc-config", "dist", "types.d.ts",
+	))
+	if err != nil {
+		log.Warn("Could not verify @gv-tech/oxc-config types; " +
+			"generated configs require a release with native upstream types")
+		return
+	}
+	if !strings.Contains(string(data), "from 'oxlint'") {
+		log.Warn("Installed @gv-tech/oxc-config predates native upstream types; " +
+			"upgrade to silence type errors in generated configs")
+	}
 }
 
 // updatePackageJSONForOxc updates scripts and lint-staged for Oxlint + Oxfmt.

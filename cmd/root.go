@@ -38,6 +38,7 @@ import (
 	"github.com/eng618/eng/cmd/doctor"
 	"github.com/eng618/eng/cmd/dotfiles"
 	"github.com/eng618/eng/cmd/files"
+	fmtcmd "github.com/eng618/eng/cmd/fmt"
 	"github.com/eng618/eng/cmd/git"
 	"github.com/eng618/eng/cmd/gitlab"
 	"github.com/eng618/eng/cmd/gpg"
@@ -162,6 +163,7 @@ func init() {
 	// Subcommands & Group Assignment
 	asdf.AsdfCmd.GroupID = "devtools"
 	codemod.CodemodCmd.GroupID = "devtools"
+	fmtcmd.FmtCmd.GroupID = "devtools"
 	git.GitCmd.GroupID = "devtools"
 	gitlab.GitLabCmd.GroupID = "devtools"
 	gpg.GPGCmd.GroupID = "devtools"
@@ -202,6 +204,7 @@ func init() {
 	rootCmd.AddCommand(doctor.DoctorCmd)
 	rootCmd.AddCommand(dotfiles.DotfilesCmd)
 	rootCmd.AddCommand(files.FilesCmd)
+	rootCmd.AddCommand(fmtcmd.FmtCmd)
 	rootCmd.AddCommand(gitlab.GitLabCmd)
 	rootCmd.AddCommand(git.GitCmd)
 	rootCmd.AddCommand(gpg.GPGCmd)

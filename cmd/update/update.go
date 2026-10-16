@@ -97,7 +97,7 @@ func updateFedora(isVerbose, autoApprove bool, cleanupTimeout int) {
 	log.Message("Running system update for Fedora/RHEL...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
-	updateCmd := execCommand("bash", "-c", "sudo dnf upgrade --refresh -y")
+	updateCmd := execCommand("sudo", "dnf", "upgrade", "--refresh", "-y")
 	updateCmd.Stdout = log.Writer()
 	updateCmd.Stderr = log.ErrorWriter()
 	if err := updateCmd.Run(); err != nil {
@@ -117,11 +117,19 @@ func updateDebianUbuntu(isVerbose, autoApprove bool, cleanupTimeout int) {
 	log.Message("Running system update for Ubuntu/Debian...")
 	log.Message("About to run a command with sudo. You may be prompted for your system password.")
 
-	updateCmd := execCommand("bash", "-c", "sudo apt-get update && sudo apt-get upgrade -y")
-	updateCmd.Stdout = log.Writer()
-	updateCmd.Stderr = log.ErrorWriter()
-	if err := updateCmd.Run(); err != nil {
-		log.Error("Error updating system with APT: %s", err)
+	updateCmd1 := execCommand("sudo", "apt-get", "update")
+	updateCmd1.Stdout = log.Writer()
+	updateCmd1.Stderr = log.ErrorWriter()
+	if err := updateCmd1.Run(); err != nil {
+		log.Error("Error updating system with APT (update): %s", err)
+		return
+	}
+
+	updateCmd2 := execCommand("sudo", "apt-get", "upgrade", "-y")
+	updateCmd2.Stdout = log.Writer()
+	updateCmd2.Stderr = log.ErrorWriter()
+	if err := updateCmd2.Run(); err != nil {
+		log.Error("Error updating system with APT (upgrade): %s", err)
 		return
 	}
 	log.Success("System updated successfully.")
@@ -214,16 +222,29 @@ func updateBrew(isVerbose bool) {
 
 	sizeBefore := asdf.CalculateDirSize(brewCacheDir)
 
-	updateCmd := execCommand("bash", "-c", "brew update && brew outdated && brew upgrade && brew cleanup")
-	if isVerbose {
-		updateCmd.Stdout = log.Writer()
-		updateCmd.Stderr = log.ErrorWriter()
-	} else {
-		var stderrBuf bytes.Buffer
-		updateCmd.Stderr = &stderrBuf
+	brewCommands := [][]string{
+		{"brew", "update"},
+		{"brew", "outdated"},
+		{"brew", "upgrade"},
+		{"brew", "cleanup"},
 	}
 
-	runErr := updateCmd.Run()
+	var runErr error
+	for _, args := range brewCommands {
+		cmd := execCommand(args[0], args[1:]...)
+		if isVerbose {
+			cmd.Stdout = log.Writer()
+			cmd.Stderr = log.ErrorWriter()
+		} else {
+			var stderrBuf bytes.Buffer
+			cmd.Stderr = &stderrBuf
+		}
+		if err := cmd.Run(); err != nil {
+			runErr = err
+			break
+		}
+	}
+
 	if spinner != nil {
 		spinner.Stop()
 	}

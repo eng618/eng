@@ -91,3 +91,19 @@ func TestEffectivePath(t *testing.T) {
 	_, err = EffectivePath("not-a-valid-url", "")
 	assert.Error(t, err)
 }
+
+func BenchmarkRepoNameFromURL(b *testing.B) {
+	b.ReportAllocs()
+	urls := []string{
+		"git@github.com:org/my-repo.git",
+		"ssh://git@github.com/org/my-repo.git",
+		"https://github.com/org/my-repo.git",
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, u := range urls {
+			_, _ = RepoNameFromURL(u)
+		}
+	}
+}

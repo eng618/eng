@@ -129,10 +129,7 @@ func selectKeyFromKeyring(verbose bool) (string, GPGKeyInfo, bool) {
 			keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
 		}
 		log.Message("Detected GPG secret key: %s", keyLabel)
-		useDetected, err := ui.Confirm(
-			fmt.Sprintf("Configure detected GPG key %s?", keyLabel),
-			true,
-		)
+		useDetected, err := ui.Confirm(fmt.Sprintf("Configure detected GPG key %s?", keyLabel), true)
 		if err == nil && useDetected {
 			target := k.KeyID
 			if target == "" {
@@ -193,12 +190,7 @@ func promptKeyIDManually() (string, GPGKeyInfo, error) {
 }
 
 // promptAndRemoveMasterKeys asks user which master key(s) to remove, supporting single and multi-selection.
-func promptAndRemoveMasterKeys(
-	activeKeyID string,
-	activeKeyInfo GPGKeyInfo,
-	verbose bool,
-	removedAny *bool,
-) error {
+func promptAndRemoveMasterKeys(activeKeyID string, activeKeyInfo GPGKeyInfo, verbose bool, removedAny *bool) error {
 	availableKeys, _ := listLocalSecretGPGKeys(verbose)
 	var keysWithMaster []GPGKeyInfo
 	for _, k := range availableKeys {
@@ -223,10 +215,7 @@ func promptAndRemoveMasterKeys(
 			keyLabel = fmt.Sprintf("Key ID: %s", k.KeyID)
 		}
 		removeKey, err := ui.Confirm(
-			fmt.Sprintf(
-				"Remove master key for %s and keep only subkeys for enhanced security?",
-				keyLabel,
-			),
+			fmt.Sprintf("Remove master key for %s and keep only subkeys for enhanced security?", keyLabel),
 			true,
 		)
 		if err != nil {
@@ -276,10 +265,7 @@ func promptAndRemoveMasterKeys(
 		log.Start("Removing master key for %s...", label)
 		if err := removeGPGMasterKey(targetKey, verbose); err != nil {
 			log.Error("Failed to remove master key for %s: %v", label, err)
-			log.Message(
-				"You can manually remove it later by running: gpg --delete-secret-keys %s",
-				targetKey,
-			)
+			log.Message("You can manually remove it later by running: gpg --delete-secret-keys %s", targetKey)
 		} else {
 			*removedAny = true
 			log.Success("Master key removed for %s - only subkeys remain for local signing/encryption", label)
@@ -320,11 +306,7 @@ func removeGPGMasterKey(keyID string, verbose bool) error {
 	log.Verbose(verbose, "Subkeys exported to: "+subkeysExportPath)
 
 	// Step 2: Delete the entire secret key using full fingerprint (required by GPG in batch mode)
-	log.Verbose(
-		verbose,
-		"Removing master key from local keyring using fingerprint %s...",
-		primaryFpr,
-	)
+	log.Verbose(verbose, "Removing master key from local keyring using fingerprint %s...", primaryFpr)
 	cmd = execCommand("gpg", "--batch", "--yes", "--delete-secret-keys", primaryFpr)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.ErrorWriter()

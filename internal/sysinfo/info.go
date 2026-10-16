@@ -340,7 +340,8 @@ func collectCPU(ctx context.Context) (string, int, int) {
 
 func fallbackCPUModel(ctx context.Context) string {
 	if RuntimeGOOS == "darwin" {
-		if out, err := runCmd(ctx, "sysctl", "-n", "machdep.cpu.brand_string"); err == nil && out != "" {
+		if out, err := runCmd(ctx, "sysctl", "-n", "machdep.cpu.brand_string"); err == nil &&
+			out != "" {
 			return out
 		}
 
@@ -529,10 +530,12 @@ func fallbackUptime(ctx context.Context) uint64 {
 	return parseProcUptime(string(data))
 }
 
+var boottimeRegex = regexp.MustCompile(`sec = (\d+)`)
+
 // parseBoottimeSec extracts boot epoch seconds from
 // `sysctl -n kern.boottime` output like "{ sec = 1234, usec = 0 } ...".
 func parseBoottimeSec(out string) (uint64, bool) {
-	matches := regexp.MustCompile(`sec = (\d+)`).FindStringSubmatch(out)
+	matches := boottimeRegex.FindStringSubmatch(out)
 	if len(matches) != 2 {
 		return 0, false
 	}
@@ -938,9 +941,11 @@ func collectBattery(ctx context.Context) string {
 	return ""
 }
 
+var pmsetBattPctRe = regexp.MustCompile(`(\d+)%`)
+
 // parsePmsetBatt extracts "NN% (state)" from `pmset -g batt` output.
 func parsePmsetBatt(out string) string {
-	pct := regexp.MustCompile(`(\d+)%`).FindStringSubmatch(out)
+	pct := pmsetBattPctRe.FindStringSubmatch(out)
 	if len(pct) != 2 {
 		return ""
 	}
@@ -998,10 +1003,12 @@ func parseThermalZoneMillis(data string) (string, bool) {
 	return fmt.Sprintf("%.1f°C", milli/1000), true
 }
 
+var vcgencmdTempRegex = regexp.MustCompile(`([\d.]+)'?C`)
+
 // parseVcgencmdTemp extracts the temperature from
 // `vcgencmd measure_temp` output like "temp=48.2'C".
 func parseVcgencmdTemp(out string) string {
-	if matches := regexp.MustCompile(`([\d.]+)'?C`).FindStringSubmatch(out); len(matches) == 2 {
+	if matches := vcgencmdTempRegex.FindStringSubmatch(out); len(matches) == 2 {
 		return matches[1] + "°C"
 	}
 

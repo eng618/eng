@@ -9,8 +9,8 @@
     // Same heading text under different sections (e.g. per-command
     // "Commands"/"Flags" in the command reference) is fine.
     "MD024": {
-      "siblings_only": true
-    }
+      "siblings_only": true,
+    },
   },
   "globs": [
     "README.md",
@@ -18,7 +18,7 @@
     "docs/tutorials/*.md",
     "docs/how-to/*.md",
     "docs/explanation/*.md",
-    "docs/reference/commands.md"
+    "docs/reference/commands.md",
   ],
-  "ignores": ["docs/reference/cli/**", "node_modules/**"]
+  "ignores": ["docs/reference/cli/**", "node_modules/**"],
 }
