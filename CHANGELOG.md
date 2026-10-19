@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.65.0](https://github.com/eng618/eng/compare/v1.64.0...v1.65.0) (2026-10-16)
+
+
+### Features
+
+* Add stale git lock detection and graceful operation cancellation ([c48a075](https://github.com/eng618/eng/commit/c48a07549e9d4a13eff88314ad2cb66d3fac8fec))
+
 ## [1.64.0](https://github.com/eng618/eng/compare/v1.63.0...v1.64.0) (2026-10-16)
 
 
