@@ -274,5 +274,9 @@ func copyFile(srcPath, destPath string, isVerbose bool) error {
 	}()
 
 	_, err = io.Copy(dest, src)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(destPath, srcInfo.Mode())
 }
