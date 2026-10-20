@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.65.1](https://github.com/eng618/eng/compare/v1.65.0...v1.65.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* Preserve file permissions when copying dotfiles by applying source file mode ([a81800c](https://github.com/eng618/eng/commit/a81800cdbc577e03506e09fedc1f2998f7ea0bc6))
+
 ## [1.65.0](https://github.com/eng618/eng/compare/v1.64.0...v1.65.0) (2026-10-16)
 
 
