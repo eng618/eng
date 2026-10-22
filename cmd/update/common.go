@@ -2,7 +2,6 @@ package update
 
 import (
 	"os"
-	"runtime"
 
 	"github.com/eng618/eng/internal/execx"
 	"github.com/eng618/eng/internal/paths"
@@ -19,22 +18,3 @@ var (
 	stat         = os.Stat
 	detectDistro = sysinfo.Detect
 )
-
-// openURL opens url in the default browser.
-// TODO: move to internal/browser with setup/software_list.go openURL.
-func openURL(url string) error {
-	var cmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "cmd"
-		args = []string{"/c", "start"}
-	case "darwin":
-		cmd = "open"
-	default: // linux, freebsd, openbsd, netbsd
-		cmd = "xdg-open"
-	}
-	args = append(args, url)
-	return execCommand(cmd, args...).Start()
-}
