@@ -138,24 +138,47 @@ func TestWriteOxcConfigs_Presets(t *testing.T) {
 		t.Run(tt.preset, func(t *testing.T) {
 			chdirTemp(t)
 			require.NoError(t, writeOxcConfigs(tt.preset, false))
-			lintData, err := os.ReadFile("oxlint.config.ts")
+			lintData, err := os.ReadFile("oxlint.config.mts")
 			require.NoError(t, err)
 			assert.Contains(t, string(lintData), tt.contains)
 			// Cast-free: presets carry native upstream types, no `as` needed.
 			assert.NotContains(t, string(lintData), " as OxlintConfig")
 			assert.NotContains(t, string(lintData), "as unknown as")
-			fmtData, err := os.ReadFile("oxfmt.config.ts")
+			fmtData, err := os.ReadFile("oxfmt.config.mts")
 			require.NoError(t, err)
 			assert.Contains(t, string(fmtData), "@gv-tech/oxc-config/oxfmt")
 			assert.NotContains(t, string(fmtData), " as OxfmtConfig")
+			_, err = os.Stat("oxlint.config.ts")
+			assert.True(t, os.IsNotExist(err))
+			_, err = os.Stat("oxfmt.config.ts")
+			assert.True(t, os.IsNotExist(err))
 		})
 	}
+}
+
+func TestWriteOxcConfigs_ReplacesLegacyTS(t *testing.T) {
+	chdirTemp(t)
+	require.NoError(t, os.WriteFile("oxlint.config.ts", []byte("legacy lint"), 0o644))
+	require.NoError(t, os.WriteFile("oxfmt.config.ts", []byte("legacy fmt"), 0o644))
+	require.NoError(t, writeOxcConfigs("recommended", false))
+
+	_, err := os.Stat("oxlint.config.ts")
+	assert.True(t, os.IsNotExist(err))
+	_, err = os.Stat("oxfmt.config.ts")
+	assert.True(t, os.IsNotExist(err))
+
+	lintData, err := os.ReadFile("oxlint.config.mts")
+	require.NoError(t, err)
+	assert.Contains(t, string(lintData), "@gv-tech/oxc-config/recommended")
+	fmtData, err := os.ReadFile("oxfmt.config.mts")
+	require.NoError(t, err)
+	assert.Contains(t, string(fmtData), "@gv-tech/oxc-config/oxfmt")
 }
 
 func TestWriteOxcConfigs_TypeAware(t *testing.T) {
 	chdirTemp(t)
 	require.NoError(t, writeOxcConfigs("vite", true))
-	data, err := os.ReadFile("oxlint.config.ts")
+	data, err := os.ReadFile("oxlint.config.mts")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "typeAware")
 	assert.Contains(t, string(data), "@gv-tech/oxc-config/type-aware")
@@ -328,10 +351,10 @@ func TestOxcSetupCmd_FullRun_RemovesEslint(t *testing.T) {
 
 	OxcSetupCmd.Run(OxcSetupCmd, []string{})
 
-	lintData, err := os.ReadFile("oxlint.config.ts")
+	lintData, err := os.ReadFile("oxlint.config.mts")
 	require.NoError(t, err)
 	assert.Contains(t, string(lintData), "@gv-tech/oxc-config")
-	_, err = os.ReadFile("oxfmt.config.ts")
+	_, err = os.ReadFile("oxfmt.config.mts")
 	require.NoError(t, err)
 	_, err = os.Stat("eslint.config.mjs")
 	assert.True(t, os.IsNotExist(err))
@@ -380,7 +403,7 @@ func TestOxcSetupCmd_PromptsOnDetect(t *testing.T) {
 
 	OxcSetupCmd.Run(OxcSetupCmd, []string{})
 
-	_, err := os.ReadFile("oxlint.config.ts")
+	_, err := os.ReadFile("oxlint.config.mts")
 	require.NoError(t, err)
 	pkgData, err := os.ReadFile("package.json")
 	require.NoError(t, err)

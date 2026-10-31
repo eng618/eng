@@ -6,9 +6,14 @@ Setup Oxlint + Oxfmt via @gv-tech/oxc-config
 
 Install and configure Oxlint + Oxfmt for a Node.js project using @gv-tech/oxc-config.
 
-Writes oxlint.config.ts and oxfmt.config.ts, updates package.json scripts
+Writes oxlint.config.mts and oxfmt.config.mts, updates package.json scripts
 (lint, lint:fix, format, format:ci), configures lint-staged + Husky, and can
 migrate off ESLint/Prettier.
+
+The .mts extension keeps the configs as ES modules when package.json "type"
+is "commonjs" or unset. A .ts config is CommonJS in that case, so its import
+statements fail to load. Re-running removes oxlint.config.ts and
+oxfmt.config.ts, which cannot sit beside the .mts files.
 
 Migration: pass --remove-eslint to uninstall the ESLint/Prettier stack and
 delete legacy configs, or run without the flag to be prompted when an

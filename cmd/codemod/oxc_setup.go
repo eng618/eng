@@ -44,6 +44,14 @@ var oxlintBaseTmpl []byte
 //go:embed oxfmt.config.tmpl
 var oxfmtConfigTmpl []byte
 
+// Generated configs use .mts so Node always loads them as ES modules.
+// .ts follows package.json "type", and import fails when that is "commonjs"
+// or unset. Oxlint and Oxfmt auto-discover .mts. .ts and .mts cannot coexist.
+const (
+	oxlintConfigFile = "oxlint.config.mts"
+	oxfmtConfigFile  = "oxfmt.config.mts"
+)
+
 // oxcConfirmPrompt asks a yes/no question. Defaults to ui.Confirm so tests can override it.
 var oxcConfirmPrompt = ui.Confirm
 
@@ -100,9 +108,14 @@ var OxcSetupCmd = &cobra.Command{
 	Short: "Setup Oxlint + Oxfmt via @gv-tech/oxc-config",
 	Long: `Install and configure Oxlint + Oxfmt for a Node.js project using @gv-tech/oxc-config.
 
-Writes oxlint.config.ts and oxfmt.config.ts, updates package.json scripts
+Writes oxlint.config.mts and oxfmt.config.mts, updates package.json scripts
 (lint, lint:fix, format, format:ci), configures lint-staged + Husky, and can
 migrate off ESLint/Prettier.
+
+The .mts extension keeps the configs as ES modules when package.json "type"
+is "commonjs" or unset. A .ts config is CommonJS in that case, so its import
+statements fail to load. Re-running removes oxlint.config.ts and
+oxfmt.config.ts, which cannot sit beside the .mts files.
 
 Migration: pass --remove-eslint to uninstall the ESLint/Prettier stack and
 delete legacy configs, or run without the flag to be prompted when an
@@ -170,7 +183,7 @@ ESLint/Prettier setup is detected.`,
 		}
 
 		if err := writeOxcConfigs(preset, oxcTypeAware); err != nil {
-			log.Error("Failed to write oxlint.config.ts / oxfmt.config.ts: %v", err)
+			log.Error("Failed to write %s / %s: %v", oxlintConfigFile, oxfmtConfigFile, err)
 			return
 		}
 
@@ -274,7 +287,7 @@ func detectViteUsage() bool {
 	return false
 }
 
-// checkNodeVersion warns when node is older than the 22.18 minimum required for oxlint.config.ts.
+// checkNodeVersion warns when node is older than the 22.18 minimum required to run the .mts configs.
 func checkNodeVersion() {
 	cmd := execCommand("node", "--version")
 	out, err := cmd.Output()
@@ -449,9 +462,12 @@ func removeEslintPrettier() error {
 	return nil
 }
 
-// writeOxcConfigs writes oxlint.config.ts and oxfmt.config.ts files.
+// writeOxcConfigs writes oxlint.config.mts and oxfmt.config.mts.
+// .mts loads as an ES module even when package.json "type" is "commonjs"
+// or unset. .ts does not, so its import statements fail under Node.
+// Any previous .ts configs are removed; the two extensions cannot coexist.
 func writeOxcConfigs(preset string, typeAware bool) error {
-	log.Info("Writing oxlint.config.ts and oxfmt.config.ts...")
+	log.Info("Writing %s and %s...", oxlintConfigFile, oxfmtConfigFile)
 	var data []byte
 	switch preset {
 	case "next":
@@ -472,10 +488,31 @@ func writeOxcConfigs(preset string, typeAware bool) error {
 		data = []byte(injectTypeAware(string(data)))
 	}
 
-	if err := os.WriteFile("oxlint.config.ts", data, 0o644); err != nil {
+	if err := os.WriteFile(oxlintConfigFile, data, 0o644); err != nil {
 		return err
 	}
-	return os.WriteFile("oxfmt.config.ts", oxfmtConfigTmpl, 0o644)
+	if err := os.WriteFile(oxfmtConfigFile, oxfmtConfigTmpl, 0o644); err != nil {
+		return err
+	}
+	return removeLegacyOxcConfigs()
+}
+
+// removeLegacyOxcConfigs deletes oxlint.config.ts and oxfmt.config.ts.
+// Those names cannot sit beside the .mts configs Oxlint and Oxfmt load.
+func removeLegacyOxcConfigs() error {
+	for _, name := range []string{"oxlint.config.ts", "oxfmt.config.ts"} {
+		if _, err := os.Stat(name); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return err
+		}
+		log.Info("Removing legacy %s...", name)
+		if err := os.Remove(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // injectTypeAware adds the typeAware preset to an oxlint config's extends list.
