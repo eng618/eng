@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.66.0](https://github.com/eng618/eng/compare/v1.65.1...v1.66.0) (2026-10-31)
+
+
+### Features
+
+* Migrate oxc config files from .ts to .mts extension ([9feff57](https://github.com/eng618/eng/commit/9feff57e42245280854ddf1380bcdc15b82ba28b))
+
 ## [1.65.1](https://github.com/eng618/eng/compare/v1.65.0...v1.65.1) (2026-10-20)
 
 
