@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.66.1](https://github.com/eng618/eng/compare/v1.66.0...v1.66.1) (2026-11-04)
+
+
+### Build System
+
+* **deps:** Bump github.com/shirou/gopsutil/v4 from 4.26.9 to 4.26.10 ([#206](https://github.com/eng618/eng/issues/206)) ([7792b09](https://github.com/eng618/eng/commit/7792b09b8dbe53b02249e889df796a148abbbff4))
+
 ## [1.66.0](https://github.com/eng618/eng/compare/v1.65.1...v1.66.0) (2026-10-31)
 
 
