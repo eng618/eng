@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/eng618/eng/internal/browser"
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/ui"
 )
@@ -25,23 +26,6 @@ type Software struct {
 	OS string
 }
 
-func openURL(url string) error {
-	var cmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "cmd"
-		args = []string{"/c", "start"}
-	case "darwin":
-		cmd = "open"
-	default: // linux, freebsd, openbsd, netbsd
-		cmd = "xdg-open"
-	}
-	args = append(args, url)
-	return execCommand(cmd, args...).Start()
-}
-
 // Helpers for checks and installs
 
 func checkFalse() bool {
@@ -50,7 +34,7 @@ func checkFalse() bool {
 
 func installByURL(url string) func() error {
 	return func() error {
-		return openURL(url)
+		return browser.OpenURL(url)
 	}
 }
 
@@ -261,8 +245,12 @@ func getSecurityAndPrivacyApps() []Software {
 			Description: "VPN & Privacy Suite",
 			Optional:    true,
 			URL:         "https://surfshark.com/download",
-			Check:       checkByBundleIDOrPath("com.surfshark.vpnclient.macos", "surfshark", "surfshark-vpn"),
-			Install:     installByURL("https://surfshark.com/download"),
+			Check: checkByBundleIDOrPath(
+				"com.surfshark.vpnclient.macos",
+				"surfshark",
+				"surfshark-vpn",
+			),
+			Install: installByURL("https://surfshark.com/download"),
 		},
 	}
 }
@@ -274,8 +262,12 @@ func getBrowserApps() []Software {
 			Description: "Web Browser",
 			Optional:    true,
 			URL:         "https://www.google.com/chrome/",
-			Check:       checkByBundleIDOrPath("com.google.Chrome", "google-chrome", "google-chrome-stable"),
-			Install:     installByURL("https://www.google.com/chrome/"),
+			Check: checkByBundleIDOrPath(
+				"com.google.Chrome",
+				"google-chrome",
+				"google-chrome-stable",
+			),
+			Install: installByURL("https://www.google.com/chrome/"),
 		},
 		{
 			Name:        "Brave Browser",
@@ -372,8 +364,12 @@ func getMediaAndCommunicationApps() []Software {
 			Description: "Secure Messaging",
 			Optional:    true,
 			URL:         "https://signal.org/download/",
-			Check:       checkByBundleIDOrPath("org.whispersystems.signal-desktop", "signal-desktop", "signal"),
-			Install:     installByURL("https://signal.org/download/"),
+			Check: checkByBundleIDOrPath(
+				"org.whispersystems.signal-desktop",
+				"signal-desktop",
+				"signal",
+			),
+			Install: installByURL("https://signal.org/download/"),
 		},
 		{
 			Name:        "VLC",
@@ -478,7 +474,7 @@ func getCLITools() []Software {
 				}
 				log.Warn("Neither brew nor npm was found to install bitwarden-cli automatically.")
 				log.Message("Please install bitwarden-cli manually or install Homebrew/npm.")
-				return openURL("https://bitwarden.com/help/cli/")
+				return browser.OpenURL("https://bitwarden.com/help/cli/")
 			},
 		},
 	}
@@ -508,7 +504,13 @@ func setupSoftware(verbose bool) {
 	for _, sw := range allSoftware {
 		// Skip if OS mismatch
 		if sw.OS != "" && sw.OS != runtime.GOOS {
-			log.Verbose(verbose, "Skipping %s (OS mismatch: need %s, have %s)", sw.Name, sw.OS, runtime.GOOS)
+			log.Verbose(
+				verbose,
+				"Skipping %s (OS mismatch: need %s, have %s)",
+				sw.Name,
+				sw.OS,
+				runtime.GOOS,
+			)
 			continue
 		}
 
@@ -527,7 +529,11 @@ func setupSoftware(verbose bool) {
 
 	// Prompt for optional software
 	if len(optionalOptions) > 0 {
-		selected, err := ui.MultiSelect("Select additional software to install:", optionalOptions, nil)
+		selected, err := ui.MultiSelect(
+			"Select additional software to install:",
+			optionalOptions,
+			nil,
+		)
 		if err != nil {
 			log.Error("Selection canceled: %v", err)
 			return

@@ -49,7 +49,11 @@ func TestCheckByBundleIDOrPath_Linux(t *testing.T) {
 		return "", errors.New("not found")
 	}
 
-	checker := checkByBundleIDOrPath("org.whispersystems.signal-desktop", "signal-desktop", "signal")
+	checker := checkByBundleIDOrPath(
+		"org.whispersystems.signal-desktop",
+		"signal-desktop",
+		"signal",
+	)
 	if !checker() {
 		t.Error("expected checkByBundleIDOrPath to return true when linux binary exists")
 	}
@@ -117,7 +121,8 @@ func TestBitwardenCLI_Install_NPM(t *testing.T) {
 
 	calledNPM := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "npm" && len(args) >= 3 && args[0] == "install" && args[1] == "-g" && args[2] == "@bitwarden/cli" {
+		if name == "npm" && len(args) >= 3 && args[0] == "install" && args[1] == "-g" &&
+			args[2] == "@bitwarden/cli" {
 			calledNPM = true
 		}
 		return exec.Command("echo", "success")
@@ -141,26 +146,9 @@ func TestBitwardenCLI_Install_NPM(t *testing.T) {
 	}
 
 	if !calledNPM {
-		t.Error("expected bitwarden-cli to install via npm when brew is absent and npm is available")
-	}
-}
-
-func TestOpenURL(t *testing.T) {
-	origExec := execCommand
-	defer func() { execCommand = origExec }()
-
-	called := false
-	execCommand = func(name string, args ...string) *exec.Cmd {
-		if name == "open" || name == "xdg-open" || name == "cmd" {
-			called = true
-		}
-		return exec.Command("echo", "success")
-	}
-
-	_ = openURL("https://example.com")
-
-	if !called {
-		t.Error("openURL did not call any system command")
+		t.Error(
+			"expected bitwarden-cli to install via npm when brew is absent and npm is available",
+		)
 	}
 }
 
