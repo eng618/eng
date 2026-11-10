@@ -36,7 +36,7 @@ The telemetry client is engineered with a strict **privacy-first** approach:
    - Can be toggled on/off via the CLI: `eng config telemetry disable`.
 4. **Non-Blocking & Fail-Safe**:
    - Events are buffered in memory and sent via a background worker goroutine.
-   - On exit the CLI waits for the in-flight request to finish. A gateway failure (HTTP 502, 503, or 504) is retried once. The wait covers both attempts plus a short margin, and it returns as soon as OpenPanel accepts the event.
+   - On exit the CLI waits for the in-flight request to finish. A gateway failure (HTTP 502, 503, or 504) is retried once. The wait covers both attempts plus a short margin, and it returns as soon as OpenPanel accepts the event. A spinner appears when the wait lasts more than a moment.
    - Network errors, timeouts, or offline status are silently swallowed. With `--verbose`, a rejected request prints the HTTP status and a one-line response snippet.
 
 ---

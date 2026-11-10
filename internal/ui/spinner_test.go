@@ -38,6 +38,74 @@ func (l *lockedBuffer) Reset() {
 	l.b.Reset()
 }
 
+func TestRunWithDelayedSpinner(t *testing.T) {
+	var buf lockedBuffer
+	oldOut, oldDisable := Out, DisableProgress
+	Out = &buf
+	DisableProgress = false
+	trueVal := true
+	forceTTY = &trueVal
+	t.Cleanup(func() {
+		Out = oldOut
+		DisableProgress = oldDisable
+		forceTTY = nil
+	})
+
+	t.Run("fast work stays quiet", func(t *testing.T) {
+		buf.Reset()
+		RunWithDelayedSpinner("Sending telemetry...", 200*time.Millisecond, func() {})
+		if buf.Len() != 0 {
+			t.Fatalf("expected no spinner output, got %q", buf.String())
+		}
+	})
+
+	t.Run("slow work shows the spinner until it finishes", func(t *testing.T) {
+		buf.Reset()
+		release := make(chan struct{})
+		done := make(chan struct{})
+		go func() {
+			RunWithDelayedSpinner("Sending telemetry...", 20*time.Millisecond, func() {
+				<-release
+			})
+			close(done)
+		}()
+
+		deadline := time.Now().Add(time.Second)
+		for buf.Len() == 0 {
+			if time.Now().After(deadline) {
+				t.Fatal("expected spinner output")
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		if !strings.Contains(buf.String(), "Sending telemetry...") {
+			t.Fatalf("expected spinner message, got %q", buf.String())
+		}
+		close(release)
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("spinner did not stop")
+		}
+	})
+
+	t.Run("disabled progress stays quiet", func(t *testing.T) {
+		buf.Reset()
+		DisableProgress = true
+		t.Cleanup(func() { DisableProgress = false })
+		release := make(chan struct{})
+		go func() {
+			time.Sleep(30 * time.Millisecond)
+			close(release)
+		}()
+		RunWithDelayedSpinner("Sending telemetry...", 10*time.Millisecond, func() {
+			<-release
+		})
+		if buf.Len() != 0 {
+			t.Fatalf("expected no spinner output, got %q", buf.String())
+		}
+	})
+}
+
 func TestSpinner(t *testing.T) {
 	var buf bytes.Buffer
 	oldOut := Out

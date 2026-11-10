@@ -117,7 +117,11 @@ func ExecuteContext(ctx context.Context) {
 	}
 
 	telemetry.TrackCommand(targetCmd, targetArgs, duration, err)
-	telemetry.Drain(telemetry.ShutdownTimeout)
+	// A fast send stays quiet. The spinner appears only when the exit wait
+	// runs long enough to look stuck (retry or timeout).
+	ui.RunWithDelayedSpinner("Sending telemetry...", 400*time.Millisecond, func() {
+		telemetry.Drain(telemetry.ShutdownTimeout)
+	})
 
 	// npm-style update notice (stderr, cached, almost silent).
 	updatecheck.NotifyIfAvailable(invokedCommandName(targetCmd))

@@ -42,6 +42,39 @@ type Spinner struct {
 	frame     int
 }
 
+// RunWithDelayedSpinner runs fn. When fn is still running after grace, a
+// spinner with message is shown until fn returns, then cleared. Fast calls
+// stay quiet. DisableProgress skips the spinner and still waits for fn.
+func RunWithDelayedSpinner(message string, grace time.Duration, fn func()) {
+	done := make(chan struct{})
+	go func() {
+		fn()
+		close(done)
+	}()
+	if DisableProgress {
+		<-done
+		return
+	}
+
+	timer := time.NewTimer(grace)
+	select {
+	case <-done:
+		if !timer.Stop() {
+			select {
+			case <-timer.C:
+			default:
+			}
+		}
+		return
+	case <-timer.C:
+	}
+
+	sp := NewSpinner(message)
+	sp.Start()
+	<-done
+	sp.Stop()
+}
+
 // NewSpinner creates a new spinner with default theme styling.
 func NewSpinner(message string) *Spinner {
 	p := progress.New(
