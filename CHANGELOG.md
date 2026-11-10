@@ -1,5 +1,12 @@
 <a name="unreleased"></a>
 
+## [1.66.2](https://github.com/eng618/eng/compare/v1.66.1...v1.66.2) (2026-11-10)
+
+
+### Code Refactoring
+
+* **version:** Enhance release fetching mechanism ([d704e75](https://github.com/eng618/eng/commit/d704e7589d282974842501c0262514457dbf2059))
+
 ## [1.66.1](https://github.com/eng618/eng/compare/v1.66.0...v1.66.1) (2026-11-10)
 
 
