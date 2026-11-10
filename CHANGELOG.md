@@ -1,5 +1,13 @@
 <a name="unreleased"></a>
 
+## [1.66.3](https://github.com/eng618/eng/compare/v1.66.2...v1.66.3) (2026-11-10)
+
+
+### Code Refactoring
+
+* **telemetry:** Implement delayed spinner for telemetry sending ([3a2901c](https://github.com/eng618/eng/commit/3a2901c38e8478b718719e1a3a3f59e7a7bd7d2b))
+* **telemetry:** Improve error handling and retry logic for telemetry requests ([58507b5](https://github.com/eng618/eng/commit/58507b585f3f3be4c83ec3341479231fc98106d9))
+
 ## [1.66.2](https://github.com/eng618/eng/compare/v1.66.1...v1.66.2) (2026-11-10)
 
 
