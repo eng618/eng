@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime"
 	"strings"
@@ -18,12 +19,19 @@ import (
 
 const (
 	defaultHTTPTimeout = 2 * time.Second
+	// transientRetryDelay is the pause before repeating a gateway failure.
+	transientRetryDelay = 200 * time.Millisecond
+	// transientRetries is how many extra attempts follow HTTP 502, 503, or 504.
+	// Those statuses come from the gateway in front of OpenPanel, not from a
+	// rejected event.
+	transientRetries = 1
 	// ShutdownTimeout is how long the process should wait for queued telemetry
-	// to be accepted. It covers the HTTP deadline plus a short margin so a
-	// cold TLS handshake is not abandoned when the CLI exits.
-	ShutdownTimeout    = defaultHTTPTimeout + 500*time.Millisecond
+	// to be accepted. It covers two HTTP attempts, the pause between them, and
+	// a short margin so a cold TLS handshake is not abandoned when the CLI exits.
+	ShutdownTimeout    = 2*defaultHTTPTimeout + transientRetryDelay + 500*time.Millisecond
 	eventQueueCapacity = 100
 	sdkName            = "eng"
+	maxErrorSnippet    = 160
 )
 
 // EventData holds the inner payload fields expected by OpenPanel track API.
@@ -179,7 +187,9 @@ func cloneProperties(props map[string]any) map[string]any {
 
 // sendHTTP executes the HTTP POST request to OpenPanel.
 func (c *Client) sendHTTP(payload Payload) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultHTTPTimeout)
+	// Each attempt has its own deadline. The parent covers one retry of a
+	// gateway response that arrives inside the first deadline.
+	ctx, cancel := context.WithTimeout(context.Background(), 2*defaultHTTPTimeout+transientRetryDelay)
 	defer cancel()
 
 	_, err := c.sendHTTPRequest(ctx, payload)
@@ -194,10 +204,42 @@ func (c *Client) sendHTTPRequest(ctx context.Context, payload Payload) (int, err
 		return 0, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(jsonData))
+	var status int
+	var snippet string
+	var reqErr error
+	for attempt := 0; attempt <= transientRetries; attempt++ {
+		if attempt > 0 {
+			if err := wait(ctx, transientRetryDelay); err != nil {
+				break
+			}
+		}
+		status, snippet, reqErr = c.postTrack(ctx, endpoint, jsonData)
+		if reqErr == nil {
+			return status, nil
+		}
+		if !isTransientStatus(status) {
+			break
+		}
+	}
+	if status >= 400 {
+		if snippet != "" {
+			log.Verbose(c.isVerbose, "Telemetry returned HTTP %d: %s", status, c.redact(snippet))
+		} else {
+			log.Verbose(c.isVerbose, "Telemetry returned HTTP %d", status)
+		}
+		return status, reqErr
+	}
+	log.Verbose(c.isVerbose, "Telemetry dispatch error: %v", reqErr)
+	return 0, reqErr
+}
+
+func (c *Client) postTrack(ctx context.Context, endpoint string, jsonData []byte) (int, string, error) {
+	attemptCtx, cancel := context.WithTimeout(ctx, defaultHTTPTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(attemptCtx, http.MethodPost, endpoint, bytes.NewReader(jsonData))
 	if err != nil {
-		log.Verbose(c.isVerbose, "Telemetry request build error: %v", err)
-		return 0, err
+		return 0, "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -213,19 +255,59 @@ func (c *Client) sendHTTPRequest(ctx context.Context, payload Payload) (int, err
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Verbose(c.isVerbose, "Telemetry dispatch error: %v", err)
-		return 0, err
+		return 0, "", err
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-
-	if resp.StatusCode >= 400 {
-		log.Verbose(c.isVerbose, "Telemetry returned non-2xx status: %d", resp.StatusCode)
-		return resp.StatusCode, fmt.Errorf("telemetry endpoint returned HTTP %d", resp.StatusCode)
+	if resp.StatusCode < 400 {
+		return resp.StatusCode, "", nil
 	}
+	return resp.StatusCode, readSnippet(resp.Body), fmt.Errorf("telemetry endpoint returned HTTP %d", resp.StatusCode)
+}
 
-	return resp.StatusCode, nil
+func isTransientStatus(code int) bool {
+	switch code {
+	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	default:
+		return false
+	}
+}
+
+func wait(ctx context.Context, delay time.Duration) error {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+func readSnippet(r io.Reader) string {
+	body, err := io.ReadAll(io.LimitReader(r, 512))
+	if err != nil || len(bytes.TrimSpace(body)) == 0 {
+		return ""
+	}
+	return oneLine(string(body))
+}
+
+func oneLine(s string) string {
+	s = strings.Join(strings.Fields(s), " ")
+	if len(s) > maxErrorSnippet {
+		return s[:maxErrorSnippet]
+	}
+	return s
+}
+
+func (c *Client) redact(s string) string {
+	secret := strings.TrimSpace(c.cfg.ClientSecret)
+	if len(secret) < 8 {
+		return s
+	}
+	return strings.ReplaceAll(s, secret, "[secret]")
 }
 
 // Drain flushes pending events and waits for the worker to finish up to the given timeout.

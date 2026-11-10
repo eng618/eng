@@ -1,6 +1,8 @@
 package telemetry_test
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/eng618/eng/internal/config"
+	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/telemetry"
 	"github.com/eng618/eng/internal/version"
 )
@@ -187,6 +190,106 @@ func TestTestConnection(t *testing.T) {
 	status, err := telemetry.TestConnection(cfg)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, status)
+}
+
+func TestSendSyncRetriesGatewayFailure(t *testing.T) {
+	var calls int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		if calls == 1 {
+			w.WriteHeader(http.StatusBadGateway)
+			_, _ = w.Write([]byte(`{"message":"bad gateway"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	client := telemetry.NewClient(config.TelemetryConfig{
+		Enabled:      true,
+		APIURL:       server.URL,
+		ClientID:     "id",
+		ClientSecret: "secret",
+		ProfileID:    "profile",
+	}, true)
+	t.Cleanup(func() { client.Drain(time.Second) })
+
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	t.Cleanup(log.ResetWriters)
+
+	status, err := client.SendSync(context.Background(), telemetry.Payload{
+		Type:    "track",
+		Payload: telemetry.EventData{Name: "test_event", ProfileID: "profile"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, 2, calls)
+	assert.NotContains(t, buf.String(), "502")
+}
+
+func TestSendSyncDoesNotRetryRejectedEvent(t *testing.T) {
+	var calls int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"message":"Invalid type"}`))
+	}))
+	t.Cleanup(server.Close)
+
+	client := telemetry.NewClient(config.TelemetryConfig{
+		Enabled:  true,
+		APIURL:   server.URL,
+		ClientID: "id",
+	}, true)
+	t.Cleanup(func() { client.Drain(time.Second) })
+
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	t.Cleanup(log.ResetWriters)
+
+	status, err := client.SendSync(context.Background(), telemetry.Payload{
+		Type:    "track",
+		Payload: telemetry.EventData{Name: "test_event"},
+	})
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, 1, calls)
+	assert.Contains(t, buf.String(), "HTTP 400")
+	assert.Contains(t, buf.String(), "Invalid type")
+}
+
+func TestSendSyncReportsRepeatedGatewayFailure(t *testing.T) {
+	var calls int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte("  bad   gateway  "))
+	}))
+	t.Cleanup(server.Close)
+
+	client := telemetry.NewClient(config.TelemetryConfig{
+		Enabled:      true,
+		APIURL:       server.URL,
+		ClientID:     "id",
+		ClientSecret: "super-secret-value",
+		ProfileID:    "profile",
+	}, true)
+	t.Cleanup(func() { client.Drain(time.Second) })
+
+	var buf bytes.Buffer
+	log.SetWriters(&buf, &buf)
+	t.Cleanup(log.ResetWriters)
+
+	status, err := client.SendSync(context.Background(), telemetry.Payload{
+		Type:    "track",
+		Payload: telemetry.EventData{Name: "test_event", ProfileID: "profile"},
+	})
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadGateway, status)
+	assert.Equal(t, 2, calls)
+	assert.Contains(t, buf.String(), "HTTP 502: bad gateway")
+	assert.NotContains(t, buf.String(), "super-secret-value")
 }
 
 func TestTrackCommand_Integration(t *testing.T) {
