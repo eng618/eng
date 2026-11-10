@@ -32,6 +32,9 @@ func withTestCache(t *testing.T) string {
 	oldVersion := appversion.Version
 	appversion.Version = "v0.1.0"
 	t.Cleanup(func() { appversion.Version = oldVersion })
+	// A developer token must not leak into httptest assertions or requests.
+	t.Setenv("GH_TOKEN", "")
+	t.Setenv("GITHUB_TOKEN", "")
 	return dir
 }
 
@@ -150,7 +153,9 @@ func TestRefreshAsyncFetchesAndCaches(t *testing.T) {
 	withTestCache(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "application/vnd.github.v3+json", r.Header.Get("Accept"))
+		assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+		assert.Contains(t, r.Header.Get("User-Agent"), "eng/")
+		assert.Empty(t, r.Header.Get("Authorization"))
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"tag_name": "v9999.0.1",
 			"html_url": "https://example.com/releases",
@@ -158,27 +163,34 @@ func TestRefreshAsyncFetchesAndCaches(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldURL := githubAPIURL
-	githubAPIURL = server.URL + "/repos/%s/%s/releases/latest"
-	defer func() { githubAPIURL = oldURL }()
+	oldURL, oldPage := githubAPIURL, githubLatestPageURL
+	githubAPIURL = server.URL + "/repos/eng618/eng/releases/latest"
+	githubLatestPageURL = "http://127.0.0.1:1/releases/latest"
+	t.Cleanup(func() {
+		githubAPIURL = oldURL
+		githubLatestPageURL = oldPage
+	})
+
+	done := make(chan struct{})
+	fetchDone = func() { close(done) }
+	t.Cleanup(func() { fetchDone = nil })
 
 	path, err := CacheFile()
 	require.NoError(t, err)
 	require.NoFileExists(t, path)
 
 	RefreshAsync()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background update check did not finish")
+	}
 
-	require.Eventually(t, func() bool {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return false
-		}
-		var entry cacheEntry
-		if err := json.Unmarshal(data, &entry); err != nil {
-			return false
-		}
-		return entry.LatestTag == "v9999.0.1"
-	}, 5*time.Second, 50*time.Millisecond)
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	var entry cacheEntry
+	require.NoError(t, json.Unmarshal(data, &entry))
+	assert.Equal(t, "v9999.0.1", entry.LatestTag)
 }
 
 func TestRefreshAsyncSkipsFreshCache(t *testing.T) {
@@ -191,9 +203,13 @@ func TestRefreshAsyncSkipsFreshCache(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldURL := githubAPIURL
-	githubAPIURL = server.URL + "/repos/%s/%s/releases/latest"
-	defer func() { githubAPIURL = oldURL }()
+	oldURL, oldPage := githubAPIURL, githubLatestPageURL
+	githubAPIURL = server.URL + "/repos/eng618/eng/releases/latest"
+	githubLatestPageURL = "http://127.0.0.1:1/releases/latest"
+	defer func() {
+		githubAPIURL = oldURL
+		githubLatestPageURL = oldPage
+	}()
 
 	path, err := CacheFile()
 	require.NoError(t, err)
@@ -213,12 +229,32 @@ func TestRefreshAsyncSkipsFreshCache(t *testing.T) {
 func TestRefreshAsyncSwallowsErrors(t *testing.T) {
 	withTestCache(t)
 
-	oldURL := githubAPIURL
-	githubAPIURL = "http://127.0.0.1:1/repos/%s/%s/releases/latest"
-	defer func() { githubAPIURL = oldURL }()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(server.Close)
 
-	assert.NotPanics(t, func() {
-		RefreshAsync()
-		time.Sleep(300 * time.Millisecond)
+	oldURL, oldPage := githubAPIURL, githubLatestPageURL
+	githubAPIURL = server.URL
+	githubLatestPageURL = server.URL + "/latest"
+	t.Cleanup(func() {
+		githubAPIURL = oldURL
+		githubLatestPageURL = oldPage
 	})
+
+	done := make(chan struct{})
+	fetchDone = func() { close(done) }
+	t.Cleanup(func() { fetchDone = nil })
+
+	assert.NotPanics(t, func() { RefreshAsync() })
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background update check did not finish")
+	}
+
+	path, err := CacheFile()
+	require.NoError(t, err)
+	_, statErr := os.Stat(path)
+	assert.True(t, os.IsNotExist(statErr), "a failed check must not write the cache")
 }

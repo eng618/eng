@@ -3,8 +3,6 @@ package updatecheck
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,12 +16,9 @@ import (
 )
 
 const (
-	githubRepoOwner = "eng618"
-	githubRepoName  = "eng"
-
 	// CheckInterval is how often the cached latest-release tag is refreshed.
 	CheckInterval = 24 * time.Hour
-	// requestTimeout bounds the background GitHub API call.
+	// requestTimeout bounds one release lookup attempt (API or releases page).
 	requestTimeout = 3 * time.Second
 
 	// disableEnvVar opts out of the automatic check when set to any non-empty value.
@@ -35,7 +30,11 @@ const (
 )
 
 // githubAPIURL is the latest-release endpoint (overridable in tests).
-var githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
+var githubAPIURL = "https://api.github.com/repos/eng618/eng/releases/latest"
+
+// fetchDone, when non-nil, runs after a background refresh attempt finishes.
+// Tests use it to wait for that goroutine. Production leaves it nil.
+var fetchDone func()
 
 // Commands that never trigger the notice; version performs its own check and
 // completion output must stay machine-clean.
@@ -122,42 +121,6 @@ func writeCache(path string, entry cacheEntry) {
 	_ = os.Rename(tmpName, path)
 }
 
-// fetchLatestTag queries the GitHub releases API for the latest tag.
-// The endpoint template is passed explicitly so callers capture the
-// package-level override synchronously; background goroutines must never
-// read the mutable global directly (data race with tests).
-func fetchLatestTag(ctx context.Context, apiURL string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(apiURL, githubRepoOwner, githubRepoName), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-	var release struct {
-		TagName string `json:"tag_name"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return "", err
-	}
-	if release.TagName == "" {
-		return "", fmt.Errorf("empty tag name")
-	}
-	return release.TagName, nil
-}
-
 // newerAvailable reports whether latestTag is a newer semver than current.
 // Unparseable versions are treated as "no update" to stay silent.
 func newerAvailable(current, latestTag string) bool {
@@ -190,17 +153,23 @@ func RefreshAsync() {
 	if time.Since(time.Unix(entry.CheckedAt, 0)) < CheckInterval && entry.LatestTag != "" {
 		return
 	}
-	// Capture the endpoint now: the goroutine below must not read the
-	// package global after this function returns.
+	// Capture the endpoints now: the goroutine below must not read the
+	// package globals after this function returns.
 	apiURL := githubAPIURL
+	latestPageURL := githubLatestPageURL
 	go func() {
-		bg, cancel := context.WithTimeout(context.Background(), requestTimeout+time.Second)
+		defer func() {
+			if fetchDone != nil {
+				fetchDone()
+			}
+		}()
+		bg, cancel := context.WithTimeout(context.Background(), 2*requestTimeout+time.Second)
 		defer cancel()
-		tag, err := fetchLatestTag(bg, apiURL)
-		if err != nil {
+		rel, err := fetchLatestRelease(bg, apiURL, latestPageURL)
+		if err != nil || rel.TagName == "" {
 			return
 		}
-		writeCache(path, cacheEntry{LatestTag: tag, CheckedAt: time.Now().Unix()})
+		writeCache(path, cacheEntry{LatestTag: rel.TagName, CheckedAt: time.Now().Unix()})
 	}()
 }
 

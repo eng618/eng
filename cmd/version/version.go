@@ -4,7 +4,8 @@ package version
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,20 +24,20 @@ import (
 	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
 	"github.com/eng618/eng/internal/ui/theme"
+	"github.com/eng618/eng/internal/updatecheck"
 	appversion "github.com/eng618/eng/internal/version"
 )
 
 const (
-	githubRepoOwner = "eng618"
-	githubRepoName  = "eng"
-	requestTimeout  = 5 * time.Second // Timeout for the GitHub API request.
-	brewCmd         = "brew"          // Command for Homebrew
-	brewPkgName     = "eng"           // Package name in Homebrew
-	scriptTimeout   = 60 * time.Second
+	requestTimeout = 8 * time.Second // Bounds the API attempt plus the releases-page fallback.
+	brewCmd        = "brew"          // Command for Homebrew
+	brewPkgName    = "eng"           // Package name in Homebrew
+	scriptTimeout  = 60 * time.Second
 )
 
 var (
-	githubAPIURL = "https://api.github.com/repos/%s/%s/releases/latest"
+	// fetchLatestRelease looks up the newest release. Tests replace it.
+	fetchLatestRelease = updatecheck.FetchLatest
 	// installScriptURL is the canonical install.sh used for curl installs and
 	// script-based self-updates (overridable in tests).
 	installScriptURL = "https://raw.githubusercontent.com/eng618/eng/main/install.sh"
@@ -66,7 +67,8 @@ var VersionCmd = &cobra.Command{
 and target OS/Architecture.
 
 It also checks the GitHub repository (eng618/eng) for the latest official release
-and compares it with the currently running version.
+and compares it with the currently running version. If the GitHub API is
+rate-limited or forbidden, the check uses the public releases page instead.
 
 If a newer version is available, you can use the --update flag to attempt
 an automatic upgrade via Homebrew (if installed that way) or via the
@@ -81,7 +83,7 @@ install script (if installed via curl).`,
 			sp = ui.NewSpinner("Checking for latest version...")
 			sp.Start()
 		}
-		latestRelease, err := getLatestRelease(githubRepoOwner, githubRepoName, isVerbose)
+		latestRelease, err := getLatestRelease(isVerbose)
 		if sp != nil {
 			sp.Stop() // Stop spinner before printing results or attempting update
 		}
@@ -543,51 +545,22 @@ func downloadInstallScript(url string) (string, error) {
 	return tmpName, nil
 }
 
-// getLatestRelease fetches the latest release information for a given GitHub repository.
-func getLatestRelease(owner, repo string, isVerbose bool) (release *githubReleaseInfo, err error) {
-	url := fmt.Sprintf(githubAPIURL, owner, repo)
-	client := &http.Client{Timeout: requestTimeout}
+// getLatestRelease fetches the latest eng release, falling back to the public
+// releases page when the GitHub API is forbidden or rate-limited.
+func getLatestRelease(isVerbose bool) (*githubReleaseInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
 
-	req, err := http.NewRequest("GET", url, nil)
+	rel, err := fetchLatestRelease(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("http request failed: %w", err)
-	}
-	defer func() {
-		closeErr := resp.Body.Close()
-		if err == nil && closeErr != nil {
-			err = fmt.Errorf("failed to close response body: %w", closeErr)
-		} else if closeErr != nil {
-			log.Verbose(isVerbose, "Error closing response body: %v", closeErr)
+		if errors.Is(err, updatecheck.ErrNoRelease) {
+			return nil, nil
 		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusNotFound:
-			return nil, nil // No releases found is not an error here
-		case http.StatusForbidden:
-			return nil, fmt.Errorf(
-				"github API request forbidden (status %d). Check rate limits or token permissions",
-				resp.StatusCode,
-			)
-		default:
-			return nil, fmt.Errorf("unexpected status code %d from GitHub API", resp.StatusCode)
-		}
+		log.Verbose(isVerbose, "update check failed: %v", err)
+		return nil, err
 	}
-
-	var releaseInfo githubReleaseInfo
-	if decodeErr := json.NewDecoder(resp.Body).Decode(&releaseInfo); decodeErr != nil {
-		return nil, fmt.Errorf("failed to decode GitHub API response: %w", decodeErr)
-	}
-	if releaseInfo.TagName == "" {
+	if rel.TagName == "" {
 		return nil, fmt.Errorf("received success status but latest release tag name is empty")
 	}
-
-	return &releaseInfo, nil
+	return &githubReleaseInfo{TagName: rel.TagName, HTMLURL: rel.HTMLURL}, nil
 }

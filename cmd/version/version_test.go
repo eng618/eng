@@ -2,7 +2,7 @@ package version
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,6 +15,7 @@ import (
 	"github.com/eng618/eng/internal/log"
 	"github.com/eng618/eng/internal/paths"
 	"github.com/eng618/eng/internal/ui"
+	"github.com/eng618/eng/internal/updatecheck"
 	appversion "github.com/eng618/eng/internal/version"
 )
 
@@ -131,40 +132,39 @@ func TestParseVersions(t *testing.T) {
 }
 
 func TestGetLatestRelease(t *testing.T) {
-	// Setup mock server
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/repos/eng618/eng/releases/latest" {
-			t.Errorf("Expected path '/repos/eng618/eng/releases/latest', got '%s'", r.URL.Path)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+	orig := fetchLatestRelease
+	t.Cleanup(func() { fetchLatestRelease = orig })
 
-		resp := githubReleaseInfo{
+	fetchLatestRelease = func(_ context.Context) (updatecheck.Release, error) {
+		return updatecheck.Release{
 			TagName: "v1.2.3",
 			HTMLURL: "https://github.com/eng618/eng/releases/tag/v1.2.3",
-		}
-		json.NewEncoder(w).Encode(resp)
-	}))
-	defer ts.Close()
+		}, nil
+	}
 
-	// Backup original URL and restore after test
-	origGithubAPIURL := githubAPIURL
-	defer func() { githubAPIURL = origGithubAPIURL }()
-
-	// Override URL to use mock server
-	githubAPIURL = ts.URL + "/repos/%s/%s/releases/latest"
-
-	release, err := getLatestRelease("eng618", "eng", false)
+	release, err := getLatestRelease(false)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
-
 	if release == nil {
 		t.Fatalf("Expected release info, got nil")
 	}
-
 	if release.TagName != "v1.2.3" {
 		t.Errorf("Expected TagName 'v1.2.3', got '%s'", release.TagName)
+	}
+	if release.HTMLURL != "https://github.com/eng618/eng/releases/tag/v1.2.3" {
+		t.Errorf("Expected HTMLURL to be preserved, got '%s'", release.HTMLURL)
+	}
+
+	fetchLatestRelease = func(_ context.Context) (updatecheck.Release, error) {
+		return updatecheck.Release{}, updatecheck.ErrNoRelease
+	}
+	release, err = getLatestRelease(false)
+	if err != nil {
+		t.Fatalf("missing release should not be an error, got %v", err)
+	}
+	if release != nil {
+		t.Fatalf("expected nil release when none is published, got %+v", release)
 	}
 }
 

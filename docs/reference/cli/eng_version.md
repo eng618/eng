@@ -8,7 +8,8 @@ Displays the application's version, build commit, build date, Go version,
 and target OS/Architecture.
 
 It also checks the GitHub repository (eng618/eng) for the latest official release
-and compares it with the currently running version.
+and compares it with the currently running version. If the GitHub API is
+rate-limited or forbidden, the check uses the public releases page instead.
 
 If a newer version is available, you can use the --update flag to attempt
 an automatic upgrade via Homebrew (if installed that way) or via the
