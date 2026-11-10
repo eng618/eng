@@ -36,7 +36,7 @@ The telemetry client is engineered with a strict **privacy-first** approach:
    - Can be toggled on/off via the CLI: `eng config telemetry disable`.
 4. **Non-Blocking & Fail-Safe**:
    - Events are buffered in memory and sent via a background worker goroutine.
-   - Flush timeout is capped at 400ms on CLI exit.
+   - On exit the CLI waits for the in-flight request to finish, up to the HTTP deadline (2s) plus a short margin. The wait returns as soon as OpenPanel accepts the event.
    - Network errors, timeouts, or offline status are silently swallowed to ensure the CLI never fails due to telemetry.
 
 ---
@@ -73,6 +73,16 @@ The telemetry client is engineered with a strict **privacy-first** approach:
 | `is_ci`          | Boolean | `true`, `false`                            | Whether executed in CI runner (GitHub Actions, etc.)   |
 | `is_interactive` | Boolean | `true`, `false`                            | Whether standard output is connected to a TTY terminal |
 | `shell`          | String  | `zsh`, `bash`, `fish`                      | User's active shell                                    |
+
+Each event also carries OpenPanel control fields that are not charted as product metrics:
+
+| Property     | Purpose                                                                                               |
+| :----------- | :---------------------------------------------------------------------------------------------------- |
+| `__os`       | OS label (`macOS`, `Linux`, `Windows`). Forces the event to be a client event so a session is opened. |
+| `__device`   | Device class (`desktop`). Sent with `__os` so OpenPanel does not classify the CLI as a server SDK.    |
+| `__identify` | Anonymous profile traits (`os`, `arch`, `cli_version`, `shell`) for the local `profile_id`.           |
+
+The request uses `User-Agent: eng/<version> (<os>; <arch>)` plus `openpanel-sdk-name` and `openpanel-sdk-version`. Go's default `Go-http-client` agent is classified as a server SDK. Server events are stored without a session, and OpenPanel only creates a profile when a session starts or an identify payload arrives, so a server-only client leaves Profiles and the overview empty.
 
 ---
 
@@ -170,3 +180,5 @@ Credentials are never committed in plain text source code. They are injected at 
 - `DefaultAPIURL`: `https://openpanel.gventureshq.com/api`
 - `DefaultClientID`: Injected via `OPENPANEL_CLIENT_ID` repository secret
 - `DefaultClientSecret`: Injected via `OPENPANEL_CLIENT_SECRET` repository secret
+
+`eng config telemetry status` prints the client id that is actually in use and whether it came from the build or the environment. When a release binary has compiled credentials, `OPENPANEL_CLIENT_ID` in the shell is ignored and listed as an ignored client. Environment variables are the credentials only for binaries built without those ldflags (local `go build` / `task build`).

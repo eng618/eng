@@ -73,15 +73,19 @@ type TelemetryConfig struct {
 	ClientID     string `mapstructure:"-"`
 	ClientSecret string `mapstructure:"-"`
 	ProfileID    string `mapstructure:"profile_id"`
+	// CredentialSource reports where ClientID came from: "build", "environment", or "unset".
+	CredentialSource string `mapstructure:"-"`
 }
 
 // GetTelemetryConfig retrieves the telemetry configuration from Viper.
 func GetTelemetryConfig() TelemetryConfig {
+	clientID, clientSecret, source := resolveTelemetryCredentials()
 	return TelemetryConfig{
-		Enabled:      IsTelemetryEnabled(),
-		APIURL:       DefaultAPIURL,
-		ClientID:     DefaultClientID,
-		ClientSecret: DefaultClientSecret,
-		ProfileID:    viper.GetString("telemetry.profile_id"),
+		Enabled:          IsTelemetryEnabled(),
+		APIURL:           DefaultAPIURL,
+		ClientID:         clientID,
+		ClientSecret:     clientSecret,
+		ProfileID:        viper.GetString("telemetry.profile_id"),
+		CredentialSource: source,
 	}
 }

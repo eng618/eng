@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -56,6 +57,28 @@ func DetectShell() string {
 		return "unknown"
 	}
 	return filepath.Base(shellPath)
+}
+
+// platformOS is the OS name OpenPanel should attribute this machine to.
+// Go's GOOS value "darwin" is not a label the dashboard groups with Macs.
+func platformOS() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return "macOS"
+	case "linux":
+		return "Linux"
+	case "windows":
+		return "Windows"
+	default:
+		return runtime.GOOS
+	}
+}
+
+// userAgent identifies this CLI to OpenPanel. The default Go user agent
+// (Go-http-client/N.N) is classified as a server SDK, and server events do not
+// create sessions or profiles.
+func userAgent() string {
+	return fmt.Sprintf("eng/%s (%s; %s)", version.Version, runtime.GOOS, runtime.GOARCH)
 }
 
 // ExtractCommandPath returns the sanitized command path (e.g. "git sync").

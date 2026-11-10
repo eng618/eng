@@ -102,7 +102,19 @@ func PrintTelemetryStatus() {
 	}
 	cardLines = append(cardLines, fmt.Sprintf("  %-20s %s", theme.BoldText.Render("Status:"), enabledText))
 	cardLines = append(cardLines, fmt.Sprintf("  %-20s %s", theme.BoldText.Render("API URL:"), theme.BaseText.Render(cfg.APIURL)))
+	cardLines = append(cardLines, fmt.Sprintf("  %-20s %s", theme.BoldText.Render("Client ID:"), theme.MutedText.Render(cfg.ClientID)))
+	cardLines = append(cardLines, fmt.Sprintf("  %-20s %s", theme.BoldText.Render("Credentials:"), theme.BaseText.Render(cfg.CredentialSource)))
 	cardLines = append(cardLines, fmt.Sprintf("  %-20s %s", theme.BoldText.Render("Profile ID:"), theme.MutedText.Render(cfg.ProfileID)))
+	if ignored := config.IgnoredTelemetryClientID(); ignored != "" {
+		cardLines = append(cardLines, theme.MutedText.Render(
+			"OPENPANEL_CLIENT_ID in the environment is not used by this build.",
+		))
+		cardLines = append(cardLines, fmt.Sprintf(
+			"  %-20s %s",
+			theme.BoldText.Render("Ignored client:"),
+			theme.MutedText.Render(ignored),
+		))
+	}
 
 	if !ui.DisableProgress {
 		fmt.Fprintln(log.Out, theme.InfoBox.Render(strings.Join(cardLines, "\n")))

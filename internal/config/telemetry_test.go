@@ -116,6 +116,46 @@ func TestGetEffectiveTelemetryConfig(t *testing.T) {
 	assert.NotEmpty(t, cfg.ProfileID)
 }
 
+func TestResolveTelemetryCredentialsPrefersBuild(t *testing.T) {
+	setupTestConfig(t)
+	origID, origSecret := config.DefaultClientID, config.DefaultClientSecret
+	t.Cleanup(func() {
+		config.DefaultClientID = origID
+		config.DefaultClientSecret = origSecret
+	})
+
+	config.DefaultClientID = "build-client"
+	config.DefaultClientSecret = "build-secret"
+	t.Setenv("OPENPANEL_CLIENT_ID", "env-client")
+	t.Setenv("OPENPANEL_CLIENT_SECRET", "env-secret")
+
+	cfg := config.GetEffectiveTelemetryConfig()
+	assert.Equal(t, "build-client", cfg.ClientID)
+	assert.Equal(t, "build-secret", cfg.ClientSecret)
+	assert.Equal(t, "build", cfg.CredentialSource)
+	assert.Equal(t, "env-client", config.IgnoredTelemetryClientID())
+}
+
+func TestResolveTelemetryCredentialsUsesEnvForDevBuilds(t *testing.T) {
+	setupTestConfig(t)
+	origID, origSecret := config.DefaultClientID, config.DefaultClientSecret
+	t.Cleanup(func() {
+		config.DefaultClientID = origID
+		config.DefaultClientSecret = origSecret
+	})
+
+	config.DefaultClientID = ""
+	config.DefaultClientSecret = ""
+	t.Setenv("OPENPANEL_CLIENT_ID", "env-client")
+	t.Setenv("OPENPANEL_CLIENT_SECRET", "env-secret")
+
+	cfg := config.GetEffectiveTelemetryConfig()
+	assert.Equal(t, "env-client", cfg.ClientID)
+	assert.Equal(t, "env-secret", cfg.ClientSecret)
+	assert.Equal(t, "environment", cfg.CredentialSource)
+	assert.Empty(t, config.IgnoredTelemetryClientID())
+}
+
 func TestSetTelemetryConfig(t *testing.T) {
 	setupTestConfig(t)
 

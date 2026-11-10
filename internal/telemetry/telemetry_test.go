@@ -16,6 +16,7 @@ import (
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/telemetry"
+	"github.com/eng618/eng/internal/version"
 )
 
 func TestFormatEndpoint(t *testing.T) {
@@ -126,10 +127,20 @@ func TestTelemetryClient_SendAndDrain(t *testing.T) {
 	assert.Equal(t, "application/json", receivedHeaders.Get("Content-Type"))
 	assert.Equal(t, "test-client-id", receivedHeaders.Get("openpanel-client-id"))
 	assert.Equal(t, "test-client-secret", receivedHeaders.Get("openpanel-client-secret"))
+	assert.Equal(t, "eng", receivedHeaders.Get("openpanel-sdk-name"))
+	assert.Equal(t, version.Version, receivedHeaders.Get("openpanel-sdk-version"))
+	ua := receivedHeaders.Get("User-Agent")
+	assert.Contains(t, ua, "eng/")
+	assert.NotContains(t, ua, "Go-http-client")
 	assert.Equal(t, "track", receivedPayload.Type)
 	assert.Equal(t, "test_event", receivedPayload.Payload.Name)
 	assert.Equal(t, "test-profile-123", receivedPayload.Payload.ProfileID)
 	assert.Equal(t, "value", receivedPayload.Payload.Properties["key"])
+	assert.Equal(t, "desktop", receivedPayload.Payload.Properties["__device"])
+	assert.NotEmpty(t, receivedPayload.Payload.Properties["__os"])
+	identify, ok := receivedPayload.Payload.Properties["__identify"].(map[string]any)
+	require.True(t, ok, "track events must carry an OpenPanel identify payload")
+	assert.Equal(t, "test-profile-123", identify["profileId"])
 }
 
 func TestTelemetryClient_Disabled(t *testing.T) {

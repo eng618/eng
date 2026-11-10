@@ -6,17 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/eng618/eng/internal/config"
 	"github.com/eng618/eng/internal/log"
+	"github.com/eng618/eng/internal/version"
 )
 
 const (
 	defaultHTTPTimeout = 2 * time.Second
+	// ShutdownTimeout is how long the process should wait for queued telemetry
+	// to be accepted. It covers the HTTP deadline plus a short margin so a
+	// cold TLS handshake is not abandoned when the CLI exits.
+	ShutdownTimeout    = defaultHTTPTimeout + 500*time.Millisecond
 	eventQueueCapacity = 100
+	sdkName            = "eng"
 )
 
 // EventData holds the inner payload fields expected by OpenPanel track API.
@@ -111,9 +118,7 @@ func (c *Client) Send(payload Payload) {
 		return
 	}
 
-	if payload.Payload.ProfileID == "" {
-		payload.Payload.ProfileID = c.cfg.ProfileID
-	}
+	payload = c.prepare(payload)
 
 	select {
 	case c.eventsChan <- payload:
@@ -124,10 +129,52 @@ func (c *Client) Send(payload Payload) {
 
 // SendSync sends a payload synchronously, returning any HTTP response status or error.
 func (c *Client) SendSync(ctx context.Context, payload Payload) (int, error) {
+	return c.sendHTTPRequest(ctx, c.prepare(payload))
+}
+
+// prepare fills the anonymous profile id and the OpenPanel hints that make a
+// CLI event show up as a client session and a profile. Go's default user agent
+// is treated as a server SDK: those events are stored without a session, and
+// profiles are only created from session boundaries or an identify payload.
+func (c *Client) prepare(payload Payload) Payload {
 	if payload.Payload.ProfileID == "" {
 		payload.Payload.ProfileID = c.cfg.ProfileID
 	}
-	return c.sendHTTPRequest(ctx, payload)
+	if payload.Type != "track" || payload.Payload.ProfileID == "" {
+		return payload
+	}
+
+	props := cloneProperties(payload.Payload.Properties)
+	if _, ok := props["__os"]; !ok {
+		props["__os"] = platformOS()
+	}
+	if _, ok := props["__device"]; !ok {
+		props["__device"] = "desktop"
+	}
+	if _, ok := props["__identify"]; !ok {
+		props["__identify"] = map[string]any{
+			"profileId": payload.Payload.ProfileID,
+			"properties": map[string]any{
+				"os":          platformOS(),
+				"arch":        runtime.GOARCH,
+				"cli_version": version.Version,
+				"shell":       DetectShell(),
+			},
+		}
+	}
+	payload.Payload.Properties = props
+	return payload
+}
+
+func cloneProperties(props map[string]any) map[string]any {
+	if len(props) == 0 {
+		return map[string]any{}
+	}
+	cloned := make(map[string]any, len(props)+3)
+	for key, value := range props {
+		cloned[key] = value
+	}
+	return cloned
 }
 
 // sendHTTP executes the HTTP POST request to OpenPanel.
@@ -154,6 +201,9 @@ func (c *Client) sendHTTPRequest(ctx context.Context, payload Payload) (int, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", userAgent())
+	req.Header.Set("openpanel-sdk-name", sdkName)
+	req.Header.Set("openpanel-sdk-version", version.Version)
 	if c.cfg.ClientID != "" {
 		req.Header.Set("openpanel-client-id", c.cfg.ClientID)
 	}

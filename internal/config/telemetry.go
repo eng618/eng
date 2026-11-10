@@ -72,28 +72,53 @@ func IsTelemetryEnabled() bool {
 
 // IsTelemetryConfigured returns true if ClientID and ClientSecret are populated.
 func IsTelemetryConfigured() bool {
-	clientID := DefaultClientID
+	clientID, clientSecret, _ := resolveTelemetryCredentials()
+	return clientID != "" && clientSecret != ""
+}
+
+// IgnoredTelemetryClientID returns an OPENPANEL_CLIENT_ID that this process will
+// not use because the binary was built with its own client. Release builds keep
+// the compile-time client so telemetry stays on the project servers. The value
+// is empty when the environment is unset, matches the build, or is the active source.
+func IgnoredTelemetryClientID() string {
+	if DefaultClientID == "" || DefaultClientSecret == "" {
+		return ""
+	}
+	envID := os.Getenv("OPENPANEL_CLIENT_ID")
+	if envID == "" || envID == DefaultClientID {
+		return ""
+	}
+	return envID
+}
+
+// resolveTelemetryCredentials returns the client pair and where it came from.
+// A release build's compiled credentials win. Environment variables fill in
+// only the fields the build left empty, which is how local dev binaries authenticate.
+func resolveTelemetryCredentials() (clientID, clientSecret, source string) {
+	clientID = DefaultClientID
+	clientSecret = DefaultClientSecret
 	if clientID == "" {
 		clientID = os.Getenv("OPENPANEL_CLIENT_ID")
 	}
-	clientSecret := DefaultClientSecret
 	if clientSecret == "" {
 		clientSecret = os.Getenv("OPENPANEL_CLIENT_SECRET")
 	}
-	return clientID != "" && clientSecret != ""
+
+	switch {
+	case clientID == "" || clientSecret == "":
+		source = "unset"
+	case DefaultClientID != "" && DefaultClientSecret != "":
+		source = "build"
+	default:
+		source = "environment"
+	}
+	return clientID, clientSecret, source
 }
 
 // GetEffectiveTelemetryConfig returns the active telemetry configuration.
 // Telemetry endpoint and credentials are built-in and fixed to the project servers.
 func GetEffectiveTelemetryConfig() TelemetryConfig {
-	clientID := DefaultClientID
-	if clientID == "" {
-		clientID = os.Getenv("OPENPANEL_CLIENT_ID")
-	}
-	clientSecret := DefaultClientSecret
-	if clientSecret == "" {
-		clientSecret = os.Getenv("OPENPANEL_CLIENT_SECRET")
-	}
+	clientID, clientSecret, source := resolveTelemetryCredentials()
 
 	enabled := IsTelemetryEnabled()
 	// If credentials are not injected at build time or provided via env, disable quietly
@@ -102,11 +127,12 @@ func GetEffectiveTelemetryConfig() TelemetryConfig {
 	}
 
 	cfg := TelemetryConfig{
-		Enabled:      enabled,
-		APIURL:       DefaultAPIURL,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		ProfileID:    viper.GetString("telemetry.profile_id"),
+		Enabled:          enabled,
+		APIURL:           DefaultAPIURL,
+		ClientID:         clientID,
+		ClientSecret:     clientSecret,
+		ProfileID:        viper.GetString("telemetry.profile_id"),
+		CredentialSource: source,
 	}
 
 	// Ensure an anonymous Profile ID exists

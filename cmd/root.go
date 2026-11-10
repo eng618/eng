@@ -117,7 +117,7 @@ func ExecuteContext(ctx context.Context) {
 	}
 
 	telemetry.TrackCommand(targetCmd, targetArgs, duration, err)
-	telemetry.Drain(400 * time.Millisecond)
+	telemetry.Drain(telemetry.ShutdownTimeout)
 
 	// npm-style update notice (stderr, cached, almost silent).
 	updatecheck.NotifyIfAvailable(invokedCommandName(targetCmd))
